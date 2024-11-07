@@ -567,71 +567,72 @@ const FreezePIX = () => {
   if (showIntro) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-xl w-full mx-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="text-center p-8 space-y-6">
-            {/* Logo Section */}
-            <div className="flex justify-center mb-6">
-              <div className="text-4xl font-bold tracking-tight">
-                <span className="text-black">freeze</span>
-                <span className="text-yellow-400">PIX</span>
+        <div className="max-w-xl w-full mx-4">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="text-center p-8 space-y-6">
+              {/* Logo Section */}
+              <div className="flex justify-center mb-6">
+                <div className="text-4xl font-bold tracking-tight">
+                  <span className="text-black">freeze</span>
+                  <span className="text-yellow-400">PIX</span>
+                </div>
               </div>
-            </div>
-            <div className="text-sm italic text-gray-600 mb-8">
-              the photography company
+              <div className="text-sm italic text-gray-600 mb-8">
+                the photography company
+              </div>
+              
+              <div className="space-y-6 max-w-md mx-auto">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  Transform Your Digital Memories Into Beautiful Prints
+                </h2>
+                
+                <p className="text-gray-600">
+                  Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
+                </p>
+      
+                <div className="flex justify-center space-x-4 py-4">
+                  <div className="text-center">
+                    <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Choose Photos</div>
+                  </div>
+                  <div className="text-center">
+                    <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Select Sizes</div>
+                  </div>
+                  <div className="text-center">
+                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Quick Checkout</div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
+                </div>
+                
+                <div className="space-y-2">
+                  {initialCountries.map(country => (
+                    <button
+                      key={country.value}
+                      onClick={() => handleCountrySelect(country.value)}
+                      className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="font-medium">{country.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-6 max-w-md mx-auto">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Transform Your Digital Memories Into Beautiful Prints
-              </h2>
-              
-              <p className="text-gray-600">
-                Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
+            {/* Archive Policy */}
+            <div className="border-t text-center py-3">
+              <p className="text-xs text-gray-500">
+                Archive policy: All pictures will be achieved in our database 60 days after the order is shipped.
               </p>
-    
-              <div className="flex justify-center space-x-4 py-4">
-                <div className="text-center">
-                  <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Choose Photos</div>
-                </div>
-                <div className="text-center">
-                  <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Select Sizes</div>
-                </div>
-                <div className="text-center">
-                  <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Quick Checkout</div>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
-              </div>
-              
-              <div className="space-y-2">
-                {initialCountries.map(country => (
-                  <button
-                    key={country.value}
-                    onClick={() => handleCountrySelect(country.value)}
-                    className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="font-medium">{country.name}</div>
-                    
-                  </button>
-                ))}
-              </div>
-              <div className="text-center">
-                <p className="text-gray-600 mt-2" style="font-size:9px;">Archieve policy: </p> <p className="text-gray-600 mt-2" style="font-size:9px;">
-All pictures will be achieved in our database 60 days after the order is shipped.
-</p>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
   }
 
   if (orderSuccess) {
