@@ -621,6 +621,11 @@ const FreezePIX = () => {
                   </button>
                 ))}
               </div>
+              <div className="text-center">
+                <p className="text-gray-600 mt-2" style="font-size:9px;">Archieve policy: </p> <p className="text-gray-600 mt-2" style="font-size:9px;">
+All pictures will be achieved in our database 60 days after the order is shipped.
+</p>
+              </div>
             </div>
           </div>
         </div>
