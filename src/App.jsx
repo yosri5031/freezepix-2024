@@ -71,6 +71,7 @@ const FreezePIX = () => {
 
   const [formData, setFormData] = useState({
     email: '',
+    phone: '',
     shippingAddress: {
       firstName: '',
       lastName: '',
@@ -168,6 +169,7 @@ const FreezePIX = () => {
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Contact Information</h3>
           <p className="text-gray-600">{formData.email}</p>
+          <p className="text-gray-600">{formData.phone}</p>
         </div>
   
         <div className="border rounded-lg p-4">
@@ -373,6 +375,7 @@ const FreezePIX = () => {
         return selectedPhotos.length > 0;
       case 1:
         return formData.email && 
+               formData.phone && 
                formData.shippingAddress.firstName && 
                formData.shippingAddress.lastName && 
                formData.shippingAddress.address && 
@@ -471,6 +474,13 @@ const FreezePIX = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 className="w-full p-2 border rounded"
               />
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full p-2 border rounded"
+              />
             </div>
 
             <div className="space-y-4">
@@ -556,28 +566,67 @@ const FreezePIX = () => {
 
   if (showIntro) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8 p-6 bg-white rounded-lg shadow-lg">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">Welcome to FreezePIX</h1>
-            <p className="mt-2 text-gray-600">Select your country to continue</p>
-          </div>
-          
-          <div className="space-y-4">
-            {initialCountries.map(country => (
-              <button
-                key={country.value}
-                onClick={() => handleCountrySelect(country.value)}
-                className="w-full p-4 text-left border rounded hover:bg-gray-50 transition-colors"
-              >
-                <div className="font-medium">{country.name}</div>
-                <div className="text-sm text-gray-500">Prices in {country.currency}</div>
-              </button>
-            ))}
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-xl w-full mx-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="text-center p-8 space-y-6">
+            {/* Logo Section */}
+            <div className="flex justify-center mb-6">
+              <div className="text-4xl font-bold tracking-tight">
+                <span className="text-black">freeze</span>
+                <span className="text-yellow-400">PIX</span>
+              </div>
+            </div>
+            <div className="text-sm italic text-gray-600 mb-8">
+              the photography company
+            </div>
+            
+            <div className="space-y-6 max-w-md mx-auto">
+              <h2 className="text-2xl font-semibold text-gray-800">
+                Transform Your Digital Memories Into Beautiful Prints
+              </h2>
+              
+              <p className="text-gray-600">
+                Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
+              </p>
+    
+              <div className="flex justify-center space-x-4 py-4">
+                <div className="text-center">
+                  <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                  <div className="text-sm text-gray-600">Choose Photos</div>
+                </div>
+                <div className="text-center">
+                  <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                  <div className="text-sm text-gray-600">Select Sizes</div>
+                </div>
+                <div className="text-center">
+                  <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                  <div className="text-sm text-gray-600">Quick Checkout</div>
+                </div>
+              </div>
+              
+              <div className="text-center">
+                <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
+              </div>
+              
+              <div className="space-y-2">
+                {initialCountries.map(country => (
+                  <button
+                    key={country.value}
+                    onClick={() => handleCountrySelect(country.value)}
+                    className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="font-medium">{country.name}</div>
+                    
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       </div>
-    );
+    </div>
+  );
   }
 
   if (orderSuccess) {
@@ -603,43 +652,69 @@ const FreezePIX = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-3xl mx-auto space-y-8 p-6 bg-white rounded-lg shadow-lg">
-        <div className="flex items-center justify-between border-b pb-4">
-          <h1 className="text-2xl font-bold">FreezePIX Order Form</h1>
-          <button
-            onClick={() => setShowIntro(true)}
-            className="text-gray-500 hover:text-gray-700"
-          >
-            Change Country
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          {/* Stepper */}
+          <div className="flex items-center justify-between mb-8">
+            {['Upload Photos', 'Shipping Details', 'Payment'].map((step, index) => (
+              <div key={step} className="flex items-center">
+                <div className={`
+                  w-8 h-8 rounded-full flex items-center justify-center
+                  ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
+                `}>
+                  {index === 0 && <Camera size={16} />}
+                  {index === 1 && <Package size={16} />}
+                  {index === 2 && <ShoppingCart size={16} />}
+                </div>
+                {index < 2 && (
+                  <div className={`h-1 w-full ${activeStep > index ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+                )}
+              </div>
+            ))}
+          </div>
 
-        <div className="space-y-8">
+          {/* Step Content */}
           {renderStepContent()}
 
-          <div className="flex justify-between pt-4 border-t">
-            <button
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-8">
+         <button
               onClick={handleBack}
-              className="px-4 py-2 border rounded hover:bg-gray-50"
+              className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
             >
-              Back
+              {activeStep === 0 ? 'Home' : 'Back'}
             </button>
-            <button
-              onClick={handleNext}
-              disabled={!validateStep()}
-              className={`px-4 py-2 rounded ${
-                validateStep()
-                  ? 'bg-yellow-400 hover:bg-yellow-500'
-                  : 'bg-gray-300 cursor-not-allowed'
-              }`}
-            >
-              {activeStep === 2 ? 'Place Order' : 'Next'}
-            </button>
+            {selectedCountry === 'TUN' ? (
+  <button
+    onClick={handleNext}
+    disabled={!validateStep()}
+    className={`px-6 py-2 rounded ${
+      validateStep()
+        ? 'bg-yellow-400 hover:bg-yellow-500'
+        : 'bg-gray-200 cursor-not-allowed'
+    }`}
+  >
+    {activeStep === 2 ? 'Place Order' : 'Next'}
+  </button>
+) : activeStep < 2 ? (
+  <button
+    onClick={() => setActiveStep(prev => prev + 1)}
+    disabled={!validateStep()}
+    className={`px-6 py-2 rounded ${
+      validateStep()
+        ? 'bg-yellow-400 hover:bg-yellow-500'
+        : 'bg-gray-200 cursor-not-allowed'
+    }`}
+  >
+    Next
+  </button>
+) : null}
           </div>
         </div>
       </div>
     </div>
+    
   );
 };
 
