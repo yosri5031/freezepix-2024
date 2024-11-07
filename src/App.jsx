@@ -631,21 +631,27 @@ const FreezePIX = () => {
 
   if (orderSuccess) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="max-w-md w-full space-y-8 p-6 bg-white rounded-lg shadow-lg text-center">
-          <div className="text-green-500">
-            <Package size={64} className="mx-auto" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="max-w-xl w-full">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
+            <div className="text-green-500 text-5xl">✓</div>
+            <h2 className="text-2xl font-bold">Thank you for your order!</h2>
+            <p className="text-gray-600">
+              Your order has been successfully placed and will be processed within 48 hours.
+              A confirmation email with tracking details will be sent to {formData.email}.
+            </p>
+            <div className="mt-4">
+              <p className="font-medium">Order Details:</p>
+              <p>Order Number: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+              <p>Total Amount: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
+            </div>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+            >
+              Place New Order
+            </button>
           </div>
-          <h1 className="text-3xl font-bold">Order Successful!</h1>
-          <p className="text-gray-600">
-            Thank you for your order. We'll send you an email confirmation shortly.
-          </p>
-          <button
-            onClick={() => window.location.reload()}
-            className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-          >
-            Place Another Order
-          </button>
         </div>
       </div>
     );
