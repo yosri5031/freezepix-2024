@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from "react";
 import { Upload, ShoppingCart, Package, Camera, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
@@ -64,8 +64,8 @@ const FreezePIX = () => {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
   const fileInputRef = useRef(null);
+
   const [discountCode, setDiscountCode] = useState('');
-  const [discountError, setDiscountError] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [showPolicyPopup, setShowPolicyPopup] = useState(false);
 
@@ -94,43 +94,6 @@ const FreezePIX = () => {
     },
     paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
   });
-
-  // Store initial photo sizes when country changes
-  useEffect(() => {
-    if (selectedCountry && selectedPhotos.length > 0) {
-      const updatedPhotos = selectedPhotos.map(photo => ({
-        ...photo,
-        size: selectedCountry === 'TUN' ? '10x15' : '4x6'
-      }));
-      setSelectedPhotos(updatedPhotos);
-    }
-  }, [selectedCountry]);
-
-  const validateDiscountCode = (code) => {
-    const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-    const validCodes = ['B2B', 'MOHAMED'];
-    const upperCode = code.toUpperCase();
-    
-    if (code && !validCodes.includes(upperCode)) {
-      setDiscountError('Invalid discount code');
-      return false;
-    } else if (totalItems < 10) {
-      setDiscountError('Minimum 10 items required for discount');
-      return false;
-    } else {
-      setDiscountError('');
-      return true;
-    }
-  };
-
-  const handleDiscountCode = (value) => {
-    setDiscountCode(value);
-    if (value) {
-      validateDiscountCode(value);
-    } else {
-      setDiscountError('');
-    }
-  };
 
   const handleBack = () => {
     if (activeStep === 0) {
@@ -197,286 +160,179 @@ const FreezePIX = () => {
     };
   };
 
- const renderInvoice = () => {
-  const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount } = calculateTotals();
-  const country = initialCountries.find(c => c.value === selectedCountry);
-  
-  return (
-    <div className="space-y-6">
-      {/* Discount Code Section */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">Discount Code</h3>
-        <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="Enter discount code"
-            value={discountCode}
-            onChange={(e) => handleDiscountCode(e.target.value)}
-            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-          />
-          {discountError && (
-            <p className="text-red-500 text-sm">{discountError}</p>
-          )}
-        </div>
-      </div>
-
-      {/* Contact Information */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">Contact Information</h3>
-        <p className="text-gray-600">{formData.email}</p>
-        <p className="text-gray-600">{formData.phone}</p>
-      </div>
-
-      {/* Shipping Address */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">Shipping Address</h3>
-        <div className="text-gray-600">
-          <p>{formData.shippingAddress.firstName} {formData.shippingAddress.lastName}</p>
-          <p>{formData.shippingAddress.address}</p>
-          <p>{formData.shippingAddress.city}, {formData.shippingAddress.postalCode}</p>
-          {formData.shippingAddress.state && <p>{formData.shippingAddress.state}</p>}
-          {formData.shippingAddress.province && <p>{formData.shippingAddress.province}</p>}
-          <p>{country?.name}</p>
-        </div>
-      </div>
-
-      {/* Billing Address (if different from shipping) */}
-      {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
+  const renderInvoice = () => {
+    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    
+    return (
+      <div className="space-y-6">
         <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Billing Address</h3>
+          <h3 className="font-medium mb-3">Contact Information</h3>
+          <p className="text-gray-600">{formData.email}</p>
+          <p className="text-gray-600">{formData.phone}</p>
+        </div>
+  
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-3">Shipping Address</h3>
           <div className="text-gray-600">
-            <p>{formData.billingAddress.firstName} {formData.billingAddress.lastName}</p>
-            <p>{formData.billingAddress.address}</p>
-            <p>{formData.billingAddress.city}, {formData.billingAddress.postalCode}</p>
-            {formData.billingAddress.state && <p>{formData.billingAddress.state}</p>}
-            {formData.billingAddress.province && <p>{formData.billingAddress.province}</p>}
+            <p>{formData.shippingAddress.firstName} {formData.shippingAddress.lastName}</p>
+            <p>{formData.shippingAddress.address}</p>
+            <p>{formData.shippingAddress.city}, {formData.shippingAddress.postalCode}</p>
+            {formData.shippingAddress.state && <p>{formData.shippingAddress.state}</p>}
+            {formData.shippingAddress.province && <p>{formData.shippingAddress.province}</p>}
             <p>{country?.name}</p>
           </div>
         </div>
-      )}
 
-      {/* Order Summary */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">Order Summary</h3>
-        
-        {/* Tunisia Photo Sizes */}
-        {selectedCountry === 'TUN' ? (
-          <>
-            {quantities['10x15'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
-              </div>
-            )}
-            {quantities['15x22'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
-              </div>
-            )}
-          </>
-        ) : (
-          /* US/Canada Photo Sizes */
-          <>
-            {quantities['4x6'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
-              </div>
-            )}
-            {quantities['5x7'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
-              </div>
-            )}
-          </>
-        )}
-        
-        {/* Subtotal */}
-        <div className="flex justify-between py-2 border-t">
-          <span>Subtotal</span>
-          <span>{subtotal.toFixed(2)} {country?.currency}</span>
-        </div>
-
-        {/* Shipping Fee */}
-        <div className="flex justify-between py-2">
-          <span>Shipping Fee</span>
-          <span>{shippingFee.toFixed(2)} {country?.currency}</span>
-        </div>
-        
-        {/* Discount (if applicable) */}
-        {discount > 0 && (
-          <div className="flex justify-between py-2 text-green-600">
-            <span>Discount (30%)</span>
-            <span>-{discount.toFixed(2)} {country?.currency}</span>
+        {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-3">Billing Address</h3>
+            <div className="text-gray-600">
+              <p>{formData.billingAddress.firstName} {formData.billingAddress.lastName}</p>
+              <p>{formData.billingAddress.address}</p>
+              <p>{formData.billingAddress.city}, {formData.billingAddress.postalCode}</p>
+              {formData.billingAddress.state && <p>{formData.billingAddress.state}</p>}
+              {formData.billingAddress.province && <p>{formData.billingAddress.province}</p>}
+              <p>{country?.name}</p>
+            </div>
           </div>
         )}
-        
-        {/* Total */}
-        <div className="flex justify-between py-2 border-t font-bold">
-          <span>Total</span>
-          <span>{total.toFixed(2)} {country?.currency}</span>
+  
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-3">Order Summary</h3>
+          
+          {selectedCountry === 'TUN' ? (
+            <>
+              {quantities['10x15'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+              {quantities['15x22'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {quantities['4x6'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+              {quantities['5x7'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+            </>
+          )}
+          
+          <div className="flex justify-between py-2 border-t">
+            <span>Subtotal</span>
+            <span>{subtotal.toFixed(2)} {country?.currency}</span>
+          </div>
+  
+          <div className="flex justify-between py-2">
+            <span>Shipping Fee</span>
+            <span>{shippingFee.toFixed(2)} {country?.currency}</span>
+          </div>
+          
+          {discount > 0 && (
+            <div className="flex justify-between py-2 text-green-600">
+              <span>Discount (30%)</span>
+              <span>-{discount.toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+          
+          <div className="flex justify-between py-2 border-t font-bold">
+            <span>Total</span>
+            <span>{total.toFixed(2)} {country?.currency}</span>
+          </div>
+        </div>
+  
+        <div className="text-sm text-gray-600">
+          <p>* Prices shown in {country?.currency}</p>
+          {selectedCountry === 'TUN' && (
+            <p>* Prices converted at rate: 1 CAD = 2.25 TND</p>
+          )}
         </div>
       </div>
-
-      {/* Order Note */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">Order Note</h3>
-        <textarea
-          placeholder="Add any special instructions (optional)"
-          value={orderNote}
-          onChange={(e) => setOrderNote(e.target.value)}
-          className="w-full p-2 border rounded"
-          rows={3}
-        />
-      </div>
-    </div>
-  );
-};
-
-const AddressForm = ({ type, data, onChange }) => {
-  // Create refs for each input
-  const inputRefs = {
-    firstName: useRef(null),
-    lastName: useRef(null),
-    address: useRef(null),
-    city: useRef(null),
-    state: useRef(null),
-    province: useRef(null),
-    postalCode: useRef(null)
+    );
   };
 
-  // Handle blur event to prevent keyboard issues
-  const handleBlur = (e) => {
-    e.preventDefault();
-    e.target.blur();
-  };
-
-  const selectedCountry = type || 'USA';
-
-  return (
+  const AddressForm = ({ type, data, onChange }) => (
     <div className="grid grid-cols-2 gap-4">
-      <div className="relative">
-        <input
-          ref={inputRefs.firstName}
-          type="text"
-          placeholder="First Name"
-          value={data.firstName || ''}
-          onChange={(e) => {
-            e.preventDefault();
-            onChange({ ...data, firstName: e.target.value });
-          }}
-          onBlur={handleBlur}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
-      <div className="relative">
-        <input
-          ref={inputRefs.lastName}
-          type="text"
-          placeholder="Last Name"
-          value={data.lastName || ''}
-          onChange={(e) => {
-            e.preventDefault();
-            onChange({ ...data, lastName: e.target.value });
-          }}
-          onBlur={handleBlur}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
-      <div className="relative col-span-2">
-        <input
-          ref={inputRefs.address}
-          type="text"
-          placeholder="Address"
-          value={data.address || ''}
-          onChange={(e) => {
-            e.preventDefault();
-            onChange({ ...data, address: e.target.value });
-          }}
-          onBlur={handleBlur}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
-      <div className="relative">
-        <input
-          ref={inputRefs.city}
-          type="text"
-          placeholder="City"
-          value={data.city || ''}
-          onChange={(e) => {
-            e.preventDefault();
-            onChange({ ...data, city: e.target.value });
-          }}
-          onBlur={handleBlur}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
+      <input
+        type="text"
+        placeholder="First Name"
+        value={data.firstName}
+        onChange={(e) => onChange({ ...data, firstName: e.target.value })}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        placeholder="Last Name"
+        value={data.lastName}
+        onChange={(e) => onChange({ ...data, lastName: e.target.value })}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        placeholder="Address"
+        value={data.address}
+        onChange={(e) => onChange({ ...data, address: e.target.value })}
+        className="col-span-2 p-2 border rounded"
+      />
+      <input
+        type="text"
+        placeholder="City"
+        value={data.city}
+        onChange={(e) => onChange({ ...data, city: e.target.value })}
+        className="p-2 border rounded"
+      />
+      
       {selectedCountry === 'USA' && (
-        <div className="relative">
-          <input
-            ref={inputRefs.state}
-            type="text"
-            placeholder="State"
-            value={data.state || ''}
-            onChange={(e) => {
-              e.preventDefault();
-              onChange({ ...data, state: e.target.value });
-            }}
-            onBlur={handleBlur}
-            className="p-2 border rounded w-full"
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="State"
+          value={data.state}
+          onChange={(e) => onChange({ ...data, state: e.target.value })}
+          className="p-2 border rounded"
+        />
       )}
-
+      
       {selectedCountry === 'CAN' && (
-        <div className="relative">
-          <input
-            ref={inputRefs.province}
-            type="text"
-            placeholder="Province"
-            value={data.province || ''}
-            onChange={(e) => {
-              e.preventDefault();
-              onChange({ ...data, province: e.target.value });
-            }}
-            onBlur={handleBlur}
-            className="p-2 border rounded w-full"
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Province"
+          value={data.province}
+          onChange={(e) => onChange({ ...data, province: e.target.value })}
+          className="p-2 border rounded"
+        />
       )}
-
-      <div className="relative">
-        <input
-          ref={inputRefs.postalCode}
-          type="text"
-          placeholder="Postal Code"
-          value={data.postalCode || ''}
-          onChange={(e) => {
-            e.preventDefault();
-            onChange({ ...data, postalCode: e.target.value });
-          }}
-          onBlur={handleBlur}
-          className="p-2 border rounded w-full"
-        />
-      </div>
-
-      <div className="relative col-span-2">
-        <input
-          type="text"
-          value={selectedCountry}
-          disabled
-          className="p-2 border rounded w-full bg-gray-100"
-        />
-      </div>
+      
+      <input
+        type="text"
+        placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
+        value={data.postalCode}
+        onChange={(e) => onChange({ ...data, postalCode: e.target.value })}
+        className="p-2 border rounded"
+      />
+      
+      <input
+        type="text"
+        value={initialCountries.find(c => c.value === selectedCountry)?.name}
+        disabled
+        className="col-span-2 p-2 border rounded bg-gray-100"
+      />
     </div>
   );
-};
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
@@ -711,71 +567,72 @@ const AddressForm = ({ type, data, onChange }) => {
   if (showIntro) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-xl w-full mx-4">
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="text-center p-8 space-y-6">
-            {/* Logo Section */}
-            <div className="flex justify-center mb-6">
-              <div className="text-4xl font-bold tracking-tight">
-                <span className="text-black">freeze</span>
-                <span className="text-yellow-400">PIX</span>
+        <div className="max-w-xl w-full mx-4">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div className="text-center p-8 space-y-6">
+              {/* Logo Section */}
+              <div className="flex justify-center mb-6">
+                <div className="text-4xl font-bold tracking-tight">
+                  <span className="text-black">freeze</span>
+                  <span className="text-yellow-400">PIX</span>
+                </div>
               </div>
-            </div>
-            <div className="text-sm italic text-gray-600 mb-8">
-              the photography company
+              <div className="text-sm italic text-gray-600 mb-8">
+                the photography company
+              </div>
+              
+              <div className="space-y-6 max-w-md mx-auto">
+                <h2 className="text-2xl font-semibold text-gray-800">
+                  Transform Your Digital Memories Into Beautiful Prints
+                </h2>
+                
+                <p className="text-gray-600">
+                  Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
+                </p>
+      
+                <div className="flex justify-center space-x-4 py-4">
+                  <div className="text-center">
+                    <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Choose Photos</div>
+                  </div>
+                  <div className="text-center">
+                    <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Select Sizes</div>
+                  </div>
+                  <div className="text-center">
+                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <div className="text-sm text-gray-600">Quick Checkout</div>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
+                </div>
+                
+                <div className="space-y-2">
+                  {initialCountries.map(country => (
+                    <button
+                      key={country.value}
+                      onClick={() => handleCountrySelect(country.value)}
+                      className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
+                    >
+                      <div className="font-medium">{country.name}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
             
-            <div className="space-y-6 max-w-md mx-auto">
-              <h2 className="text-2xl font-semibold text-gray-800">
-                Transform Your Digital Memories Into Beautiful Prints
-              </h2>
-              
-              <p className="text-gray-600">
-                Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
+            {/* Archive Policy */}
+            <div className="border-t text-center py-3">
+              <p className="text-xs text-gray-500">
+                Archive policy: All pictures will be achieved in our database 60 days after the order is shipped.
               </p>
-    
-              <div className="flex justify-center space-x-4 py-4">
-                <div className="text-center">
-                  <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Choose Photos</div>
-                </div>
-                <div className="text-center">
-                  <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Select Sizes</div>
-                </div>
-                <div className="text-center">
-                  <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                  <div className="text-sm text-gray-600">Quick Checkout</div>
-                </div>
-              </div>
-              
-              <div className="text-center">
-                <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
-              </div>
-              
-              <div className="space-y-2">
-                {initialCountries.map(country => (
-                  <button
-                    key={country.value}
-                    onClick={() => handleCountrySelect(country.value)}
-                    className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
-                  >
-                    <div className="font-medium">{country.name}</div>
-                    
-                  </button>
-                ))}
-              </div>
-              <div className="text-center">
-                <p className="text-gray-600 mt-2" style="font-size:9px;">Archieve policy: </p> <p className="text-gray-600 mt-2" style="font-size:9px;">
-All pictures will be achieved in our database 60 days after the order is shipped.
-</p>
-              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
   }
 
   if (orderSuccess) {
