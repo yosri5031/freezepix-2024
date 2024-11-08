@@ -56,6 +56,104 @@ const PaymentForm = ({ onPaymentSuccess }) => {
   );
 };
 
+const AddressForm = ({ type, data, onChange }) => {
+  // Handle input changes without spreading the entire data object on every keystroke
+  const handleInputChange = (field) => (e) => {
+    const newValue = e.target.value;
+    
+    // Save the caret position and scroll position
+    const caretPosition = e.target.selectionStart;
+    const scrollPosition = e.target.scrollTop;
+  
+    onChange({
+      ...data,
+      [field]: newValue
+    });
+  
+    // Restore the caret position and scroll position after updating the field value
+    setTimeout(() => {
+      e.target.selectionStart = caretPosition;
+      e.target.selectionEnd = caretPosition;
+      e.target.scrollTop = scrollPosition;
+    }, 0);
+  };
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      <input
+        type="text"
+        inputMode="text"
+        placeholder="First Name"
+        value={data.firstName || ''}
+        onChange={handleInputChange('firstName')}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder="Last Name"
+        value={data.lastName || ''}
+        onChange={handleInputChange('lastName')}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder="Address"
+        value={data.address || ''}
+        onChange={handleInputChange('address')}
+        className="col-span-2 p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder="City"
+        value={data.city || ''}
+        onChange={handleInputChange('city')}
+        className="p-2 border rounded"
+      />
+      
+      {data.country === 'USA' && (
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="State"
+          value={data.state || ''}
+          onChange={handleInputChange('state')}
+          className="p-2 border rounded"
+        />
+      )}
+      
+      {data.country === 'CAN' && (
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="Province"
+          value={data.province || ''}
+          onChange={handleInputChange('province')}
+          className="p-2 border rounded"
+        />
+      )}
+      
+      <input
+        type="text"
+        inputMode="numeric"
+        placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
+        value={data.postalCode || ''}
+        onChange={handleInputChange('postalCode')}
+        className="p-2 border rounded"
+      />
+      
+      <input
+        type="text"
+        value={initialCountries.find(c => c.value === data.country)?.name}
+        disabled
+        className="col-span-2 p-2 border rounded bg-gray-100"
+      />
+    </div>
+  );
+};
+
 const FreezePIX = () => {
   const [showIntro, setShowIntro] = useState(true);
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -326,125 +424,28 @@ const FreezePIX = () => {
     );
   };
 
-  const AddressForm = ({ type, data, onChange }) => {
-    // Handle input changes without spreading the entire data object on every keystroke
-    const handleInputChange = (field) => (e) => {
-      const newValue = e.target.value;
-      
-      // Save the caret position and scroll position
-      const caretPosition = e.target.selectionStart;
-      const scrollPosition = e.target.scrollTop;
-    
-      onChange({
-        ...data,
-        [field]: newValue
-      });
-    
-      // Restore the caret position and scroll position after updating the field value
-      setTimeout(() => {
-        e.target.selectionStart = caretPosition;
-        e.target.selectionEnd = caretPosition;
-        e.target.scrollTop = scrollPosition;
-      }, 0);
-    };
   
-    return (
-      <div className="grid grid-cols-2 gap-4">
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="First Name"
-          value={data.firstName || ''}
-          onChange={(e) => handleShippingAddressChange('firstName', e.target.value)}
-          className="p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="Last Name"
-          value={data.lastName || ''}
-          onChange={(e) => handleShippingAddressChange('lastName', e.target.value)}
-          className="p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="Address"
-          value={data.address || ''}
-          onChange={(e) => handleShippingAddressChange('address', e.target.value)}
-          className="col-span-2 p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="City"
-          value={data.city || ''}
-          onChange={(e) => handleShippingAddressChange('city', e.target.value)}
-          className="p-2 border rounded"
-        />
-        
-        {selectedCountry === 'USA' && (
-          <input
-            type="text"
-            inputMode="text"
-            placeholder="State"
-            value={data.state || ''}
-            onChange={(e) => handleShippingAddressChange('state', e.target.value)}
-            className="p-2 border rounded"
-          />
-        )}
-        
-        {selectedCountry === 'CAN' && (
-          <input
-            type="text"
-            inputMode="text"
-            placeholder="Province"
-            value={data.province || ''}
-            onChange={(e) => handleShippingAddressChange('province', e.target.value)}
-            className="p-2 border rounded"
-          />
-        )}
-        
-        <input
-          type="text"
-          inputMode="numeric"
-          placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
-          value={data.postalCode || ''}
-          onChange={(e) => handleShippingAddressChange('postalCode', e.target.value)}
-          className="p-2 border rounded"
-        />
-        
-        <input
-          type="text"
-          value={initialCountries.find(c => c.value === selectedCountry)?.name}
-          disabled
-          className="col-span-2 p-2 border rounded bg-gray-100"
-        />
-      </div>
-    );
+  
+  const handleShippingAddressChange = (field, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      shippingAddress: {
+        ...prevData.shippingAddress,
+        [field]: value
+      }
+    }));
   };
-  
-  // In your parent component, modify the onChange handlers:
-// Update an individual field in the shipping address
-const handleShippingAddressChange = (field, value) => {
-  setFormData((prevData) => ({
-    ...prevData,
-    shippingAddress: {
-      ...prevData.shippingAddress,
-      [field]: value
-    }
-  }));
-};
-  
-const handleBillingAddressChange = (field, value) => {
-  setFormData((prevData) => ({
-    ...prevData,
-    billingAddress: {
-      ...prevData.billingAddress,
-      [field]: value
-    }
-  }));
-};
+
+  const handleBillingAddressChange = (field, value) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      billingAddress: {
+        ...prevData.billingAddress,
+        [field]: value
+      }
+    }));
+  };
+
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
