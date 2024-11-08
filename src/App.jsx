@@ -355,7 +355,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="First Name"
           value={data.firstName || ''}
-          onChange={handleInputChange('firstName')}
+          onChange={(e) => handleShippingAddressChange('firstName', e.target.value)}
           className="p-2 border rounded"
         />
         <input
@@ -363,7 +363,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="Last Name"
           value={data.lastName || ''}
-          onChange={handleInputChange('lastName')}
+          onChange={(e) => handleShippingAddressChange('lastName', e.target.value)}
           className="p-2 border rounded"
         />
         <input
@@ -371,7 +371,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="Address"
           value={data.address || ''}
-          onChange={handleInputChange('address')}
+          onChange={(e) => handleShippingAddressChange('address', e.target.value)}
           className="col-span-2 p-2 border rounded"
         />
         <input
@@ -379,7 +379,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="City"
           value={data.city || ''}
-          onChange={handleInputChange('city')}
+          onChange={(e) => handleShippingAddressChange('city', e.target.value)}
           className="p-2 border rounded"
         />
         
@@ -389,7 +389,7 @@ const FreezePIX = () => {
             inputMode="text"
             placeholder="State"
             value={data.state || ''}
-            onChange={handleInputChange('state')}
+            onChange={(e) => handleShippingAddressChange('state', e.target.value)}
             className="p-2 border rounded"
           />
         )}
@@ -400,7 +400,7 @@ const FreezePIX = () => {
             inputMode="text"
             placeholder="Province"
             value={data.province || ''}
-            onChange={handleInputChange('province')}
+            onChange={(e) => handleShippingAddressChange('province', e.target.value)}
             className="p-2 border rounded"
           />
         )}
@@ -410,7 +410,7 @@ const FreezePIX = () => {
           inputMode="numeric"
           placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
           value={data.postalCode || ''}
-          onChange={handleInputChange('postalCode')}
+          onChange={(e) => handleShippingAddressChange('postalCode', e.target.value)}
           className="p-2 border rounded"
         />
         
@@ -425,19 +425,26 @@ const FreezePIX = () => {
   };
   
   // In your parent component, modify the onChange handlers:
-  const handleShippingAddressChange = (newAddress) => {
-    setFormData(prev => ({
-      ...prev,
-      shippingAddress: newAddress
-    }));
-  };
+// Update an individual field in the shipping address
+const handleShippingAddressChange = (field, value) => {
+  setFormData((prevData) => ({
+    ...prevData,
+    shippingAddress: {
+      ...prevData.shippingAddress,
+      [field]: value
+    }
+  }));
+};
   
-  const handleBillingAddressChange = (newAddress) => {
-    setFormData(prev => ({
-      ...prev,
-      billingAddress: newAddress
-    }));
-  };
+const handleBillingAddressChange = (field, value) => {
+  setFormData((prevData) => ({
+    ...prevData,
+    billingAddress: {
+      ...prevData.billingAddress,
+      [field]: value
+    }
+  }));
+};
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
