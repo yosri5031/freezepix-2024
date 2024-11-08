@@ -66,6 +66,7 @@ const FreezePIX = () => {
   const fileInputRef = useRef(null);
 
   const [discountCode, setDiscountCode] = useState('');
+  const [discountError, setDiscountError] = useState('');
   const [orderNote, setOrderNote] = useState('');
   const [showPolicyPopup, setShowPolicyPopup] = useState(false);
 
@@ -94,6 +95,32 @@ const FreezePIX = () => {
     },
     paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
   });
+
+  const validateDiscountCode = (code) => {
+    const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
+    const validCodes = ['B2B', 'MOHAMED'];
+    const upperCode = code.toUpperCase();
+    
+    if (code && !validCodes.includes(upperCode)) {
+      setDiscountError('Invalid discount code');
+      return false;
+    } else if (totalItems < 10) {
+      setDiscountError('Minimum 10 items required for discount');
+      return false;
+    } else {
+      setDiscountError('');
+      return true;
+    }
+  };
+
+  const handleDiscountCode = (value) => {
+    setDiscountCode(value);
+    if (value) {
+      validateDiscountCode(value);
+    } else {
+      setDiscountError('');
+    }
+  };
 
   const handleBack = () => {
     if (activeStep === 0) {
@@ -166,12 +193,31 @@ const FreezePIX = () => {
     
     return (
       <div className="space-y-6">
+        {/* Discount Code Section */}
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-3">Discount Code</h3>
+          <div className="space-y-2">
+            <input
+              type="text"
+              placeholder="Enter discount code"
+              value={discountCode}
+              onChange={(e) => handleDiscountCode(e.target.value)}
+              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+            />
+            {discountError && (
+              <p className="text-red-500 text-sm">{discountError}</p>
+            )}
+          </div>
+        </div>
+  
+        {/* Contact Information */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Contact Information</h3>
           <p className="text-gray-600">{formData.email}</p>
           <p className="text-gray-600">{formData.phone}</p>
         </div>
   
+        {/* Shipping Address */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Shipping Address</h3>
           <div className="text-gray-600">
@@ -183,7 +229,8 @@ const FreezePIX = () => {
             <p>{country?.name}</p>
           </div>
         </div>
-
+  
+        {/* Billing Address (if different from shipping) */}
         {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
           <div className="border rounded-lg p-4">
             <h3 className="font-medium mb-3">Billing Address</h3>
@@ -198,9 +245,11 @@ const FreezePIX = () => {
           </div>
         )}
   
+        {/* Order Summary */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Order Summary</h3>
           
+          {/* Tunisia Photo Sizes */}
           {selectedCountry === 'TUN' ? (
             <>
               {quantities['10x15'] > 0 && (
@@ -217,6 +266,7 @@ const FreezePIX = () => {
               )}
             </>
           ) : (
+            /* US/Canada Photo Sizes */
             <>
               {quantities['4x6'] > 0 && (
                 <div className="flex justify-between py-2">
@@ -233,16 +283,19 @@ const FreezePIX = () => {
             </>
           )}
           
+          {/* Subtotal */}
           <div className="flex justify-between py-2 border-t">
             <span>Subtotal</span>
             <span>{subtotal.toFixed(2)} {country?.currency}</span>
           </div>
   
+          {/* Shipping Fee */}
           <div className="flex justify-between py-2">
             <span>Shipping Fee</span>
             <span>{shippingFee.toFixed(2)} {country?.currency}</span>
           </div>
           
+          {/* Discount (if applicable) */}
           {discount > 0 && (
             <div className="flex justify-between py-2 text-green-600">
               <span>Discount (30%)</span>
@@ -250,17 +303,23 @@ const FreezePIX = () => {
             </div>
           )}
           
+          {/* Total */}
           <div className="flex justify-between py-2 border-t font-bold">
             <span>Total</span>
             <span>{total.toFixed(2)} {country?.currency}</span>
           </div>
         </div>
   
-        <div className="text-sm text-gray-600">
-          <p>* Prices shown in {country?.currency}</p>
-          {selectedCountry === 'TUN' && (
-            <p>* Prices converted at rate: 1 CAD = 2.25 TND</p>
-          )}
+        {/* Order Note */}
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-3">Order Note</h3>
+          <textarea
+            placeholder="Add any special instructions (optional)"
+            value={orderNote}
+            onChange={(e) => setOrderNote(e.target.value)}
+            className="w-full p-2 border rounded"
+            rows={3}
+          />
         </div>
       </div>
     );
