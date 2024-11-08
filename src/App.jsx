@@ -627,7 +627,7 @@ const FreezePIX = () => {
                     <AddressForm
                       type="billing"
                       data={formData.billingAddress}
-                      onChange={(newAddress) => ssetFormData(prevData => ({
+                      onChange={(newAddress) => setFormData(prevData => ({
                         ...prevData,
                         billingAddress: newAddress
                       }))}
