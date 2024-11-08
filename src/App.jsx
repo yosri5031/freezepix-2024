@@ -626,10 +626,17 @@ const handleBillingAddressChange = (field, value) => {
                     <AddressForm
                       type="billing"
                       data={formData.billingAddress}
-                      onChange={(newAddress) => setFormData({
-                        ...formData,
+                      onChange={(newAddress) => ssetFormData(prevData => ({
+                        ...prevData,
                         billingAddress: newAddress
-                      })}
+                      }))}
+
+                      /*type="shipping"
+                       data={formData.shippingAddress}
+                        onChange={(newAddress) => setFormData(prevData => ({
+                        ...prevData,
+                      shippingAddress: newAddress,
+                     billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress*/
                     />
                   </>
                 )}
