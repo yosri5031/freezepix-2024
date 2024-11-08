@@ -331,19 +331,21 @@ const FreezePIX = () => {
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
       
-      // Save the caret position to restore it after updating the field value
+      // Save the caret position and scroll position
       const caretPosition = e.target.selectionStart;
-      
+      const scrollPosition = e.target.scrollTop;
+    
       onChange({
         ...data,
         [field]: newValue
       });
     
-      // Restore the caret position after updating the field value
+      // Restore the caret position and scroll position after updating the field value
       setTimeout(() => {
         e.target.selectionStart = caretPosition;
         e.target.selectionEnd = caretPosition;
-      });
+        e.target.scrollTop = scrollPosition;
+      }, 0);
     };
   
     return (
