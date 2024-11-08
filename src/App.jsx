@@ -326,73 +326,115 @@ const FreezePIX = () => {
     );
   };
 
-  const AddressForm = ({ type, data, onChange }) => (
-    <div className="grid grid-cols-2 gap-4">
-      <input
-        type="text"
-        placeholder="First Name"
-        value={data.firstName}
-        onChange={(e) => onChange({ ...data, firstName: e.target.value })}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Last Name"
-        value={data.lastName}
-        onChange={(e) => onChange({ ...data, lastName: e.target.value })}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Address"
-        value={data.address}
-        onChange={(e) => onChange({ ...data, address: e.target.value })}
-        className="col-span-2 p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="City"
-        value={data.city}
-        onChange={(e) => onChange({ ...data, city: e.target.value })}
-        className="p-2 border rounded"
-      />
-      
-      {selectedCountry === 'USA' && (
+  const AddressForm = ({ type, data, onChange }) => {
+    // Add logging to check re-renders
+    console.log('AddressForm rendered');
+  
+    // Add ref to track input focus
+    const inputRef = useRef();
+  
+    // Add effect to check focus changes
+    useEffect(() => {
+      console.log('Focus state:', document.activeElement);
+    });
+  
+    return (
+      <div className="grid grid-cols-2 gap-4">
         <input
+          ref={inputRef}
           type="text"
-          placeholder="State"
-          value={data.state}
-          onChange={(e) => onChange({ ...data, state: e.target.value })}
+          placeholder="First Name"
+          value={data.firstName}
+          onChange={(e) => {
+            console.log('Input changed:', e.target.value);
+            onChange({ ...data, firstName: e.target.value });
+          }}
+          onBlur={() => console.log('Input lost focus')}
           className="p-2 border rounded"
         />
-      )}
-      
-      {selectedCountry === 'CAN' && (
         <input
           type="text"
-          placeholder="Province"
-          value={data.province}
-          onChange={(e) => onChange({ ...data, province: e.target.value })}
+          placeholder="Last Name"
+          value={data.lastName}
+          onChange={(e) => {
+            console.log('Input changed:', e.target.value);
+            onChange({ ...data, lastName: e.target.value });
+          }}
+          onBlur={() => console.log('Input lost focus')}
           className="p-2 border rounded"
         />
-      )}
-      
-      <input
-        type="text"
-        placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
-        value={data.postalCode}
-        onChange={(e) => onChange({ ...data, postalCode: e.target.value })}
-        className="p-2 border rounded"
-      />
-      
-      <input
-        type="text"
-        value={initialCountries.find(c => c.value === selectedCountry)?.name}
-        disabled
-        className="col-span-2 p-2 border rounded bg-gray-100"
-      />
-    </div>
-  );
+        <input
+          type="text"
+          placeholder="Address"
+          value={data.address}
+          onChange={(e) => {
+            console.log('Input changed:', e.target.value);
+            onChange({ ...data, address: e.target.value });
+          }}
+          onBlur={() => console.log('Input lost focus')}
+          className="col-span-2 p-2 border rounded"
+        />
+        <input
+          type="text"
+          placeholder="City"
+          value={data.city}
+          onChange={(e) => {
+            console.log('Input changed:', e.target.value);
+            onChange({ ...data, city: e.target.value });
+          }}
+          onBlur={() => console.log('Input lost focus')}
+          className="p-2 border rounded"
+        />
+        
+        {selectedCountry === 'USA' && (
+          <input
+            type="text"
+            placeholder="State"
+            value={data.state}
+            onChange={(e) => {
+              console.log('Input changed:', e.target.value);
+              onChange({ ...data, state: e.target.value });
+            }}
+            onBlur={() => console.log('Input lost focus')}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        {selectedCountry === 'CAN' && (
+          <input
+            type="text"
+            placeholder="Province"
+            value={data.province}
+            onChange={(e) => {
+              console.log('Input changed:', e.target.value);
+              onChange({ ...data, province: e.target.value });
+            }}
+            onBlur={() => console.log('Input lost focus')}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        <input
+          type="text"
+          placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
+          value={data.postalCode}
+          onChange={(e) => {
+            console.log('Input changed:', e.target.value);
+            onChange({ ...data, postalCode: e.target.value });
+          }}
+          onBlur={() => console.log('Input lost focus')}
+          className="p-2 border rounded"
+        />
+        
+        <input
+          type="text"
+          value={initialCountries.find(c => c.value === selectedCountry)?.name}
+          disabled
+          className="col-span-2 p-2 border rounded bg-gray-100"
+        />
+      </div>
+    );
+  };
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
