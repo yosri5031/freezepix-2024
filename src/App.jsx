@@ -343,7 +343,6 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="First Name"
           value={data.firstName || ''}
-          onChange={handleInputChange('firstName')}
           className="p-2 border rounded"
         />
         <input
