@@ -330,9 +330,19 @@ const FreezePIX = () => {
     // Handle input changes without spreading the entire data object on every keystroke
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
+      
+      // Save the caret position to restore it after updating the field value
+      const caretPosition = e.target.selectionStart;
+      
       onChange({
         ...data,
         [field]: newValue
+      });
+    
+      // Restore the caret position after updating the field value
+      setTimeout(() => {
+        e.target.selectionStart = caretPosition;
+        e.target.selectionEnd = caretPosition;
       });
     };
   
@@ -343,6 +353,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="First Name"
           value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
           className="p-2 border rounded"
         />
         <input
