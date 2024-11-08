@@ -326,61 +326,58 @@ const FreezePIX = () => {
     );
   };
 
-  const AddressForm = memo(({ type, data, onChange }) => {
-    // Local state to handle input changes
-    const [localData, setLocalData] = useState(data);
-  
-    // Update local state when parent data changes
-    useEffect(() => {
-      setLocalData(data);
-    }, [data]);
-  
-    // Handle input changes
-    const handleChange = useCallback((field, value) => {
-      setLocalData(prev => {
-        const newData = { ...prev, [field]: value };
-        onChange(newData);
-        return newData;
+  const AddressForm = ({ type, data, onChange }) => {
+    // Handle input changes without spreading the entire data object on every keystroke
+    const handleInputChange = (field) => (e) => {
+      const newValue = e.target.value;
+      onChange({
+        ...data,
+        [field]: newValue
       });
-    }, [onChange]);
+    };
   
     return (
       <div className="grid grid-cols-2 gap-4">
         <input
           type="text"
+          inputMode="text"
           placeholder="First Name"
-          value={localData.firstName}
-          onChange={(e) => handleChange('firstName', e.target.value)}
+          value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
           className="p-2 border rounded"
         />
         <input
           type="text"
+          inputMode="text"
           placeholder="Last Name"
-          value={localData.lastName}
-          onChange={(e) => handleChange('lastName', e.target.value)}
+          value={data.lastName || ''}
+          onChange={handleInputChange('lastName')}
           className="p-2 border rounded"
         />
         <input
           type="text"
+          inputMode="text"
           placeholder="Address"
-          value={localData.address}
-          onChange={(e) => handleChange('address', e.target.value)}
+          value={data.address || ''}
+          onChange={handleInputChange('address')}
           className="col-span-2 p-2 border rounded"
         />
         <input
           type="text"
+          inputMode="text"
           placeholder="City"
-          value={localData.city}
-          onChange={(e) => handleChange('city', e.target.value)}
+          value={data.city || ''}
+          onChange={handleInputChange('city')}
           className="p-2 border rounded"
         />
         
         {selectedCountry === 'USA' && (
           <input
             type="text"
+            inputMode="text"
             placeholder="State"
-            value={localData.state}
-            onChange={(e) => handleChange('state', e.target.value)}
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
             className="p-2 border rounded"
           />
         )}
@@ -388,18 +385,20 @@ const FreezePIX = () => {
         {selectedCountry === 'CAN' && (
           <input
             type="text"
+            inputMode="text"
             placeholder="Province"
-            value={localData.province}
-            onChange={(e) => handleChange('province', e.target.value)}
+            value={data.province || ''}
+            onChange={handleInputChange('province')}
             className="p-2 border rounded"
           />
         )}
         
         <input
           type="text"
+          inputMode="numeric"
           placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
-          value={localData.postalCode}
-          onChange={(e) => handleChange('postalCode', e.target.value)}
+          value={data.postalCode || ''}
+          onChange={handleInputChange('postalCode')}
           className="p-2 border rounded"
         />
         
@@ -411,7 +410,22 @@ const FreezePIX = () => {
         />
       </div>
     );
-  });
+  };
+  
+  // In your parent component, modify the onChange handlers:
+  const handleShippingAddressChange = (newAddress) => {
+    setFormData(prev => ({
+      ...prev,
+      shippingAddress: newAddress
+    }));
+  };
+  
+  const handleBillingAddressChange = (newAddress) => {
+    setFormData(prev => ({
+      ...prev,
+      billingAddress: newAddress
+    }));
+  };
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
