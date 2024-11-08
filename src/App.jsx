@@ -355,7 +355,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="First Name"
           value={data.firstName || ''}
-          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+          onChange={handleInputChange('firstName')}
           className="p-2 border rounded"
         />
         <input
@@ -363,7 +363,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="Last Name"
           value={data.lastName || ''}
-          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+          onChange={handleInputChange('lastName')}
           className="p-2 border rounded"
         />
         <input
@@ -371,7 +371,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="Address"
           value={data.address || ''}
-          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+          onChange={handleInputChange('address')}
           className="col-span-2 p-2 border rounded"
         />
         <input
@@ -379,7 +379,7 @@ const FreezePIX = () => {
           inputMode="text"
           placeholder="City"
           value={data.city || ''}
-          onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+          onChange={handleInputChange('city')}
           className="p-2 border rounded"
         />
         
@@ -389,7 +389,7 @@ const FreezePIX = () => {
             inputMode="text"
             placeholder="State"
             value={data.state || ''}
-            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+            onChange={handleInputChange('state')}
             className="p-2 border rounded"
           />
         )}
@@ -400,7 +400,7 @@ const FreezePIX = () => {
             inputMode="text"
             placeholder="Province"
             value={data.province || ''}
-            onChange={(e) => setFormData({ ...formData, province: e.target.value })}
+            onChange={handleInputChange('province')}
             className="p-2 border rounded"
           />
         )}
@@ -410,7 +410,7 @@ const FreezePIX = () => {
           inputMode="numeric"
           placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
           value={data.postalCode || ''}
-          onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+          onChange={handleInputChange('postalCode')}
           className="p-2 border rounded"
         />
         
