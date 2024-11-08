@@ -326,73 +326,92 @@ const FreezePIX = () => {
     );
   };
 
-  const AddressForm = ({ type, data, onChange }) => (
-    <div className="grid grid-cols-2 gap-4">
-      <input
-        type="text"
-        placeholder="First Name"
-        value={data.firstName}
-        onChange={(e) => onChange({ ...data, firstName: e.target.value })}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Last Name"
-        value={data.lastName}
-        onChange={(e) => onChange({ ...data, lastName: e.target.value })}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="Address"
-        value={data.address}
-        onChange={(e) => onChange({ ...data, address: e.target.value })}
-        className="col-span-2 p-2 border rounded"
-      />
-      <input
-        type="text"
-        placeholder="City"
-        value={data.city}
-        onChange={(e) => onChange({ ...data, city: e.target.value })}
-        className="p-2 border rounded"
-      />
-      
-      {selectedCountry === 'USA' && (
+  const AddressForm = memo(({ type, data, onChange }) => {
+    // Local state to handle input changes
+    const [localData, setLocalData] = useState(data);
+  
+    // Update local state when parent data changes
+    useEffect(() => {
+      setLocalData(data);
+    }, [data]);
+  
+    // Handle input changes
+    const handleChange = useCallback((field, value) => {
+      setLocalData(prev => {
+        const newData = { ...prev, [field]: value };
+        onChange(newData);
+        return newData;
+      });
+    }, [onChange]);
+  
+    return (
+      <div className="grid grid-cols-2 gap-4">
         <input
           type="text"
-          placeholder="State"
-          value={data.state}
-          onChange={(e) => onChange({ ...data, state: e.target.value })}
+          placeholder="First Name"
+          value={localData.firstName}
+          onChange={(e) => handleChange('firstName', e.target.value)}
           className="p-2 border rounded"
         />
-      )}
-      
-      {selectedCountry === 'CAN' && (
         <input
           type="text"
-          placeholder="Province"
-          value={data.province}
-          onChange={(e) => onChange({ ...data, province: e.target.value })}
+          placeholder="Last Name"
+          value={localData.lastName}
+          onChange={(e) => handleChange('lastName', e.target.value)}
           className="p-2 border rounded"
         />
-      )}
-      
-      <input
-        type="text"
-        placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
-        value={data.postalCode}
-        onChange={(e) => onChange({ ...data, postalCode: e.target.value })}
-        className="p-2 border rounded"
-      />
-      
-      <input
-        type="text"
-        value={initialCountries.find(c => c.value === selectedCountry)?.name}
-        disabled
-        className="col-span-2 p-2 border rounded bg-gray-100"
-      />
-    </div>
-  );
+        <input
+          type="text"
+          placeholder="Address"
+          value={localData.address}
+          onChange={(e) => handleChange('address', e.target.value)}
+          className="col-span-2 p-2 border rounded"
+        />
+        <input
+          type="text"
+          placeholder="City"
+          value={localData.city}
+          onChange={(e) => handleChange('city', e.target.value)}
+          className="p-2 border rounded"
+        />
+        
+        {selectedCountry === 'USA' && (
+          <input
+            type="text"
+            placeholder="State"
+            value={localData.state}
+            onChange={(e) => handleChange('state', e.target.value)}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        {selectedCountry === 'CAN' && (
+          <input
+            type="text"
+            placeholder="Province"
+            value={localData.province}
+            onChange={(e) => handleChange('province', e.target.value)}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        <input
+          type="text"
+          placeholder={selectedCountry === 'USA' ? "ZIP Code" : "Postal Code"}
+          value={localData.postalCode}
+          onChange={(e) => handleChange('postalCode', e.target.value)}
+          className="p-2 border rounded"
+        />
+        
+        <input
+          type="text"
+          value={initialCountries.find(c => c.value === selectedCountry)?.name}
+          disabled
+          className="col-span-2 p-2 border rounded bg-gray-100"
+        />
+      </div>
+    );
+  });
 
   const handleFileChange = (event) => {
     const files = Array.from(event.target.files);
