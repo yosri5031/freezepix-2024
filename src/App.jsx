@@ -234,18 +234,18 @@ const FreezePIX = () => {
           <h3 className="font-medium mb-3">Discount Code</h3>
           <div className="space-y-2">
             <input
-              type="text"
-              placeholder="Enter discount code"
-              value={discountCode}
-              onChange={(e) => handleDiscountCode(e.target.value)}
-              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-            />
+  type="text"
+  placeholder="Enter discount code"
+  value={discountCode}
+  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
+  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+/>
             {discountError && (
               <p className="text-red-500 text-sm">{discountError}</p>
             )}
           </div>
         </div>
-        
+
         {/* Order Summary */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Order Summary</h3>
