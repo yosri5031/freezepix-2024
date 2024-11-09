@@ -671,12 +671,7 @@ const FreezePIX = () => {
                     Your order will be processed as Cash on Delivery (COD)
                   </p>
                 </div>
-                <button
-                  onClick={() => setOrderSuccess(true)}
-                  className="w-full py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 font-medium"
-                >
-                  Place Order
-                </button>
+                
               </div>
             ) : (
               // For other countries: Display Stripe payment form
