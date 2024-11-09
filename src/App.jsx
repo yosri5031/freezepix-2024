@@ -11,78 +11,86 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49 },
+    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystalRectangle: 100, crystalHeart: 100 },
+    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystalRectangle: 100, crystalHeart: 100 },
     { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
 ];
 
-const PaymentForm = ({ onPaymentSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    
-    if (!stripe || !elements) {
-      return;
-    }
-
-    const { error, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: elements.getElement(CardElement),
-    });
-
-    if (error) {
-      console.log('[error]', error);
-    } else {
-      console.log('[PaymentMethod]', paymentMethod);
-      onPaymentSuccess();
-    }
-  };
-
+// Product Category Selection Component
+const ProductCategorySelection = ({ onSelect }) => {
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded">
-        <CardElement />
-      </div>
+    <div className="grid grid-cols-2 gap-4">
       <button 
-        type="submit" 
-        disabled={!stripe}
-        className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+        onClick={() => onSelect('photos')}
+        className="p-6 border rounded-lg hover:bg-gray-50 text-center"
       >
-        Pay Now
+        <img src="https://i.imgur.com/DEXREVR.png" alt="Photo Print" className="w-24 h-24 mx-auto mb-4" />
+        <div className="font-medium">Photo Prints</div>
       </button>
-    </form>
+      <button 
+        onClick={() => onSelect('crystal')}
+        className="p-6 border rounded-lg hover:bg-gray-50 text-center"
+      >
+        <img src="https://i.imgur.com/YyD0Fp1.png" alt="3D Crystal" className="w-24 h-24 mx-auto mb-4" />
+        <div className="font-medium">3D Crystal</div>
+      </button>
+    </div>
   );
 };
 
+// Crystal Product Selection Component
+const CrystalProductSelection = ({ onSelect }) => {
+  const products = [
+    {
+      id: 'rectangle',
+      name: 'Rectangle Personalized Freezepix',
+      image: 'https://i.imgur.com/BK69Ry3.png',
+      description: `Each freezepix is custom-made with your chosen photo, making it a truly personalized keepsake that holds immense sentimental value...`,
+      specs: 'Rectangle: 3 x 3.5 x 3 inches'
+    },
+    {
+      id: 'heart',
+      name: 'Heart Personalized Freezepix',
+      image: 'https://i.imgur.com/C8q347r.png',
+      description: `Each freezepix is custom-made with your chosen photo, making it a truly personalized keepsake that holds immense sentimental value...`,
+      specs: 'Heart: 4 x 3.5 x 2.5 inches'
+    }
+  ];
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {products.map(product => (
+        <div key={product.id} className="border rounded-lg p-4">
+          <img src={product.image} alt={product.name} className="w-full h-48 object-contain mb-4" />
+          <h3 className="text-lg font-medium mb-2">{product.name}</h3>
+          <p className="text-sm text-gray-600 mb-4">{product.description}</p>
+          <p className="text-sm font-medium mb-4">{product.specs}</p>
+          <button
+            onClick={() => onSelect(product.id)}
+            className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+          >
+            Select This Design
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// Modified AddressForm Component
 const AddressForm = ({ type, data, onChange }) => {
-  // Handle input changes without spreading the entire data object on every keystroke
   const handleInputChange = (field) => (e) => {
     const newValue = e.target.value;
-    
-    // Save the caret position and scroll position
-    const caretPosition = e.target.selectionStart;
-    const scrollPosition = e.target.scrollTop;
-  
     onChange({
       ...data,
       [field]: newValue
     });
-  
-    // Restore the caret position and scroll position after updating the field value
-    setTimeout(() => {
-      e.target.selectionStart = caretPosition;
-      e.target.selectionEnd = caretPosition;
-      e.target.scrollTop = scrollPosition;
-    }, 0);
   };
 
   return (
     <div className="grid grid-cols-2 gap-4">
       <input
         type="text"
-        inputMode="text"
         placeholder="First Name"
         value={data.firstName || ''}
         onChange={handleInputChange('firstName')}
@@ -90,7 +98,6 @@ const AddressForm = ({ type, data, onChange }) => {
       />
       <input
         type="text"
-        inputMode="text"
         placeholder="Last Name"
         value={data.lastName || ''}
         onChange={handleInputChange('lastName')}
@@ -98,7 +105,6 @@ const AddressForm = ({ type, data, onChange }) => {
       />
       <input
         type="text"
-        inputMode="text"
         placeholder="Address"
         value={data.address || ''}
         onChange={handleInputChange('address')}
@@ -106,7 +112,6 @@ const AddressForm = ({ type, data, onChange }) => {
       />
       <input
         type="text"
-        inputMode="text"
         placeholder="City"
         value={data.city || ''}
         onChange={handleInputChange('city')}
@@ -116,7 +121,6 @@ const AddressForm = ({ type, data, onChange }) => {
       {data.country === 'USA' && (
         <input
           type="text"
-          inputMode="text"
           placeholder="State"
           value={data.state || ''}
           onChange={handleInputChange('state')}
@@ -127,7 +131,6 @@ const AddressForm = ({ type, data, onChange }) => {
       {data.country === 'CAN' && (
         <input
           type="text"
-          inputMode="text"
           placeholder="Province"
           value={data.province || ''}
           onChange={handleInputChange('province')}
@@ -137,16 +140,16 @@ const AddressForm = ({ type, data, onChange }) => {
       
       <input
         type="text"
-        inputMode="numeric"
         placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
         value={data.postalCode || ''}
         onChange={handleInputChange('postalCode')}
+        pattern="[A-Za-z0-9\s-]*"
         className="p-2 border rounded"
       />
       
       <input
         type="text"
-        value={initialCountries.find(c => c.value === data.country)?.name}
+        value={initialCountries.find(c => c.value === data.country)?.name || ''}
         disabled
         className="col-span-2 p-2 border rounded bg-gray-100"
       />
@@ -154,145 +157,205 @@ const AddressForm = ({ type, data, onChange }) => {
   );
 };
 
-const FreezePIX = () => {
-  const [showIntro, setShowIntro] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedPhotos, setSelectedPhotos] = useState([]);
-  const [activeStep, setActiveStep] = useState(0);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
-  const fileInputRef = useRef(null);
-
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountError, setDiscountError] = useState('');
-  const [orderNote, setOrderNote] = useState('');
-  const [showPolicyPopup, setShowPolicyPopup] = useState(false);
-
-  const [formData, setFormData] = useState({
-    email: '',
-    phone: '',
-    shippingAddress: {
-      firstName: '',
-      lastName: '',
-      address: '',
-      city: '',
-      postalCode: '',
-      country: selectedCountry,
-      province: '',
-      state: '',
-    },
-    billingAddress: {
-      firstName: '',
-      lastName: '',
-      address: '',
-      city: '',
-      postalCode: '',
-      country: selectedCountry,
-      province: '',
-      state: '',
-    },
-    paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
-  });
-
-  const validateDiscountCode = (code) => {
-    const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-    const validCodes = ['B2B', 'MOHAMED'];
-    const upperCode = code.toUpperCase();
-    
-    if (code && !validCodes.includes(upperCode)) {
-      setDiscountError('Invalid discount code');
-      return false;
-    } else if (totalItems < 10) {
-      setDiscountError('Minimum 10 items required for discount');
-      return false;
-    } else {
-      setDiscountError('');
-      return true;
-    }
-  };
-
-  const handleDiscountCode = (value) => {
-    setDiscountCode(value);
-    if (value) {
-      validateDiscountCode(value);
-    } else {
-      setDiscountError('');
-    }
-  };
-
-  const handleBack = () => {
-    if (activeStep === 0) {
-      setShowIntro(true);
-    } else {
-      setActiveStep(prev => prev - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (activeStep === 2) {
-      if (selectedCountry === 'TUN') {
-        setOrderSuccess(true);
+const PaymentForm = ({ onPaymentSuccess }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+  
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+      
+      if (!stripe || !elements) {
+        return;
       }
-    } else {
-      setActiveStep(prev => prev + 1);
-    }
+  
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement),
+      });
+  
+      if (error) {
+        console.log('[error]', error);
+      } else {
+        console.log('[PaymentMethod]', paymentMethod);
+        onPaymentSuccess();
+      }
+    };
+  
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 border rounded">
+          <CardElement />
+        </div>
+        <button 
+          type="submit" 
+          disabled={!stripe}
+          className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+        >
+          Pay Now
+        </button>
+      </form>
+    );
   };
 
-  const calculateTotals = () => {
-    const country = initialCountries.find(c => c.value === selectedCountry);
-    
+  const FreezePIX = () => {
+    const [showIntro, setShowIntro] = useState(true);
+    const [selectedCountry, setSelectedCountry] = useState('');
+    const [selectedPhotos, setSelectedPhotos] = useState([]);
+    const [activeStep, setActiveStep] = useState(0);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
+    const fileInputRef = useRef(null);
+  
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountError, setDiscountError] = useState('');
+    const [orderNote, setOrderNote] = useState('');
+    const [showPolicyPopup, setShowPolicyPopup] = useState(false);
+  
+    const [formData, setFormData] = useState({
+      email: '',
+      phone: '',
+      shippingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: selectedCountry,
+        province: '',
+        state: '',
+      },
+      billingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: selectedCountry,
+        province: '',
+        state: '',
+      },
+      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+    });
+  
+    const validateDiscountCode = (code) => {
+      const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
+      const validCodes = ['B2B', 'MOHAMED'];
+      const upperCode = code.toUpperCase();
+      
+      if (code && !validCodes.includes(upperCode)) {
+        setDiscountError('Invalid discount code');
+        return false;
+      } else if (totalItems < 10) {
+        setDiscountError('Minimum 10 items required for discount');
+        return false;
+      } else {
+        setDiscountError('');
+        return true;
+      }
+    };
+  
+    const handleDiscountCode = (value) => {
+      setDiscountCode(value);
+      if (value) {
+        validateDiscountCode(value);
+      } else {
+        setDiscountError('');
+      }
+    };
+  
+    const handleBack = () => {
+      if (activeStep === 0) {
+        setShowIntro(true);
+      } else {
+        setActiveStep(prev => prev - 1);
+      }
+    };
+  
+    const handleNext = () => {
+      if (activeStep === 2) {
+        if (selectedCountry === 'TUN') {
+          setOrderSuccess(true);
+        }
+      } else {
+        setActiveStep(prev => prev + 1);
+      }
+    };
+
+// Modified calculateTotals function
+const calculateTotals = (selectedPhotos, selectedCrystal, selectedCountry, discountCode) => {
+  const country = initialCountries.find(c => c.value === selectedCountry);
+  
+  let subtotal = 0;
+  let itemizedList = [];
+
+  if (selectedCrystal) {
+    // Crystal product pricing
+    const price = selectedCrystal === 'rectangle' ? country.crystalRectangle : country.crystalHeart;
+    subtotal = price;
+    itemizedList.push({
+      name: `${selectedCrystal === 'rectangle' ? 'Rectangle' : 'Heart'} Crystal`,
+      quantity: 1,
+      price: price,
+      total: price
+    });
+  } else {
+    // Photo prints pricing
     const photosBySize = {
       '4x6': selectedPhotos.filter(p => p.size === '4x6'),
       '5x7': selectedPhotos.filter(p => p.size === '5x7'),
       '10x15': selectedPhotos.filter(p => p.size === '10x15'),
       '15x22': selectedPhotos.filter(p => p.size === '15x22')
     };
+
+    Object.entries(photosBySize).forEach(([size, photos]) => {
+      const quantity = photos.reduce((sum, photo) => sum + photo.quantity, 0);
+      if (quantity > 0) {
+        const price = country[`size${size.replace('x', '')}`];
+        const total = quantity * price;
+        subtotal += total;
+        itemizedList.push({
+          name: `${size} Photos`,
+          quantity,
+          price,
+          total
+        });
+      }
+    });
+  }
+
+  const shippingFee = selectedCountry === 'TUN' ? 8 : 9;
+  let discount = 0;
   
-    const quantities = {
-      '4x6': photosBySize['4x6'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '5x7': photosBySize['5x7'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '10x15': photosBySize['10x15'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '15x22': photosBySize['15x22'].reduce((sum, photo) => sum + photo.quantity, 0)
-    };
-  
-    const subtotalsBySize = {
-      '4x6': quantities['4x6'] * (country?.size4x6 || 0),
-      '5x7': quantities['5x7'] * (country?.size5x7 || 0),
-      '10x15': quantities['10x15'] * (country?.size10x15 || 0),
-      '15x22': quantities['15x22'] * (country?.size15x22 || 0)
-    };
-  
-    let subtotal = Object.values(subtotalsBySize).reduce((sum, value) => sum + value, 0);
-    const shippingFee = selectedCountry === 'TUN' ? 8 : 9;
-    
+  if ((discountCode === 'B2B' || discountCode === 'MOHAMED') && !selectedCrystal) {
     const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-    let discount = 0;
-    
-    if ((discountCode === 'B2B' || discountCode === 'MOHAMED') && totalItems >= 10) {
-      discount = subtotal * 0.3; // 30% discount
+    if (totalItems >= 10) {
+      discount = subtotal * 0.3;
       subtotal -= discount;
     }
-  
-    const total = subtotal + shippingFee;
-  
-    return { 
-      subtotalsBySize, 
-      subtotal, 
-      shippingFee, 
-      total,
-      quantities,
-      discount
-    };
-  };
+  }
 
-  const renderInvoice = () => {
-    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount } = calculateTotals();
+  const total = subtotal + shippingFee;
+
+  return {
+    itemizedList,
+    subtotal,
+    shippingFee,
+    discount,
+    total
+  };
+};
+
+const renderInvoice = () => {
+    const { itemizedList, subtotal, shippingFee, total, discount } = calculateTotals(
+      selectedPhotos,
+      selectedCrystal,
+      selectedCountry,
+      discountCode
+    );
     const country = initialCountries.find(c => c.value === selectedCountry);
-    
+  
     return (
       <div className="space-y-6">
-        
-  
         {/* Contact Information */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Contact Information</h3>
@@ -327,61 +390,36 @@ const FreezePIX = () => {
             </div>
           </div>
         )}
-   {/* Discount Code Section */}
-   <div className="border rounded-lg p-4">
+  
+        {/* Discount Code Section */}
+        <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Discount Code</h3>
           <div className="space-y-2">
             <input
-  type="text"
-  placeholder="Enter discount code"
-  value={discountCode}
-  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
-  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-/>
+              type="text"
+              placeholder="Enter discount code"
+              value={discountCode}
+              onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+            />
             {discountError && (
               <p className="text-red-500 text-sm">{discountError}</p>
             )}
           </div>
         </div>
-
+  
         {/* Order Summary */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Order Summary</h3>
           
-          {/* Tunisia Photo Sizes */}
-          {selectedCountry === 'TUN' ? (
-            <>
-              {quantities['10x15'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-              {quantities['15x22'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            /* US/Canada Photo Sizes */
-            <>
-              {quantities['4x6'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-              {quantities['5x7'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-            </>
-          )}
-          
+          {/* Itemized List */}
+          {itemizedList.map((item, index) => (
+            <div key={index} className="flex justify-between py-2">
+              <span>{item.name} ({item.quantity} × {item.price.toFixed(2)} {country?.currency})</span>
+              <span>{item.total.toFixed(2)} {country?.currency}</span>
+            </div>
+          ))}
+  
           {/* Subtotal */}
           <div className="flex justify-between py-2 border-t">
             <span>Subtotal</span>
@@ -393,7 +431,7 @@ const FreezePIX = () => {
             <span>Shipping Fee</span>
             <span>{shippingFee.toFixed(2)} {country?.currency}</span>
           </div>
-          
+  
           {/* Discount (if applicable) */}
           {discount > 0 && (
             <div className="flex justify-between py-2 text-green-600">
@@ -401,7 +439,7 @@ const FreezePIX = () => {
               <span>-{discount.toFixed(2)} {country?.currency}</span>
             </div>
           )}
-          
+  
           {/* Total */}
           <div className="flex justify-between py-2 border-t font-bold">
             <span>Total</span>
@@ -423,9 +461,7 @@ const FreezePIX = () => {
       </div>
     );
   };
-
-  
-  
+   
   const handleShippingAddressChange = (field, value) => {
     setFormData((prevData) => ({
       ...prevData,
