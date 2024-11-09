@@ -153,6 +153,18 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     );
   };
 const FreezePIX = () => {
+    const [showIntro, setShowIntro] = useState(true);
+    const [selectedCountry, setSelectedCountry] = useState('');
+    const [selectedPhotos, setSelectedPhotos] = useState([]);
+    const [activeStep, setActiveStep] = useState(0);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
+    const fileInputRef = useRef(null);
+  
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountError, setDiscountError] = useState('');
+    const [orderNote, setOrderNote] = useState('');
+    const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
