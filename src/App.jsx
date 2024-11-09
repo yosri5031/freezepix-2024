@@ -1,3 +1,4 @@
+import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -11,255 +12,278 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49 },
+    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
+    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
     { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
 ];
 
+// ... (Keep existing PaymentForm and AddressForm components) ...
 const PaymentForm = ({ onPaymentSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-    
-    if (!stripe || !elements) {
-      return;
-    }
-
-    const { error, paymentMethod } = await stripe.createPaymentMethod({
-      type: 'card',
-      card: elements.getElement(CardElement),
-    });
-
-    if (error) {
-      console.log('[error]', error);
-    } else {
-      console.log('[PaymentMethod]', paymentMethod);
-      onPaymentSuccess();
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded">
-        <CardElement />
-      </div>
-      <button 
-        type="submit" 
-        disabled={!stripe}
-        className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-      >
-        Pay Now
-      </button>
-    </form>
-  );
-};
-
-// 1. Fix for country visibility in AddressForm component
-const AddressForm = ({ type, data, onChange }) => {
-  const handleInputChange = (field) => (e) => {
-    const newValue = e.target.value;
-    const caretPosition = e.target.selectionStart;
-    const scrollPosition = e.target.scrollTop;
+    const stripe = useStripe();
+    const elements = useElements();
   
-    onChange({
-      ...data,
-      [field]: newValue
-    });
-  
-    setTimeout(() => {
-      e.target.selectionStart = caretPosition;
-      e.target.selectionEnd = caretPosition;
-      e.target.scrollTop = scrollPosition;
-    }, 0);
-  };
-
-  return (
-    <div className="grid grid-cols-2 gap-4">
-      <input
-        type="text"
-        inputMode="text"
-        placeholder="First Name"
-        value={data.firstName || ''}
-        onChange={handleInputChange('firstName')}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder="Last Name"
-        value={data.lastName || ''}
-        onChange={handleInputChange('lastName')}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder="Address"
-        value={data.address || ''}
-        onChange={handleInputChange('address')}
-        className="col-span-2 p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder="City"
-        value={data.city || ''}
-        onChange={handleInputChange('city')}
-        className="p-2 border rounded"
-      />
+    const handleSubmit = async (event) => {
+      event.preventDefault();
       
-      {/* Fix for state/province visibility */}
-      {data.country === 'USA' && (
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="State"
-          value={data.state || ''}
-          onChange={handleInputChange('state')}
-          className="p-2 border rounded"
-        />
-      )}
-      
-      {data.country === 'CAN' && (
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="Province"
-          value={data.province || ''}
-          onChange={handleInputChange('province')}
-          className="p-2 border rounded"
-        />
-      )}
-      
-      {/* Fix for postal code input */}
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
-        value={data.postalCode || ''}
-        onChange={handleInputChange('postalCode')}
-        className="p-2 border rounded"
-      />
-      
-      {/* Fix for country visibility */}
-      <div className="col-span-2 p-2 border rounded bg-gray-100">
-        {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
-      </div>
-    </div>
-  );
-};
-
-const FreezePIX = () => {
-  const [showIntro, setShowIntro] = useState(true);
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedPhotos, setSelectedPhotos] = useState([]);
-  const [activeStep, setActiveStep] = useState(0);
-  const [orderSuccess, setOrderSuccess] = useState(false);
-  const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
-  const fileInputRef = useRef(null);
-
-  const [discountCode, setDiscountCode] = useState('');
-  const [discountError, setDiscountError] = useState('');
-  const [orderNote, setOrderNote] = useState('');
-  const [showPolicyPopup, setShowPolicyPopup] = useState(false);
-
-  const [formData, setFormData] = useState({
-    email: '',
-    phone: '',
-    shippingAddress: {
-      firstName: '',
-      lastName: '',
-      address: '',
-      city: '',
-      postalCode: '',
-      country: selectedCountry, // Initialize with selected country
-      province: '',
-      state: '',
-    },
-    billingAddress: {
-      firstName: '',
-      lastName: '',
-      address: '',
-      city: '',
-      postalCode: '',
-      country: selectedCountry, // Initialize with selected country
-      province: '',
-      state: '',
-    },
-    paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
-  });
-  
-
-  const validateDiscountCode = (code) => {
-    const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-    const validCodes = ['B2B', 'MOHAMED'];
-    const upperCode = code.toUpperCase();
-    
-    if (code && !validCodes.includes(upperCode)) {
-      setDiscountError('Invalid discount code');
-      return false;
-    } else if (totalItems < 10) {
-      setDiscountError('Minimum 10 items required for discount');
-      return false;
-    } else {
-      setDiscountError('');
-      return true;
-    }
-  };
-
-  const handleDiscountCode = (value) => {
-    setDiscountCode(value);
-    if (value) {
-      validateDiscountCode(value);
-    } else {
-      setDiscountError('');
-    }
-  };
-
-  const handleBack = () => {
-    if (activeStep === 0) {
-      setShowIntro(true);
-    } else {
-      setActiveStep(prev => prev - 1);
-    }
-  };
-
-  const handleNext = () => {
-    if (activeStep === 2) {
-      if (selectedCountry === 'TUN') {
-        setOrderSuccess(true);
+      if (!stripe || !elements) {
+        return;
       }
-    } else {
-      setActiveStep(prev => prev + 1);
-    }
+  
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement),
+      });
+  
+      if (error) {
+        console.log('[error]', error);
+      } else {
+        console.log('[PaymentMethod]', paymentMethod);
+        onPaymentSuccess();
+      }
+    };
+  
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 border rounded">
+          <CardElement />
+        </div>
+        <button 
+          type="submit" 
+          disabled={!stripe}
+          className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+        >
+          Pay Now
+        </button>
+      </form>
+    );
+  };
+  
+  // 1. Fix for country visibility in AddressForm component
+  const AddressForm = ({ type, data, onChange }) => {
+    const handleInputChange = (field) => (e) => {
+      const newValue = e.target.value;
+      const caretPosition = e.target.selectionStart;
+      const scrollPosition = e.target.scrollTop;
+    
+      onChange({
+        ...data,
+        [field]: newValue
+      });
+    
+      setTimeout(() => {
+        e.target.selectionStart = caretPosition;
+        e.target.selectionEnd = caretPosition;
+        e.target.scrollTop = scrollPosition;
+      }, 0);
+    };
+  
+    return (
+      <div className="grid grid-cols-2 gap-4">
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="First Name"
+          value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
+          className="p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="Last Name"
+          value={data.lastName || ''}
+          onChange={handleInputChange('lastName')}
+          className="p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="Address"
+          value={data.address || ''}
+          onChange={handleInputChange('address')}
+          className="col-span-2 p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="City"
+          value={data.city || ''}
+          onChange={handleInputChange('city')}
+          className="p-2 border rounded"
+        />
+        
+        {/* Fix for state/province visibility */}
+        {data.country === 'USA' && (
+          <input
+            type="text"
+            inputMode="text"
+            placeholder="State"
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        {data.country === 'CAN' && (
+          <input
+            type="text"
+            inputMode="text"
+            placeholder="Province"
+            value={data.province || ''}
+            onChange={handleInputChange('province')}
+            className="p-2 border rounded"
+          />
+        )}
+        
+        {/* Fix for postal code input */}
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
+          value={data.postalCode || ''}
+          onChange={handleInputChange('postalCode')}
+          className="p-2 border rounded"
+        />
+        
+        {/* Fix for country visibility */}
+        <div className="col-span-2 p-2 border rounded bg-gray-100">
+          {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
+        </div>
+      </div>
+    );
+  };
+const FreezePIX = () => {
+    const [formData, setFormData] = useState({
+        email: '',
+        phone: '',
+        shippingAddress: {
+          firstName: '',
+          lastName: '',
+          address: '',
+          city: '',
+          postalCode: '',
+          country: selectedCountry, // Initialize with selected country
+          province: '',
+          state: '',
+        },
+        billingAddress: {
+          firstName: '',
+          lastName: '',
+          address: '',
+          city: '',
+          postalCode: '',
+          country: selectedCountry, // Initialize with selected country
+          province: '',
+          state: '',
+        },
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+      });
+      
+    
+      const validateDiscountCode = (code) => {
+        const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
+        const validCodes = ['B2B', 'MOHAMED'];
+        const upperCode = code.toUpperCase();
+        
+        if (code && !validCodes.includes(upperCode)) {
+          setDiscountError('Invalid discount code');
+          return false;
+        } else if (totalItems < 10) {
+          setDiscountError('Minimum 10 items required for discount');
+          return false;
+        } else {
+          setDiscountError('');
+          return true;
+        }
+      };
+    
+      const handleDiscountCode = (value) => {
+        setDiscountCode(value);
+        if (value) {
+          validateDiscountCode(value);
+        } else {
+          setDiscountError('');
+        }
+      };
+    
+      const handleBack = () => {
+        if (activeStep === 0) {
+          setShowIntro(true);
+        } else {
+          setActiveStep(prev => prev - 1);
+        }
+      };
+    
+      const handleNext = () => {
+        if (activeStep === 2) {
+          if (selectedCountry === 'TUN') {
+            setOrderSuccess(true);
+          }
+        } else {
+          setActiveStep(prev => prev + 1);
+        }
+      };
+  
+  const handleFileChange = (event) => {
+    const files = Array.from(event.target.files);
+    const newPhotos = files.map(file => ({
+      id: Math.random().toString(36).substr(2, 9),
+      file,
+      preview: URL.createObjectURL(file),
+      productType: 'photo_print', // Default to photo print
+      size: selectedCountry === 'TUN' ? '10x15' : '4x6',
+      crystalShape: null, // For 3D crystal option
+      quantity: 1
+    }));
+    setSelectedPhotos([...selectedPhotos, ...newPhotos]);
+  };
+
+  const updateProductType = (photoId, newType) => {
+    setSelectedPhotos(selectedPhotos.map(photo =>
+      photo.id === photoId ? {
+        ...photo,
+        productType: newType,
+        size: newType === 'photo_print' ? (selectedCountry === 'TUN' ? '10x15' : '4x6') : null,
+        crystalShape: newType === '3d_crystal' ? 'rectangle' : null
+      } : photo
+    ));
+  };
+
+  const updateCrystalShape = (photoId, newShape) => {
+    setSelectedPhotos(selectedPhotos.map(photo =>
+      photo.id === photoId ? { ...photo, crystalShape: newShape } : photo
+    ));
   };
 
   const calculateTotals = () => {
     const country = initialCountries.find(c => c.value === selectedCountry);
     
+    // Calculate photo print totals
     const photosBySize = {
-      '4x6': selectedPhotos.filter(p => p.size === '4x6'),
-      '5x7': selectedPhotos.filter(p => p.size === '5x7'),
-      '10x15': selectedPhotos.filter(p => p.size === '10x15'),
-      '15x22': selectedPhotos.filter(p => p.size === '15x22')
+      '4x6': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '4x6'),
+      '5x7': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '5x7'),
+      '10x15': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '10x15'),
+      '15x22': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '15x22')
     };
-  
+
     const quantities = {
       '4x6': photosBySize['4x6'].reduce((sum, photo) => sum + photo.quantity, 0),
       '5x7': photosBySize['5x7'].reduce((sum, photo) => sum + photo.quantity, 0),
       '10x15': photosBySize['10x15'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '15x22': photosBySize['15x22'].reduce((sum, photo) => sum + photo.quantity, 0)
+      '15x22': photosBySize['15x22'].reduce((sum, photo) => sum + photo.quantity, 0),
+      'crystal3d': selectedPhotos
+        .filter(p => p.productType === '3d_crystal')
+        .reduce((sum, photo) => sum + photo.quantity, 0)
     };
-  
+
     const subtotalsBySize = {
       '4x6': quantities['4x6'] * (country?.size4x6 || 0),
       '5x7': quantities['5x7'] * (country?.size5x7 || 0),
       '10x15': quantities['10x15'] * (country?.size10x15 || 0),
-      '15x22': quantities['15x22'] * (country?.size15x22 || 0)
+      '15x22': quantities['15x22'] * (country?.size15x22 || 0),
+      'crystal3d': quantities['crystal3d'] * (country?.crystal3d || 0)
     };
-  
+
     let subtotal = Object.values(subtotalsBySize).reduce((sum, value) => sum + value, 0);
     const shippingFee = selectedCountry === 'TUN' ? 8 : 9;
     
@@ -267,12 +291,12 @@ const FreezePIX = () => {
     let discount = 0;
     
     if ((discountCode === 'B2B' || discountCode === 'MOHAMED') && totalItems >= 10) {
-      discount = subtotal * 0.3; // 30% discount
+      discount = subtotal * 0.3;
       subtotal -= discount;
     }
-  
+
     const total = subtotal + shippingFee;
-  
+
     return { 
       subtotalsBySize, 
       subtotal, 
@@ -281,6 +305,216 @@ const FreezePIX = () => {
       quantities,
       discount
     };
+  };
+
+  const renderStepContent = () => {
+    switch (activeStep) {
+      case 0:
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-medium">Select Photos</h2>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              >
+                <Upload size={20} />
+                Add Photos
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                multiple
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+  
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {selectedPhotos.map(photo => (
+                <div key={photo.id} className="relative border rounded-lg p-2">
+                  <img
+                    src={photo.preview}
+                    alt="preview"
+                    className="w-full h-40 object-cover rounded"
+                  />
+                  <button
+                    onClick={() => removePhoto(photo.id)}
+                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+                  >
+                    <X size={16} />
+                  </button>
+                  <div className="mt-2 space-y-2">
+                    {/* Product Type Selection for US/Canada */}
+                    {(['USA', 'CAN'].includes(selectedCountry)) && (
+                      <select
+                        value={photo.productType}
+                        onChange={(e) => updateProductType(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        <option value="photo_print">Photo Print</option>
+                        <option value="3d_crystal">3D Crystal</option>
+                      </select>
+                    )}
+
+                    {/* Size selection for photo prints */}
+                    {photo.productType === 'photo_print' && (
+                      <select
+                        value={photo.size}
+                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        {selectedCountry === 'TUN' ? (
+                          <>
+                            <option value="10x15">10x15 cm</option>
+                            <option value="15x22">15x22 cm</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="4x6">4x6"</option>
+                            <option value="5x7">5x7"</option>
+                          </>
+                        )}
+                      </select>
+                    )}
+
+                    {/* Crystal shape selection for 3D crystal */}
+                    {photo.productType === '3d_crystal' && (
+                      <select
+                        value={photo.crystalShape}
+                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        <option value="rectangle">Rectangle</option>
+                        <option value="heart">Heart</option>
+                      </select>
+                    )}
+
+                    <select
+                      value={photo.quantity}
+                      onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+                      className="w-full p-1 border rounded"
+                    >
+                      {[...Array(99)].map((_, i) => (
+                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
+      case 1:
+      return (
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h2 className="text-xl font-medium">Contact Information</h2>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full p-2 border rounded"
+            />
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+
+          <div className="space-y-4">
+            <h2 className="text-xl font-medium">Shipping Address</h2>
+            <AddressForm
+              type="shipping"
+              data={{
+                ...formData.shippingAddress,
+                country: selectedCountry // Ensure country is passed
+              }}
+              onChange={(newAddress) => setFormData(prevData => ({
+                ...prevData,
+                shippingAddress: newAddress,
+                billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
+              }))}
+            />
+          </div>
+
+          {formData.paymentMethod !== 'cod' && (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={isBillingAddressSameAsShipping}
+                  onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
+                  id="sameAddress"
+                  className="rounded border-gray-300"
+                />
+                <label htmlFor="sameAddress" className="text-sm">
+                  Billing address same as shipping
+                </label>
+              </div>
+
+              {!isBillingAddressSameAsShipping && (
+                <>
+                  <h2 className="text-xl font-medium">Billing Address</h2>
+                  <AddressForm
+                    type="billing"
+                    data={{
+                      ...formData.billingAddress,
+                      country: selectedCountry // Ensure country is passed
+                    }}
+                    onChange={(newAddress) => setFormData(prevData => ({
+                      ...prevData,
+                      billingAddress: newAddress
+                    }))}
+                  />
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      );
+
+    case 2:
+      return (
+        <div className="space-y-6">
+          <h2 className="text-xl font-medium">Review & Payment</h2>
+          {renderInvoice()}
+
+          {selectedCountry === 'TUN' ? (
+            // For Tunisia: Display COD message and Place Order button
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-center text-gray-600">
+                  Your order will be processed as Cash on Delivery (COD)
+                </p>
+              </div>
+              
+            </div>
+          ) : (
+            // For other countries: Display Stripe payment form
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <p className="text-center text-gray-600">
+                  Please complete your payment to place the order
+                </p>
+              </div>
+              <Elements stripe={stripePromise}>
+                <PaymentForm onPaymentSuccess={() => setOrderSuccess(true)} />
+              </Elements>
+            </div>
+          )}
+        </div>
+      );
+
+    default:
+      return null;
+    }
   };
 
   const renderInvoice = () => {
@@ -341,7 +575,7 @@ const FreezePIX = () => {
             )}
           </div>
         </div>
-
+        
         {/* Order Summary */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Order Summary</h3>
@@ -363,7 +597,7 @@ const FreezePIX = () => {
               )}
             </>
           ) : (
-            /* US/Canada Photo Sizes */
+            /* US/Canada Items */
             <>
               {quantities['4x6'] > 0 && (
                 <div className="flex justify-between py-2">
@@ -377,11 +611,18 @@ const FreezePIX = () => {
                   <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
                 </div>
               )}
+              {quantities['crystal3d'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>3D Crystal Items ({quantities['crystal3d']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['crystal3d'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
             </>
           )}
           
-          {/* Subtotal */}
-          <div className="flex justify-between py-2 border-t">
+          {/* ... (Keep existing totals sections) ... */}
+           {/* Subtotal */}
+           <div className="flex justify-between py-2 border-t">
             <span>Subtotal</span>
             <span>{subtotal.toFixed(2)} {country?.currency}</span>
           </div>
@@ -406,9 +647,9 @@ const FreezePIX = () => {
             <span>{total.toFixed(2)} {country?.currency}</span>
           </div>
         </div>
-  
-        {/* Order Note */}
-        <div className="border rounded-lg p-4">
+        
+      {/* Order Note */}
+      <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">Order Note</h3>
           <textarea
             placeholder="Add any special instructions (optional)"
@@ -422,8 +663,7 @@ const FreezePIX = () => {
     );
   };
 
-  
-  
+  // ... (Keep remaining component code) ...
   const handleShippingAddressChange = (field, value) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -443,24 +683,9 @@ const FreezePIX = () => {
       }
     }));
   };
-
-
-  const handleFileChange = (event) => {
-    const files = Array.from(event.target.files);
-    const newPhotos = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: URL.createObjectURL(file),
-      size: selectedCountry === 'TUN' ? '10x15' : '4x6',
-      quantity: 1
-    }));
-    setSelectedPhotos([...selectedPhotos, ...newPhotos]);
-  };
-
   const removePhoto = (photoId) => {
     setSelectedPhotos(selectedPhotos.filter(photo => photo.id !== photoId));
   };
-
   const updatePhotoSize = (photoId, newSize) => {
     setSelectedPhotos(selectedPhotos.map(photo =>
       photo.id === photoId ? { ...photo, size: newSize } : photo
@@ -490,7 +715,6 @@ const FreezePIX = () => {
     }));
     setShowIntro(false);
   };
-
   const validateStep = () => {
     switch (activeStep) {
       case 0:
@@ -512,187 +736,7 @@ const FreezePIX = () => {
     }
   };
 
-  const renderStepContent = () => {
-    switch (activeStep) {
-      case 0:
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-medium">Select Photos</h2>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-              >
-                <Upload size={20} />
-                Add Photos
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                multiple
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-  
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {selectedPhotos.map(photo => (
-                <div key={photo.id} className="relative border rounded-lg p-2">
-                  <img
-                    src={photo.preview}
-                    alt="preview"
-                    className="w-full h-40 object-cover rounded"
-                  />
-                  <button
-                    onClick={() => removePhoto(photo.id)}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-                  >
-                    <X size={16} />
-                  </button>
-                  <div className="mt-2 space-y-2">
-                    <select
-                      value={photo.size}
-                      onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-                      className="w-full p-1 border rounded"
-                    >
-                      {selectedCountry === 'TUN' ? (
-                        <>
-                          <option value="10x15">10x15 cm</option>
-                          <option value="15x22">15x22 cm</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="4x6">4x6"</option>
-                          <option value="5x7">5x7"</option>
-                        </>
-                      )}
-                    </select>
-                    <select
-                      value={photo.quantity}
-                      onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-                      className="w-full p-1 border rounded"
-                    >
-                      {[...Array(99)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>{i + 1}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-  
-      case 1:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">Contact Information</h2>
-              <input
-                type="email"
-                placeholder="Email Address"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-              <input
-                type="tel"
-                placeholder="Phone Number"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-  
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">Shipping Address</h2>
-              <AddressForm
-                type="shipping"
-                data={{
-                  ...formData.shippingAddress,
-                  country: selectedCountry // Ensure country is passed
-                }}
-                onChange={(newAddress) => setFormData(prevData => ({
-                  ...prevData,
-                  shippingAddress: newAddress,
-                  billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
-                }))}
-              />
-            </div>
-  
-            {formData.paymentMethod !== 'cod' && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={isBillingAddressSameAsShipping}
-                    onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-                    id="sameAddress"
-                    className="rounded border-gray-300"
-                  />
-                  <label htmlFor="sameAddress" className="text-sm">
-                    Billing address same as shipping
-                  </label>
-                </div>
-  
-                {!isBillingAddressSameAsShipping && (
-                  <>
-                    <h2 className="text-xl font-medium">Billing Address</h2>
-                    <AddressForm
-                      type="billing"
-                      data={{
-                        ...formData.billingAddress,
-                        country: selectedCountry // Ensure country is passed
-                      }}
-                      onChange={(newAddress) => setFormData(prevData => ({
-                        ...prevData,
-                        billingAddress: newAddress
-                      }))}
-                    />
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        );
-  
-      case 2:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-medium">Review & Payment</h2>
-            {renderInvoice()}
-  
-            {selectedCountry === 'TUN' ? (
-              // For Tunisia: Display COD message and Place Order button
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    Your order will be processed as Cash on Delivery (COD)
-                  </p>
-                </div>
-                
-              </div>
-            ) : (
-              // For other countries: Display Stripe payment form
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    Please complete your payment to place the order
-                  </p>
-                </div>
-                <Elements stripe={stripePromise}>
-                  <PaymentForm onPaymentSuccess={() => setOrderSuccess(true)} />
-                </Elements>
-              </div>
-            )}
-          </div>
-        );
-  
-      default:
-        return null;
-    }
-  };
+ 
 
   if (showIntro) {
     return (
