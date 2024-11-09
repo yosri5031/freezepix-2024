@@ -56,12 +56,10 @@ const PaymentForm = ({ onPaymentSuccess }) => {
   );
 };
 
+// 1. Fix for country visibility in AddressForm component
 const AddressForm = ({ type, data, onChange }) => {
-  // Handle input changes without spreading the entire data object on every keystroke
   const handleInputChange = (field) => (e) => {
     const newValue = e.target.value;
-    
-    // Save the caret position and scroll position
     const caretPosition = e.target.selectionStart;
     const scrollPosition = e.target.scrollTop;
   
@@ -70,7 +68,6 @@ const AddressForm = ({ type, data, onChange }) => {
       [field]: newValue
     });
   
-    // Restore the caret position and scroll position after updating the field value
     setTimeout(() => {
       e.target.selectionStart = caretPosition;
       e.target.selectionEnd = caretPosition;
@@ -113,6 +110,7 @@ const AddressForm = ({ type, data, onChange }) => {
         className="p-2 border rounded"
       />
       
+      {/* Fix for state/province visibility */}
       {data.country === 'USA' && (
         <input
           type="text"
@@ -135,21 +133,20 @@ const AddressForm = ({ type, data, onChange }) => {
         />
       )}
       
+      {/* Fix for postal code input */}
       <input
         type="text"
-        inputMode="numeric"
+        inputMode="text"
         placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
         value={data.postalCode || ''}
         onChange={handleInputChange('postalCode')}
         className="p-2 border rounded"
       />
       
-      <input
-        type="text"
-        value={initialCountries.find(c => c.value === data.country)?.name}
-        disabled
-        className="col-span-2 p-2 border rounded bg-gray-100"
-      />
+      {/* Fix for country visibility */}
+      <div className="col-span-2 p-2 border rounded bg-gray-100">
+        {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
+      </div>
     </div>
   );
 };
@@ -177,7 +174,7 @@ const FreezePIX = () => {
       address: '',
       city: '',
       postalCode: '',
-      country: selectedCountry,
+      country: selectedCountry, // Initialize with selected country
       province: '',
       state: '',
     },
@@ -187,12 +184,13 @@ const FreezePIX = () => {
       address: '',
       city: '',
       postalCode: '',
-      country: selectedCountry,
+      country: selectedCountry, // Initialize with selected country
       province: '',
       state: '',
     },
     paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
   });
+  
 
   const validateDiscountCode = (code) => {
     const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
@@ -479,6 +477,17 @@ const FreezePIX = () => {
 
   const handleCountrySelect = (country) => {
     setSelectedCountry(country);
+    setFormData(prevData => ({
+      ...prevData,
+      shippingAddress: {
+        ...prevData.shippingAddress,
+        country: country
+      },
+      billingAddress: {
+        ...prevData.billingAddress,
+        country: country
+      }
+    }));
     setShowIntro(false);
   };
 
@@ -526,7 +535,7 @@ const FreezePIX = () => {
                 className="hidden"
               />
             </div>
-
+  
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {selectedPhotos.map(photo => (
                 <div key={photo.id} className="relative border rounded-lg p-2">
@@ -574,7 +583,7 @@ const FreezePIX = () => {
             </div>
           </div>
         );
-
+  
       case 1:
         return (
           <div className="space-y-6">
@@ -595,20 +604,23 @@ const FreezePIX = () => {
                 className="w-full p-2 border rounded"
               />
             </div>
-
+  
             <div className="space-y-4">
               <h2 className="text-xl font-medium">Shipping Address</h2>
               <AddressForm
-  type="shipping"
-  data={formData.shippingAddress}
-  onChange={(newAddress) => setFormData(prevData => ({
-    ...prevData,
-    shippingAddress: newAddress,
-    billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
-  }))}
-/>
+                type="shipping"
+                data={{
+                  ...formData.shippingAddress,
+                  country: selectedCountry // Ensure country is passed
+                }}
+                onChange={(newAddress) => setFormData(prevData => ({
+                  ...prevData,
+                  shippingAddress: newAddress,
+                  billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
+                }))}
+              />
             </div>
-
+  
             {formData.paymentMethod !== 'cod' && (
               <div className="space-y-4">
                 <div className="flex items-center gap-2">
@@ -617,27 +629,26 @@ const FreezePIX = () => {
                     checked={isBillingAddressSameAsShipping}
                     onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
                     id="sameAddress"
+                    className="rounded border-gray-300"
                   />
-                  <label htmlFor="sameAddress">Billing address same as shipping</label>
+                  <label htmlFor="sameAddress" className="text-sm">
+                    Billing address same as shipping
+                  </label>
                 </div>
-
+  
                 {!isBillingAddressSameAsShipping && (
                   <>
                     <h2 className="text-xl font-medium">Billing Address</h2>
                     <AddressForm
                       type="billing"
-                      data={formData.billingAddress}
+                      data={{
+                        ...formData.billingAddress,
+                        country: selectedCountry // Ensure country is passed
+                      }}
                       onChange={(newAddress) => setFormData(prevData => ({
                         ...prevData,
                         billingAddress: newAddress
                       }))}
-
-                      /*type="shipping"
-                       data={formData.shippingAddress}
-                        onChange={(newAddress) => setFormData(prevData => ({
-                        ...prevData,
-                      shippingAddress: newAddress,
-                     billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress*/
                     />
                   </>
                 )}
@@ -645,23 +656,44 @@ const FreezePIX = () => {
             )}
           </div>
         );
-
+  
       case 2:
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-medium">Review & Payment</h2>
             {renderInvoice()}
-            
-            
-
-            {selectedCountry !== 'TUN' && (
-              <Elements stripe={stripePromise}>
-                <PaymentForm onPaymentSuccess={() => setOrderSuccess(true)} />
-              </Elements>
+  
+            {selectedCountry === 'TUN' ? (
+              // For Tunisia: Display COD message and Place Order button
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    Your order will be processed as Cash on Delivery (COD)
+                  </p>
+                </div>
+                <button
+                  onClick={() => setOrderSuccess(true)}
+                  className="w-full py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 font-medium"
+                >
+                  Place Order
+                </button>
+              </div>
+            ) : (
+              // For other countries: Display Stripe payment form
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    Please complete your payment to place the order
+                  </p>
+                </div>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm onPaymentSuccess={() => setOrderSuccess(true)} />
+                </Elements>
+              </div>
             )}
           </div>
         );
-
+  
       default:
         return null;
     }
