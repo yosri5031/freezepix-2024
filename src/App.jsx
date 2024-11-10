@@ -182,7 +182,7 @@ const FreezePIX = () => {
 
         try {
           // Send order confirmation request
-          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com//send-order-confirmation', {
+          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
