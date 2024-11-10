@@ -13,8 +13,8 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
+    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
+    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
     { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
 ];
 
@@ -321,10 +321,11 @@ const FreezePIX = () => {
         if (code && !validCodes.includes(upperCode)) {
           setDiscountError('Invalid discount code');
           return false;
-        } else if (totalItems < 10) {
-          setDiscountError('Minimum 10 items required for discount');
-          return false;
-        } else {
+        } //else if (totalItems < 10) {
+          //setDiscountError('Minimum 10 items required for discount');
+          //return false;
+        //} 
+        else {
           setDiscountError('');
           return true;
         }
@@ -425,8 +426,8 @@ const FreezePIX = () => {
     const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
     let discount = 0;
     
-    if ((discountCode === 'B2B' || discountCode === 'MOHAMED') && totalItems >= 10) {
-      discount = subtotal * 0.3;
+    if ((discountCode === 'B2B' || discountCode === 'MOHAMED')) { //discountCode === 'B2B' || discountCode === 'MOHAMED') && totalItems >= 10
+      discount = subtotal * 0.5;
       subtotal -= discount;
     }
 
@@ -768,7 +769,7 @@ const FreezePIX = () => {
           {/* Discount (if applicable) */}
           {discount > 0 && (
             <div className="flex justify-between py-2 text-green-600">
-              <span>Discount (30%)</span>
+              <span>Discount (50%)</span>
               <span>-{discount.toFixed(2)} {country?.currency}</span>
             </div>
           )}
