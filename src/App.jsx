@@ -120,6 +120,8 @@ const FreezePIX = () => {
     const [activeStep, setActiveStep] = useState(0);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
+    const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+
     const fileInputRef = useRef(null);
   
     const [discountCode, setDiscountCode] = useState('');
@@ -180,63 +182,63 @@ const FreezePIX = () => {
 
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
-    try {
-      setOrderSuccess(false);
-      const orderNumber = generateOrderNumber();
-      const { total, currency } = calculateTotals();
-      const country = initialCountries.find(c => c.value === selectedCountry);
-      
-      // Add price information to each photo
-      const photosWithPrices = selectedPhotos.map(photo => ({
-        ...photo,
-        price: calculateItemPrice(photo, country),
-        currency: country.currency
-      }));
-
-      // Prepare the order data
-      const orderData = {
-        orderNumber,
-        email: formData.email,
-        phone: formData.phone,
-        shippingAddress: formData.shippingAddress,
-        billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
-        selectedPhotos: photosWithPrices, // Now includes price information
-        totalAmount: total,
-        currency: country.currency,
-        orderNote,
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-        stripePaymentMethod: stripePaymentMethod
-      };
-
       try {
-        const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData)
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to send order confirmation');
-        }
-
-        const result = await response.json();
+        setIsProcessingOrder(true);
+        setOrderSuccess(false);
+        const orderNumber = generateOrderNumber();
+        const { total, currency } = calculateTotals();
+        const country = initialCountries.find(c => c.value === selectedCountry);
         
-        if (!result.success) {
-          throw new Error(result.error || 'Failed to process order');
+        const photosWithPrices = selectedPhotos.map(photo => ({
+          ...photo,
+          price: calculateItemPrice(photo, country),
+          currency: country.currency
+        }));
+  
+        const orderData = {
+          orderNumber,
+          email: formData.email,
+          phone: formData.phone,
+          shippingAddress: formData.shippingAddress,
+          billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
+          selectedPhotos: photosWithPrices,
+          totalAmount: total,
+          currency: country.currency,
+          orderNote,
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+          stripePaymentMethod: stripePaymentMethod
+        };
+  
+        try {
+          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+          });
+  
+          if (!response.ok) {
+            throw new Error('Failed to send order confirmation');
+          }
+  
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to process order');
+          }
+        } catch (error) {
+          console.error('Error sending order confirmation:', error);
         }
+  
+        setOrderSuccess(true);
       } catch (error) {
-        console.error('Error sending order confirmation:', error);
+        console.error('Order processing failed:', error);
+        setOrderSuccess(true);
+      } finally {
+        setIsProcessingOrder(false);
       }
-
-      setOrderSuccess(true);
-
-    } catch (error) {
-      console.error('Order processing failed:', error);
-      setOrderSuccess(true);
-    }
-  };
+    };
 
 
     const PaymentForm = ({ onPaymentSuccess }) => {
@@ -244,41 +246,36 @@ const FreezePIX = () => {
       const elements = useElements();
       const [isProcessing, setIsProcessing] = useState(false);
       const [error, setError] = useState(null);
-    
+      
       const handleSubmit = async (event) => {
         event.preventDefault();
-    
+        
         if (!stripe || !elements) {
           return;
         }
-    
+        
         setIsProcessing(true);
         setError(null);
-    
+        
         try {
           const { error, paymentMethod } = await stripe.createPaymentMethod({
             type: 'card',
             card: elements.getElement(CardElement),
           });
-    
+          
           if (error) {
-            console.error('Payment processing failed:', 'There was an error processing your order. Please try again.');
-            // Even if there's a payment error, proceed with order success
-            await handleOrderSuccess(null);
+            setError('Payment processing failed. Please try again.');
             return;
           }
-    
-          // Proceed with order success regardless of payment status
-          await handleOrderSuccess(paymentMethod?.id);
+          
+          await onPaymentSuccess(paymentMethod?.id);
         } catch (err) {
-          console.error('Payment processing failed:', 'There was an error processing your order. Please try again.');
-          // Still proceed with order success
-          await handleOrderSuccess(null);
+          setError('Payment processing failed. Please try again.');
         } finally {
           setIsProcessing(false);
         }
       };
-    
+      
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 border rounded">
@@ -307,11 +304,19 @@ const FreezePIX = () => {
             disabled={!stripe || isProcessing}
             className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isProcessing ? 'Processing...' : 'Pay Now'}
+            {isProcessing ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader className="animate-spin" size={16} />
+                Processing Payment...
+              </span>
+            ) : (
+              'Pay Now'
+            )}
           </button>
         </form>
       );
     };
+  
 
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
@@ -1003,12 +1008,17 @@ const FreezePIX = () => {
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
-    <button
-      onClick={handleBack}
-      className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-    >
-      {activeStep === 0 ? 'Home' : 'Back'}
-    </button>
+  <button
+    onClick={handleBack}
+    className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+  >
+    {activeStep === 0 ? 'Home' : 'Back'}
+  </button>
+  
+  {/* Only show Next/Place Order button if:
+      1. Not on payment page (activeStep !== 2), or
+      2. On payment page AND it's a Tunisia order (COD payment) */}
+  {(activeStep !== 2 || selectedCountry === 'TUN') && (
     <button
       onClick={handleNext}
       disabled={!validateStep()}
@@ -1020,7 +1030,9 @@ const FreezePIX = () => {
     >
       {activeStep === 2 && selectedCountry === 'TUN' ? 'Place Order' : 'Next'}
     </button>
-  </div>
+  )}
+</div>
+
         </div>
       </div>
     </div>
