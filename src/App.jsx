@@ -157,61 +157,86 @@ const FreezePIX = () => {
         const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
+
+      const calculateItemPrice = (photo, country) => {
+        if (photo.productType === 'photo_print') {
+          switch (photo.size) {
+            case '4x6':
+              return country.size4x6;
+            case '5x7':
+              return country.size5x7;
+            case '10x15':
+              return country.size10x15;
+            case '15x22':
+              return country.size15x22;
+            default:
+              return 0;
+          }
+        } else if (photo.productType === '3d_crystal') {
+          return country.crystal3d;
+        }
+        return 0;
+      };
+
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
+    try {
+      setOrderSuccess(false);
+      const orderNumber = generateOrderNumber();
+      const { total, currency } = calculateTotals();
+      const country = initialCountries.find(c => c.value === selectedCountry);
+      
+      // Add price information to each photo
+      const photosWithPrices = selectedPhotos.map(photo => ({
+        ...photo,
+        price: calculateItemPrice(photo, country),
+        currency: country.currency
+      }));
+
+      // Prepare the order data
+      const orderData = {
+        orderNumber,
+        email: formData.email,
+        phone: formData.phone,
+        shippingAddress: formData.shippingAddress,
+        billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
+        selectedPhotos: photosWithPrices, // Now includes price information
+        totalAmount: total,
+        currency: country.currency,
+        orderNote,
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+        stripePaymentMethod: stripePaymentMethod
+      };
+
       try {
-        setOrderSuccess(false); // Reset order success state
-        const orderNumber = generateOrderNumber();
-        const { total, currency } = calculateTotals();
-        const country = initialCountries.find(c => c.value === selectedCountry);
-        
-        // Prepare the order data
-        const orderData = {
-          orderNumber,
-          email: formData.email,
-          phone: formData.phone,
-          shippingAddress: formData.shippingAddress,
-          billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
-          selectedPhotos,
-          totalAmount: total,
-          currency: country.currency,
-          orderNote,
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentMethod: stripePaymentMethod
-        };
+        const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData)
+        });
 
-        try {
-          // Send order confirmation request
-          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData)
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to send order confirmation');
-          }
-
-          const result = await response.json();
-          
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to process order');
-          }
-        } catch (error) {
-          console.error('Error sending order confirmation.');
+        if (!response.ok) {
+          throw new Error('Failed to send order confirmation');
         }
 
-        // Always set order success to true, even if there was an error
-        setOrderSuccess(true);
-
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'Failed to process order');
+        }
       } catch (error) {
-        console.error('Order processing failed:', 'There was an error processing your order. Please try again.');
-        // Still set order success to true
-        setOrderSuccess(true);
+        console.error('Error sending order confirmation:', error);
       }
-    };
+
+      setOrderSuccess(true);
+
+    } catch (error) {
+      console.error('Order processing failed:', error);
+      setOrderSuccess(true);
+    }
+  };
 
 
     const PaymentForm = ({ onPaymentSuccess }) => {
