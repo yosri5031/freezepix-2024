@@ -158,75 +158,62 @@ const FreezePIX = () => {
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
     // Inside the FreezePIX component, modify the order success handling:
-    const handleOrderSuccess = async () => {
-      const orderNumber = generateOrderNumber();
-      const { total, currency } = calculateTotals();
-      const country = initialCountries.find(c => c.value === selectedCountry);
-      
+    const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
-        // Prepare the order data object that will be sent for both cases
+        setOrderSuccess(false); // Reset order success state
+        const orderNumber = generateOrderNumber();
+        const { total, currency } = calculateTotals();
+        const country = initialCountries.find(c => c.value === selectedCountry);
+        
+        // Prepare the order data
         const orderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
           shippingAddress: formData.shippingAddress,
-          billingAddress: formData.billingAddress,
+          billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
           selectedPhotos,
           totalAmount: total,
           currency: country.currency,
           orderNote,
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+          stripePaymentMethod: stripePaymentMethod // Include Stripe payment method if available
         };
-    
-        // For Tunisia (COD orders)
-        if (selectedCountry === 'TUN') {
-          const response = await fetch('./utils/send-order-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              ...orderData,
-              paymentMethod: 'cod', // Cash on Delivery
-            }),
-          });
-    
-          const result = await response.json();
-          if (!result.success) {
-            throw new Error('Failed to process COD order');
-          }
-    
-          setOrderSuccess(true);
-          return;
-        }
-    
-        // For other countries (handled by Stripe payment)
+
+        // Send order confirmation request
         const response = await fetch('./utils/send-order-confirmation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            ...orderData,
-            paymentMethod: 'credit',
-          }),
+          body: JSON.stringify(orderData)
         });
-    
-        const result = await response.json();
-        if (!result.success) {
+
+        if (!response.ok) {
           throw new Error('Failed to process order');
         }
-    
-        setOrderSuccess(true);
-    
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setOrderSuccess(true);
+        } else {
+          setOrderSuccess(true);
+          throw new Error(result.error || 'Failed to process order');
+        }
+
       } catch (error) {
         console.error('Order processing failed:', error);
-        // You might want to add a state to show error messages to the user
+        alert('There was an error processing your order. Please try again.');
       }
     };
+
 
     const PaymentForm = ({ onPaymentSuccess }) => {
       const stripe = useStripe();
       const elements = useElements();
+      const [isProcessing, setIsProcessing] = useState(false);
+      const [error, setError] = useState(null);
     
       const handleSubmit = async (event) => {
         event.preventDefault();
@@ -235,30 +222,56 @@ const FreezePIX = () => {
           return;
         }
     
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
-          type: 'card',
-          card: elements.getElement(CardElement),
-        });
+        setIsProcessing(true);
+        setError(null);
     
-        if (error) {
-          console.log('[error]', error);
-        } else {
-          console.log('[PaymentMethod]', paymentMethod);
-          onPaymentSuccess();
+        try {
+          const { error, paymentMethod } = await stripe.createPaymentMethod({
+            type: 'card',
+            card: elements.getElement(CardElement),
+          });
+    
+          if (error) {
+            setError(error.message);
+            return;
+          }
+    
+          // Pass the payment method to handleOrderSuccess
+          await handleOrderSuccess(paymentMethod.id);
+        } catch (err) {
+          setError('An unexpected error occurred. Please try again.');
+        } finally {
+          setIsProcessing(false);
         }
       };
     
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 border rounded">
-            <CardElement />
+            <CardElement options={{
+              style: {
+                base: {
+                  fontSize: '16px',
+                  color: '#424770',
+                  '::placeholder': {
+                    color: '#aab7c4',
+                  },
+                },
+                invalid: {
+                  color: '#9e2146',
+                },
+              },
+            }}/>
           </div>
+          {error && (
+            <div className="text-red-500 text-sm">{error}</div>
+          )}
           <button 
             type="submit" 
-            disabled={!stripe}
-            className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+            disabled={!stripe || isProcessing}
+            className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Pay Now
+            {isProcessing ? 'Processing...' : 'Pay Now'}
           </button>
         </form>
       );
@@ -299,9 +312,12 @@ const FreezePIX = () => {
       };
     
       const handleNext = async () => {
-        if (activeStep === 2 && selectedCountry === 'TUN') {
-          // For Tunisia COD orders, directly call handleOrderSuccess
-          await handleOrderSuccess();
+        if (activeStep === 2) {
+          if (selectedCountry === 'TUN') {
+            // For Tunisia COD orders, directly call handleOrderSuccess
+            await handleOrderSuccess();
+          }
+          // For other countries, the PaymentForm component will handle the order submission
         } else {
           setActiveStep(prev => prev + 1);
         }
@@ -898,12 +914,17 @@ const FreezePIX = () => {
             <h2 className="text-2xl font-bold">Thank you for your order!</h2>
             <p className="text-gray-600">
               Your order has been successfully placed and will be processed within 48 hours.
-              A confirmation email with tracking details will be sent to {formData.email}.
+              A confirmation email has been sent to {formData.email}.
             </p>
             <div className="mt-4">
               <p className="font-medium">Order Details:</p>
-              <p>Order Number: {Math.random().toString(36).substr(2, 9).toUpperCase()}</p>
+              <p>Order Number: {generateOrderNumber()}</p>
               <p>Total Amount: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
+              {selectedCountry === 'TUN' && (
+                <p className="text-gray-600 mt-2">
+                  Payment Method: Cash on Delivery
+                </p>
+              )}
             </div>
             <button
               onClick={() => window.location.reload()}
