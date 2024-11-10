@@ -182,7 +182,7 @@ const FreezePIX = () => {
 
         try {
           // Send order confirmation request
-          const response = await fetch('./utils/send-order-confirmation', {
+          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com//send-order-confirmation', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ const FreezePIX = () => {
           });
 
           if (!response.ok) {
-            throw new Error('Failed to process order');
+            throw new Error('Failed to send order confirmation');
           }
 
           const result = await response.json();
@@ -200,7 +200,7 @@ const FreezePIX = () => {
             throw new Error(result.error || 'Failed to process order');
           }
         } catch (error) {
-          console.error('Order processing failed:', 'There was an error processing your order. Please try again.');
+          console.error('Error sending order confirmation.');
         }
 
         // Always set order success to true, even if there was an error
