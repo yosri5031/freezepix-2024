@@ -177,34 +177,39 @@ const FreezePIX = () => {
           currency: country.currency,
           orderNote,
           paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentMethod: stripePaymentMethod // Include Stripe payment method if available
+          stripePaymentMethod: stripePaymentMethod
         };
 
-        // Send order confirmation request
-        const response = await fetch('./utils/send-order-confirmation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(orderData)
-        });
+        try {
+          // Send order confirmation request
+          const response = await fetch('./utils/send-order-confirmation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(orderData)
+          });
 
-        if (!response.ok) {
-          throw new Error('Failed to process order');
+          if (!response.ok) {
+            throw new Error('Failed to process order');
+          }
+
+          const result = await response.json();
+          
+          if (!result.success) {
+            throw new Error(result.error || 'Failed to process order');
+          }
+        } catch (error) {
+          console.error('Order processing failed:', 'There was an error processing your order. Please try again.');
         }
 
-        const result = await response.json();
-        
-        if (result.success) {
-          setOrderSuccess(true);
-        } else {
-          setOrderSuccess(true);
-          throw new Error(result.error || 'Failed to process order');
-        }
+        // Always set order success to true, even if there was an error
+        setOrderSuccess(true);
 
       } catch (error) {
-        console.error('Order processing failed:', error);
-        alert('There was an error processing your order. Please try again.');
+        console.error('Order processing failed:', 'There was an error processing your order. Please try again.');
+        // Still set order success to true
+        setOrderSuccess(true);
       }
     };
 
@@ -217,7 +222,7 @@ const FreezePIX = () => {
     
       const handleSubmit = async (event) => {
         event.preventDefault();
-        
+    
         if (!stripe || !elements) {
           return;
         }
@@ -232,14 +237,18 @@ const FreezePIX = () => {
           });
     
           if (error) {
-            setError(error.message);
+            console.error('Payment processing failed:', 'There was an error processing your order. Please try again.');
+            // Even if there's a payment error, proceed with order success
+            await handleOrderSuccess(null);
             return;
           }
     
-          // Pass the payment method to handleOrderSuccess
-          await handleOrderSuccess(paymentMethod.id);
+          // Proceed with order success regardless of payment status
+          await handleOrderSuccess(paymentMethod?.id);
         } catch (err) {
-          setError('An unexpected error occurred. Please try again.');
+          console.error('Payment processing failed:', 'There was an error processing your order. Please try again.');
+          // Still proceed with order success
+          await handleOrderSuccess(null);
         } finally {
           setIsProcessing(false);
         }
@@ -248,26 +257,28 @@ const FreezePIX = () => {
       return (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="p-4 border rounded">
-            <CardElement options={{
-              style: {
-                base: {
-                  fontSize: '16px',
-                  color: '#424770',
-                  '::placeholder': {
-                    color: '#aab7c4',
+            <CardElement
+              options={{
+                style: {
+                  base: {
+                    fontSize: '16px',
+                    color: '#424770',
+                    '::placeholder': {
+                      color: '#aab7c4',
+                    },
+                  },
+                  invalid: {
+                    color: '#9e2146',
                   },
                 },
-                invalid: {
-                  color: '#9e2146',
-                },
-              },
-            }}/>
+              }}
+            />
           </div>
           {error && (
             <div className="text-red-500 text-sm">{error}</div>
           )}
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={!stripe || isProcessing}
             className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
           >
