@@ -166,32 +166,36 @@ const FreezePIX = () => {
       try {
         // For Tunisia (COD orders)
         if (selectedCountry === 'TUN') {
-          const response = await fetch('./utils/send-order-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              orderNumber,
-              email: formData.email,
-              phone: formData.phone,
-              shippingAddress: formData.shippingAddress,
-              billingAddress: formData.billingAddress,
-              selectedPhotos,
-              totalAmount: total,
-              currency: country.currency,
-              paymentMethod: 'cod',
-              orderNote
-            }),
-          });
-    
-          const result = await response.json();
-          if (!result.success) {
-            throw new Error('Failed to process order');
-          }
+          // Since this is a COD order, we'll set the success state directly
+          setOrderSuccess(true);
+          return; // Exit the function after setting success state
         }
         
-        // Set order success state to show confirmation page
+        // For other countries (handled by Stripe payment)
+        const response = await fetch('./utils/send-order-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderNumber,
+            email: formData.email,
+            phone: formData.phone,
+            shippingAddress: formData.shippingAddress,
+            billingAddress: formData.billingAddress,
+            selectedPhotos,
+            totalAmount: total,
+            currency: country.currency,
+            paymentMethod: 'credit',
+            orderNote
+          }),
+        });
+  
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error('Failed to process order');
+        }
+        
         setOrderSuccess(true);
         
       } catch (error) {
@@ -275,10 +279,9 @@ const FreezePIX = () => {
       };
     
       const handleNext = async () => {
-        if (activeStep === 2) {
-          if (selectedCountry === 'TUN') {
-            await handleOrderSuccess();
-          }
+        if (activeStep === 2 && selectedCountry === 'TUN') {
+          // For Tunisia COD orders, directly call handleOrderSuccess
+          await handleOrderSuccess();
         } else {
           setActiveStep(prev => prev + 1);
         }
@@ -922,38 +925,24 @@ const FreezePIX = () => {
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
-         <button
-              onClick={handleBack}
-              className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-            >
-              {activeStep === 0 ? 'Home' : 'Back'}
-            </button>
-            {selectedCountry === 'TUN' ? (
-  <button
-    onClick={handleNext}
-    disabled={!validateStep()}
-    className={`px-6 py-2 rounded ${
-      validateStep()
-        ? 'bg-yellow-400 hover:bg-yellow-500'
-        : 'bg-gray-200 cursor-not-allowed'
-    }`}
-  >
-    {activeStep === 2 ? 'Place Order' : 'Next'}
-  </button>
-) : activeStep < 2 ? (
-  <button
-    onClick={() => setActiveStep(prev => prev + 1)}
-    disabled={!validateStep()}
-    className={`px-6 py-2 rounded ${
-      validateStep()
-        ? 'bg-yellow-400 hover:bg-yellow-500'
-        : 'bg-gray-200 cursor-not-allowed'
-    }`}
-  >
-    Next
-  </button>
-) : null}
-          </div>
+    <button
+      onClick={handleBack}
+      className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+    >
+      {activeStep === 0 ? 'Home' : 'Back'}
+    </button>
+    <button
+      onClick={handleNext}
+      disabled={!validateStep()}
+      className={`px-6 py-2 rounded ${
+        validateStep()
+          ? 'bg-yellow-400 hover:bg-yellow-500'
+          : 'bg-gray-200 cursor-not-allowed'
+      }`}
+    >
+      {activeStep === 2 && selectedCountry === 'TUN' ? 'Place Order' : 'Next'}
+    </button>
+  </div>
         </div>
       </div>
     </div>
