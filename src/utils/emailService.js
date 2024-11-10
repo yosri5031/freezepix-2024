@@ -1,7 +1,7 @@
 // src/utils/emailService.js
 const sendOrderConfirmation = async (orderDetails) => {
     try {
-      const response = await fetch('/api/send-order-confirmation', {
+      const response = await fetch('./send-order-confirmation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
