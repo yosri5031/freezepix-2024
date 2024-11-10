@@ -221,7 +221,6 @@ const FreezePIX = () => {
       } catch (error) {
         console.error('Order processing failed:', error);
         // You might want to add a state to show error messages to the user
-        setOrderError(error.message); // Assuming you have a state for error messages
       }
     };
 
