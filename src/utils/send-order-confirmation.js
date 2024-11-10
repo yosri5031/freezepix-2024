@@ -145,6 +145,9 @@ export default async function handler(req, res) {
       html: emailContent
     });
 
+    // Log a message when the email to the customer is sent successfully
+console.log('Order confirmation email sent to customer successfully!');
+
     // Send notification to admin
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
@@ -153,6 +156,9 @@ export default async function handler(req, res) {
       subject: `Freezepix App New Order Received - ${orderNumber}`,
       html: emailContent
     });
+    
+// Log a message when the email to the admin is sent successfully
+console.log('Order confirmation email sent to admin successfully!');
 
     return res.status(200).json({ success: true });
   } catch (error) {
