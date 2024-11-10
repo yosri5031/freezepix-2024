@@ -164,13 +164,41 @@ const FreezePIX = () => {
       const country = initialCountries.find(c => c.value === selectedCountry);
       
       try {
+        // Prepare the order data object that will be sent for both cases
+        const orderData = {
+          orderNumber,
+          email: formData.email,
+          phone: formData.phone,
+          shippingAddress: formData.shippingAddress,
+          billingAddress: formData.billingAddress,
+          selectedPhotos,
+          totalAmount: total,
+          currency: country.currency,
+          orderNote,
+        };
+    
         // For Tunisia (COD orders)
         if (selectedCountry === 'TUN') {
-          // Since this is a COD order, we'll set the success state directly
+          const response = await fetch('./utils/send-order-confirmation', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              ...orderData,
+              paymentMethod: 'cod', // Cash on Delivery
+            }),
+          });
+    
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error('Failed to process COD order');
+          }
+    
           setOrderSuccess(true);
-          return; // Exit the function after setting success state
+          return;
         }
-        
+    
         // For other countries (handled by Stripe payment)
         const response = await fetch('./utils/send-order-confirmation', {
           method: 'POST',
@@ -178,29 +206,22 @@ const FreezePIX = () => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            orderNumber,
-            email: formData.email,
-            phone: formData.phone,
-            shippingAddress: formData.shippingAddress,
-            billingAddress: formData.billingAddress,
-            selectedPhotos,
-            totalAmount: total,
-            currency: country.currency,
+            ...orderData,
             paymentMethod: 'credit',
-            orderNote
           }),
         });
-  
+    
         const result = await response.json();
         if (!result.success) {
           throw new Error('Failed to process order');
         }
-        
+    
         setOrderSuccess(true);
-        
+    
       } catch (error) {
         console.error('Order processing failed:', error);
-        // Handle error appropriately (show error message to user)
+        // You might want to add a state to show error messages to the user
+        setOrderError(error.message); // Assuming you have a state for error messages
       }
     };
 
