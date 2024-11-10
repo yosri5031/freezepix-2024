@@ -3,11 +3,11 @@ import { createTransport } from 'nodemailer';
 
 const transporter = createTransport({
   host: 'smtppro.zoho.com',
-  port: 587,
+  port: 465,
   secure: true,
   auth: {
     user: 'lab@freezepix.com',
-    pass: process.env.EMAIL_PASSWORD // Store password in environment variable
+    pass: 'Freeze2024+' // Store password in environment variable
   }
 });
 
