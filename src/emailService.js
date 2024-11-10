@@ -80,4 +80,4 @@ const sendOrderConfirmation = async (orderDetails) => {
   });
 };
 
-export default { sendOrderConfirmation };
+export { sendOrderConfirmation };
