@@ -13,15 +13,17 @@ const sendOrderConfirmation = async (orderDetails) => {
   
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
-        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
-      }
-  
-      const data = await response.json();
-      return data;
-    } catch (error) {
-      console.error('Error sending order confirmation:', error);
-      throw error;
+        const errorMessage = errorData?.message || `HTTP error! status: ${response.status}`;
+        console.error('Error in response:', errorMessage);
+        throw new Error(errorMessage);
     }
-  };
-  
-  export { sendOrderConfirmation };
+
+    const data = await response.json();
+    return data;
+} catch (error) {
+    console.error('Error sending order confirmation:', error);
+    throw error;
+}
+};
+
+export { sendOrderConfirmation };
