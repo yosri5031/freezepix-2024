@@ -17,71 +17,7 @@ const initialCountries = [
     { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
     { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
 ];
-// Inside the FreezePIX component, modify the order success handling:
-const handleOrderSuccess = async () => {
-    const orderNumber = Math.random().toString(36).substr(2, 9).toUpperCase();
-    const { total, currency } = calculateTotals();
-    const country = initialCountries.find(c => c.value === selectedCountry);
-  
-    try {
-      await sendOrderConfirmation({
-        orderNumber,
-        email: formData.email,
-        totalAmount: total.toFixed(2),
-        currency: country.currency,
-        shippingAddress: formData.shippingAddress,
-        selectedPhotos,
-        orderNote
-      });
-      
-      setOrderSuccess(true);
-    } catch (error) {
-      console.error('Failed to send order confirmation:', error);
-      // Still set order success but maybe show a message about email delay
-      setOrderSuccess(true);
-    }
-  };
 
-// ... (Keep existing PaymentForm and AddressForm components) ...
-const PaymentForm = ({ onPaymentSuccess }) => {
-    const stripe = useStripe();
-    const elements = useElements();
-  
-    const handleSubmit = async (event) => {
-      event.preventDefault();
-      
-      if (!stripe || !elements) {
-        return;
-      }
-  
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardElement),
-      });
-  
-      if (error) {
-        console.log('[error]', error);
-      } else {
-        console.log('[PaymentMethod]', paymentMethod);
-        handleOrderSuccess();
-      }
-    };
-  
-    return (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="p-4 border rounded">
-          <CardElement />
-        </div>
-        <button 
-          type="submit" 
-          disabled={!stripe}
-          className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-        >
-          Pay Now
-        </button>
-      </form>
-    );
-  };
   
   // 1. Fix for country visibility in AddressForm component
   const AddressForm = ({ type, data, onChange }) => {
@@ -216,7 +152,71 @@ const FreezePIX = () => {
         paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
       });
       
+    // Inside the FreezePIX component, modify the order success handling:
+  const handleOrderSuccess = async () => {
+    const orderNumber = Math.random().toString(36).substr(2, 9).toUpperCase();
+    const { total, currency } = calculateTotals(); // Now calculateTotals is accessible
+    const country = initialCountries.find(c => c.value === selectedCountry);
     
+    try {
+      await sendOrderConfirmation({
+        orderNumber,
+        email: formData.email,
+        totalAmount: total.toFixed(2),
+        currency: country.currency,
+        shippingAddress: formData.shippingAddress,
+        selectedPhotos,
+        orderNote
+      });
+      
+      setOrderSuccess(true);
+    } catch (error) {
+      console.error('Failed to send order confirmation:', error);
+      // Still set order success but maybe show a message about email delay
+      setOrderSuccess(true);
+    }
+  };
+
+  const PaymentForm = ({ onPaymentSuccess }) => {
+    const stripe = useStripe();
+    const elements = useElements();
+  
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+      
+      if (!stripe || !elements) {
+        return;
+      }
+  
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement),
+      });
+  
+      if (error) {
+        console.log('[error]', error);
+      } else {
+        console.log('[PaymentMethod]', paymentMethod);
+        onPaymentSuccess(); // Call the passed handler
+      }
+    };
+  
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="p-4 border rounded">
+          <CardElement />
+        </div>
+        <button 
+          type="submit" 
+          disabled={!stripe}
+          className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+        >
+          Pay Now
+        </button>
+      </form>
+    );
+  };
+
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
         const validCodes = ['B2B', 'MOHAMED'];
@@ -522,19 +522,16 @@ const FreezePIX = () => {
         <div className="space-y-6">
           <h2 className="text-xl font-medium">Review & Payment</h2>
           {renderInvoice()}
-
+  
           {selectedCountry === 'TUN' ? (
-            // For Tunisia: Display COD message and Place Order button
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-center text-gray-600">
                   Your order will be processed as Cash on Delivery (COD)
                 </p>
               </div>
-              
             </div>
           ) : (
-            // For other countries: Display Stripe payment form
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-center text-gray-600">
@@ -542,7 +539,7 @@ const FreezePIX = () => {
                 </p>
               </div>
               <Elements stripe={stripePromise}>
-                <PaymentForm onPaymentSuccess={() => setOrderSuccess(true)} />
+                <PaymentForm onPaymentSuccess={handleOrderSuccess} />
               </Elements>
             </div>
           )}
