@@ -2,6 +2,7 @@ import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
+import { sendOrderConfirmation } from './emailService';
 import {
   CardElement,
   Elements,
@@ -16,6 +17,30 @@ const initialCountries = [
     { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 100 },
     { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
 ];
+// Inside the FreezePIX component, modify the order success handling:
+const handleOrderSuccess = async () => {
+    const orderNumber = Math.random().toString(36).substr(2, 9).toUpperCase();
+    const { total, currency } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
+  
+    try {
+      await sendOrderConfirmation({
+        orderNumber,
+        email: formData.email,
+        totalAmount: total.toFixed(2),
+        currency: country.currency,
+        shippingAddress: formData.shippingAddress,
+        selectedPhotos,
+        orderNote
+      });
+      
+      setOrderSuccess(true);
+    } catch (error) {
+      console.error('Failed to send order confirmation:', error);
+      // Still set order success but maybe show a message about email delay
+      setOrderSuccess(true);
+    }
+  };
 
 // ... (Keep existing PaymentForm and AddressForm components) ...
 const PaymentForm = ({ onPaymentSuccess }) => {
@@ -38,7 +63,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
         console.log('[error]', error);
       } else {
         console.log('[PaymentMethod]', paymentMethod);
-        onPaymentSuccess();
+        handleOrderSuccess();
       }
     };
   
@@ -226,10 +251,10 @@ const FreezePIX = () => {
         }
       };
     
-      const handleNext = () => {
+      const handleNext = async () => {
         if (activeStep === 2) {
           if (selectedCountry === 'TUN') {
-            setOrderSuccess(true);
+            await handleOrderSuccess();
           }
         } else {
           setActiveStep(prev => prev + 1);
