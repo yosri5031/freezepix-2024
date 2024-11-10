@@ -12,15 +12,25 @@ const transporter = createTransport({
   }
 });
 
-// Add CORS headers helper (useful for development)
+// Add CORS headers helper
 const setCorsHeaders = (res) => {
   res.setHeader('Access-Control-Allow-Credentials', true);
+  // In production, replace * with your actual domain
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
   res.setHeader(
     'Access-Control-Allow-Headers',
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
+};
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '4mb' // Increase if needed for larger payloads
+    },
+    externalResolver: true
+  },
 };
 
 export default async function handler(req, res) {
@@ -108,14 +118,14 @@ export default async function handler(req, res) {
       from: 'lab@freezepix.com',
       to: 'lab@freezepix.com',
       cc: 'info@freezepix.com',
-      subject: `New Order Received - ${orderNumber}`,
+      subject: `Freezepix App New Order Received - ${orderNumber}`,
       html: emailContent
     });
 
-    res.status(200).json({ success: true });
+    return res.status(200).json({ success: true });
   } catch (error) {
     console.error('Error sending email:', error);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       message: 'Failed to send email', 
       error: error.message 
     });

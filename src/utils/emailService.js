@@ -1,18 +1,19 @@
 // src/utils/emailService.js
-
 const sendOrderConfirmation = async (orderDetails) => {
     try {
-      // Update the API path to match the new structure
       const response = await fetch('/api/send-order-confirmation', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json'
         },
-        body: JSON.stringify(orderDetails)
+        body: JSON.stringify(orderDetails),
+        credentials: 'same-origin'
       });
   
       if (!response.ok) {
-        throw new Error('Failed to send order confirmation');
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.message || `HTTP error! status: ${response.status}`);
       }
   
       const data = await response.json();
