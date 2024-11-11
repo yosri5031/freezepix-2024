@@ -192,10 +192,10 @@ const FreezePIX = () => {
         const orderNumber = generateOrderNumber();
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
-        
+    
         // Create FormData to handle file uploads
         const formData = new FormData();
-        
+    
         // Add order details
         const orderData = {
           orderNumber,
@@ -212,32 +212,20 @@ const FreezePIX = () => {
           discountAmount: calculateTotals().discount,
           status: 'open'
         };
-        //c
+    
         // Append order data
         formData.append('orderData', JSON.stringify(orderData));
-        
+    
         // Append image files
         selectedPhotos.forEach((photo, index) => {
           formData.append(`photos`, photo.file);
         });
-        
-        // Send order to backend
-        const response = await fetch('./pages/api/orders/create', {
-          method: 'POST',
-          body: formData
-        });
     
-        if (!response.ok) {
-          throw new Error('Failed to create order');
-        }
-    
-        const result = await response.json();
-        
         // Send email confirmation
         await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify(orderData)
         });
