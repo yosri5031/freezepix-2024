@@ -420,8 +420,8 @@ const FreezePIX = () => {
     const subtotalsBySize = {
       '4x6': quantities['4x6'] * (country?.size4x6 || 0),
       '5x7': quantities['5x7'] * (country?.size5x7 || 0),
-      '10x15': quantities['10x15'] * (country?.size10x15 || 0),
-      '15x22': quantities['15x22'] * (country?.size15x22 || 0),
+      '10x15': selectedCountry === 'TUN' ? quantities['10x15'] * 2 : quantities['10x15'] * (country?.size10x15 || 0),
+      '15x22': selectedCountry === 'TUN' ? quantities['15x22'] * 4 : quantities['15x22'] * (country?.size15x22 || 0),
       'crystal3d': quantities['crystal3d'] * (country?.crystal3d || 0)
     };
 
