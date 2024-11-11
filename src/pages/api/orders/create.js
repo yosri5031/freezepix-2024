@@ -18,11 +18,11 @@ export default async function handler(req, res) {
 
   try {
     await connectDB();
-    
+
     // Parse form data with formidable
     const form = new formidable.IncomingForm();
     form.multiples = true;
-    
+
     const [fields, files] = await new Promise((resolve, reject) => {
       form.parse(req, (err, fields, files) => {
         if (err) reject(err);
@@ -32,29 +32,29 @@ export default async function handler(req, res) {
 
     // Convert files object to array
     const fileArray = Object.values(files).map(file => file[0] || file);
-    
+
     // Parse the orderData from fields
     const orderData = {
       ...fields,
-      orderItems: JSON.parse(fields.orderItems),  // Assuming orderItems is sent as JSON string
+      orderItems: JSON.parse(fields.orderItems),
       totalAmount: parseFloat(fields.totalAmount),
     };
 
     // Upload images to Cloudinary
     const uploadPromises = fileArray.map(file => uploadImage(file, orderData.orderNumber));
     const uploadedImages = await Promise.all(uploadPromises);
-    
+
     // Add image URLs to order items
     orderData.orderItems = orderData.orderItems.map((item, index) => ({
       ...item,
       imageUrl: uploadedImages[index].url,
       imageId: uploadedImages[index].key
     }));
-    
+
     // Create order in MongoDB
     const order = new Order(orderData);
     await order.save();
-    
+
     res.status(201).json({ success: true, order });
   } catch (error) {
     console.error('Order creation failed:', error);
