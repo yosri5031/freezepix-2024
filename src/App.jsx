@@ -212,7 +212,7 @@ const FreezePIX = () => {
           discountAmount: calculateTotals().discount,
           status: 'open'
         };
-        
+        //c
         // Append order data
         formData.append('orderData', JSON.stringify(orderData));
         
