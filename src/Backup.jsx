@@ -1,7 +1,11 @@
 import React from 'react';
-import { memo, useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
 import { loadStripe } from "@stripe/stripe-js";
+import { Cloudinary } from '@cloudinary/url-gen';
+import { auto } from '@cloudinary/url-gen/actions/resize';
+import { autoGravity } from '@cloudinary/url-gen/qualifiers/gravity';
+import { AdvancedImage } from '@cloudinary/react';
 //import { sendOrderConfirmation } from './utils/emailService';
 import {
   CardElement,
@@ -188,53 +192,48 @@ const FreezePIX = () => {
         const orderNumber = generateOrderNumber();
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
-        
-        const photosWithPrices = selectedPhotos.map(photo => ({
-          ...photo,
-          price: calculateItemPrice(photo, country),
-          currency: country.currency
-        }));
-  
+    
+        // Create FormData to handle file uploads
+        const formData = new FormData();
+    
+        // Add order details
         const orderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
           shippingAddress: formData.shippingAddress,
           billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
-          selectedPhotos: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
           orderNote,
           paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentMethod: stripePaymentMethod
+          stripePaymentId: stripePaymentMethod,
+          discountCode: discountCode,
+          discountAmount: calculateTotals().discount,
+          status: 'open'
         };
-  
-        try {
-          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData)
-          });
-  
-          if (!response.ok) {
-            throw new Error('Failed to send order confirmation');
-          }
-  
-          const result = await response.json();
-          
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to process order');
-          }
-        } catch (error) {
-          console.error('Error sending order confirmation:', error);
-        }
-  
+    
+        // Append order data
+        formData.append('orderData', JSON.stringify(orderData));
+    
+        // Append image files
+        selectedPhotos.forEach((photo, index) => {
+          formData.append(`photos`, photo.file);
+        });
+    
+        // Send email confirmation
+        await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(orderData)
+        });
+    
         setOrderSuccess(true);
       } catch (error) {
         console.error('Order processing failed:', error);
-        setOrderSuccess(true);
+        // Handle error appropriately
       } finally {
         setIsProcessingOrder(false);
       }
