@@ -1,8 +1,8 @@
 // pages/api/orders/create.js
 import formidable from 'formidable';
-import connectDB from '../../../utils/db';
-import Order from '../../../models/Order';
-import { uploadImage } from '../../../utils/cloudinary';
+import connectDB from './db';
+import Order from './Order';
+import { uploadImage } from './cloudinary';
 
 // Disable the default body parser to handle form data
 export const config = {

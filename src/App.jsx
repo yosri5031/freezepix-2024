@@ -222,7 +222,7 @@ const FreezePIX = () => {
         });
         
         // Send order to backend
-        const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/api/orders/create', {
+        const response = await fetch('./pages/api/orders/create', {
           method: 'POST',
           body: formData
         });
@@ -234,7 +234,7 @@ const FreezePIX = () => {
         const result = await response.json();
         
         // Send email confirmation
-        await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+        await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com//send-order-confirmation', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
