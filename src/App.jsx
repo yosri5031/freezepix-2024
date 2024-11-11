@@ -15,7 +15,7 @@ const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmb
 const initialCountries = [
     { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
     { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
-    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 2, size15x22: 4 }
+    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5 }
 ];
 
   
@@ -188,53 +188,58 @@ const FreezePIX = () => {
         const orderNumber = generateOrderNumber();
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
-        
+    
         const photosWithPrices = selectedPhotos.map(photo => ({
           ...photo,
           price: calculateItemPrice(photo, country),
           currency: country.currency
         }));
-  
+    
         const orderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
           shippingAddress: formData.shippingAddress,
           billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
-          selectedPhotos: photosWithPrices,
+          orderItems: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
           orderNote,
           paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentMethod: stripePaymentMethod
+          stripePaymentId: stripePaymentMethod
         };
-  
-        try {
-          const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(orderData)
-          });
-  
-          if (!response.ok) {
-            throw new Error('Failed to send order confirmation');
-          }
-  
-          const result = await response.json();
-          
-          if (!result.success) {
-            throw new Error(result.error || 'Failed to process order');
-          }
-        } catch (error) {
-          console.error('Error sending order confirmation:', error);
+    
+        // Create the order on the server
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(orderData)
+        });
+    
+        if (!response.ok) {
+          throw new Error('Failed to create order');
         }
-  
+    
+        const createdOrder = await response.json();
+    
+        // Send order confirmation email
+        await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(createdOrder)
+        });
+    
+        // Send order notification email to admin
+        await sendOrderNotification(createdOrder);
+    
         setOrderSuccess(true);
       } catch (error) {
         console.error('Order processing failed:', error);
-        setOrderSuccess(true);
+        setOrderSuccess(false);
       } finally {
         setIsProcessingOrder(false);
       }
