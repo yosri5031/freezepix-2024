@@ -116,6 +116,9 @@ const initialCountries = [
       </div>
     );
   };
+  
+const FreezePIX = () => {
+  
   useEffect(() => {
     saveSelectedPhotosToLocalStorage(selectedPhotos);
   }, [selectedPhotos]);
@@ -133,7 +136,7 @@ const initialCountries = [
     }
     return [];
   };
-const FreezePIX = () => {
+
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState(loadSelectedPhotosFromLocalStorage());
