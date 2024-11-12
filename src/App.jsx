@@ -122,7 +122,7 @@ const FreezePIX = () => {
 
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
-    const [selectedPhotos, setSelectedPhotos] = useState('');
+    const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
@@ -202,7 +202,7 @@ const FreezePIX = () => {
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
     
-        const photosWithPrices = selectedPhotos.map(photo => ({
+        const photosWithPrices = (selectedPhotos || []).map(photo => ({
           ...photo,
           price: calculateItemPrice(photo, country),
           currency: country.currency
@@ -383,22 +383,22 @@ const FreezePIX = () => {
         }
       };
   
-  const handleFileChange = (event) => {
-    const files = Array.from(event.target.files);
-    const newPhotos = files.map(file => ({
-      id: Math.random().toString(36).substr(2, 9),
-      file,
-      preview: URL.createObjectURL(file),
-      productType: 'photo_print', // Default to photo print
-      size: selectedCountry === 'TUN' ? '10x15' : '4x6',
-      crystalShape: null, // For 3D crystal option
-      quantity: 1
-    }));
-    setSelectedPhotos([...selectedPhotos, ...newPhotos]);
-  };
+      const handleFileChange = (event) => {
+        const files = Array.from(event.target.files);
+        const newPhotos = files.map(file => ({
+          id: Math.random().toString(36).substr(2, 9),
+          file,
+          preview: URL.createObjectURL(file),
+          productType: 'photo_print',
+          size: selectedCountry === 'TUN' ? '10x15' : '4x6',
+          crystalShape: null,
+          quantity: 1
+        }));
+        setSelectedPhotos(prevPhotos => [...(prevPhotos || []), ...newPhotos]);
+      };
 
   const updateProductType = (photoId, newType) => {
-    setSelectedPhotos(selectedPhotos.map(photo =>
+    setSelectedPhotos((selectedPhotos || []).map(photo =>
       photo.id === photoId ? {
         ...photo,
         productType: newType,
@@ -409,7 +409,7 @@ const FreezePIX = () => {
   };
 
   const updateCrystalShape = (photoId, newShape) => {
-    setSelectedPhotos(selectedPhotos.map(photo =>
+    setSelectedPhotos((selectedPhotos || []).map(photo =>
       photo.id === photoId ? { ...photo, crystalShape: newShape } : photo
     ));
   };
@@ -499,7 +499,7 @@ const FreezePIX = () => {
             </div>
   
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-  {selectedPhotos.map(photo => (
+  {(selectedPhotos || []).map(photo => (
     <div key={photo.id} className="relative border rounded-lg p-2">
       <img
         src={photo.preview}
@@ -883,14 +883,14 @@ const FreezePIX = () => {
     setSelectedPhotos(selectedPhotos.filter(photo => photo.id !== photoId));
   };
   const updatePhotoSize = (photoId, newSize) => {
-    setSelectedPhotos(selectedPhotos.map(photo =>
+    setSelectedPhotos((selectedPhotos || []).map(photo =>
       photo.id === photoId ? { ...photo, size: newSize } : photo
     ));
   };
 
   const updatePhotoQuantity = (photoId, newQuantity) => {
     if (newQuantity > 0 && newQuantity <= 99) {
-      setSelectedPhotos(selectedPhotos.map(photo =>
+      setSelectedPhotos((selectedPhotos || []).map(photo =>
         photo.id === photoId ? { ...photo, quantity: newQuantity } : photo
       ));
     }

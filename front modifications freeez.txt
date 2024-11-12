@@ -1,11 +1,12 @@
 please i need this modification : 
 
-- if we add pictures and then we close the app, we wanna make sure when we reopen the app we still see what was in the cart in the last session (images uploaded in upload page)
+
 - change type  3d crystal par 3d frame
 - keychain and "Keyring and magnet" new categories for us and canada price 9,99$ , Size selector below it standard 
 - add keychain and "Keyring and magnet" in tunisia also 15d so for tunisia will be 3 product types selector list [photo print, Keyring and magnet , keychain]
-- add in smart way button to home page Book a photography service redirect to this link https://freezepix.setmore.com/
 
+
+- add in smart way button to home page Book a photography service redirect to this link https://freezepix.setmore.com/
 - add Tax for canada provinces like this "Country	Shipping Province	Tax Type	Tax Rate	
 Canada	British Columbia	GST	5.000%	
 Canada	British Columbia	PST	7.000%	
@@ -23,3 +24,5 @@ Canada	Saskatchewan	PST	6.000%
 Canada	Yukon	GST	5.000%	
 Canada	Ontario	HST	13.000%	" / 19% TVA for tunisia
 - turn state for us and province for canada a selection list
+
+- if we add pictures and then we close the app, we wanna make sure when we reopen the app we still see what was in the cart in the last session (images uploaded in upload page)
