@@ -529,6 +529,10 @@ const FreezePIX = () => {
 
         {/* Product Type Selection for Tunisia */}
         {selectedCountry === 'TUN' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Product
+            </label>
           <select
             value={photo.productType}
             onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -538,10 +542,15 @@ const FreezePIX = () => {
             <option value="keyring_magnet">Keyring and Magnet</option>
             <option value="keychain">Keychain</option>
           </select>
+          </div>
         )}
 
         {/* Size selection for photo prints */}
         {photo.productType === 'photo_print' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Size
+            </label>
           <select
             value={photo.size}
             onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
@@ -559,10 +568,15 @@ const FreezePIX = () => {
               </>
             )}
           </select>
+          </div>
         )}
 
         {/* Crystal shape selection for 3D frame */}
         {photo.productType === '3d_frame' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Shape
+            </label>
           <select
             value={photo.crystalShape}
             onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
@@ -571,13 +585,14 @@ const FreezePIX = () => {
             <option value="rectangle">Rectangle</option>
             <option value="heart">Heart</option>
           </select>
+          </div>
         )}
 
         {/* Standard Size selection for Keychain and Keyring & Magnet */}
         {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Standard Size
+              Size
             </label>
             <select
               value={photo.standardSize || 'standard'}
@@ -773,56 +788,71 @@ const FreezePIX = () => {
         </div>
         
         {/* Order Summary */}
-        <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Order Summary</h3>
-          
-          {/* Tunisia Photo Sizes */}
-          {selectedCountry === 'TUN' ? (
-            <>
-              {quantities['10x15'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-              {quantities['15x22'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-            </>
-          ) : (
-            /* US/Canada Items */
-            <>
-              {quantities['4x6'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-              {quantities['5x7'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-              {quantities['crystal3d'] > 0 && (
-                <div className="flex justify-between py-2">
-                  <span>3D Crystal Items ({quantities['crystal3d']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
-                  <span>{subtotalsBySize['crystal3d'].toFixed(2)} {country?.currency}</span>
-                </div>
-              )}
-            </>
-          )}
-          
-          {/* ... (Keep existing totals sections) ... */}
-           {/* Subtotal */}
-           <div className="flex justify-between py-2 border-t">
-            <span>Subtotal</span>
-            <span>{subtotal.toFixed(2)} {country?.currency}</span>
-          </div>
+<div className="border rounded-lg p-4">
+  <h3 className="font-medium mb-3">Order Summary</h3>
   
+  {/* Photo Prints */}
+  {selectedCountry === 'TUN' ? (
+    <>
+      {quantities['10x15'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+      {quantities['15x22'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+    </>
+  ) : (
+    <>
+      {quantities['4x6'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+      {quantities['5x7'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+    </>
+  )}
+
+  {/* 3D Frame Items */}
+  {quantities['3d_frame'] > 0 && (
+    <div className="flex justify-between py-2">
+      <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
+      <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
+    </div>
+  )}
+
+  {/* Keychain Items */}
+  {quantities['keychain'] > 0 && (
+    <div className="flex justify-between py-2">
+      <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
+      <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
+    </div>
+  )}
+
+  {/* Keyring/Magnet Items */}
+  {quantities['keyring_magnet'] > 0 && (
+    <div className="flex justify-between py-2">
+      <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
+      <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
+    </div>
+  )}
+
+  {/* Subtotal */}
+  <div className="flex justify-between py-2 border-t">
+    <span>Subtotal</span>
+    <span>{subtotal.toFixed(2)} {country?.currency}</span>
+  </div>
           {/* Shipping Fee */}
           <div className="flex justify-between py-2">
             <span>Shipping Fee</span>
