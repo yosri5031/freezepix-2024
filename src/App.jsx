@@ -1068,9 +1068,9 @@ const FreezePIX = () => {
   
                {/* Book Now Button */}
 <div class="text-center mt-6">
-    <a onClick={() => setShowBookingPopup(true)} class="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500">
+    <button onClick={() => setShowBookingPopup(true)} class="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500">
         Book a Photography Service
-    </a>
+    </button>
 </div>
               </div>
             </div>
