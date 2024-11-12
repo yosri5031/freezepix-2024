@@ -13,9 +13,12 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140 },
-    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5 }
+    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
+      keyring_magnet: 9.99 },
+    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
+      keyring_magnet: 9.99 },
+    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5,keychain: 15,
+      keyring_magnet: 15 }
 ];
 
   
@@ -116,7 +119,7 @@ const initialCountries = [
 const FreezePIX = () => {
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
-    const [selectedPhotos, setSelectedPhotos] = useState([]);
+    const [selectedPhotos, setSelectedPhotos] = useState(loadSelectedPhotosFromLocalStorage());
     const [activeStep, setActiveStep] = useState(0);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
@@ -154,32 +157,55 @@ const FreezePIX = () => {
         paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
       });
       
+      useEffect(() => {
+        saveSelectedPhotosToLocalStorage(selectedPhotos);
+      }, [selectedPhotos]);
+    
+      // Function to save selected photos to localStorage
+      const saveSelectedPhotosToLocalStorage = (photos) => {
+        localStorage.setItem('freezepix_selected_photos', JSON.stringify(photos));
+      };
+    
+      // Function to load selected photos from localStorage
+      const loadSelectedPhotosFromLocalStorage = () => {
+        const savedPhotos = localStorage.getItem('freezepix_selected_photos');
+        if (savedPhotos) {
+          return JSON.parse(savedPhotos);
+        }
+        return [];
+      };
+
+      const updateStandardSize = (photoId, standardSize) => {
+        setSelectedPhotos(prevPhotos => 
+          prevPhotos.map(photo => 
+            photo.id === photoId 
+              ? { ...photo, standardSize } 
+              : photo
+          )
+        );
+      };
       const generateOrderNumber = () => {
         const timestamp = Date.now().toString();
         const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
 
-      const calculateItemPrice = (photo, country) => {
-        if (photo.productType === 'photo_print') {
-          switch (photo.size) {
-            case '4x6':
-              return country.size4x6;
-            case '5x7':
-              return country.size5x7;
-            case '10x15':
-              return country.size10x15;
-            case '15x22':
-              return country.size15x22;
-            default:
-              return 0;
-          }
-        } else if (photo.productType === '3d_crystal') {
-          return country.crystal3d;
-        }
-        return 0;
-      };
-
+     const calculateItemPrice = (photo, country) => {
+  if (photo.productType === 'photo_print') {
+    switch (photo.size) {
+      case '4x6': return country.size4x6;
+      case '5x7': return country.size5x7;
+      case '10x15': return country.size10x15;
+      case '15x22': return country.size15x22;
+      default: return 0;
+    }
+  } else if (photo.productType === '3d_frame') {
+    return country.crystal3d; // Assuming same pricing as 3D crystal
+  } else if (['keychain', 'keyring_magnet'].includes(photo.productType)) {
+    return country.value === 'TUN' ? 15 : 9.99;
+  }
+  return 0;
+};
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
@@ -411,38 +437,46 @@ const FreezePIX = () => {
       '10x15': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '10x15'),
       '15x22': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '15x22')
     };
-
+  
     const quantities = {
       '4x6': photosBySize['4x6'].reduce((sum, photo) => sum + photo.quantity, 0),
       '5x7': photosBySize['5x7'].reduce((sum, photo) => sum + photo.quantity, 0),
       '10x15': photosBySize['10x15'].reduce((sum, photo) => sum + photo.quantity, 0),
       '15x22': photosBySize['15x22'].reduce((sum, photo) => sum + photo.quantity, 0),
       'crystal3d': selectedPhotos
-        .filter(p => p.productType === '3d_crystal')
+        .filter(p => p.productType === '3d_frame') // Updated to match the new product type
+        .reduce((sum, photo) => sum + photo.quantity, 0),
+      'keychain': selectedPhotos
+        .filter(p => p.productType === 'keychain')
+        .reduce((sum, photo) => sum + photo.quantity, 0),
+      'keyring_magnet': selectedPhotos
+        .filter(p => p.productType === 'keyring_magnet')
         .reduce((sum, photo) => sum + photo.quantity, 0)
     };
-
+  
     const subtotalsBySize = {
       '4x6': quantities['4x6'] * (country?.size4x6 || 0),
       '5x7': quantities['5x7'] * (country?.size5x7 || 0),
       '10x15': selectedCountry === 'TUN' ? quantities['10x15'] * 2 : quantities['10x15'] * (country?.size10x15 || 0),
       '15x22': selectedCountry === 'TUN' ? quantities['15x22'] * 4 : quantities['15x22'] * (country?.size15x22 || 0),
-      'crystal3d': quantities['crystal3d'] * (country?.crystal3d || 0)
+      'crystal3d': quantities['crystal3d'] * (country?.crystal3d || 0),
+      'keychain': quantities['keychain'] * (country?.keychain || 9.99), // Assuming $9.99 for keychain
+      'keyring_magnet': quantities['keyring_magnet'] * (country?.keyring_magnet || 9.99) // Assuming $9.99 for keyring and magnet
     };
-
+  
     let subtotal = Object.values(subtotalsBySize).reduce((sum, value) => sum + value, 0);
     const shippingFee = selectedCountry === 'TUN' ? 8 : 9;
     
     const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
     let discount = 0;
     
-    if ((discountCode === 'B2B' || discountCode === 'MOHAMED')) { //discountCode === 'B2B' || discountCode === 'MOHAMED') && totalItems >= 10
+    if ((discountCode === 'B2B' || discountCode === 'MOHAMED')) {
       discount = subtotal * 0.5;
       subtotal -= discount;
     }
-
+  
     const total = subtotal + shippingFee;
-
+  
     return { 
       subtotalsBySize, 
       subtotal, 
@@ -478,78 +512,110 @@ const FreezePIX = () => {
             </div>
   
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {selectedPhotos.map(photo => (
-                <div key={photo.id} className="relative border rounded-lg p-2">
-                  <img
-                    src={photo.preview}
-                    alt="preview"
-                    className="w-full h-40 object-cover rounded"
-                  />
-                  <button
-                    onClick={() => removePhoto(photo.id)}
-                    className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-                  >
-                    <X size={16} />
-                  </button>
-                  <div className="mt-2 space-y-2">
-                    {/* Product Type Selection for US/Canada */}
-                    {(['USA', 'CAN'].includes(selectedCountry)) && (
-                      <select
-                        value={photo.productType}
-                        onChange={(e) => updateProductType(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        <option value="photo_print">Photo Print</option>
-                        <option value="3d_crystal">3D Crystal</option>
-                      </select>
-                    )}
+  {selectedPhotos.map(photo => (
+    <div key={photo.id} className="relative border rounded-lg p-2">
+      <img
+        src={photo.preview}
+        alt="preview"
+        className="w-full h-40 object-cover rounded"
+      />
+      <button
+        onClick={() => removePhoto(photo.id)}
+        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+      >
+        <X size={16} />
+      </button>
+      <div className="mt-2 space-y-2">
+        {/* Product Type Selection for US/Canada */}
+        {(['USA', 'CAN'].includes(selectedCountry)) && (
+          <select
+            value={photo.productType}
+            onChange={(e) => updateProductType(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="photo_print">Photo Print</option>
+            <option value="3d_frame">3D Frame</option>
+            <option value="keychain">Keychain</option>
+            <option value="keyring_magnet">Keyring and Magnet</option>
+          </select>
+        )}
 
-                    {/* Size selection for photo prints */}
-                    {photo.productType === 'photo_print' && (
-                      <select
-                        value={photo.size}
-                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        {selectedCountry === 'TUN' ? (
-                          <>
-                            <option value="10x15">10x15 cm</option>
-                            <option value="15x22">15x22 cm</option>
-                          </>
-                        ) : (
-                          <>
-                            <option value="4x6">4x6"</option>
-                            <option value="5x7">5x7"</option>
-                          </>
-                        )}
-                      </select>
-                    )}
+        {/* Product Type Selection for Tunisia */}
+        {selectedCountry === 'TUN' && (
+          <select
+            value={photo.productType}
+            onChange={(e) => updateProductType(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="photo_print">Photo Print</option>
+            <option value="keyring_magnet">Keyring and Magnet</option>
+            <option value="keychain">Keychain</option>
+          </select>
+        )}
 
-                    {/* Crystal shape selection for 3D crystal */}
-                    {photo.productType === '3d_crystal' && (
-                      <select
-                        value={photo.crystalShape}
-                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        <option value="rectangle">Rectangle</option>
-                        <option value="heart">Heart</option>
-                      </select>
-                    )}
+        {/* Size selection for photo prints */}
+        {photo.productType === 'photo_print' && (
+          <select
+            value={photo.size}
+            onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            {selectedCountry === 'TUN' ? (
+              <>
+                <option value="10x15">10x15 cm</option>
+                <option value="15x22">15x22 cm</option>
+              </>
+            ) : (
+              <>
+                <option value="4x6">4x6"</option>
+                <option value="5x7">5x7"</option>
+              </>
+            )}
+          </select>
+        )}
 
-                    <select
-                      value={photo.quantity}
-                      onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-                      className="w-full p-1 border rounded"
-                    >
-                      {[...Array(99)].map((_, i) => (
-                        <option key={i + 1} value={i + 1}>{i + 1}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Crystal shape selection for 3D frame */}
+        {photo.productType === '3d_frame' && (
+          <select
+            value={photo.crystalShape}
+            onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="rectangle">Rectangle</option>
+            <option value="heart">Heart</option>
+          </select>
+        )}
+
+        {/* Standard Size selection for Keychain and Keyring & Magnet */}
+        {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Standard Size
+            </label>
+            <select
+              value={photo.standardSize || 'standard'}
+              onChange={(e) => updateStandardSize(photo.id, e.target.value)}
+              className="w-full p-1 border rounded"
+            >
+              <option value="standard">Standard</option>
+            </select>
+          </div>
+        )}
+
+        {/* Quantity selection */}
+        <select
+          value={photo.quantity}
+          onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+          className="w-full p-1 border rounded"
+        >
+          {[...Array(99)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>{i + 1}</option>
+          ))}
+        </select>
+      </div>
+    </div>
+  ))}
+</div>
           </div>
         );
 
