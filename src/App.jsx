@@ -24,19 +24,20 @@ const initialCountries = [
 const BookingPopup = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="relative bg-white rounded-lg w-full max-w-4xl h-[80vh]">
+      <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
         <button 
           onClick={onClose}
-          className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10"
+          className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
           aria-label="Close"
         >
           <X size={24} />
         </button>
         
         <iframe
-          src="https://booking.setmore.com/scheduleappointment/f18f8bf6-a617-459b-8b80-a03c33318e76"
+          src="https://freezepix.setmore.com/"
           title="Book Photography Service"
           className="w-full h-full rounded-lg"
+          style={{ maxWidth: '100%', maxHeight: '100%' }}
         />
       </div>
     </div>
@@ -1067,12 +1068,15 @@ const FreezePIX = () => {
                   ))}
                 </div>
   
-               {/* Book Now Button */}
-<div class="text-center mt-6">
-    <button onClick={() => setShowBookingPopup(true)} class="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500">
-        Book a Photography Service
-    </button>
-</div>
+                {/* Book Now Button */}
+                <div className="text-center mt-6">
+                  <button 
+                    onClick={() => setShowBookingPopup(true)} 
+                    className="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500"
+                  >
+                    Book a Photography Service
+                  </button>
+                </div>
               </div>
             </div>
             
@@ -1083,6 +1087,28 @@ const FreezePIX = () => {
               </p>
             </div>
           </div>
+
+          {/* Booking Popup */}
+          {showBookingPopup && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
+                <button 
+                  onClick={() => setShowBookingPopup(false)}
+                  className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
+                  aria-label="Close"
+                >
+                  <X size={24} />
+                </button>
+                
+                <iframe
+                  src="https://freezepix.setmore.com/"
+                  title="Book Photography Service"
+                  className="w-full h-full rounded-lg"
+                  style={{ maxWidth: '100%', maxHeight: '100%' }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
