@@ -343,28 +343,6 @@ const convertFileToBase64 = (file) => {
           }
         );
     
-        try {
-          const emailResponse = await axios.post(
-            'https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', 
-            orderData,
-            {
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              timeout: 30000 // 30 seconds timeout
-            }
-          );
-          
-          console.log('Email confirmation sent:', emailResponse.data);
-        } catch (emailError) {
-          console.error('Failed to send email confirmation:', {
-            message: emailError.message,
-            response: emailError.response?.data,
-            status: emailError.response?.status
-          });
-          // Optionally, you might want to handle email send failure differently
-          // For now, we'll continue with the order process
-        }
         
         // Handle successful order creation
         setOrderSuccess(true);
