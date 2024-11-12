@@ -903,7 +903,7 @@ const FreezePIX = () => {
           </div>
         </div>
         
-       {/* Order Summary */}
+      {/* Order Summary */}
 <div className="border rounded-lg p-4">
   <h3 className="font-medium mb-3">Order Summary</h3>
   
@@ -964,68 +964,93 @@ const FreezePIX = () => {
     </div>
   )}
 
-  {/* Subtotal */}
-  <div className="flex justify-between py-2 border-t">
-    <span>Subtotal</span>
-    <span>{subtotal.toFixed(2)} {country?.currency}</span>
-  </div>
+  {/* Calculations and Summary */}
+  {(() => {
+    // Calculate tax amount
+    let taxAmount = 0;
+    
+    if (selectedCountry === 'TUN') {
+      taxAmount = subtotal * 0.19;
+    } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
+      const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+      if (provinceTaxes) {
+        if (provinceTaxes.HST) {
+          taxAmount = subtotal * (provinceTaxes.HST / 100);
+        } else {
+          if (provinceTaxes.GST) taxAmount += subtotal * (provinceTaxes.GST / 100);
+          if (provinceTaxes.PST) taxAmount += subtotal * (provinceTaxes.PST / 100);
+          if (provinceTaxes.QST) taxAmount += subtotal * (provinceTaxes.QST / 100);
+        }
+      }
+    }
 
-  {/* Shipping Fee */}
-  <div className="flex justify-between py-2">
-    <span>Shipping Fee</span>
-    <span>{shippingFee.toFixed(2)} {country?.currency}</span>
-  </div>
+    // Calculate final total
+    const finalTotal = subtotal + shippingFee + taxAmount - discount;
 
-  {/* Tax */}
-  {selectedCountry === 'TUN' && (
-    <div className="flex justify-between py-2">
-      <span>TVA (19%)</span>
-      <span>{(subtotal * 0.19).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
-
-  {selectedCountry === 'CAN' && (
-    <>
-      {formData.shippingAddress.province && (
-        <div className="flex justify-between py-2">
-          <div className="flex flex-col">
-            <span>Tax</span>
-            <span className="text-sm text-gray-600">
-              {(() => {
-                const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-                if (provinceTaxes) {
-                  if (provinceTaxes.HST) {
-                    return `HST (${provinceTaxes.HST}%)`;
-                  }
-                  return [
-                    provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
-                    provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
-                    provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
-                  ].filter(Boolean).join(' + ');
-                }
-                return '';
-              })()}
-            </span>
-          </div>
-          <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+    return (
+      <>
+        {/* Subtotal */}
+        <div className="flex justify-between py-2 border-t">
+          <span>Subtotal</span>
+          <span>{subtotal.toFixed(2)} {country?.currency}</span>
         </div>
-      )}
-    </>
-  )}
-  
-  {/* Discount (if applicable) */}
-  {discount > 0 && (
-    <div className="flex justify-between py-2 text-green-600">
-      <span>Discount (50%)</span>
-      <span>-{discount.toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
-  
-  {/* Total */}
-  <div className="flex justify-between py-2 border-t font-bold">
-    <span>Total</span>
-    <span>{total.toFixed(2)} {country?.currency}</span>
-  </div>
+
+        {/* Shipping Fee */}
+        <div className="flex justify-between py-2">
+          <span>Shipping Fee</span>
+          <span>{shippingFee.toFixed(2)} {country?.currency}</span>
+        </div>
+
+        {/* Tax for Tunisia */}
+        {selectedCountry === 'TUN' && (
+          <div className="flex justify-between py-2">
+            <span>TVA (19%)</span>
+            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
+
+        {/* Tax for Canada */}
+        {selectedCountry === 'CAN' && formData.shippingAddress.province && (
+          <div className="flex justify-between py-2">
+            <div className="flex flex-col">
+              <span>Tax</span>
+              <span className="text-sm text-gray-600">
+                {(() => {
+                  const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+                  if (provinceTaxes) {
+                    if (provinceTaxes.HST) {
+                      return `HST (${provinceTaxes.HST}%)`;
+                    }
+                    return [
+                      provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
+                      provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
+                      provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
+                    ].filter(Boolean).join(' + ');
+                  }
+                  return '';
+                })()}
+              </span>
+            </div>
+            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
+
+        {/* Discount */}
+        {discount > 0 && (
+          <div className="flex justify-between py-2 text-green-600">
+            <span>Discount (50%)</span>
+            <span>-{discount.toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
+
+        {/* Final Total */}
+        <div className="flex justify-between py-2 border-t font-bold">
+          <span>Total</span>
+          <span>{finalTotal.toFixed(2)} {country?.currency}</span>
+        </div>
+      </>
+    );
+  })()}
 </div>
         
       {/* Order Note */}
