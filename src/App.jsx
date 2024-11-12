@@ -537,9 +537,11 @@ const FreezePIX = () => {
     if (selectedCountry === 'TUN') {
       shippingFee = 8; // 8 TND for Tunisia
     } else if (selectedCountry === 'USA') {
-      shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
+      shippingFee = 9; // 9$ for usa
     } else if (selectedCountry === 'CAN') {
-      shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
+      //shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
+      shippingFee = 9; // 9$ for canada
+
     }
   
     // Calculate discount if applicable
