@@ -296,6 +296,8 @@ const FreezePIX = () => {
         });
     
         if (!response.ok) {
+          const errorBody = await response.text();
+          console.error('Error creating order:', errorBody);
           throw new Error('Failed to create order');
         }
     
@@ -321,7 +323,6 @@ const FreezePIX = () => {
         setIsProcessingOrder(false);
       }
     };
-
 
     const PaymentForm = ({ onPaymentSuccess }) => {
       const stripe = useStripe();
