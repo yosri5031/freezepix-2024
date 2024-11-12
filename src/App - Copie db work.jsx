@@ -309,7 +309,7 @@ const convertFileToBase64 = (file) => {
           billingAddress: isBillingAddressSameAsShipping 
             ? formData.shippingAddress 
             : formData.billingAddress,
-          selectedPhotos: photosWithPrices,
+          orderItems: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
           orderNote: orderNote || '',
@@ -324,7 +324,7 @@ const convertFileToBase64 = (file) => {
         // Sanitized logging
         console.log('Order Payload:', JSON.stringify({
           ...orderData,
-          selectedPhotos: orderData.selectedPhotos.map(item => ({
+          orderItems: orderData.orderItems.map(item => ({
             id: item.id,
             originalFileName: item.originalFileName,
             price: item.price
@@ -332,7 +332,7 @@ const convertFileToBase64 = (file) => {
         }));
     
         // Create the order using Axios
-        const orderResponse = await axios.post(
+        const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
           orderData,
           {
@@ -343,33 +343,9 @@ const convertFileToBase64 = (file) => {
           }
         );
     
-        // Send email confirmation
-        try {
-          const emailResponse = await axios.post(
-            'https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', 
-            orderData,
-            {
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              timeout: 30000 // 30 seconds timeout
-            }
-          );
-          
-          console.log('Email confirmation sent:', emailResponse.data);
-        } catch (emailError) {
-          console.error('Failed to send email confirmation:', {
-            message: emailError.message,
-            response: emailError.response?.data,
-            status: emailError.response?.status
-          });
-          // Optionally, you might want to handle email send failure differently
-          // For now, we'll continue with the order process
-        }
-    
         // Handle successful order creation
         setOrderSuccess(true);
-        console.log('Order created successfully:', orderResponse.data);
+        console.log('Order created successfully:', response.data);
     
       } catch (error) {
         // Comprehensive error handling
