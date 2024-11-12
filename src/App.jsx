@@ -21,6 +21,44 @@ const initialCountries = [
       keyring_magnet: 15 }
 ];
 
+const TAX_RATES = {
+  'TN': { // Tunisia
+    default: 19.0 // 19% TVA
+  },
+  'CA': { // Canada
+    'British Columbia': { GST: 5.0, PST: 7.0 },
+    'Alberta': { GST: 5.0 },
+    'New Brunswick': { HST: 15.0 },
+    'Newfoundland and Labrador': { HST: 15.0 },
+    'Northwest Territories': { GST: 5.0 },
+    'Nova Scotia': { HST: 15.0 },
+    'Nunavut': { GST: 5.0 },
+    'Prince Edward Island': { HST: 15.0 },
+    'Quebec': { GST: 5.0, QST: 9.975 },
+    'Saskatchewan': { GST: 5.0, PST: 6.0 },
+    'Yukon': { GST: 5.0 },
+    'Ontario': { HST: 13.0 }
+  }
+};
+
+// Add these arrays for US states and Canadian provinces
+const US_STATES = [
+  'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
+  'Delaware', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 
+  'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 
+  'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'New Hampshire', 
+  'New Jersey', 'New Mexico', 'New York', 'North Carolina', 'North Dakota', 'Ohio', 
+  'Oklahoma', 'Oregon', 'Pennsylvania', 'Rhode Island', 'South Carolina', 'South Dakota', 
+  'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'West Virginia', 
+  'Wisconsin', 'Wyoming'
+];
+
+const CANADIAN_PROVINCES = [
+  'Alberta', 'British Columbia', 'Manitoba', 'New Brunswick', 'Newfoundland and Labrador',
+  'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island',
+  'Quebec', 'Saskatchewan', 'Yukon'
+];
+
 const BookingPopup = ({ onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -100,26 +138,30 @@ const BookingPopup = ({ onClose }) => {
         
         {/* Fix for state/province visibility */}
         {data.country === 'USA' && (
-          <input
-            type="text"
-            inputMode="text"
-            placeholder="State"
-            value={data.state || ''}
-            onChange={handleInputChange('state')}
-            className="p-2 border rounded"
-          />
-        )}
-        
-        {data.country === 'CAN' && (
-          <input
-            type="text"
-            inputMode="text"
-            placeholder="Province"
-            value={data.province || ''}
-            onChange={handleInputChange('province')}
-            className="p-2 border rounded"
-          />
-        )}
+        <select
+          value={data.state || ''}
+          onChange={handleInputChange('state')}
+          className="p-2 border rounded"
+        >
+          <option value="">Select State</option>
+          {US_STATES.map(state => (
+            <option key={state} value={state}>{state}</option>
+          ))}
+        </select>
+      )}
+      
+      {data.country === 'CAN' && (
+        <select
+          value={data.province || ''}
+          onChange={handleInputChange('province')}
+          className="p-2 border rounded"
+        >
+          <option value="">Select Province</option>
+          {CANADIAN_PROVINCES.map(province => (
+            <option key={province} value={province}>{province}</option>
+          ))}
+        </select>
+      )}
         
         {/* Fix for postal code input */}
         <input
@@ -502,13 +544,40 @@ const FreezePIX = () => {
   
     // Calculate discount if applicable
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0;
-  
+    // Calculate tax based on location
+    let taxAmount = 0;
+    if (selectedCountry === 'TUN') {
+      // 19% TVA for Tunisia
+      taxAmount = subtotal * 0.19;
+    } else if (selectedCountry === 'CAN') {
+      const province = formData.shippingAddress.province;
+      const provinceTaxes = TAX_RATES['CA'][province];
+      
+      if (provinceTaxes) {
+        if (provinceTaxes.HST) {
+          taxAmount = subtotal * (provinceTaxes.HST / 100);
+        } else {
+          // Calculate GST
+          if (provinceTaxes.GST) {
+            taxAmount += subtotal * (provinceTaxes.GST / 100);
+          }
+          // Calculate PST or QST
+          if (provinceTaxes.PST) {
+            taxAmount += subtotal * (provinceTaxes.PST / 100);
+          }
+          if (provinceTaxes.QST) {
+            taxAmount += subtotal * (provinceTaxes.QST / 100);
+          }
+        }
+      }
+    }
     // Calculate total
-    const total = subtotal + shippingFee - discount;
+    const total = subtotal + shippingFee + taxAmount - discount;
   
     return {
       subtotalsBySize,
       subtotal,
+      taxAmount,
       shippingFee,
       total,
       quantities,
@@ -834,7 +903,7 @@ const FreezePIX = () => {
           </div>
         </div>
         
-        {/* Order Summary */}
+       {/* Order Summary */}
 <div className="border rounded-lg p-4">
   <h3 className="font-medium mb-3">Order Summary</h3>
   
@@ -900,26 +969,64 @@ const FreezePIX = () => {
     <span>Subtotal</span>
     <span>{subtotal.toFixed(2)} {country?.currency}</span>
   </div>
-          {/* Shipping Fee */}
-          <div className="flex justify-between py-2">
-            <span>Shipping Fee</span>
-            <span>{shippingFee.toFixed(2)} {country?.currency}</span>
+
+  {/* Shipping Fee */}
+  <div className="flex justify-between py-2">
+    <span>Shipping Fee</span>
+    <span>{shippingFee.toFixed(2)} {country?.currency}</span>
+  </div>
+
+  {/* Tax */}
+  {selectedCountry === 'TUN' && (
+    <div className="flex justify-between py-2">
+      <span>TVA (19%)</span>
+      <span>{(subtotal * 0.19).toFixed(2)} {country?.currency}</span>
+    </div>
+  )}
+
+  {selectedCountry === 'CAN' && (
+    <>
+      {formData.shippingAddress.province && (
+        <div className="flex justify-between py-2">
+          <div className="flex flex-col">
+            <span>Tax</span>
+            <span className="text-sm text-gray-600">
+              {(() => {
+                const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+                if (provinceTaxes) {
+                  if (provinceTaxes.HST) {
+                    return `HST (${provinceTaxes.HST}%)`;
+                  }
+                  return [
+                    provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
+                    provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
+                    provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
+                  ].filter(Boolean).join(' + ');
+                }
+                return '';
+              })()}
+            </span>
           </div>
-          
-          {/* Discount (if applicable) */}
-          {discount > 0 && (
-            <div className="flex justify-between py-2 text-green-600">
-              <span>Discount (50%)</span>
-              <span>-{discount.toFixed(2)} {country?.currency}</span>
-            </div>
-          )}
-          
-          {/* Total */}
-          <div className="flex justify-between py-2 border-t font-bold">
-            <span>Total</span>
-            <span>{total.toFixed(2)} {country?.currency}</span>
-          </div>
+          <span>{taxAmount.toFixed(2)} {country?.currency}</span>
         </div>
+      )}
+    </>
+  )}
+  
+  {/* Discount (if applicable) */}
+  {discount > 0 && (
+    <div className="flex justify-between py-2 text-green-600">
+      <span>Discount (50%)</span>
+      <span>-{discount.toFixed(2)} {country?.currency}</span>
+    </div>
+  )}
+  
+  {/* Total */}
+  <div className="flex justify-between py-2 border-t font-bold">
+    <span>Total</span>
+    <span>{total.toFixed(2)} {country?.currency}</span>
+  </div>
+</div>
         
       {/* Order Note */}
       <div className="border rounded-lg p-4">
