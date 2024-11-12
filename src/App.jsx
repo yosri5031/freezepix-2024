@@ -416,58 +416,78 @@ const FreezePIX = () => {
 
   const calculateTotals = () => {
     const country = initialCountries.find(c => c.value === selectedCountry);
-    
-    // Calculate photo print totals
-    const photosBySize = {
-      '4x6': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '4x6'),
-      '5x7': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '5x7'),
-      '10x15': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '10x15'),
-      '15x22': selectedPhotos.filter(p => p.productType === 'photo_print' && p.size === '15x22')
-    };
-  
     const quantities = {
-      '4x6': photosBySize['4x6'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '5x7': photosBySize['5x7'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '10x15': photosBySize['10x15'].reduce((sum, photo) => sum + photo.quantity, 0),
-      '15x22': photosBySize['15x22'].reduce((sum, photo) => sum + photo.quantity, 0),
-      'crystal3d': selectedPhotos
-        .filter(p => p.productType === '3d_frame') // Updated to match the new product type
-        .reduce((sum, photo) => sum + photo.quantity, 0),
-      'keychain': selectedPhotos
-        .filter(p => p.productType === 'keychain')
-        .reduce((sum, photo) => sum + photo.quantity, 0),
-      'keyring_magnet': selectedPhotos
-        .filter(p => p.productType === 'keyring_magnet')
-        .reduce((sum, photo) => sum + photo.quantity, 0)
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
     };
   
     const subtotalsBySize = {
-      '4x6': quantities['4x6'] * (country?.size4x6 || 0),
-      '5x7': quantities['5x7'] * (country?.size5x7 || 0),
-      '10x15': selectedCountry === 'TUN' ? quantities['10x15'] * 2 : quantities['10x15'] * (country?.size10x15 || 0),
-      '15x22': selectedCountry === 'TUN' ? quantities['15x22'] * 4 : quantities['15x22'] * (country?.size15x22 || 0),
-      'crystal3d': quantities['crystal3d'] * (country?.crystal3d || 0),
-      'keychain': quantities['keychain'] * (country?.keychain || 9.99), // Assuming $9.99 for keychain
-      'keyring_magnet': quantities['keyring_magnet'] * (country?.keyring_magnet || 9.99) // Assuming $9.99 for keyring and magnet
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
     };
   
-    let subtotal = Object.values(subtotalsBySize).reduce((sum, value) => sum + value, 0);
-    const shippingFee = selectedCountry === 'TUN' ? 8 : 9;
-    
-    const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-    let discount = 0;
-    
-    if ((discountCode === 'B2B' || discountCode === 'MOHAMED')) {
-      discount = subtotal * 0.5;
-      subtotal -= discount;
+    // Count quantities and calculate subtotals for each size/product
+    selectedPhotos.forEach(photo => {
+      if (photo.productType === 'photo_print') {
+        quantities[photo.size] += photo.quantity || 1;
+        if (selectedCountry === 'TUN') {
+          if (photo.size === '10x15') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
+          } else if (photo.size === '15x22') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
+          }
+        } else {
+          if (photo.size === '4x6') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+          } else if (photo.size === '5x7') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+          }
+        }
+      } else if (photo.productType === '3d_frame') {
+        quantities['3d_frame'] += photo.quantity || 1;
+        subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+        quantities['keychain'] += photo.quantity || 1;
+        subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+        quantities['keyring_magnet'] += photo.quantity || 1;
+        subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+      }
+    });
+  
+    // Calculate subtotal
+    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
+  
+    // Calculate shipping fee based on country
+    let shippingFee = 0;
+    if (selectedCountry === 'TUN') {
+      shippingFee = 8; // 8 TND for Tunisia
+    } else if (selectedCountry === 'USA') {
+      shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
+    } else if (selectedCountry === 'CAN') {
+      shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
     }
   
-    const total = subtotal + shippingFee;
+    // Calculate discount if applicable
+    const discount = discountCode === 'FREEZE50' ? subtotal * 0.5 : 0;
   
-    return { 
-      subtotalsBySize, 
-      subtotal, 
-      shippingFee, 
+    // Calculate total
+    const total = subtotal + shippingFee - discount;
+  
+    return {
+      subtotalsBySize,
+      subtotal,
+      shippingFee,
       total,
       quantities,
       discount
