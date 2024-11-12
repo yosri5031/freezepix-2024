@@ -2,6 +2,8 @@ import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
 import { loadStripe } from "@stripe/stripe-js";
+import { v4 as uuidv4 } from 'uuid';
+
 //import { sendOrderConfirmation } from './utils/emailService';
 import {
   CardElement,
@@ -257,72 +259,111 @@ const FreezePIX = () => {
   }
   return 0;
 };
+const convertFileToBase64 = (file) => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = (error) => reject(error);
+  });
+};
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
+        // Reset states
         setIsProcessingOrder(true);
         setOrderSuccess(false);
+        setError(null);
+  
+        // Generate order details
         const orderNumber = generateOrderNumber();
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
-    
-        const photosWithPrices = (selectedPhotos || []).map(photo => ({
-          ...photo,
-          price: calculateItemPrice(photo, country),
-          currency: country.currency
-        }));
-    
+  
+        // Process selected photos with base64 conversion
+        const photosWithPrices = await Promise.all(
+          (selectedPhotos || []).map(async (photo) => {
+            // Convert file to base64 if it's a File object
+            let base64Image = null;
+            if (photo.file instanceof File) {
+              base64Image = await convertFileToBase64(photo.file);
+            }
+  
+            return {
+              ...photo,
+              id: photo.id || uuidv4(),
+              file: base64Image,
+              price: calculateItemPrice(photo, country),
+              currency: country.currency,
+              originalFileName: photo.file?.name || 'unknown'
+            };
+          })
+        );
+  
+        // Construct order data
         const orderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
           shippingAddress: formData.shippingAddress,
-          billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
+          billingAddress: isBillingAddressSameAsShipping 
+            ? formData.shippingAddress 
+            : formData.billingAddress,
           orderItems: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
-          orderNote,
+          orderNote: orderNote || '',
           paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod
+          stripePaymentId: stripePaymentMethod,
+          customerDetails: {
+            name: formData.name,
+            country: selectedCountry
+          }
         };
-    
-        // Create the order on the server
-        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(orderData)
-        });
-    
-        if (!response.ok) {
-          const errorBody = await response.text();
-          console.error('Error creating order:', errorBody);
-          throw new Error('Failed to create order');
-        }
-    
-        const createdOrder = await response.json();
-    
-        // Send order confirmation email
-        await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(createdOrder)
-        });
-    
-        // Send order notification email to admin
-        await sendOrderNotification(createdOrder);
-    
-        setOrderSuccess(true);
-      } catch (error) {
-        console.error('Order processing failed:', error);
-        setOrderSuccess(false);
-      } finally {
-        setIsProcessingOrder(false);
+        // Sanitized logging
+      console.log('Order Payload:', JSON.stringify({
+        ...orderData,
+        orderItems: orderData.orderItems.map(item => ({
+          id: item.id,
+          originalFileName: item.originalFileName,
+          price: item.price
+        }))
+      }));
+
+      // Create the order on the server
+      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderData)
+      });
+
+      // Enhanced error handling
+      if (!response.ok) {
+        const errorBody = await response.text();
+        console.error('Full Error Response:', errorBody);
+        throw new Error(`Failed to create order: ${errorBody}`);
       }
-    };
+
+      const createdOrder = await response.json();
+
+      // Handle successful order creation (e.g., show confirmation, redirect, etc.)
+      setOrderSuccess(true);
+      console.log('Order created successfully:', createdOrder);
+
+    } catch (error) {
+      console.error('Detailed Order Processing Error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      setError(error.message);
+      setOrderSuccess(false);
+    } finally {
+      setIsProcessingOrder(false);
+    }
+  };
+  
 
     const PaymentForm = ({ onPaymentSuccess }) => {
       const stripe = useStripe();
