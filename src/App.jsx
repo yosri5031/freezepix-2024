@@ -605,6 +605,10 @@ const FreezePIX = () => {
         )}
 
         {/* Quantity selection */}
+        <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+              Quantity
+            </label>
         <select
           value={photo.quantity}
           onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
@@ -614,6 +618,7 @@ const FreezePIX = () => {
             <option key={i + 1} value={i + 1}>{i + 1}</option>
           ))}
         </select>
+        </div>
       </div>
     </div>
   ))}
