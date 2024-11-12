@@ -479,7 +479,7 @@ const FreezePIX = () => {
     }
   
     // Calculate discount if applicable
-    const discount = discountCode === 'FREEZE50' ? subtotal * 0.5 : 0;
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0;
   
     // Calculate total
     const total = subtotal + shippingFee - discount;
