@@ -195,7 +195,7 @@ const FreezePIX = () => {
     const [isProcessingOrder, setIsProcessingOrder] = useState(false);
     const [showBookingPopup, setShowBookingPopup] = useState(false);
     const fileInputRef = useRef(null);
-  
+    const [error, setError] = useState(null);
     const [discountCode, setDiscountCode] = useState('');
     const [discountError, setDiscountError] = useState('');
     const [orderNote, setOrderNote] = useState('');
@@ -357,7 +357,7 @@ const convertFileToBase64 = (file) => {
         message: error.message,
         stack: error.stack
       });
-      setError(error.message);
+      setError(error.message || 'An unexpected error occurred');
       setOrderSuccess(false);
     } finally {
       setIsProcessingOrder(false);
