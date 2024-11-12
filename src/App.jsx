@@ -21,7 +21,28 @@ const initialCountries = [
       keyring_magnet: 15 }
 ];
 
-  
+const BookingPopup = ({ onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="relative bg-white rounded-lg w-full max-w-4xl h-[80vh]">
+        <button 
+          onClick={onClose}
+          className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10"
+          aria-label="Close"
+        >
+          <X size={24} />
+        </button>
+        
+        <iframe
+          src="https://booking.setmore.com/scheduleappointment/f18f8bf6-a617-459b-8b80-a03c33318e76"
+          title="Book Photography Service"
+          className="w-full h-full rounded-lg"
+        />
+      </div>
+    </div>
+  );
+};
+
   // 1. Fix for country visibility in AddressForm component
   const AddressForm = ({ type, data, onChange }) => {
     const handleInputChange = (field) => (e) => {
@@ -127,7 +148,7 @@ const FreezePIX = () => {
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
     const [isProcessingOrder, setIsProcessingOrder] = useState(false);
-
+    const [showBookingPopup, setShowBookingPopup] = useState(false);
     const fileInputRef = useRef(null);
   
     const [discountCode, setDiscountCode] = useState('');
@@ -987,27 +1008,7 @@ const FreezePIX = () => {
     }
   };
 
-  const BookingPopup = ({ onClose }) => {
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div className="relative bg-white rounded-lg w-full max-w-4xl h-[80vh]">
-          <button 
-            onClick={onClose}
-            className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10"
-            aria-label="Close"
-          >
-            <X size={24} />
-          </button>
-          
-          <iframe
-            src="https://booking.setmore.com/scheduleappointment/457599fe-abd0-4fe2-80f4-4dd7a897adb8"
-            title="Book Photography Service"
-            className="w-full h-full rounded-lg"
-          />
-        </div>
-      </div>
-    );
-  };
+  
 
   if (showIntro) {
     return (
@@ -1175,6 +1176,9 @@ const FreezePIX = () => {
 
         </div>
       </div>
+      {showBookingPopup && (
+        <BookingPopup onClose={() => setShowBookingPopup(false)} />
+      )}
     </div>
     
   );
