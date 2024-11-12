@@ -3,7 +3,7 @@ import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
-
+import axios from 'axios';
 //import { sendOrderConfirmation } from './utils/emailService';
 import {
   CardElement,
@@ -274,12 +274,12 @@ const convertFileToBase64 = (file) => {
         setIsProcessingOrder(true);
         setOrderSuccess(false);
         setError(null);
-  
+    
         // Generate order details
         const orderNumber = generateOrderNumber();
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
-  
+    
         // Process selected photos with base64 conversion
         const photosWithPrices = await Promise.all(
           (selectedPhotos || []).map(async (photo) => {
@@ -288,7 +288,7 @@ const convertFileToBase64 = (file) => {
             if (photo.file instanceof File) {
               base64Image = await convertFileToBase64(photo.file);
             }
-  
+    
             return {
               ...photo,
               id: photo.id || uuidv4(),
@@ -299,7 +299,7 @@ const convertFileToBase64 = (file) => {
             };
           })
         );
-  
+    
         // Construct order data
         const orderData = {
           orderNumber,
@@ -320,49 +320,54 @@ const convertFileToBase64 = (file) => {
             country: selectedCountry
           }
         };
+    
         // Sanitized logging
-      console.log('Order Payload:', JSON.stringify({
-        ...orderData,
-        orderItems: orderData.orderItems.map(item => ({
-          id: item.id,
-          originalFileName: item.originalFileName,
-          price: item.price
-        }))
-      }));
-
-      // Create the order on the server
-      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(orderData)
-      });
-
-      // Enhanced error handling
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Full Error Response:', errorBody);
-        throw new Error(`Failed to create order: ${errorBody}`);
+        console.log('Order Payload:', JSON.stringify({
+          ...orderData,
+          orderItems: orderData.orderItems.map(item => ({
+            id: item.id,
+            originalFileName: item.originalFileName,
+            price: item.price
+          }))
+        }));
+    
+        // Create the order using Axios
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
+          orderData,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 60000 // 60 seconds timeout
+          }
+        );
+    
+        // Handle successful order creation
+        setOrderSuccess(true);
+        console.log('Order created successfully:', response.data);
+    
+      } catch (error) {
+        // Comprehensive error handling
+        console.error('Detailed Order Processing Error:', {
+          message: error.message,
+          response: error.response?.data,
+          status: error.response?.status
+        });
+    
+        // Determine error message
+        const errorMessage = error.response?.data?.details 
+          || error.response?.data?.error 
+          || error.message 
+          || 'An unexpected error occurred';
+    
+        setError(errorMessage);
+        setOrderSuccess(false);
+      } finally {
+        setIsProcessingOrder(false);
       }
-
-      const createdOrder = await response.json();
-
-      // Handle successful order creation (e.g., show confirmation, redirect, etc.)
-      setOrderSuccess(true);
-      console.log('Order created successfully:', createdOrder);
-
-    } catch (error) {
-      console.error('Detailed Order Processing Error:', {
-        message: error.message,
-        stack: error.stack
-      });
-      setError(error.message || 'An unexpected error occurred');
-      setOrderSuccess(false);
-    } finally {
-      setIsProcessingOrder(false);
-    }
-  };
+    };
+    
   
 
     const PaymentForm = ({ onPaymentSuccess }) => {
