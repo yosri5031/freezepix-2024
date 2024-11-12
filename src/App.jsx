@@ -987,7 +987,27 @@ const FreezePIX = () => {
     }
   };
 
- 
+  const BookingPopup = ({ onClose }) => {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <div className="relative bg-white rounded-lg w-full max-w-4xl h-[80vh]">
+          <button 
+            onClick={onClose}
+            className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10"
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
+          
+          <iframe
+            src="https://booking.setmore.com/scheduleappointment/457599fe-abd0-4fe2-80f4-4dd7a897adb8"
+            title="Book Photography Service"
+            className="w-full h-full rounded-lg"
+          />
+        </div>
+      </div>
+    );
+  };
 
   if (showIntro) {
     return (
@@ -1048,7 +1068,7 @@ const FreezePIX = () => {
   
                {/* Book Now Button */}
 <div class="text-center mt-6">
-    <a href="https://freezepix.setmore.com/" class="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500">
+    <a onClick={() => setShowBookingPopup(true)} class="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500">
         Book a Photography Service
     </a>
 </div>
