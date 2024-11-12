@@ -116,6 +116,7 @@ const initialCountries = [
       </div>
     );
   };
+  let z=1;
 const FreezePIX = () => {
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
