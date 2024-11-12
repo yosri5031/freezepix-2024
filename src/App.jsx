@@ -116,7 +116,23 @@ const initialCountries = [
       </div>
     );
   };
-  let z=1;
+  useEffect(() => {
+    saveSelectedPhotosToLocalStorage(selectedPhotos);
+  }, [selectedPhotos]);
+
+  // Function to save selected photos to localStorage
+  const saveSelectedPhotosToLocalStorage = (photos) => {
+    localStorage.setItem('freezepix_selected_photos', JSON.stringify(photos));
+  };
+
+  // Function to load selected photos from localStorage
+  const loadSelectedPhotosFromLocalStorage = () => {
+    const savedPhotos = localStorage.getItem('freezepix_selected_photos');
+    if (savedPhotos) {
+      return JSON.parse(savedPhotos);
+    }
+    return [];
+  };
 const FreezePIX = () => {
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
@@ -158,23 +174,7 @@ const FreezePIX = () => {
         paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
       });
       
-      useEffect(() => {
-        saveSelectedPhotosToLocalStorage(selectedPhotos);
-      }, [selectedPhotos]);
-    
-      // Function to save selected photos to localStorage
-      const saveSelectedPhotosToLocalStorage = (photos) => {
-        localStorage.setItem('freezepix_selected_photos', JSON.stringify(photos));
-      };
-    
-      // Function to load selected photos from localStorage
-      const loadSelectedPhotosFromLocalStorage = () => {
-        const savedPhotos = localStorage.getItem('freezepix_selected_photos');
-        if (savedPhotos) {
-          return JSON.parse(savedPhotos);
-        }
-        return [];
-      };
+     
 
       const updateStandardSize = (photoId, standardSize) => {
         setSelectedPhotos(prevPhotos => 
