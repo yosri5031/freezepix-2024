@@ -118,28 +118,11 @@ const initialCountries = [
   };
   
 const FreezePIX = () => {
-  
-  useEffect(() => {
-    saveSelectedPhotosToLocalStorage(selectedPhotos);
-  }, [selectedPhotos]);
-
-  // Function to save selected photos to localStorage
-  const saveSelectedPhotosToLocalStorage = (photos) => {
-    localStorage.setItem('freezepix_selected_photos', JSON.stringify(photos));
-  };
-
-  // Function to load selected photos from localStorage
-  const loadSelectedPhotosFromLocalStorage = () => {
-    const savedPhotos = localStorage.getItem('freezepix_selected_photos');
-    if (savedPhotos) {
-      return JSON.parse(savedPhotos);
-    }
-    return [];
-  };
+ 
 
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
-    const [selectedPhotos, setSelectedPhotos] = useState(loadSelectedPhotosFromLocalStorage());
+    const [selectedPhotos, setSelectedPhotos] = useState('');
     const [activeStep, setActiveStep] = useState(0);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
