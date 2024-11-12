@@ -1045,6 +1045,16 @@ const FreezePIX = () => {
                     </button>
                   ))}
                 </div>
+  
+                {/* Book Now Button */}
+                <div className="text-center mt-6">
+                  <a
+                    href="https://freezepix.setmore.com/"
+                    className="inline-block px-6 py-3 bg-yellow-400 text-white font-semibold rounded-lg shadow-md hover:bg-yellow-500"
+                  >
+                    Book a Photography Service
+                  </a>
+                </div>
               </div>
             </div>
             
