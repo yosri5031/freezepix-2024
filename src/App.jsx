@@ -200,6 +200,7 @@ const FreezePIX = () => {
     const [discountError, setDiscountError] = useState('');
     const [orderNote, setOrderNote] = useState('');
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
+    const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -277,6 +278,7 @@ const convertFileToBase64 = (file) => {
     
         // Generate order details
         const orderNumber = generateOrderNumber();
+        setCurrentOrderNumber(orderNumber);
         const { total, currency } = calculateTotals();
         const country = initialCountries.find(c => c.value === selectedCountry);
     
@@ -1312,7 +1314,7 @@ const convertFileToBase64 = (file) => {
             </p>
             <div className="mt-4">
               <p className="font-medium">Order Details:</p>
-              <p>Order Number: {generateOrderNumber()}</p>
+              <p>Order Number: {currentOrderNumber}</p>
               <p>Total Amount: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
               {selectedCountry === 'TUN' && (
                 <p className="text-gray-600 mt-2">
