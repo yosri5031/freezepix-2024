@@ -201,6 +201,7 @@ const FreezePIX = () => {
     const [orderNote, setOrderNote] = useState('');
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -489,9 +490,9 @@ const convertFileToBase64 = (file) => {
         if (activeStep === 2) {
             if (selectedCountry === 'TUN') {
                 // For Tunisia COD orders, show loading state
-                setIsProcessingOrder(true);
+                setIsLoading(true);
                 await handleOrderSuccess(); // Call the order success function
-                setIsProcessingOrder(false); // Reset loading state after processing
+                setIsLoading(false); // Reset loading state after processing
             } else {
                 setActiveStep(prev => prev + 1);
             }
@@ -1369,21 +1370,21 @@ const convertFileToBase64 = (file) => {
     {activeStep === 0 ? 'Home' : 'Back'}
   </button>
   
-  {/* Only show Next/Place Order button if :
+  {/* Only show Next/Place Order button if:
       1. Not on payment page (activeStep !== 2), or
       2. On payment page AND it's a Tunisia order (COD payment) */}
   {(activeStep !== 2 || selectedCountry === 'TUN') && (
-    <button
-      onClick={handleNext}
-      disabled={!validateStep()}
-      className={`px-6 py-2 rounded ${
-        validateStep()
-          ? 'bg-yellow-400 hover:bg-yellow-500'
-          : 'bg-gray-200 cursor-not-allowed'
-      }`}
-    >
-      {activeStep === 2 && selectedCountry === 'TUN' ? 'Place Order' : 'Next'}
-    </button>
+   <button 
+   onClick={handleNext} 
+   disabled={!validateStep()} 
+   className={`px-6 py-2 rounded ${ 
+     validateStep() 
+       ? 'bg-yellow-400 hover:bg-yellow-500' 
+       : 'bg-gray-200 cursor-not-allowed' 
+   }`} 
+ >
+   {isLoading ? 'Processing...' : (activeStep === 2 && selectedCountry === 'TUN' ? 'Place Order' : 'Next')}
+ </button>
   )}
 </div>
 
