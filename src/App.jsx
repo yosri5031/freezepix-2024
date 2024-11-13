@@ -1308,16 +1308,17 @@ const validateStep = () => {
                   </select>
   
                   <button
-                    onClick={() => {
-                      if (selectedCountry) {
-                        handleCountrySelect(selectedCountry);
-                      }
-                    }}
-                    disabled={!selectedCountry}
-                    className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Start Printing
-                  </button>
+  onClick={() => {
+    if (selectedCountry) {
+      handleCountrySelect(selectedCountry);
+      handleStartPrinting(); // Call handleStartPrinting if selectedCountry is available
+    }
+  }}
+  disabled={!selectedCountry}
+  className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Start Printing
+</button>
   
                   <div className="text-center">
                     <button 
