@@ -15,12 +15,14 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
-      keyring_magnet: 9.99 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
-      keyring_magnet: 9.99 },
-    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5,keychain: 15,
-      keyring_magnet: 15 }
+  { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
+  { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
+  { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5, keychain: 15, keyring_magnet: 15 },
+  { name: 'Germany', value: 'DEU', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'France', value: 'FRA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Italy', value: 'ITA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Spain', value: 'ESP', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'United Kingdom', value: 'GBR', currency: 'GBP', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 }
 ];
 
 const TAX_RATES = {
@@ -43,6 +45,13 @@ const TAX_RATES = {
   }
 };
 
+const EU_COUNTRIES = [
+  'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
+  'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary',
+  'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta',
+  'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia', 'Slovenia',
+  'Spain', 'Sweden'
+];
 // Add these arrays for US states and Canadian provinces
 const US_STATES = [
   'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
@@ -88,97 +97,99 @@ const BookingPopup = ({ onClose }) => {
   const AddressForm = ({ type, data, onChange }) => {
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
-      const caretPosition = e.target.selectionStart;
-      const scrollPosition = e.target.scrollTop;
-    
-      onChange({
-        ...data,
-        [field]: newValue
-      });
-    
-      setTimeout(() => {
-        e.target.selectionStart = caretPosition;
-        e.target.selectionEnd = caretPosition;
-        e.target.scrollTop = scrollPosition;
-      }, 0);
+      onChange({ ...data, [field]: newValue });
+    };
+  
+    const getStateOptions = () => {
+      switch(data.country) {
+        case 'USA':
+          return US_STATES;
+        case 'CAN':
+          return CANADIAN_PROVINCES;
+        default:
+          return [];
+      }
     };
   
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="space-y-4">
         <input
           type="text"
-          inputMode="text"
-          placeholder="First Name"
-          value={data.firstName || ''}
-          onChange={handleInputChange('firstName')}
-          className="p-2 border rounded"
+          placeholder="Full Name"
+          value={data.name || ''}
+          onChange={handleInputChange('name')}
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
         />
+        
         <input
-          type="text"
-          inputMode="text"
-          placeholder="Last Name"
-          value={data.lastName || ''}
-          onChange={handleInputChange('lastName')}
-          className="p-2 border rounded"
+          type="email"
+          placeholder="Email"
+          value={data.email || ''}
+          onChange={handleInputChange('email')}
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
         />
+        
+        <input
+          type="tel"
+          placeholder="Phone"
+          value={data.phone || ''}
+          onChange={handleInputChange('phone')}
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
+        />
+        
         <input
           type="text"
-          inputMode="text"
-          placeholder="Address"
+          placeholder="Street Address"
           value={data.address || ''}
           onChange={handleInputChange('address')}
-          className="col-span-2 p-2 border rounded"
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
         />
+        
         <input
           type="text"
-          inputMode="text"
           placeholder="City"
           value={data.city || ''}
           onChange={handleInputChange('city')}
-          className="p-2 border rounded"
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
         />
+  
+        {['USA', 'CAN'].includes(data.country) && (
+          <select
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+            required
+          >
+            <option value="">Select State/Province</option>
+            {getStateOptions().map(state => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        )}
+  
+        {!['USA', 'CAN'].includes(data.country) && (
+          <input
+            type="text"
+            placeholder="State/Region"
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          />
+        )}
         
-        {/* Fix for state/province visibility */}
-        {data.country === 'USA' && (
-        <select
-          value={data.state || ''}
-          onChange={handleInputChange('state')}
-          className="p-2 border rounded"
-        >
-          <option value="">Select State</option>
-          {US_STATES.map(state => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
-      )}
-      
-      {data.country === 'CAN' && (
-        <select
-          value={data.province || ''}
-          onChange={handleInputChange('province')}
-          className="p-2 border rounded"
-        >
-          <option value="">Select Province</option>
-          {CANADIAN_PROVINCES.map(province => (
-            <option key={province} value={province}>{province}</option>
-          ))}
-        </select>
-      )}
-        
-        {/* Fix for postal code input */}
         <input
           type="text"
-          inputMode="text"
-          placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
+          placeholder="Postal Code"
           value={data.postalCode || ''}
           onChange={handleInputChange('postalCode')}
-          className="p-2 border rounded"
+          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
+          required
         />
-        
-        {/* Fix for country visibility */}
-        <div className="col-span-2 p-2 border rounded bg-gray-100">
-          {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
-        </div>
       </div>
     );
   };
@@ -587,14 +598,18 @@ const convertFileToBase64 = (file) => {
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
 
     // Calculate shipping fee based on country 
-    let shippingFee = 0; 
-    if (selectedCountry === 'TUN') { 
-        shippingFee = 8; // 8 TND for Tunisia 
-    } else if (selectedCountry === 'USA') { 
-        shippingFee = 9; // 9$ for USA 
-    } else if (selectedCountry === 'CAN') { 
-        shippingFee = 9; // 9$ for Canada 
-    } 
+    let shippingFee = 0;
+    if (selectedCountry === 'TUN') {
+        shippingFee = 8; // 8 TND for Tunisia
+    } else if (selectedCountry === 'USA') {
+        shippingFee = 9; // 9$ for USA
+    } else if (selectedCountry === 'CAN') {
+        shippingFee = 9; // 9$ for Canada
+    } else if (selectedCountry === 'GBR') {
+        shippingFee = 9; // 9£ for United Kingdom
+    } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
+        shippingFee = 9; // 9€ for European countries
+    }
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
@@ -1198,7 +1213,6 @@ const convertFileToBase64 = (file) => {
   };
 
   
-
   if (showIntro) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -1241,29 +1255,43 @@ const convertFileToBase64 = (file) => {
                 </div>
                 
                 <div className="text-center">
-                  <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
+                  <p className="text-gray-600 mt-2">Choose your location to start printing your memories</p>
                 </div>
                 
-                <div className="space-y-2">
-                  {initialCountries.map(country => (
-                    <button
-                      key={country.value}
-                      onClick={() => handleCountrySelect(country.value)}
-                      className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="font-medium">{country.name}</div>
-                    </button>
-                  ))}
-                </div>
-  
-                {/* Book Now Button */}
-                <div className="text-center mt-6">
-                  <button 
-                    onClick={() => setShowBookingPopup(true)} 
-                    className="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500"
+                <div className="space-y-4">
+                  <select 
+                    className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    value={selectedCountry}
+                    onChange={(e) => handleCountrySelect(e.target.value)}
                   >
-                    Book a Photography Service
+                    <option value="">Select your country</option>
+                    {initialCountries.map(country => (
+                      <option key={country.value} value={country.value}>
+                        {country.name} ({country.currency})
+                      </option>
+                    ))}
+                  </select>
+  
+                  <button
+                    onClick={() => {
+                      if (selectedCountry) {
+                        handleCountrySelect(selectedCountry);
+                      }
+                    }}
+                    disabled={!selectedCountry}
+                    className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Start Printing
                   </button>
+  
+                  <div className="text-center">
+                    <button 
+                      onClick={() => setShowBookingPopup(true)} 
+                      className="text-sm text-gray-600 hover:text-yellow-600 underline"
+                    >
+                      Book a photography service
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1275,7 +1303,7 @@ const convertFileToBase64 = (file) => {
               </p>
             </div>
           </div>
-
+  
           {/* Booking Popup */}
           {showBookingPopup && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
