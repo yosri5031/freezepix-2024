@@ -526,114 +526,114 @@ const convertFileToBase64 = (file) => {
     ));
   };
 
-  const calculateTotals = () => {
-    const country = initialCountries.find(c => c.value === selectedCountry);
-    const quantities = {
-      '4x6': 0,
-      '5x7': 0,
-      '10x15': 0,
-      '15x22': 0,
-      '3d_frame': 0,
-      'keychain': 0,
-      'keyring_magnet': 0
-    };
-  
-    const subtotalsBySize = {
-      '4x6': 0,
-      '5x7': 0,
-      '10x15': 0,
-      '15x22': 0,
-      '3d_frame': 0,
-      'keychain': 0,
-      'keyring_magnet': 0
-    };
-  
-    // Count quantities and calculate subtotals for each size/product
-    selectedPhotos.forEach(photo => {
-      if (photo.productType === 'photo_print') {
-        quantities[photo.size] += photo.quantity || 1;
-        if (selectedCountry === 'TUN') {
-          if (photo.size === '10x15') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
-          } else if (photo.size === '15x22') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-          }
-        } else {
-          if (photo.size === '4x6') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
-          } else if (photo.size === '5x7') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-          }
-        }
-      } else if (photo.productType === '3d_frame') {
-        quantities['3d_frame'] += photo.quantity || 1;
-        subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
-      } else if (photo.productType === 'keychain') {
-        quantities['keychain'] += photo.quantity || 1;
-        subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
-      } else if (photo.productType === 'keyring_magnet') {
-        quantities['keyring_magnet'] += photo.quantity || 1;
-        subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
-      }
-    });
-  
-    // Calculate subtotal
-    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
-  
-    // Calculate shipping fee based on country
-    let shippingFee = 0;
-    if (selectedCountry === 'TUN') {
-      shippingFee = 8; // 8 TND for Tunisia
-    } else if (selectedCountry === 'USA') {
-      shippingFee = 9; // 9$ for usa
-    } else if (selectedCountry === 'CAN') {
-      //shippingFee = subtotal >= 35 ? 0 : 4.99; // Free shipping over $35, otherwise $4.99
-      shippingFee = 9; // 9$ for canada
+  const calculateTotals = () => { 
+    const country = initialCountries.find(c => c.value === selectedCountry); 
+    const quantities = { 
+        '4x6': 0, 
+        '5x7': 0, 
+        '10x15': 0, 
+        '15x22': 0, 
+        '3d_frame': 0, 
+        'keychain': 0, 
+        'keyring_magnet': 0 
+    }; 
 
-    }
-  
-    // Calculate discount if applicable
-    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0;
-    // Calculate tax based on location
-    let taxAmount = 0;
-    if (selectedCountry === 'TUN') {
-      // 19% TVA for Tunisia
-      taxAmount = subtotal * 0.19;
-    } else if (selectedCountry === 'CAN') {
-      const province = formData.shippingAddress.province;
-      const provinceTaxes = TAX_RATES['CA'][province];
-      
-      if (provinceTaxes) {
-        if (provinceTaxes.HST) {
-          taxAmount = subtotal * (provinceTaxes.HST / 100);
-        } else {
-          // Calculate GST
-          if (provinceTaxes.GST) {
-            taxAmount += subtotal * (provinceTaxes.GST / 100);
-          }
-          // Calculate PST or QST
-          if (provinceTaxes.PST) {
-            taxAmount += subtotal * (provinceTaxes.PST / 100);
-          }
-          if (provinceTaxes.QST) {
-            taxAmount += subtotal * (provinceTaxes.QST / 100);
-          }
-        }
-      }
-    }
-    // Calculate total
-    const total = subtotal + shippingFee + taxAmount - discount;
-  
-    return {
-      subtotalsBySize,
-      subtotal,
-      taxAmount,
-      shippingFee,
-      total,
-      quantities,
-      discount
-    };
-  };
+    const subtotalsBySize = { 
+        '4x6': 0, 
+        '5x7': 0, 
+        '10x15': 0, 
+        '15x22': 0, 
+        '3d_frame': 0, 
+        'keychain': 0, 
+        'keyring_magnet': 0 
+    }; 
+
+    // Count quantities and calculate subtotals for each size/product 
+    selectedPhotos.forEach(photo => { 
+        if (photo.productType === 'photo_print') { 
+            quantities[photo.size] += photo.quantity || 1; 
+            if (selectedCountry === 'TUN') { 
+                if (photo.size === '10x15') { 
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15; 
+                } else if (photo.size === '15x22') { 
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22; 
+                } 
+            } else { 
+                if (photo.size === '4x6') { 
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6; 
+                } else if (photo.size === '5x7') { 
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7; 
+                } 
+            } 
+        } else if (photo.productType === '3d_frame') { 
+            quantities['3d_frame'] += photo.quantity || 1; 
+            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d; 
+        } else if (photo.productType === 'keychain') { 
+            quantities['keychain'] += photo.quantity || 1; 
+            subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain; 
+        } else if (photo.productType === 'keyring_magnet') { 
+            quantities['keyring_magnet'] += photo.quantity || 1; 
+            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet; 
+        } 
+    }); 
+
+    // Calculate subtotal 
+    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
+
+    // Calculate shipping fee based on country 
+    let shippingFee = 0; 
+    if (selectedCountry === 'TUN') { 
+        shippingFee = 8; // 8 TND for Tunisia 
+    } else if (selectedCountry === 'USA') { 
+        shippingFee = 9; // 9$ for USA 
+    } else if (selectedCountry === 'CAN') { 
+        shippingFee = 9; // 9$ for Canada 
+    } 
+
+    // Calculate discount if applicable 
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
+    
+    // Calculate tax based on location, including shipping fee 
+    let taxAmount = 0; 
+    const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation
+    if (selectedCountry === 'TUN') { 
+        taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
+    } else if (selectedCountry === 'CAN') { 
+        const province = formData.shippingAddress.province; 
+        const provinceTaxes = TAX_RATES['CA'][province]; 
+
+        if (provinceTaxes) { 
+            if (provinceTaxes.HST) { 
+                taxAmount = taxableAmount * (provinceTaxes.HST / 100); 
+            } else { 
+                // Calculate GST 
+ if (provinceTaxes.GST) { 
+                    taxAmount += taxableAmount * (provinceTaxes.GST / 100); 
+                } 
+                // Calculate PST or QST 
+                if (provinceTaxes.PST) { 
+                    taxAmount += taxableAmount * (provinceTaxes.PST / 100); 
+                } 
+                if (provinceTaxes.QST) { 
+                    taxAmount += taxableAmount * (provinceTaxes.QST / 100); 
+                } 
+            } 
+        } 
+    } 
+
+    // Calculate total 
+    const total = taxableAmount + taxAmount - discount; 
+
+    return { 
+        subtotalsBySize, 
+        subtotal, 
+        taxAmount, 
+        shippingFee, 
+        total, 
+        quantities, 
+        discount 
+    }; 
+};
 
   const renderStepContent = () => {
     switch (activeStep) {
@@ -684,7 +684,7 @@ const convertFileToBase64 = (file) => {
             <option value="photo_print">Photo Print</option>
             <option value="3d_frame">3D Frame</option>
             <option value="keychain">Keychain</option>
-            <option value="keyring_magnet">Keyring and Magnet</option>
+            <option value="keyring_magnet">Magnet</option>
           </select>
         )}
 
@@ -700,7 +700,7 @@ const convertFileToBase64 = (file) => {
             className="w-full p-1 border rounded"
           >
             <option value="photo_print">Photo Print</option>
-            <option value="keyring_magnet">Keyring and Magnet</option>
+            <option value="keyring_magnet">Magnet</option>
             <option value="keychain">Keychain</option>
           </select>
           </div>
