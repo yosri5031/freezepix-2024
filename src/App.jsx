@@ -592,10 +592,10 @@ const convertFileToBase64 = (file) => {
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
-    
+
     // Calculate tax based on location, including shipping fee 
     let taxAmount = 0; 
-    const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation
+    const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
     } else if (selectedCountry === 'CAN') { 
@@ -607,8 +607,8 @@ const convertFileToBase64 = (file) => {
                 taxAmount = taxableAmount * (provinceTaxes.HST / 100); 
             } else { 
                 // Calculate GST 
- if (provinceTaxes.GST) { 
-                    taxAmount += taxableAmount * (provinceTaxes.GST / 100); 
+                if (provinceTaxes.GST) { 
+                    taxAmount += taxableAmount * (provinceTaxes.GST /  100); 
                 } 
                 // Calculate PST or QST 
                 if (provinceTaxes.PST) { 
@@ -895,7 +895,7 @@ const convertFileToBase64 = (file) => {
   };
 
   const renderInvoice = () => {
-    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount } = calculateTotals();
+    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount,taxAmount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
     
     return (
