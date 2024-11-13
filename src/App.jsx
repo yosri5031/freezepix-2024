@@ -282,16 +282,23 @@ const convertFileToBase64 = (file) => {
 //email send 
 const sendOrderConfirmationEmail = async (orderData) => {
   try {
-    // Validate orderData and provide defaults
-    if (!orderData) {
-      throw new Error('Order data is required');
-    }
+    // Helper function to get product description
+    const getProductDescription = (photo) => {
+      switch (photo.productType) {
+        case 'photo_print':
+          return `Print - ${photo.size}`;
+        case '3d_frame':
+          return '3D Crystal Frame';
+        case 'keychain':
+          return 'Photo Keychain';
+        case 'keyring_magnet':
+          return 'Keyring Magnet';
+        default:
+          return 'Custom Product';
+      }
+    };
 
-    // Ensure selectedPhotos exists and is an array
-    const selectedPhotos = Array.isArray(orderData.selectedPhotos) 
-      ? orderData.selectedPhotos 
-      : [];
-
+    // Create order summary with detailed product information
     const emailOrderData = {
       orderNumber: orderData.orderNumber || '',
       email: orderData.email || '',
@@ -305,21 +312,23 @@ const sendOrderConfirmationEmail = async (orderData) => {
         postalCode: orderData?.shippingAddress?.postalCode || '',
         country: orderData?.shippingAddress?.country || ''
       },
-      selectedPhotos: selectedPhotos.map(photo => ({
-        productType: photo?.type || 'photo_print',
-        size: photo?.size || '',
-        quantity: photo?.quantity || 1,
-        price: photo?.price || 0,
-        currency: photo?.currency || 'USD'
-      })),
-      totalAmount: orderData.totalAmount || 0,
-      currency: orderData.currency || 'USD',
+      orderSummary: {
+        totalItems: Array.isArray(orderData.selectedPhotos) ? orderData.selectedPhotos.length : 0,
+        totalAmount: orderData.totalAmount || 0,
+        currency: orderData.currency || 'USD',
+        items: Array.isArray(orderData.selectedPhotos) ? 
+          orderData.selectedPhotos.map(photo => ({
+            productDescription: getProductDescription(photo),
+            quantity: photo.quantity || 1,
+            price: photo.price || 0
+          })) : []
+      },
       phone: orderData.phone || 'Not provided',
       orderNote: orderData.orderNote || '',
       paymentMethod: orderData.paymentMethod || 'cod'
     };
 
-    console.log('Sending formatted email data:', JSON.stringify(emailOrderData, null, 2));
+    console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
 
     const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
       method: 'POST',
