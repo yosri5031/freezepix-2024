@@ -430,19 +430,19 @@ const convertFileToBase64 = (file) => {
             <div className="text-red-500 text-sm">{error}</div>
           )}
           <button
-            type="submit"
-            disabled={!stripe || isProcessing}
-            className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isProcessing ? (
-              <span className="flex items-center justify-center gap-2">
-                <Loader className="animate-spin" size={16} />
-                Processing Payment...
-              </span>
-            ) : (
-              'Pay Now'
-            )}
-          </button>
+    type="submit"
+    disabled={!stripe || isProcessing || isProcessingOrder} // Disable if processing order
+    className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+    {isProcessing || isProcessingOrder ? ( // Show loading state
+        <span className="flex items-center justify-center gap-2">
+            <Loader className="animate-spin" size={16} />
+            Processing Payment...
+        </span>
+    ) : (
+        'Pay Now'
+    )}
+</button>
         </form>
       );
     };
@@ -485,15 +485,18 @@ const convertFileToBase64 = (file) => {
     
       const handleNext = async () => {
         if (activeStep === 2) {
-          if (selectedCountry === 'TUN') {
-            // For Tunisia COD orders, directly call handleOrderSuccess
-            await handleOrderSuccess();
-          }
-          // For other countries, the PaymentForm component will handle the order submission
+            if (selectedCountry === 'TUN') {
+                // For Tunisia COD orders, show loading state
+                setIsProcessingOrder(true);
+                await handleOrderSuccess(); // Call the order success function
+                setIsProcessingOrder(false); // Reset loading state after processing
+            } else {
+                setActiveStep(prev => prev + 1);
+            }
         } else {
-          setActiveStep(prev => prev + 1);
+            setActiveStep(prev => prev + 1);
         }
-      };
+    };
   
       const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
