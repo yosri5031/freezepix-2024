@@ -1309,7 +1309,7 @@ const validateStep = () => {
       const stateValid = 
         (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
         (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.state);       // Canada needs province
+        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
 
       return basicFieldsValid && stateValid;
 
