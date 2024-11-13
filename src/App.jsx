@@ -1126,23 +1126,24 @@ const sendOrderConfirmationEmail = async (orderData) => {
   )}
 
   {/* Calculations and Summary */}
-  {(() => {
+{(() => {
     // Calculate tax amount
     let taxAmount = 0;
+    const taxableAmount = subtotal + shippingFee; // Define taxable amount once
     
     if (selectedCountry === 'TUN') {
-      taxAmount = (subtotal+shippingFee) * 0.19;
+        taxAmount = taxableAmount * 0.19;
     } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
-      const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-      if (provinceTaxes) {
-        if (provinceTaxes.HST) {
-          taxAmount = subtotal * (provinceTaxes.HST / 100);
-        } else {
-          if (provinceTaxes.GST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.GST / 100);
-          if (provinceTaxes.PST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.PST / 100);
-          if (provinceTaxes.QST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.QST / 100);
+        const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+        if (provinceTaxes) {
+            if (provinceTaxes.HST) {
+                taxAmount = taxableAmount * (provinceTaxes.HST / 100); // Fixed: Include shipping fee in HST calculation
+            } else {
+                if (provinceTaxes.GST) taxAmount += taxableAmount * (provinceTaxes.GST / 100);
+                if (provinceTaxes.PST) taxAmount += taxableAmount * (provinceTaxes.PST / 100);
+                if (provinceTaxes.QST) taxAmount += taxableAmount * (provinceTaxes.QST / 100);
+            }
         }
-      }
     }
 
     // Calculate final total
