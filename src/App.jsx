@@ -300,6 +300,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     // Create order summary with detailed product information
     const emailOrderData = {
+          // Initialize with empty array if photos are missing
       orderNumber: orderData.orderNumber || 'N/A',
       email: orderData.email || 'N/A',
       shippingAddress: {
@@ -315,7 +316,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
       paymentMethod: orderData.paymentMethod || 'N/A',
-      selectedPhotos: Array.isArray(orderData.selectedPhotos) ? orderData.selectedPhotos : [],
+      selectedPhotos: orderData.selectedPhotos || [],
       totalAmount: orderData.totalAmount || 0,
       currency: orderData.currency || 'USD'
     };
