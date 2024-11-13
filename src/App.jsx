@@ -300,8 +300,8 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     // Create order summary with detailed product information
     const emailOrderData = {
-      orderNumber: orderData.orderNumber || '',
-      email: orderData.email || '',
+      orderNumber: orderData.orderNumber || 'N/A',
+      email: orderData.email || 'N/A',
       shippingAddress: {
         firstName: orderData?.shippingAddress?.firstName || '',
         lastName: orderData?.shippingAddress?.lastName || '',
@@ -312,20 +312,12 @@ const sendOrderConfirmationEmail = async (orderData) => {
         postalCode: orderData?.shippingAddress?.postalCode || '',
         country: orderData?.shippingAddress?.country || ''
       },
-      orderSummary: {
-        totalItems: Array.isArray(orderData.selectedPhotos) ? orderData.selectedPhotos.length : 0,
-        totalAmount: orderData.totalAmount || 0,
-        currency: orderData.currency || 'USD',
-        items: Array.isArray(orderData.selectedPhotos) ? 
-          orderData.selectedPhotos.map(photo => ({
-            productDescription: getProductDescription(photo),
-            quantity: photo.quantity || 1,
-            price: photo.price || 0
-          })) : []
-      },
-      phone: orderData.phone || 'Not provided',
+      phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
-      paymentMethod: orderData.paymentMethod || 'cod'
+      paymentMethod: orderData.paymentMethod || 'N/A',
+      selectedPhotos: Array.isArray(orderData.selectedPhotos) ? orderData.selectedPhotos : [],
+      totalAmount: orderData.totalAmount || 0,
+      currency: orderData.currency || 'USD'
     };
 
     console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
