@@ -498,19 +498,31 @@ const convertFileToBase64 = (file) => {
       };
     
       const handleNext = async () => {
-        if (activeStep === 2) {
-            if (selectedCountry === 'TUN') {
-                // For Tunisia COD orders, show loading state
-                setIsLoading(true);
-                await handleOrderSuccess(); // Call the order success function
-                setIsLoading(false); // Reset loading state after processing
-            } else {
-                setActiveStep(prev => prev + 1);
-            }
-        } else {
-            setActiveStep(prev => prev + 1);
+        // First check if the current step is valid
+        if (!validateStep()) {
+          setError('Please complete all required fields before proceeding');
+          return;
         }
-    };
+      
+        try {
+          if (activeStep === 2) {
+            if (selectedCountry === 'TUN') {
+              setIsLoading(true);
+              await handleOrderSuccess();
+            } else {
+              setActiveStep(prev => prev + 1);
+            }
+          } else {
+            setError(null); // Clear any previous errors
+            setActiveStep(prev => prev + 1);
+          }
+        } catch (error) {
+          setError('An error occurred while processing your request');
+          console.error('Error in handleNext:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
   
       const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
@@ -696,7 +708,7 @@ const convertFileToBase64 = (file) => {
       </button>
       <div className="mt-2 space-y-2">
         {/* Product Type Selection for US/Canada */}
-        {(['USA', 'CAN'].includes(selectedCountry)) && (
+        {(['USA', 'CAN', 'DEU','FRA','ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
           <select
             value={photo.productType}
             onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -1189,28 +1201,51 @@ const convertFileToBase64 = (file) => {
         country: country
       }
     }));
-    setShowIntro(false);
   };
-  const validateStep = () => {
-    switch (activeStep) {
-      case 0:
-        return selectedPhotos.length > 0;
-      case 1:
-        return formData.email && 
-               formData.phone && 
-               formData.shippingAddress.firstName && 
-               formData.shippingAddress.lastName && 
-               formData.shippingAddress.address && 
-               formData.shippingAddress.city && 
-               formData.shippingAddress.postalCode &&
-               (selectedCountry !== 'USA' || formData.shippingAddress.state) &&
-               (selectedCountry !== 'CAN' || formData.shippingAddress.province);
-      case 2:
-        return true;
-      default:
-        return false;
-    }
-  };
+  // Add a separate handler for the Start Printing button
+const handleStartPrinting = () => {
+  setShowIntro(false);
+  setActiveStep(0);
+};
+const validateStep = () => {
+  switch (activeStep) {
+    case 0: // Upload Photos step
+      return selectedPhotos.length > 0;
+      
+    case 1: // Shipping Information step
+      // Simplified validation for required fields
+      const shippingAddress = formData.shippingAddress;
+      
+      // Basic field validation
+      const basicFieldsValid = Boolean(
+        formData.email &&
+        formData.phone &&
+        shippingAddress.firstName &&
+        shippingAddress.lastName &&
+        shippingAddress.address &&
+        shippingAddress.city &&
+        shippingAddress.postalCode
+      );
+
+      // State/Province validation based on country
+      const stateValid = 
+        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
+        (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
+        (selectedCountry === 'CAN' && shippingAddress.state);       // Canada needs province
+
+      return basicFieldsValid && stateValid;
+
+    case 2: // Payment step (if applicable)
+      if (selectedCountry === 'TUN') {
+        return true; // COD doesn't need additional validation
+      }
+      // Add any specific payment validation here if needed
+      return true;
+
+    default:
+      return false;
+  }
+};
 
   
   if (showIntro) {
