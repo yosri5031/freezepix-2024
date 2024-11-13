@@ -278,6 +278,29 @@ const convertFileToBase64 = (file) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
+//email send 
+const sendOrderConfirmationEmail = async (orderData) => {
+  try {
+    const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`Email service responded with status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error('Failed to send order confirmation email:', error);
+    throw error;
+  }
+};
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
@@ -355,7 +378,8 @@ const convertFileToBase64 = (file) => {
           }
         );
     
-        
+         // Send confirmation email
+         await sendOrderConfirmationEmail(orderData);
         // Handle successful order creation
         setOrderSuccess(true);
         console.log('Order created successfully:', response.data);
