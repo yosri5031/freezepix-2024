@@ -282,23 +282,68 @@ const convertFileToBase64 = (file) => {
 //email send 
 const sendOrderConfirmationEmail = async (orderData) => {
   try {
-    const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
+    const emailOrderData = {
+      orderNumber: orderData.orderNumber,
+      email: orderData.email,
+      shippingAddress: {
+        firstName: orderData.shippingAddress.firstName,
+        lastName: orderData.shippingAddress.lastName,
+        address: orderData.shippingAddress.address,
+        city: orderData.shippingAddress.city,
+        state: orderData.shippingAddress.state || '',
+        province: orderData.shippingAddress.province || '',
+        postalCode: orderData.shippingAddress.postalCode,
+        country: orderData.shippingAddress.country
       },
-      body: JSON.stringify(orderData)
-    });
+      selectedPhotos: orderData.selectedPhotos.map(photo => ({
+        productType: photo.type || 'photo_print',
+        size: photo.size || '',
+        quantity: photo.quantity,
+        price: photo.price,
+        currency: photo.currency
+      })),
+      totalAmount: orderData.totalAmount,
+      currency: orderData.currency,
+      phone: orderData.phone || 'Not provided',
+      orderNote: orderData.orderNote || '',
+      paymentMethod: orderData.paymentMethod || 'cod'
+    };
 
-    if (!response.ok) {
-      throw new Error(`Email service responded with status: ${response.status}`);
+   
+
+    const response1 = axios.post('hhttps://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation',emailOrderData,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        timeout: 60000 // 60 seconds timeout
+      }
+    );
+    const responseData1 = await response1.json().catch(e => null);
+    
+    if (!response1.ok) {
+      throw {
+        message: `Email service error: ${responseData1?.message || response.statusText}`,
+        status: response1.status,
+        response1: responseData1
+      };
     }
 
-    const result = await response.json();
-    return result;
+    console.log('Email service response:', responseData1);
+    return responseData1;
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
-    throw error;
+    console.error('Detailed email service error:', {
+      message: error.message,
+      status: error.status,
+      response: error.response,
+      stack: error.stack
+    });
+    throw {
+      message: 'Failed to send order confirmation email',
+      originalError: error,
+      status: error.status,
+      response: error.response
+    };
   }
 };
     // Inside the FreezePIX component, modify the order success handling:
