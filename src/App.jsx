@@ -622,7 +622,7 @@ const convertFileToBase64 = (file) => {
     } 
 
     // Calculate total 
-    const total = taxableAmount + taxAmount - discount; 
+    const total = (taxableAmount + taxAmount) - discount; 
 
     return { 
         subtotalsBySize, 
@@ -1020,16 +1020,16 @@ const convertFileToBase64 = (file) => {
     let taxAmount = 0;
     
     if (selectedCountry === 'TUN') {
-      taxAmount = subtotal * 0.19;
+      taxAmount = (subtotal+shippingFee) * 0.19;
     } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
       const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
       if (provinceTaxes) {
         if (provinceTaxes.HST) {
           taxAmount = subtotal * (provinceTaxes.HST / 100);
         } else {
-          if (provinceTaxes.GST) taxAmount += subtotal * (provinceTaxes.GST / 100);
-          if (provinceTaxes.PST) taxAmount += subtotal * (provinceTaxes.PST / 100);
-          if (provinceTaxes.QST) taxAmount += subtotal * (provinceTaxes.QST / 100);
+          if (provinceTaxes.GST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.GST / 100);
+          if (provinceTaxes.PST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.PST / 100);
+          if (provinceTaxes.QST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.QST / 100);
         }
       }
     }
