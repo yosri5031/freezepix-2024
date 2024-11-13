@@ -685,16 +685,20 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     // Calculate shipping fee based on country 
     let shippingFee = 0;
-    if (selectedCountry === 'TUN') {
-        shippingFee = 8; // 8 TND for Tunisia
-    } else if (selectedCountry === 'USA') {
-        shippingFee = 9; // 9$ for USA
-    } else if (selectedCountry === 'CAN') {
-        shippingFee = 9; // 9$ for Canada
-    } else if (selectedCountry === 'GBR') {
-        shippingFee = 9; // 9£ for United Kingdom
-    } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
-        shippingFee = 9; // 9€ for European countries
+    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
+
+    if (!isOrderOverThreshold) {
+        if (selectedCountry === 'TUN') {
+            shippingFee = 8; // 8 TND for Tunisia
+        } else if (selectedCountry === 'USA') {
+            shippingFee = 9; // 9$ for USA
+        } else if (selectedCountry === 'CAN') {
+            shippingFee = 9; // 9$ for Canada
+        } else if (selectedCountry === 'GBR') {
+            shippingFee = 9; // 9£ for United Kingdom
+        } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
+            shippingFee = 9; // 9€ for European countries
+        }
     }
 
     // Calculate discount if applicable 
