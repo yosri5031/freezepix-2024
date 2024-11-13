@@ -15,12 +15,14 @@ import {
 const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
 
 const initialCountries = [
-    { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
-      keyring_magnet: 9.99 },
-    { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140,keychain: 9.99,
-      keyring_magnet: 9.99 },
-    { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5,keychain: 15,
-      keyring_magnet: 15 }
+  { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
+  { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
+  { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5, keychain: 15, keyring_magnet: 15 },
+  { name: 'Germany', value: 'DEU', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'France', value: 'FRA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Italy', value: 'ITA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Spain', value: 'ESP', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'United Kingdom', value: 'GBR', currency: 'GBP', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 }
 ];
 
 const TAX_RATES = {
@@ -43,6 +45,13 @@ const TAX_RATES = {
   }
 };
 
+const EU_COUNTRIES = [
+  'Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czech Republic',
+  'Denmark', 'Estonia', 'Finland', 'France', 'Germany', 'Greece', 'Hungary',
+  'Ireland', 'Italy', 'Latvia', 'Lithuania', 'Luxembourg', 'Malta',
+  'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia', 'Slovenia',
+  'Spain', 'Sweden'
+];
 // Add these arrays for US states and Canadian provinces
 const US_STATES = [
   'Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 
@@ -487,19 +496,31 @@ const convertFileToBase64 = (file) => {
       };
     
       const handleNext = async () => {
-        if (activeStep === 2) {
-            if (selectedCountry === 'TUN') {
-                // For Tunisia COD orders, show loading state
-                setIsLoading(true);
-                await handleOrderSuccess(); // Call the order success function
-                setIsLoading(false); // Reset loading state after processing
-            } else {
-                setActiveStep(prev => prev + 1);
-            }
-        } else {
-            setActiveStep(prev => prev + 1);
+        // First check if the current step is valid
+        if (!validateStep()) {
+          setError('Please complete all required fields before proceeding');
+          return;
         }
-    };
+      
+        try {
+          if (activeStep === 2) {
+            if (selectedCountry === 'TUN') {
+              setIsLoading(true);
+              await handleOrderSuccess();
+            } else {
+              setActiveStep(prev => prev + 1);
+            }
+          } else {
+            setError(null); // Clear any previous errors
+            setActiveStep(prev => prev + 1);
+          }
+        } catch (error) {
+          setError('An error occurred while processing your request');
+          console.error('Error in handleNext:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
   
       const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
@@ -587,14 +608,18 @@ const convertFileToBase64 = (file) => {
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
 
     // Calculate shipping fee based on country 
-    let shippingFee = 0; 
-    if (selectedCountry === 'TUN') { 
-        shippingFee = 8; // 8 TND for Tunisia 
-    } else if (selectedCountry === 'USA') { 
-        shippingFee = 9; // 9$ for USA 
-    } else if (selectedCountry === 'CAN') { 
-        shippingFee = 9; // 9$ for Canada 
-    } 
+    let shippingFee = 0;
+    if (selectedCountry === 'TUN') {
+        shippingFee = 8; // 8 TND for Tunisia
+    } else if (selectedCountry === 'USA') {
+        shippingFee = 9; // 9$ for USA
+    } else if (selectedCountry === 'CAN') {
+        shippingFee = 9; // 9$ for Canada
+    } else if (selectedCountry === 'GBR') {
+        shippingFee = 9; // 9£ for United Kingdom
+    } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
+        shippingFee = 9; // 9€ for European countries
+    }
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
@@ -681,7 +706,7 @@ const convertFileToBase64 = (file) => {
       </button>
       <div className="mt-2 space-y-2">
         {/* Product Type Selection for US/Canada */}
-        {(['USA', 'CAN'].includes(selectedCountry)) && (
+        {(['USA', 'CAN', 'DEU','FRA','ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
           <select
             value={photo.productType}
             onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -1174,31 +1199,53 @@ const convertFileToBase64 = (file) => {
         country: country
       }
     }));
-    setShowIntro(false);
   };
-  const validateStep = () => {
-    switch (activeStep) {
-      case 0:
-        return selectedPhotos.length > 0;
-      case 1:
-        return formData.email && 
-               formData.phone && 
-               formData.shippingAddress.firstName && 
-               formData.shippingAddress.lastName && 
-               formData.shippingAddress.address && 
-               formData.shippingAddress.city && 
-               formData.shippingAddress.postalCode &&
-               (selectedCountry !== 'USA' || formData.shippingAddress.state) &&
-               (selectedCountry !== 'CAN' || formData.shippingAddress.province);
-      case 2:
-        return true;
-      default:
-        return false;
-    }
-  };
+  // Add a separate handler for the Start Printing button
+const handleStartPrinting = () => {
+  setShowIntro(false);
+  setActiveStep(0);
+};
+const validateStep = () => {
+  switch (activeStep) {
+    case 0: // Upload Photos step
+      return selectedPhotos.length > 0;
+      
+    case 1: // Shipping Information step
+      // Simplified validation for required fields
+      const shippingAddress = formData.shippingAddress;
+      
+      // Basic field validation
+      const basicFieldsValid = Boolean(
+        formData.email &&
+        formData.phone &&
+        shippingAddress.firstName &&
+        shippingAddress.lastName &&
+        shippingAddress.address &&
+        shippingAddress.city &&
+        shippingAddress.postalCode
+      );
+
+      // State/Province validation based on country
+      const stateValid = 
+        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
+        (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
+        (selectedCountry === 'CAN' && shippingAddress.state);       // Canada needs province
+
+      return basicFieldsValid && stateValid;
+
+    case 2: // Payment step (if applicable)
+      if (selectedCountry === 'TUN') {
+        return true; // COD doesn't need additional validation
+      }
+      // Add any specific payment validation here if needed
+      return true;
+
+    default:
+      return false;
+  }
+};
 
   
-
   if (showIntro) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -1241,29 +1288,44 @@ const convertFileToBase64 = (file) => {
                 </div>
                 
                 <div className="text-center">
-                  <p className="text-gray-600 mt-2">Choose your shipping country to continue</p>
+                  <p className="text-gray-600 mt-2">Choose your location to start printing your memories</p>
                 </div>
                 
-                <div className="space-y-2">
-                  {initialCountries.map(country => (
-                    <button
-                      key={country.value}
-                      onClick={() => handleCountrySelect(country.value)}
-                      className="w-full p-4 text-left border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="font-medium">{country.name}</div>
-                    </button>
-                  ))}
-                </div>
-  
-                {/* Book Now Button */}
-                <div className="text-center mt-6">
-                  <button 
-                    onClick={() => setShowBookingPopup(true)} 
-                    className="inline-block px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500"
+                <div className="space-y-4">
+                  <select 
+                    className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                    value={selectedCountry}
+                    onChange={(e) => handleCountrySelect(e.target.value)}
                   >
-                    Book a Photography Service
-                  </button>
+                    <option value="">Select your country</option>
+                    {initialCountries.map(country => (
+                      <option key={country.value} value={country.value}>
+                        {country.name} ({country.currency})
+                      </option>
+                    ))}
+                  </select>
+  
+                  <button
+  onClick={() => {
+    if (selectedCountry) {
+      handleCountrySelect(selectedCountry);
+      handleStartPrinting(); // Call handleStartPrinting if selectedCountry is available
+    }
+  }}
+  disabled={!selectedCountry}
+  className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+  Start Printing
+</button>
+  
+                  <div className="text-center">
+                    <button 
+                      onClick={() => setShowBookingPopup(true)} 
+                      className="text-sm text-gray-600 hover:text-yellow-600 underline"
+                    >
+                      Book a photography service
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1275,7 +1337,7 @@ const convertFileToBase64 = (file) => {
               </p>
             </div>
           </div>
-
+  
           {/* Booking Popup */}
           {showBookingPopup && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
