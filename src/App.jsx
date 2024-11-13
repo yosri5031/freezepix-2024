@@ -97,99 +97,97 @@ const BookingPopup = ({ onClose }) => {
   const AddressForm = ({ type, data, onChange }) => {
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
-      onChange({ ...data, [field]: newValue });
-    };
-  
-    const getStateOptions = () => {
-      switch(data.country) {
-        case 'USA':
-          return US_STATES;
-        case 'CAN':
-          return CANADIAN_PROVINCES;
-        default:
-          return [];
-      }
+      const caretPosition = e.target.selectionStart;
+      const scrollPosition = e.target.scrollTop;
+    
+      onChange({
+        ...data,
+        [field]: newValue
+      });
+    
+      setTimeout(() => {
+        e.target.selectionStart = caretPosition;
+        e.target.selectionEnd = caretPosition;
+        e.target.scrollTop = scrollPosition;
+      }, 0);
     };
   
     return (
-      <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-4">
         <input
           type="text"
-          placeholder="Full Name"
-          value={data.name || ''}
-          onChange={handleInputChange('name')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
+          inputMode="text"
+          placeholder="First Name"
+          value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
+          className="p-2 border rounded"
         />
-        
-        <input
-          type="email"
-          placeholder="Email"
-          value={data.email || ''}
-          onChange={handleInputChange('email')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
-        />
-        
-        <input
-          type="tel"
-          placeholder="Phone"
-          value={data.phone || ''}
-          onChange={handleInputChange('phone')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
-        />
-        
         <input
           type="text"
-          placeholder="Street Address"
+          inputMode="text"
+          placeholder="Last Name"
+          value={data.lastName || ''}
+          onChange={handleInputChange('lastName')}
+          className="p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder="Address"
           value={data.address || ''}
           onChange={handleInputChange('address')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
+          className="col-span-2 p-2 border rounded"
         />
-        
         <input
           type="text"
+          inputMode="text"
           placeholder="City"
           value={data.city || ''}
           onChange={handleInputChange('city')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
+          className="p-2 border rounded"
         />
-  
-        {['USA', 'CAN'].includes(data.country) && (
-          <select
-            value={data.state || ''}
-            onChange={handleInputChange('state')}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-            required
-          >
-            <option value="">Select State/Province</option>
-            {getStateOptions().map(state => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
-        )}
-  
-        {!['USA', 'CAN'].includes(data.country) && (
-          <input
-            type="text"
-            placeholder="State/Region"
-            value={data.state || ''}
-            onChange={handleInputChange('state')}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          />
-        )}
         
+        {/* Fix for state/province visibility */}
+        {data.country === 'USA' && (
+        <select
+          value={data.state || ''}
+          onChange={handleInputChange('state')}
+          className="p-2 border rounded"
+        >
+          <option value="">Select State</option>
+          {US_STATES.map(state => (
+            <option key={state} value={state}>{state}</option>
+          ))}
+        </select>
+      )}
+      
+      {data.country === 'CAN' && (
+        <select
+          value={data.province || ''}
+          onChange={handleInputChange('province')}
+          className="p-2 border rounded"
+        >
+          <option value="">Select Province</option>
+          {CANADIAN_PROVINCES.map(province => (
+            <option key={province} value={province}>{province}</option>
+          ))}
+        </select>
+      )}
+        
+        {/* Fix for postal code input */}
         <input
           type="text"
-          placeholder="Postal Code"
+          inputMode="text"
+          placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
           value={data.postalCode || ''}
           onChange={handleInputChange('postalCode')}
-          className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 focus:outline-none"
-          required
+          className="p-2 border rounded"
         />
+        
+        {/* Fix for country visibility */}
+        <div className="col-span-2 p-2 border rounded bg-gray-100">
+          {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
+        </div>
       </div>
     );
   };
