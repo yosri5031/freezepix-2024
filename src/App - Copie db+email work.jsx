@@ -278,6 +278,81 @@ const convertFileToBase64 = (file) => {
     reader.onerror = (error) => reject(error);
   });
 };
+
+//email send 
+const sendOrderConfirmationEmail = async (orderData) => {
+  try {
+    // Helper function to get product description
+    const getProductDescription = (photo) => {
+      switch (photo.productType) {
+        case 'photo_print':
+          return `Print - ${photo.size}`;
+        case '3d_frame':
+          return '3D Crystal Frame';
+        case 'keychain':
+          return 'Photo Keychain';
+        case 'keyring_magnet':
+          return 'Keyring Magnet';
+        default:
+          return 'Custom Product';
+      }
+    };
+
+    // Create order summary with detailed product information
+    const emailOrderData = {
+          // Initialize with empty array if photos are missing
+      orderNumber: orderData.orderNumber || 'N/A',
+      email: orderData.email || 'N/A',
+      shippingAddress: {
+        firstName: orderData?.shippingAddress?.firstName || '',
+        lastName: orderData?.shippingAddress?.lastName || '',
+        address: orderData?.shippingAddress?.address || '',
+        city: orderData?.shippingAddress?.city || '',
+        state: orderData?.shippingAddress?.state || '',
+        province: orderData?.shippingAddress?.province || '',
+        postalCode: orderData?.shippingAddress?.postalCode || '',
+        country: orderData?.shippingAddress?.country || ''
+      },
+      phone: orderData.phone || 'N/A',
+      orderNote: orderData.orderNote || '',
+      paymentMethod: orderData.paymentMethod || 'N/A',
+      selectedPhotos: orderData.selectedPhotos || [],
+      totalAmount: orderData.totalAmount || 0,
+      currency: orderData.currency || 'USD'
+    };
+
+    console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
+//.
+    const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify(emailOrderData)
+    });
+
+    const responseData = await response.json().catch(e => null);
+    
+    if (!response.ok) {
+      throw {
+        message: `Email service error: ${responseData?.message || response.statusText}`,
+        status: response.status,
+        response: responseData
+      };
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Detailed email service error:', {
+      message: error.message,
+      status: error.status,
+      response: error.response,
+      stack: error.stack
+    });
+    throw error;
+  }
+};
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
@@ -355,7 +430,8 @@ const convertFileToBase64 = (file) => {
           }
         );
     
-        
+         // Send confirmation email
+         await sendOrderConfirmationEmail(orderData);
         // Handle successful order creation
         setOrderSuccess(true);
         console.log('Order created successfully:', response.data);
@@ -609,16 +685,20 @@ const convertFileToBase64 = (file) => {
 
     // Calculate shipping fee based on country 
     let shippingFee = 0;
-    if (selectedCountry === 'TUN') {
-        shippingFee = 8; // 8 TND for Tunisia
-    } else if (selectedCountry === 'USA') {
-        shippingFee = 9; // 9$ for USA
-    } else if (selectedCountry === 'CAN') {
-        shippingFee = 9; // 9$ for Canada
-    } else if (selectedCountry === 'GBR') {
-        shippingFee = 9; // 9£ for United Kingdom
-    } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
-        shippingFee = 9; // 9€ for European countries
+    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
+
+    if (!isOrderOverThreshold) {
+        if (selectedCountry === 'TUN') {
+            shippingFee = 8; // 8 TND for Tunisia
+        } else if (selectedCountry === 'USA') {
+            shippingFee = 9; // 9$ for USA
+        } else if (selectedCountry === 'CAN') {
+            shippingFee = 9; // 9$ for Canada
+        } else if (selectedCountry === 'GBR') {
+            shippingFee = 9; // 9£ for United Kingdom
+        } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
+            shippingFee = 9; // 9€ for European countries
+        }
     }
 
     // Calculate discount if applicable 
@@ -1046,23 +1126,24 @@ const convertFileToBase64 = (file) => {
   )}
 
   {/* Calculations and Summary */}
-  {(() => {
+{(() => {
     // Calculate tax amount
     let taxAmount = 0;
+    const taxableAmount = subtotal + shippingFee; // Define taxable amount once
     
     if (selectedCountry === 'TUN') {
-      taxAmount = (subtotal+shippingFee) * 0.19;
+        taxAmount = taxableAmount * 0.19;
     } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
-      const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-      if (provinceTaxes) {
-        if (provinceTaxes.HST) {
-          taxAmount = subtotal * (provinceTaxes.HST / 100);
-        } else {
-          if (provinceTaxes.GST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.GST / 100);
-          if (provinceTaxes.PST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.PST / 100);
-          if (provinceTaxes.QST) taxAmount += (subtotal+shippingFee) * (provinceTaxes.QST / 100);
+        const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+        if (provinceTaxes) {
+            if (provinceTaxes.HST) {
+                taxAmount = taxableAmount * (provinceTaxes.HST / 100); // Fixed: Include shipping fee in HST calculation
+            } else {
+                if (provinceTaxes.GST) taxAmount += taxableAmount * (provinceTaxes.GST / 100);
+                if (provinceTaxes.PST) taxAmount += taxableAmount * (provinceTaxes.PST / 100);
+                if (provinceTaxes.QST) taxAmount += taxableAmount * (provinceTaxes.QST / 100);
+            }
         }
-      }
     }
 
     // Calculate final total
@@ -1229,7 +1310,7 @@ const validateStep = () => {
       const stateValid = 
         (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
         (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.state);       // Canada needs province
+        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
 
       return basicFieldsValid && stateValid;
 
