@@ -399,22 +399,22 @@ useEffect(() => {
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
 
-     const calculateItemPrice = (photo, country) => {
-  if (photo.productType === 'photo_print') {
-    switch (photo.size) {
-      case '4x6': return country.size4x6;
-      case '5x7': return country.size5x7;
-      case '10x15': return country.size10x15;
-      case '15x22': return country.size15x22;
-      default: return 0;
-    }
-  } else if (photo.productType === '3d_frame') {
-    return country.crystal3d; // Assuming same pricing as 3D crystal
-  } else if (['keychain', 'keyring_magnet'].includes(photo.productType)) {
-    return country.value === 'TUN' ? 15 : 9.99;
-  }
-  return 0;
-};
+      const calculateItemPrice = (photo, country) => { 
+        if (photo.productType === 'photo_print') { 
+          switch (photo.size) { 
+            case '4x6': return country.size4x6; 
+            case '5x7': return country.size5x7; 
+            case '10x15': return country.size10x15; 
+            case '15x22': return country.size15x22; 
+            default: return 0; 
+          } 
+        } else if (photo.productType === '3d_frame') { 
+          return country.crystal3d; 
+        } else if (['keychain', 'keyring_magnet'].includes(photo.productType)) { 
+          return country.value === 'TUN' ? 15 : 9.99; 
+        } 
+        return 0; 
+     }; 
 const convertFileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -798,53 +798,44 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     // Count quantities and calculate subtotals for each size/product 
     selectedPhotos.forEach(photo => { 
+        const itemPrice = calculateItemPrice(photo, country);
+        
         if (photo.productType === 'photo_print') { 
             quantities[photo.size] += photo.quantity || 1; 
-            if (selectedCountry === 'TUN') { 
-                if (photo.size === '10x15') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15; 
-                } else if (photo.size === '15x22') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22; 
-                } 
-            } else { 
-                if (photo.size === '4x6') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6; 
-                } else if (photo.size === '5x7') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7; 
-                } 
-            } 
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * itemPrice; 
         } else if (photo.productType === '3d_frame') { 
             quantities['3d_frame'] += photo.quantity || 1; 
-            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d; 
+            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * itemPrice; 
         } else if (photo.productType === 'keychain') { 
             quantities['keychain'] += photo.quantity || 1; 
-            subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain; 
+            subtotalsBySize['keychain'] += (photo.quantity || 1) * itemPrice; 
         } else if (photo.productType === 'keyring_magnet') { 
             quantities['keyring_magnet'] += photo.quantity || 1; 
-            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet; 
+            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * itemPrice; 
         } 
     }); 
 
     // Calculate subtotal 
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
 
+    // Rest of the calculation remains the same...
     // Calculate shipping fee based on country 
-    let shippingFee = 0;
-    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
+    let shippingFee = 0; 
+    const isOrderOverThreshold = subtotal >= 50; // Base threshold value 
 
-    if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN') {
-            shippingFee = 8; // 8 TND for Tunisia
-        } else if (selectedCountry === 'USA') {
-            shippingFee = 9; // 9$ for USA
-        } else if (selectedCountry === 'CAN') {
-            shippingFee = 9; // 9$ for Canada
-        } else if (selectedCountry === 'GBR') {
-            shippingFee = 9; // 9£ for United Kingdom
-        } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
-            shippingFee = 9; // 9€ for European countries
-        }
-    }
+    if (!isOrderOverThreshold) { 
+        if (selectedCountry === 'TUN') { 
+            shippingFee = 8; // 8 TND for Tunisia 
+        } else if (selectedCountry === 'USA') { 
+            shippingFee = 9; // 9$ for USA 
+        } else if (selectedCountry === 'CAN') { 
+            shippingFee = 9; // 9$ for Canada 
+        } else if (selectedCountry === 'GBR') { 
+            shippingFee = 9; // 9£ for United Kingdom 
+        } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) { 
+            shippingFee = 9; // 9€ for European countries 
+        } 
+    } 
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
@@ -889,7 +880,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         quantities, 
         discount 
     }; 
-};
+}; 
 
   const renderStepContent = () => {
     switch (activeStep) {
