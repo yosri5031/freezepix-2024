@@ -194,6 +194,66 @@ const BookingPopup = ({ onClose }) => {
   
 const FreezePIX = () => {
  
+// Add these hooks at the beginning of the FreezePIX component
+useEffect(() => {
+  // Load saved state when component mounts
+  const savedState = localStorage.getItem('freezepixState');
+  if (savedState) {
+    const parsedState = JSON.parse(savedState);
+    setShowIntro(parsedState.showIntro);
+    setSelectedCountry(parsedState.selectedCountry);
+    setSelectedPhotos(parsedState.selectedPhotos);
+    setActiveStep(parsedState.activeStep);
+    setFormData(parsedState.formData);
+  }
+}, []);
+
+// Save state whenever important values change
+useEffect(() => {
+  const stateToSave = {
+    showIntro,
+    selectedCountry,
+    selectedPhotos,
+    activeStep,
+    formData
+  };
+  localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
+}, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+
+// Add this effect to update prices when country changes
+useEffect(() => {
+  if (selectedCountry) {
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    if (!country) return;
+
+    // Update prices for all selected photos
+    setSelectedPhotos(prevPhotos => 
+      prevPhotos.map(photo => ({
+        ...photo,
+        price: calculateItemPrice({ ...photo }, country)
+      }))
+    );
+
+    // Update form data with new country
+    setFormData(prev => ({
+      ...prev,
+      shippingAddress: {
+        ...prev.shippingAddress,
+        country: selectedCountry,
+        state: '', // Reset state/province when country changes
+        province: ''
+      },
+      billingAddress: {
+        ...prev.billingAddress,
+        country: selectedCountry,
+        state: '', // Reset state/province when country changes
+        province: ''
+      },
+      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+    }));
+  }
+}, [selectedCountry]);
+
 
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
