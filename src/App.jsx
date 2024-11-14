@@ -240,30 +240,114 @@ const FreezePIX = () => {
       });
       
      // Add these hooks at the beginning of the FreezePIX component
-useEffect(() => {
-  // Load saved state when component mounts
-  const savedState = localStorage.getItem('freezepixState');
-  if (savedState) {
-    const parsedState = JSON.parse(savedState);
-    setShowIntro(parsedState.showIntro);
-    setSelectedCountry(parsedState.selectedCountry);
-    setSelectedPhotos(parsedState.selectedPhotos);
-    setActiveStep(parsedState.activeStep);
-    setFormData(parsedState.formData);
-  }
-}, []);
+     jsx
 
-// Save state whenever important values change
+     Copier
+     // Add these helper functions at the beginning of your component
+     const convertImageToBase64 = (file) => {
+         return new Promise((resolve, reject) => {
+             const reader = new FileReader();
+             reader.onload = () => resolve(reader.result);
+             reader.onerror = reject;
+             reader.readAsDataURL(file);
+         });
+     };
+     
+     const base64ToFile = (base64String, fileName) => {
+         const arr = base64String.split(',');
+         const mime = arr[0].match(/:(.*?);/)[1];
+         const bstr = atob(arr[1]);
+         let n = bstr.length;
+         const u8arr = new Uint8Array(n);
+         while (n--) {
+             u8arr[n] = bstr.charCodeAt(n);
+         }
+         return new File([u8arr], fileName, { type: mime });
+     };
+     
+     // Modify the save state useEffect to handle image conversion
+     useEffect(() => {
+         const saveState = async () => {
+             try {
+                 const photosWithBase64 = await Promise.all(
+                     selectedPhotos.map(async (photo) => {
+                         if (photo.file && !photo.base64) {
+                             const base64 = await convertImageToBase64(photo.file);
+                             return {
+                                 ...photo,
+                                 base64,
+                                 // Store original file properties we need
+                                 fileName: photo.file.name,
+                                 fileType: photo.file.type,
+                             };
+                         }
+                         return photo;
+                     })
+                 );
+     
+                 const stateToSave = {
+                     showIntro,
+                     selectedCountry,
+                     selectedPhotos: photosWithBase64,
+                     activeStep,
+                     formData
+                 };
+                 localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
+             } catch (error) {
+                 console.error('Error saving state:', error);
+             }
+         };
+     
+         saveState();
+     }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+     
+     // Modify the load state useEffect to handle image reconstruction
+     useEffect(() => {
+         const loadState = async () => {
+             const savedState = localStorage.getItem('freezepixState');
+             if (savedState) {
+                 try {
+                     const parsedState = JSON.parse(savedState);
+                     
+                     // Reconstruct files from base64
+                     const photosWithFiles = parsedState.selectedPhotos.map(photo => {
+                         if (photo.base64) {
+                             const file = base64ToFile(photo.base64, photo.fileName);
+                             return {
+                                 ...photo,
+                                 file,
+                                 preview: photo.base64, // Use base64 as preview URL
+                             };
+                         }
+                         return photo;
+                     });
+     
+                     setShowIntro(parsedState.showIntro);
+                     setSelectedCountry(parsedState.selectedCountry);
+                     setSelectedPhotos(photosWithFiles);
+                     setActiveStep(parsedState.activeStep);
+                     setFormData(parsedState.formData);
+                 } catch (error) {
+                     console.error('Error loading saved state:', error);
+                     localStorage.removeItem('freezepixState');
+                 }
+             }
+         };
+     
+         loadState();
+     }, []);
+
+     // Add cleanup for preview URLs
 useEffect(() => {
-  const stateToSave = {
-    showIntro,
-    selectedCountry,
-    selectedPhotos,
-    activeStep,
-    formData
+  return () => {
+      // Cleanup preview URLs when component unmounts
+      selectedPhotos.forEach(photo => {
+          if (photo.preview && !photo.preview.startsWith('data:')) {
+              URL.revokeObjectURL(photo.preview);
+          }
+      });
   };
-  localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
-}, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+}, [selectedPhotos]);
 
 // Add this effect to update prices when country changes
 useEffect(() => {
