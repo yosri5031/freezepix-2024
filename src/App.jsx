@@ -347,36 +347,40 @@ useEffect(() => {
 }, [selectedPhotos]);
 
 // Add this effect to update prices when country changes
+// Update the useEffect for country change
 useEffect(() => {
   if (selectedCountry) {
-    const country = initialCountries.find(c => c.value === selectedCountry);
-    if (!country) return;
+      const country = initialCountries.find(c => c.value === selectedCountry);
+      if (!country) return;
 
-    // Update prices for all selected photos
-    setSelectedPhotos(prevPhotos => 
-      prevPhotos.map(photo => ({
-        ...photo,
-        price: calculateItemPrice({ ...photo }, country)
-      }))
-    );
+      // Update prices for all photos when country changes
+      setSelectedPhotos(prevPhotos => 
+          prevPhotos.map(photo => ({
+              ...photo,
+              price: calculateItemPrice({ 
+                  size: photo.size || '10x15',
+                  quantity: photo.quantity || 1
+              }, country)
+          }))
+      );
 
-    // Update form data with new country
-    setFormData(prev => ({
-      ...prev,
-      shippingAddress: {
-        ...prev.shippingAddress,
-        country: selectedCountry,
-        state: '', // Reset state/province when country changes
-        province: ''
-      },
-      billingAddress: {
-        ...prev.billingAddress,
-        country: selectedCountry,
-        state: '', // Reset state/province when country changes
-        province: ''
-      },
-      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
-    }));
+      // Update form data
+      setFormData(prev => ({
+          ...prev,
+          shippingAddress: {
+              ...prev.shippingAddress,
+              country: selectedCountry,
+              state: '',
+              province: ''
+          },
+          billingAddress: {
+              ...prev.billingAddress,
+              country: selectedCountry,
+              state: '',
+              province: ''
+          },
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+      }));
   }
 }, [selectedCountry]);
 
