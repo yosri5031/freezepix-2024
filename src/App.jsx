@@ -194,7 +194,52 @@ const BookingPopup = ({ onClose }) => {
   
 const FreezePIX = () => {
  
-// Add these hooks at the beginning of the FreezePIX component
+
+
+
+    const [showIntro, setShowIntro] = useState(true);
+    const [selectedCountry, setSelectedCountry] = useState('');
+    const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
+    const [activeStep, setActiveStep] = useState(0);
+    const [orderSuccess, setOrderSuccess] = useState(false);
+    const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
+    const [isProcessingOrder, setIsProcessingOrder] = useState(false);
+    const [showBookingPopup, setShowBookingPopup] = useState(false);
+    const fileInputRef = useRef(null);
+    const [error, setError] = useState(null);
+    const [discountCode, setDiscountCode] = useState('');
+    const [discountError, setDiscountError] = useState('');
+    const [orderNote, setOrderNote] = useState('');
+    const [showPolicyPopup, setShowPolicyPopup] = useState(false);
+    const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [formData, setFormData] = useState({
+        email: '',
+        phone: '',
+        shippingAddress: {
+          firstName: '',
+          lastName: '',
+          address: '',
+          city: '',
+          postalCode: '',
+          country: selectedCountry, // Initialize with selected country
+          province: '',
+          state: '',
+        },
+        billingAddress: {
+          firstName: '',
+          lastName: '',
+          address: '',
+          city: '',
+          postalCode: '',
+          country: selectedCountry, // Initialize with selected country
+          province: '',
+          state: '',
+        },
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+      });
+      
+     // Add these hooks at the beginning of the FreezePIX component
 useEffect(() => {
   // Load saved state when component mounts
   const savedState = localStorage.getItem('freezepixState');
@@ -253,51 +298,6 @@ useEffect(() => {
     }));
   }
 }, [selectedCountry]);
-
-
-    const [showIntro, setShowIntro] = useState(true);
-    const [selectedCountry, setSelectedCountry] = useState('');
-    const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
-    const [activeStep, setActiveStep] = useState(0);
-    const [orderSuccess, setOrderSuccess] = useState(false);
-    const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
-    const [isProcessingOrder, setIsProcessingOrder] = useState(false);
-    const [showBookingPopup, setShowBookingPopup] = useState(false);
-    const fileInputRef = useRef(null);
-    const [error, setError] = useState(null);
-    const [discountCode, setDiscountCode] = useState('');
-    const [discountError, setDiscountError] = useState('');
-    const [orderNote, setOrderNote] = useState('');
-    const [showPolicyPopup, setShowPolicyPopup] = useState(false);
-    const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const [formData, setFormData] = useState({
-        email: '',
-        phone: '',
-        shippingAddress: {
-          firstName: '',
-          lastName: '',
-          address: '',
-          city: '',
-          postalCode: '',
-          country: selectedCountry, // Initialize with selected country
-          province: '',
-          state: '',
-        },
-        billingAddress: {
-          firstName: '',
-          lastName: '',
-          address: '',
-          city: '',
-          postalCode: '',
-          country: selectedCountry, // Initialize with selected country
-          province: '',
-          state: '',
-        },
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
-      });
-      
-     
 
       const updateStandardSize = (photoId, standardSize) => {
         setSelectedPhotos(prevPhotos => 
