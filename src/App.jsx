@@ -239,10 +239,7 @@ const FreezePIX = () => {
         paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
       });
       
-     // Add these hooks at the beginning of the FreezePIX component
-     jsx
-
-     Copier
+    
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
