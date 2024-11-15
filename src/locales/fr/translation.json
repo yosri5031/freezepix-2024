@@ -1,0 +1,77 @@
+{
+    "intro": {
+      "welcome" : "la société de photographie",
+      "title": "Transformez vos souvenirs numériques en magnifiques impressions",
+      "subtitle": "Obtenez des impressions de haute qualité livrées directement à votre porte. Commande facile, livraison rapide et résultats époustouflants.",
+      "choose_location": "Choisissez votre pays pour commencer à imprimer vos souvenirs",
+      "archive_policy": "Politique d'archivage : Toutes les photos seront archivées dans notre base de données 60 jours après l'expédition de la commande."
+    },
+    "navigation": {
+      "choose_photos": "Choisir des Photos",
+      "select_sizes": "Sélectionner les Tailles", 
+      "quick_checkout": "Paiement Rapide",
+      "location" : "Choisissez votre emplacement pour commencer à imprimer vos souvenirs",
+      "select" : "Sélectionnez votre pays"
+    },
+    "buttons": {
+      "start_printing": "Commencer l'impression",
+      "book_service": "Réserver un service photo",
+      "add_photos": "Ajouter des Photos",
+      "next": "Suivant",
+      "back": "Retour",
+      "home": "Accueil",
+      "place_order": "Passer la Commande",
+      "place_new": "Passer une nouvelle commande",
+      "review": "Révision et paiement"
+    },
+    "steps": {
+      "upload_photos": "Télécharger des Photos",
+      "shipping_details": "Détails de Livraison",
+      "payment": "Paiement"
+    },
+    "form": {
+        "select_photo" : "Sélectionner des photos",
+        "select_state" : "sélectionner l'état",
+        "select_province": "Sélectionner une province",
+      "email": "Adresse e-mail",
+      "phone": "Numéro de téléphone",
+      "first_name": "Prénom",
+      "last_name": "Nom de famille",
+      "address": "Adresse",
+      "city": "Ville",
+      "postal_code": "Code Postal",
+      "select_country": "Sélectionnez votre pays",
+      "same_address": "Adresse de facturation identique à l'adresse de livraison",
+      "shipping_a" : "Adresse de livraison",
+       "billing_a" : "adresse de facturation"
+    },
+    "order": {
+      "success_message": "Merci pour votre commande !",
+      "success_details": "Votre commande a été passée avec succès et sera traitée dans les 48 heures. Un e-mail de confirmation a été envoyé à",
+      "order_number": "Numéro de commande",
+      "total_amount": "Montant total",
+      "payment_method": "Mode de paiement",
+      "cod": " livraison à domicile",
+      "discount" : "Code de réduction",
+      "summary": "Résumé de la commande",
+       "shipping_fee": "Frais d'expédition"
+    },
+    "validation": {
+        "contact_info": "Coordonnées",
+      "complete_fields": "Veuillez compléter tous les champs requis avant de continuer",
+      "select_photos": "Veuillez sélectionner au moins une photo"
+    },
+    "produits": {
+        "produits": {
+        "photo_print": "Photo Print",
+        "magnet": "Magnet",
+        "3d_frame":"3D Frame",
+        "keychain": "Keychain",
+        "shape" : "Forme",
+        "rectangle": "Rectangle",
+        "heart" : "Coeur",
+        "quantity" : "Quantité",
+        "size": "taille"
+      }
+      }
+  }

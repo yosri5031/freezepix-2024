@@ -1,0 +1,75 @@
+{
+    "intro": {
+      "welcome" : "the photography company",
+      "title": "Transform Your Digital Memories Into Beautiful Prints",
+      "subtitle": "Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.",
+      "choose_location": "Choose your location to start printing your memories",
+      "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
+    },
+    "navigation": {
+      "choose_photos": "Choose Photos",
+      "select_sizes": "Select Sizes", 
+      "quick_checkout": "Quick Checkout",
+      "location" : "Choose your location to start printing your memories",
+      "select" : "Select your country"
+    },
+    "buttons": {
+      "start_printing": "Start Printing",
+      "book_service": "Book a photography service",
+      "add_photos": "Add Photos",
+      "next": "Next",
+      "back": "Back",
+      "home": "Home",
+      "place_order": "Place Order",
+      "place_new": "Place New Order",
+      "review": "Review & Payment"
+    },
+    "steps": {
+      "upload_photos": "Upload Photos",
+      "shipping_details": "Shipping Details",
+      "payment": "Payment"
+    },
+    "form": {
+    "select_photo" : "Select Photos",
+      "select_state" : "Select State",
+      "select_province": "Select Province",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "address": "Address",
+      "city": "City",
+      "postal_code": "Postal Code",
+      "select_country": "Select your country",
+      "same_address": "Billing address same as shipping",
+      "shipping_a" : "Shipping Address",
+      "billing_a" : "Billing Address"
+    },
+    "order": {
+      "success_message": "Thank you for your order!",
+      "success_details": "Your order has been successfully placed and will be processed within 48 hours. A confirmation email has been sent to",
+      "order_number": "Order Number",
+      "total_amount": "Total Amount",
+      "payment_method": "Payment Method",
+      "cod": " Your order will be processed as Cash on Delivery (COD)",
+      "discount" : "Discount Code",
+      "summary": "Order Summary",
+      "shipping_fee": "Shipping Fee"
+    },
+    "validation": {
+      "contact_info": "Contact Information",
+      "complete_fields": "Please complete all required fields before proceeding",
+      "select_photos": "Please select at least one photo"
+    },
+    "produits": {
+        "photo_print": "Photo Print",
+        "magnet": "Magnet",
+        "3d_frame":"3D Frame",
+        "keychain": "Keychain",
+        "shape" : "Shape",
+        "rectangle": "Rectangle",
+        "heart" : "Heart",
+        "quantity" : "Quantity",
+        "size": "Size"
+      }
+  }

@@ -4,6 +4,8 @@ import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react'
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { useTranslation } from 'react-i18next';
+import LanguageSelector from './components/LanguageSelector';
 //import { sendOrderConfirmation } from './utils/emailService';
 import {
   CardElement,
@@ -154,7 +156,7 @@ const BookingPopup = ({ onClose }) => {
           onChange={handleInputChange('state')}
           className="p-2 border rounded"
         >
-          <option value="">Select State</option>
+          <option value="">{t('form.select_state')}</option>
           {US_STATES.map(state => (
             <option key={state} value={state}>{state}</option>
           ))}
@@ -167,7 +169,7 @@ const BookingPopup = ({ onClose }) => {
           onChange={handleInputChange('province')}
           className="p-2 border rounded"
         >
-          <option value="">Select Province</option>
+          <option value="">{t('form.select_province')}</option>
           {CANADIAN_PROVINCES.map(province => (
             <option key={province} value={province}>{province}</option>
           ))}
@@ -897,7 +899,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-medium">Select Photos</h2>
+              <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
               <button
                 onClick={() => fileInputRef.current?.click()}
                 className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
@@ -992,15 +994,15 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {photo.productType === '3d_frame' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Shape
+            {t('produits.shape')}
             </label>
           <select
             value={photo.crystalShape}
             onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
             className="w-full p-1 border rounded"
           >
-            <option value="rectangle">Rectangle</option>
-            <option value="heart">Heart</option>
+            <option value="rectangle"> {t('produits.rectangle')}</option>
+            <option value="heart">{t('produits.heart')}</option>
           </select>
           </div>
         )}
@@ -1009,7 +1011,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Size
+            {t('produits.size')}
             </label>
             <select
               value={photo.standardSize || 'standard'}
@@ -1024,7 +1026,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {/* Quantity selection */}
         <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-              Quantity
+        {t('produits.quantity')}
             </label>
         <select
           value={photo.quantity}
@@ -1047,7 +1049,8 @@ const sendOrderConfirmationEmail = async (orderData) => {
       return (
         <div className="space-y-6">
           <div className="space-y-4">
-            <h2 className="text-xl font-medium">Contact Information</h2>
+            <h2 className="text-xl font-medium">        {t('validation.contact_info')}
+            </h2>
             <input
               type="email"
               placeholder="Email Address"
@@ -1065,7 +1068,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
           </div>
 
           <div className="space-y-4">
-            <h2 className="text-xl font-medium">Shipping Address</h2>
+            <h2 className="text-xl font-medium"> {t('form.shipping_a')}</h2>
             <AddressForm
               type="shipping"
               data={{
@@ -1091,13 +1094,14 @@ const sendOrderConfirmationEmail = async (orderData) => {
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="sameAddress" className="text-sm">
-                  Billing address same as shipping
+                {t('form.same_address')}
+
                 </label>
               </div>
 
               {!isBillingAddressSameAsShipping && (
                 <>
-                  <h2 className="text-xl font-medium">Billing Address</h2>
+                  <h2 className="text-xl font-medium">{t('form.billing_a')}</h2>
                   <AddressForm
                     type="billing"
                     data={{
@@ -1119,14 +1123,14 @@ const sendOrderConfirmationEmail = async (orderData) => {
     case 2:
       return (
         <div className="space-y-6">
-          <h2 className="text-xl font-medium">Review & Payment</h2>
+          <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
           {renderInvoice()}
   
           {selectedCountry === 'TUN' ? (
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
                 <p className="text-center text-gray-600">
-                  Your order will be processed as Cash on Delivery (COD)
+                {t('order.cod')}
                 </p>
               </div>
             </div>
@@ -1160,14 +1164,14 @@ const sendOrderConfirmationEmail = async (orderData) => {
   
         {/* Contact Information */}
         <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Contact Information</h3>
+          <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
           <p className="text-gray-600">{formData.email}</p>
           <p className="text-gray-600">{formData.phone}</p>
         </div>
   
         {/* Shipping Address */}
         <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Shipping Address</h3>
+          <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
           <div className="text-gray-600">
             <p>{formData.shippingAddress.firstName} {formData.shippingAddress.lastName}</p>
             <p>{formData.shippingAddress.address}</p>
@@ -1181,7 +1185,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {/* Billing Address (if different from shipping) */}
         {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
           <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">Billing Address</h3>
+            <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
             <div className="text-gray-600">
               <p>{formData.billingAddress.firstName} {formData.billingAddress.lastName}</p>
               <p>{formData.billingAddress.address}</p>
@@ -1194,7 +1198,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         )}
    {/* Discount Code Section */}
    <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Discount Code</h3>
+          <h3 className="font-medium mb-3">{t('order.discount')}</h3>
           <div className="space-y-2">
             <input
   type="text"
@@ -1211,7 +1215,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         
       {/* Order Summary */}
 <div className="border rounded-lg p-4">
-  <h3 className="font-medium mb-3">Order Summary</h3>
+  <h3 className="font-medium mb-3">{t('order.summary')}</h3>
   
   {/* Photo Prints */}
   {selectedCountry === 'TUN' ? (
@@ -1304,7 +1308,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
         {/* Shipping Fee */}
         <div className="flex justify-between py-2">
-          <span>Shipping Fee</span>
+          <span>{t('order.shipping_fee')}</span>
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
         </div>
 
@@ -1470,6 +1474,7 @@ const validateStep = () => {
       return false;
   }
 };
+const { t } = useTranslation();
 
   
   if (showIntro) {
@@ -1486,35 +1491,35 @@ const validateStep = () => {
                 </div>
               </div>
               <div className="text-sm italic text-gray-600 mb-8">
-                the photography company
+              {t('intro.welcome')}
+              <p> <LanguageSelector /> </p>
               </div>
               
               <div className="space-y-6 max-w-md mx-auto">
                 <h2 className="text-2xl font-semibold text-gray-800">
-                  Transform Your Digital Memories Into Beautiful Prints
+                {t('intro.title')}
                 </h2>
                 
                 <p className="text-gray-600">
-                  Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.
-                </p>
+                {t('intro.subtitle')}                </p>
       
                 <div className="flex justify-center space-x-4 py-4">
                   <div className="text-center">
                     <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                    <div className="text-sm text-gray-600">Choose Photos</div>
+                    <div className="text-sm text-gray-600">{t('navigation.choose_photos')}</div>
                   </div>
                   <div className="text-center">
                     <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                    <div className="text-sm text-gray-600">Select Sizes</div>
+                    <div className="text-sm text-gray-600">{t('navigation.select_sizes')}</div>
                   </div>
                   <div className="text-center">
                     <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
-                    <div className="text-sm text-gray-600">Quick Checkout</div>
+                    <div className="text-sm text-gray-600">{t('navigation.quick_checkout')}</div>
                   </div>
                 </div>
                 
                 <div className="text-center">
-                  <p className="text-gray-600 mt-2">Choose your location to start printing your memories</p>
+                  <p className="text-gray-600 mt-2">{t('navigation.location')}</p>
                 </div>
                 
                 <div className="space-y-4">
@@ -1523,7 +1528,7 @@ const validateStep = () => {
                     value={selectedCountry}
                     onChange={(e) => handleCountrySelect(e.target.value)}
                   >
-                    <option value="">Select your country</option>
+                    <option value="">{t('navigation.select')}</option>
                     {initialCountries.map(country => (
                       <option key={country.value} value={country.value}>
                         {country.name} ({country.currency})
@@ -1541,7 +1546,7 @@ const validateStep = () => {
   disabled={!selectedCountry}
   className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
 >
-  Start Printing
+{t('buttons.start_printing')}
 </button>
   
                   <div className="text-center">
@@ -1549,7 +1554,7 @@ const validateStep = () => {
                       onClick={() => setShowBookingPopup(true)} 
                       className="text-sm text-gray-600 hover:text-yellow-600 underline"
                     >
-                      Book a photography service
+                      {t('buttons.book_service')}
                     </button>
                   </div>
                 </div>
@@ -1559,8 +1564,7 @@ const validateStep = () => {
             {/* Archive Policy */}
             <div className="border-t text-center py-3">
               <p className="text-xs text-gray-500">
-                Archive policy: All pictures will be achieved in our database 60 days after the order is shipped.
-              </p>
+              {t('intro.archive_policy')}              </p>
             </div>
           </div>
   
@@ -1596,18 +1600,17 @@ const validateStep = () => {
         <div className="max-w-xl w-full">
           <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
             <div className="text-green-500 text-5xl">✓</div>
-            <h2 className="text-2xl font-bold">Thank you for your order!</h2>
+            <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
             <p className="text-gray-600">
-              Your order has been successfully placed and will be processed within 48 hours.
-              A confirmation email has been sent to {formData.email}.
+            {t('order.success_details')} {formData.email}.
             </p>
             <div className="mt-4">
               <p className="font-medium">Order Details:</p>
-              <p>Order Number: {currentOrderNumber}</p>
-              <p>Total Amount: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
+              <p> {t('order.order_number')}: {currentOrderNumber}</p>
+              <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
               {selectedCountry === 'TUN' && (
                 <p className="text-gray-600 mt-2">
-                  Payment Method: Cash on Delivery
+                 {t('order.payment_method')}
                 </p>
               )}
             </div>
@@ -1615,7 +1618,7 @@ const validateStep = () => {
               onClick={() => window.location.reload()}
               className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
             >
-              Place New Order
+              {t('buttons.place_new')}
             </button>
           </div>
         </div>
