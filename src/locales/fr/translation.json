@@ -62,7 +62,7 @@
       "select_photos": "Veuillez sélectionner au moins une photo"
     },
     "produits": {
-        "produits": {
+       
         "photo_print": "Photo Print",
         "magnet": "Magnet",
         "3d_frame":"3D Frame",
@@ -79,5 +79,5 @@
          "total": "Totale",
          "discountmessage": "Entrez le code de réduction"
       }
-      }
+      
   }
