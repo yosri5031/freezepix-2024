@@ -63,10 +63,10 @@
     },
     "produits": {
        
-        "photo_print": "Photo Print",
-        "magnet": "Magnet",
-        "3d_frame":"3D Frame",
-        "keychain": "Keychain",
+        "photo_print": "Impression photo",
+        "magnet": "Aimant",
+        "3d_frame":"Cadre 3D",
+        "keychain": "porte-clés",
         "shape" : "Forme",
         "rectangle": "Rectangle",
         "heart" : "Coeur",
