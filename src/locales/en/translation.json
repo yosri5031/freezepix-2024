@@ -72,6 +72,10 @@
         "quantity" : "Quantity",
         "size": "Size",
         "product": "Product",
-        "note" : "Order Note"
+        "note" : "Order Note",
+        "note1" : "Add any special instructions (optional)",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "discountmessage": "Enter discount code"
       }
   }

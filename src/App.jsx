@@ -1202,7 +1202,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
           <div className="space-y-2">
             <input
   type="text"
-  placeholder="Enter discount code"
+  placeholder="<%= t('produits.discountmessage') %>" 
   value={discountCode}
   onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
   className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
@@ -1302,7 +1302,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       <>
         {/* Subtotal */}
         <div className="flex justify-between py-2 border-t">
-          <span>Subtotal</span>
+          <span>{t('produits.subtotal')} </span>
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
         </div>
 
@@ -1349,14 +1349,14 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {/* Discount */}
         {discount > 0 && (
           <div className="flex justify-between py-2 text-green-600">
-            <span>Discount (50%)</span>
+            <span>{t('order.discount')}  (50%)</span>
             <span>-{discount.toFixed(2)} {country?.currency}</span>
           </div>
         )}
 
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
-          <span>Total</span>
+          <span>{t('produits.total')} </span>
           <span>{finalTotal.toFixed(2)} {country?.currency}</span>
         </div>
       </>
@@ -1368,7 +1368,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
-            placeholder="Add any special instructions (optional)"
+            placeholder="<%= t('produits.note1') %>" 
             value={orderNote}
             onChange={(e) => setOrderNote(e.target.value)}
             className="w-full p-2 border rounded"

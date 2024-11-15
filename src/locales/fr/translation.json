@@ -73,7 +73,11 @@
         "quantity" : "Quantité",
         "size": "taille",
         "product": "Produit",
-        "note" : "Remarque sur la commande"
+        "note" : "Remarque sur la commande",
+        "note1" : "Ajoutez des instructions spéciales (facultatif)",
+        "subtotal": "sous-totaux",
+         "total": "Totale",
+         "discountmessage": "Entrez le code de réduction"
       }
       }
   }
