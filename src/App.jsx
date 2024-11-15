@@ -905,7 +905,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
                 className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
               >
                 <Upload size={20} />
-                Add Photos
+                {t('buttons.add_photos')}
               </button>
               <input
                 type="file"
