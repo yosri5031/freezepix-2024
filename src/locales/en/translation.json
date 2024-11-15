@@ -70,6 +70,8 @@
         "rectangle": "Rectangle",
         "heart" : "Heart",
         "quantity" : "Quantity",
-        "size": "Size"
+        "size": "Size",
+        "product": "Product",
+        "note" : "Order Note"
       }
   }

@@ -950,7 +950,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {selectedCountry === 'TUN' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Product
+            {t('produits.product')}
             </label>
           <select
             value={photo.productType}
@@ -968,7 +968,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {photo.productType === 'photo_print' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Size
+            {t('produits.size')}
             </label>
           <select
             value={photo.size}
@@ -1366,7 +1366,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         
       {/* Order Note */}
       <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">Order Note</h3>
+          <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
             placeholder="Add any special instructions (optional)"
             value={orderNote}

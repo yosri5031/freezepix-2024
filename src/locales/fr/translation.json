@@ -71,7 +71,9 @@
         "rectangle": "Rectangle",
         "heart" : "Coeur",
         "quantity" : "Quantité",
-        "size": "taille"
+        "size": "taille",
+        "product": "Produit",
+        "note" : "Remarque sur la commande"
       }
       }
   }
