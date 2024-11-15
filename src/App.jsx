@@ -1608,7 +1608,7 @@ const { t } = useTranslation();
               <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
               {selectedCountry === 'TUN' && (
                 <p className="text-gray-600 mt-2">
-                 {t('order.payment_method')}
+                 {t('order.payment_method')} COD
                 </p>
               )}
             </div>
