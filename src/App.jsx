@@ -1202,6 +1202,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
           <div className="space-y-2">
             <input
   type="text"
+  placeholder="<%= t('produits.discountmessage') %>" 
   value={discountCode}
   onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
   className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
@@ -1367,6 +1368,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
+            placeholder="<%= t('produits.note1') %>" 
             value={orderNote}
             onChange={(e) => setOrderNote(e.target.value)}
             className="w-full p-2 border rounded"
