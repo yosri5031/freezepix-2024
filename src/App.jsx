@@ -7,8 +7,6 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 //import { sendOrderConfirmation } from './utils/emailService';
-import ProductList from './ProductList';
-import products from './assets/products.json';
 import {
   CardElement,
   Elements,
@@ -217,10 +215,6 @@ const FreezePIX = () => {
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
-    const [selectedImages, setSelectedImages] = useState([]);
-    const [displayedProducts, setDisplayedProducts] = useState(
-      selectedCountry === 'TUN' ? products.filter((product) => product.country === 'TUN') : products
-    );
     const [formData, setFormData] = useState({
         email: '',
         phone: '',
@@ -270,14 +264,6 @@ const FreezePIX = () => {
          return new File([u8arr], fileName, { type: mime });
      };
      
-     useEffect(() => {
-      const initialProducts =
-        selectedCountry === 'TUN'
-          ? products.filter((product) => product.country === 'TUN')
-          : products;
-      setDisplayedProducts(initialProducts.slice(0, 4));
-    }, [selectedCountry]);
-
      // Modify the save state useEffect to handle image conversion
      useEffect(() => {
          const saveState = async () => {
@@ -771,8 +757,6 @@ const sendOrderConfirmationEmail = async (orderData) => {
           quantity: 1
         }));
         setSelectedPhotos(prevPhotos => [...(prevPhotos || []), ...newPhotos]);
-        setSelectedPhotos((selectedPhotos) => [...selectedPhotos, ...newImages]);
-  setSelectedImages((selectedImages) => [...selectedImages, ...newImages]);
       };
 
   const updateProductType = (photoId, newType) => {
@@ -913,153 +897,152 @@ const sendOrderConfirmationEmail = async (orderData) => {
     switch (activeStep) {
       case 0:
         return (
-          <><div className="w-1/3">
-            <ProductList products={displayedProducts} country={selectedCountry} />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              >
+                <Upload size={20} />
+                {t('buttons.add_photos')}
+              </button>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                multiple
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+  
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  {(selectedPhotos || []).map(photo => (
+    <div key={photo.id} className="relative border rounded-lg p-2">
+      <img
+        src={photo.preview}
+        alt="preview"
+        className="w-full h-40 object-cover rounded"
+      />
+      <button
+        onClick={() => removePhoto(photo.id)}
+        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+      >
+        <X size={16} />
+      </button>
+      <div className="mt-2 space-y-2">
+        {/* Product Type Selection for US/Canada */}
+        {(['USA', 'CAN', 'DEU','FRA','ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
+          <select
+            value={photo.productType}
+            onChange={(e) => updateProductType(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="photo_print">Photo Print</option>
+            <option value="3d_frame">3D Frame</option>
+            <option value="keychain">Keychain</option>
+            <option value="keyring_magnet">Magnet</option>
+          </select>
+        )}
+
+        {/* Product Type Selection for Tunisia */}
+        {selectedCountry === 'TUN' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('produits.product')}
+            </label>
+          <select
+            value={photo.productType}
+            onChange={(e) => updateProductType(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="photo_print">Photo Print</option>
+            <option value="keyring_magnet">Magnet</option>
+            <option value="keychain">Keychain</option>
+          </select>
           </div>
-          <div className="w-2/3 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-                >
-                  <Upload size={20} />
-                  {t('buttons.add_photos')}
-                </button>
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  multiple
-                  accept="image/*"
-                  className="hidden" />
-              </div>
+        )}
 
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {(selectedPhotos || []).map(photo => (
-                  <div key={photo.id} className="relative border rounded-lg p-2">
-                    <img
-                      src={photo.preview}
-                      alt="preview"
-                      className="w-full h-40 object-cover rounded" />
-                    <button
-                      onClick={() => removePhoto(photo.id)}
-                      className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-                    >
-                      <X size={16} />
-                    </button>
-                    <div className="mt-2 space-y-2">
-                      {/* Product Type Selection for US/Canada */}
-                      {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
-                        <select
-                          value={photo.productType}
-                          onChange={(e) => updateProductType(photo.id, e.target.value)}
-                          className="w-full p-1 border rounded"
-                        >
-                          <option value="photo_print">{t('produits.photo_print')}</option>
-                          <option value="3d_frame">{t('produits.3d_frame')}</option>
-                          <option value="keychain">{t('produits.keychain')}</option>
-                          <option value="keyring_magnet">{t('produits.magnet')}</option>
-                        </select>
-                      )}
+        {/* Size selection for photo prints */}
+        {photo.productType === 'photo_print' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('produits.size')}
+            </label>
+          <select
+            value={photo.size}
+            onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            {selectedCountry === 'TUN' ? (
+              <>
+                <option value="10x15">10x15 cm</option>
+                <option value="15x22">15x22 cm</option>
+              </>
+            ) : (
+              <>
+                <option value="4x6">4x6"</option>
+                <option value="5x7">5x7"</option>
+              </>
+            )}
+          </select>
+          </div>
+        )}
 
-                      {/* Product Type Selection for Tunisia */}
-                      {selectedCountry === 'TUN' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('produits.product')}
-                          </label>
-                          <select
-                            value={photo.productType}
-                            onChange={(e) => updateProductType(photo.id, e.target.value)}
-                            className="w-full p-1 border rounded"
-                          >
-                            <option value="photo_print">{t('produits.photo_print')}</option>
-                            <option value="keyring_magnet">{t('produits.magnet')}</option>
-                            <option value="keychain">{t('produits.keychain')}</option>
-                          </select>
-                        </div>
-                      )}
+        {/* Crystal shape selection for 3D frame */}
+        {photo.productType === '3d_frame' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('produits.shape')}
+            </label>
+          <select
+            value={photo.crystalShape}
+            onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
+            className="w-full p-1 border rounded"
+          >
+            <option value="rectangle"> {t('produits.rectangle')}</option>
+            <option value="heart">{t('produits.heart')}</option>
+          </select>
+          </div>
+        )}
 
-                      {/* Size selection for photo prints */}
-                      {photo.productType === 'photo_print' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('produits.size')}
-                          </label>
-                          <select
-                            value={photo.size}
-                            onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-                            className="w-full p-1 border rounded"
-                          >
-                            {selectedCountry === 'TUN' ? (
-                              <>
-                                <option value="10x15">10x15 cm</option>
-                                <option value="15x22">15x22 cm</option>
-                              </>
-                            ) : (
-                              <>
-                                <option value="4x6">4x6"</option>
-                                <option value="5x7">5x7"</option>
-                              </>
-                            )}
-                          </select>
-                        </div>
-                      )}
+        {/* Standard Size selection for Keychain and Keyring & Magnet */}
+        {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('produits.size')}
+            </label>
+            <select
+              value={photo.standardSize || 'standard'}
+              onChange={(e) => updateStandardSize(photo.id, e.target.value)}
+              className="w-full p-1 border rounded"
+            >
+              <option value="standard">Standard</option>
+            </select>
+          </div>
+        )}
 
-                      {/* Crystal shape selection for 3D frame */}
-                      {photo.productType === '3d_frame' && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('produits.shape')}
-                          </label>
-                          <select
-                            value={photo.crystalShape}
-                            onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
-                            className="w-full p-1 border rounded"
-                          >
-                            <option value="rectangle"> {t('produits.rectangle')}</option>
-                            <option value="heart">{t('produits.heart')}</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Standard Size selection for Keychain and Keyring & Magnet */}
-                      {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {t('produits.size')}
-                          </label>
-                          <select
-                            value={photo.standardSize || 'standard'}
-                            onChange={(e) => updateStandardSize(photo.id, e.target.value)}
-                            className="w-full p-1 border rounded"
-                          >
-                            <option value="standard">Standard</option>
-                          </select>
-                        </div>
-                      )}
-
-                      {/* Quantity selection */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          {t('produits.quantity')}
-                        </label>
-                        <select
-                          value={photo.quantity}
-                          onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-                          className="w-full p-1 border rounded"
-                        >
-                          {[...Array(99)].map((_, i) => (
-                            <option key={i + 1} value={i + 1}>{i + 1}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div></>
+        {/* Quantity selection */}
+        <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+        {t('produits.quantity')}
+            </label>
+        <select
+          value={photo.quantity}
+          onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+          className="w-full p-1 border rounded"
+        >
+          {[...Array(99)].map((_, i) => (
+            <option key={i + 1} value={i + 1}>{i + 1}</option>
+          ))}
+        </select>
+        </div>
+      </div>
+    </div>
+  ))}
+</div>
+          </div>
         );
 
       case 1:
@@ -1219,6 +1202,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
           <div className="space-y-2">
             <input
   type="text"
+  placeholder="Enter discount code"
   value={discountCode}
   onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
   className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
@@ -1318,7 +1302,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       <>
         {/* Subtotal */}
         <div className="flex justify-between py-2 border-t">
-          <span>{t('produits.subtotal')} </span>
+          <span>Subtotal</span>
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
         </div>
 
@@ -1365,14 +1349,14 @@ const sendOrderConfirmationEmail = async (orderData) => {
         {/* Discount */}
         {discount > 0 && (
           <div className="flex justify-between py-2 text-green-600">
-            <span>{t('order.discount')}  (50%)</span>
+            <span>Discount (50%)</span>
             <span>-{discount.toFixed(2)} {country?.currency}</span>
           </div>
         )}
 
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
-          <span>{t('produits.total')} </span>
+          <span>Total</span>
           <span>{finalTotal.toFixed(2)} {country?.currency}</span>
         </div>
       </>
@@ -1384,6 +1368,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
+            placeholder="Add any special instructions (optional)"
             value={orderNote}
             onChange={(e) => setOrderNote(e.target.value)}
             className="w-full p-2 border rounded"
@@ -1625,7 +1610,7 @@ const { t } = useTranslation();
               <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
               {selectedCountry === 'TUN' && (
                 <p className="text-gray-600 mt-2">
-                 {t('order.payment_method')} COD
+                 {t('order.payment_method')}
                 </p>
               )}
             </div>
