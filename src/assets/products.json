@@ -1,0 +1,50 @@
+{
+    "products": [
+      {
+        "id": 1,
+        "name": "3d_frame",
+        "title": "3D Crystal Frame",
+        "description": "Capture and cherish memories with our exquisite Freezepix crystal piece, available in heart or rectangle shapes. Our laser engraving technology brings images to life in stunning 3D detail. La transparence du Freezepix rehausse la gravure, créant un effet captivant. Commandez dès maintenant pour des moments précieux qui brilleront éternellement.",
+        "image": "3d_frame.jpg",
+        "category": "special_gifts",
+        "availableOptions": [
+          "rectangle",
+          "heart"
+        ]
+      },
+      {
+        "id": 2,
+        "name": "keychain",
+        "title": "Crystal Keychain",
+        "description": "Capture memories on-the-go with our elegant Crystal Keychain, a portable keepsake personalized with your chosen image. This sleek accessory is crafted with premium crystal and advanced laser engraving technology, ensuring your memories shine wherever you go. Emportez vos souvenirs partout avec notre élégant porte-clés en cristal, un souvenir portable personnalisé avec l'image de votre choix. Cet accessoire chic est conçu avec du cristal de qualité et une technologie de gravure au laser avancée, garantissant que vos souvenirs brillent où que vous alliez.",
+        "image": "keychain.jpg", 
+        "category": "accessories",
+        "availableOptions": [
+          "standard"
+        ]
+      },
+      {
+        "id": 3,
+        "name": "keyring_magnet",
+        "title": "Magnet",
+        "description": "Display cherished photos with our durable and compact Photo Magnet, perfect for any magnetic surface. Showcase your favorite memories with ease and style, ensuring they are kept close at hand.  Affichez vos photos préférées avec style grâce à notre Magnet Photo durable et compact, idéal pour toute surface magnétique. Gardez vos souvenirs à portée de main avec élégance, assurant qu'ils restent toujours près de vous.",
+        "image": "magnet.jpg",
+        "category": "accessories", 
+        "availableOptions": [
+          "standard"
+        ]
+      },
+      {
+        "id": 4,
+        "name": "photo_print",
+        "title": "Photo Print - Impression photo ",
+        "description": "Turn your memories into art with our high-quality Photo Prints, capturing vivid details and colors for cherished moments.  Transformez vos souvenirs en œuvres d'art avec nos tirages photo de haute qualité, capturant des détails et des couleurs vives pour des moments précieux.",
+        "image": "photo_print.jpg",
+        "category": "print",
+        "availableOptions": [
+          "10x15 cm",
+          "15x22 cm"
+        ]
+      }
+    ]
+  }
