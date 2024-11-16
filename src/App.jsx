@@ -97,16 +97,18 @@ const BookingPopup = ({ onClose }) => {
 
   // 1. Fix for country visibility in AddressForm component
   const AddressForm = ({ type, data, onChange }) => {
+    const { t } = useTranslation(); // Add this line to use translation
+  
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
       const caretPosition = e.target.selectionStart;
       const scrollPosition = e.target.scrollTop;
-    
+  
       onChange({
         ...data,
         [field]: newValue
       });
-    
+  
       setTimeout(() => {
         e.target.selectionStart = caretPosition;
         e.target.selectionEnd = caretPosition;
@@ -148,34 +150,34 @@ const BookingPopup = ({ onClose }) => {
           onChange={handleInputChange('city')}
           className="p-2 border rounded"
         />
-        
+  
         {/* Fix for state/province visibility */}
         {data.country === 'USA' && (
-        <select
-          value={data.state || ''}
-          onChange={handleInputChange('state')}
-          className="p-2 border rounded"
-        >
-          <option value="">{t('form.select_state')}</option>
-          {US_STATES.map(state => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
-      )}
-      
-      {data.country === 'CAN' && (
-        <select
-          value={data.province || ''}
-          onChange={handleInputChange('province')}
-          className="p-2 border rounded"
-        >
-          <option value="">{t('form.select_province')}</option>
-          {CANADIAN_PROVINCES.map(province => (
-            <option key={province} value={province}>{province}</option>
-          ))}
-        </select>
-      )}
-        
+          <select
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_state')}</option>
+            {US_STATES.map(state => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        )}
+  
+        {data.country === 'CAN' && (
+          <select
+            value={data.province || ''}
+            onChange={handleInputChange('province')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_province')}</option>
+            {CANADIAN_PROVINCES.map(province => (
+              <option key={province} value={province}>{province}</option>
+            ))}
+          </select>
+        )}
+  
         {/* Fix for postal code input */}
         <input
           type="text"
@@ -185,7 +187,7 @@ const BookingPopup = ({ onClose }) => {
           onChange={handleInputChange('postalCode')}
           className="p-2 border rounded"
         />
-        
+  
         {/* Fix for country visibility */}
         <div className="col-span-2 p-2 border rounded bg-gray-100">
           {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
