@@ -319,8 +319,8 @@ const closeProductDetails = () => {
       });
       const getImageSrc = (product) => {
         const imageName = {
-          '4x6 Size': 'photo4x6',
-          '5x7 Size': 'photo5x7',
+          '4x6 Size': 'photoprint4x6',
+          '5x7 Size': 'photoprint5x7',
           'Keychain': 'keychain',
           'Magnet': 'magnet',
           '3D Frame': '3d_frame',
