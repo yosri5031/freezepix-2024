@@ -11,6 +11,8 @@ import photoprint5x7 from './assets/photoprint5x7.jpg';
 import keychain from './assets/keychain.jpg';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
+import Rectangle from './assets/rectangle.jpg';
+import Heart from './assets/heart.jpg';
 //import { sendOrderConfirmation } from './utils/emailService';
 
 import {
@@ -323,12 +325,20 @@ const closeProductDetails = () => {
     if (country !== 'TUN') {
       products.push({
         category: '3D Frame',
-        product: '3D Frame',
+        product: 'Rectangle 3D Frame',
         country: countryInfo.name,
         price: countryInfo.crystal3d 
           ? `${countryInfo.currency} ${countryInfo.crystal3d}`
           : 'N/A'
-      });
+      },{
+        category: '3D Frame',
+        product: 'Heart 3D Frame',
+        country: countryInfo.name,
+        price: countryInfo.crystal3d 
+          ? `${countryInfo.currency} ${countryInfo.crystal3d}`
+          : 'N/A'
+      }
+    );
     }
 
     return products;
@@ -340,7 +350,8 @@ const closeProductDetails = () => {
       '5x7 Size': photoprint5x7,
       'Keychain': keychain,
       'Magnet': magnet,
-      '3D Frame': threeDFrame,
+      'Rectangle 3D Frame': Rectangle,
+      'Heart 3D Frame' : Heart
     };
   
     return imageMap[product] || '';
