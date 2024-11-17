@@ -784,14 +784,9 @@ const handlePaymentMethodChange = (event) => {
                 state: formData.billingAddress.state,
               },
           paymentMethod: formData.paymentMethod,
-          orderItems: selectedPhotos.map(photo => ({
-            id: photo.id,
-            type: photo.type,
-            quantity: photo.quantity,
-            price: photo.price,
-            // Only include base64 if it's necessary and you're sure it won't exceed size limits
-            image: photo.base64 // Be careful with this
-          })),
+          orderItems: photosWithPrices,
+          totalAmount: total,
+          currency: country.currency,
           orderNote: orderNote,
           discountCode: discountCode,
           stripePaymentId: stripePaymentMethod?.id,
