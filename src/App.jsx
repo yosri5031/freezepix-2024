@@ -2007,25 +2007,26 @@ const { t } = useTranslation();
   </button>
   
   {/* Only show Next/Place Order button if:
-      1. Not on payment page (activeStep !== 2), or
-      2. On payment page AND it's a Tunisia order (COD payment) */}
- {(activeStep !== 2 || selectedCountry === 'TUN' || paymentMethod === 'interac') && (
-  <button
-    onClick={activeStep === 2 && paymentMethod === 'interac' ? handleProcessOrder : handleNext}
-    disabled={!validateStep()}
+    1. Not on payment page (activeStep !== 2), or
+    2. On payment page AND it's either Tunisia order (COD) or Interac payment */}
+{(activeStep !== 2 || selectedCountry === 'TUN' || paymentMethod === 'interac') && (
+  <button 
+    onClick={handleNext} 
+    disabled={!validateStep()} 
     className={`px-6 py-2 rounded ${
-      validateStep()
-        ? 'bg-yellow-400 hover:bg-yellow-500'
+      validateStep() 
+        ? 'bg-yellow-400 hover:bg-yellow-500' 
         : 'bg-gray-200 cursor-not-allowed'
-    }`}
+    }`} 
   >
-    {isLoading && (paymentMethod === 'interac' || paymentMethod === 'cod')
+    {isLoading 
       ? 'Processing...' 
-      : (activeStep === 2 && paymentMethod === 'interac'
+      : (activeStep === 2 && (selectedCountry === 'TUN' || paymentMethod === 'interac') 
         ? 'Place Order' 
         : 'Next')}
   </button>
 )}
+
 </div>
 
         </div>
