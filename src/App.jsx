@@ -286,44 +286,48 @@ const closeProductDetails = () => {
           const countryInfo = initialCountries.find(c => c.value === country);
           if (!countryInfo) return [];
       
-          return [
+          let products = [
             {
-              category: 'Photo Prints',
-              product: '4x6 Size',
+              category: 'photoprints',
+              product: '4x6',
               country: countryInfo.name,
               price: countryInfo.currency === 'TND' 
                 ? `${countryInfo.size10x15} TND`
                 : `${countryInfo.currency} ${countryInfo.size4x6}`
             },
             {
-              category: 'Photo Prints',
-              product: '5x7 Size',
+              category: 'photoprints',
+              product: '5x7',
               country: countryInfo.name,
               price: countryInfo.currency === 'TND'
                 ? `${countryInfo.size15x22} TND`
                 : `${countryInfo.currency} ${countryInfo.size5x7}`
             },
             {
-              category: 'Keychain',
-              product: 'Keychain',
+              category: 'keychain',
+              product: 'keychain',
               country: countryInfo.name,
               price: `${countryInfo.currency} ${countryInfo.keychain}`
             },
             {
-              category: 'Magnet',
-              product: 'Magnet',
+              category: 'magnet',
+              product: 'magnet',
               country: countryInfo.name,
               price: `${countryInfo.currency} ${countryInfo.keyring_magnet}`
-            },
-            {
-              category: '3D Frame',
-              product: '3D Frame',
-              country: countryInfo.name,
-              price: countryInfo.crystal3d 
-                ? `${countryInfo.currency} ${countryInfo.crystal3d}`
-                : 'N/A'
             }
           ];
+      
+          // Only add 3D Frame if country is not Tunisia
+          if (country !== 'TUN') {
+            products.push({
+              category: '3dframe',
+              product: '3dframe',
+              country: countryInfo.name,
+              price: `${countryInfo.currency} ${countryInfo.crystal3d}`
+            });
+          }
+      
+          return products;
         };
       
         const getImageSrc = (product) => {
