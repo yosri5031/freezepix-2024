@@ -1364,32 +1364,65 @@ const sendOrderConfirmationEmail = async (orderData) => {
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4">Payment Options for Canada</h3>
                   
-                  {/* Interac Payment Option */}
-                  <div className="border rounded-lg p-4 mb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h4 className="font-medium">Interac E-Transfer</h4>
-                        <p className="text-sm text-gray-600">Send payment to:</p>
-                        <p className="font-bold">Info@freezepix.com</p>
-                      </div>
-                      <img 
-                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp9FibB-R9ac8XXEootfuHyEdTuaeJ9bZiQQ&s" 
-                        alt="Interac E-Transfer" 
-                        className="h-12 w-auto"
+                  {/* Payment Method Selection */}
+                  <div className="mb-4">
+                    <h4 className="font-medium">Select Payment Method:</h4>
+                    <label className="block">
+                      <input
+                        type="radio"
+                        value="interac"
+                        checked={paymentMethod === 'interac'}
+                        onChange={handlePaymentMethodChange}
+                        className="mr-2"
                       />
-                    </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                      After placing the order, complete the Interac E-Transfer to the provided email.
-                    </p>
+                      Interac E-Transfer
+                    </label>
+                    <label className="block">
+                      <input
+                        type="radio"
+                        value="credit"
+                        checked={paymentMethod === 'credit'}
+                        onChange={handlePaymentMethodChange}
+                        className="mr-2"
+                      />
+                      Credit Card Payment
+                    </label>
                   </div>
       
+                  {/* Interac Payment Option */}
+                  {paymentMethod === 'interac' && (
+                    <div className="border rounded-lg p-4 mb-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium">Interac E-Transfer</h4>
+                          <p className="text-sm text-gray-600">Send payment to:</p>
+                          <p className="font-bold">Info@freezepix.com</p>
+                        </div>
+                        <img 
+                          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp9FibB-R9ac8XXEootfuHyEdTuaeJ9bZiQQ&s" 
+                          alt="Interac E-Transfer" 
+                          className="h-12 w-auto"
+                        />
+                      </div>
+                      <p className="text-xs text-gray-500 mt-2">
+                        After placing the order, complete the Interac E-Transfer to the provided email.
+                      </p>
+                      {/* Place Order Button for Interac */}
+                      <button onClick={handleOrderSuccess} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded">
+                        Place Order
+                      </button>
+                    </div>
+                  )}
+      
                   {/* Stripe Payment Option */}
-                  <div className="border rounded-lg p-4">
-                    <h4 className="font-medium mb-4">Credit Card Payment</h4>
-                    <Elements stripe={stripePromise}>
-                      <PaymentForm onPaymentSuccess={handleOrderSuccess} />
-                    </Elements>
-                  </div>
+                  {paymentMethod === 'credit' && (
+                    <div className="border rounded-lg p-4">
+                      <h4 className="font-medium mb-4">Credit Card Payment</h4>
+                      <Elements stripe={stripePromise}>
+                        <PaymentForm onPaymentSuccess={handleOrderSuccess} />
+                      </Elements>
+                    </div>
+                  )}
                 </div>
               </div>
             ) : (
