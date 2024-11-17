@@ -759,31 +759,21 @@ const handlePaymentMethodChange = (event) => {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
-          shippingAddress: {
-              ...formData.shippingAddress,
-              // Ensure that shippingAddress does not contain circular references
-          },
+          shippingAddress: formData.shippingAddress,
           billingAddress: isBillingAddressSameAsShipping 
-              ? { ...formData.shippingAddress }
-              : { ...formData.billingAddress },
-          orderItems: photosWithPrices.map(item => ({
-              id: item.id,
-              originalFileName: item.originalFileName,
-              price: item.price,
-              // Exclude any non-serializable properties
-          })),
+            ? formData.shippingAddress 
+            : formData.billingAddress,
+          orderItems: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
           orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'CAN' 
-              ? (stripePaymentMethod ? 'stripe' : 'interac') 
-              : (selectedCountry === 'TUN' ? 'cod' : 'credit'),
-          stripePaymentId: stripePaymentMethod, // This will be null for Interac
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+          stripePaymentId: stripePaymentMethod,
           customerDetails: {
-              name: formData.name,
-              country: selectedCountry
+            name: formData.name,
+            country: selectedCountry
           }
-      };
+        };
     
         // Sanitized logging
         console.log('Order Payload:', JSON.stringify({
