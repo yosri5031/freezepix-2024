@@ -250,7 +250,7 @@ const FreezePIX = () => {
         province: '',
         state: ''
       },
-      paymentMethod: 'credit'
+      paymentMethod: 'cod'
     });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
       const updateFormData = (field, value) => {
@@ -813,13 +813,27 @@ const handlePaymentMethodChange = (event) => {
           totalAmount: total,
           currency: country.currency,
           orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod || 'null',
+          paymentMethod: formData.paymentMethod,
+          stripePaymentId: stripePaymentMethod ,
           customerDetails: {
             name: formData.name,
             country: selectedCountry
           }
         };
+    
+        // Only process Stripe payment if credit card is selected
+    if (formData.paymentMethod === 'credit') {
+      const paymentMethod = await stripe.createPaymentMethod({
+        type: 'card',
+        card: Elements.getElement(CardElement),
+      });
+      
+      if (paymentMethod.error) {
+        throw new Error(paymentMethod.error.message);
+      }
+      
+      orderData.stripePaymentId = paymentMethod.paymentMethod.id;
+    }
     
         // Sanitized logging
         console.log('Order Payload:', JSON.stringify({
