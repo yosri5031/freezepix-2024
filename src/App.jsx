@@ -783,7 +783,6 @@ const handlePaymentMethodChange = (event) => {
         // Process selected photos with base64 conversion
         const photosWithPrices = await Promise.all(
           (selectedPhotos || []).map(async (photo) => {
-            // Convert file to base64 if it's a File object
             let base64Image = null;
             if (photo.file instanceof File) {
               base64Image = await convertFileToBase64(photo.file);
@@ -800,8 +799,8 @@ const handlePaymentMethodChange = (event) => {
           })
         );
     
-        // Construct order data
-        const orderData = {
+        // Base order data structure
+        const baseOrderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
@@ -814,64 +813,61 @@ const handlePaymentMethodChange = (event) => {
           currency: country.currency,
           orderNote: orderNote || '',
           paymentMethod: formData.paymentMethod,
-          stripePaymentId: stripePaymentMethod ,
           customerDetails: {
             name: formData.name,
             country: selectedCountry
           }
         };
     
-        // Only process Stripe payment if credit card is selected
-    if (formData.paymentMethod === 'credit') {
-      const paymentMethod = await stripe.createPaymentMethod({
-        type: 'card',
-        card: Elements.getElement(CardElement),
-      });
-      
-      if (paymentMethod.error) {
-        throw new Error(paymentMethod.error.message);
-      }
-      
-      orderData.stripePaymentId = paymentMethod.paymentMethod.id;
-    }
+        // Handle Interac payment
+        if (formData.paymentMethod === 'interac') {
+          const interacResponse = await axios.post(
+            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
+            baseOrderData,
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: 60000
+            }
+          );
     
-        // Sanitized logging
-        console.log('Order Payload:', JSON.stringify({
-          ...orderData,
-          orderItems: orderData.orderItems.map(item => ({
-            id: item.id,
-            originalFileName: item.originalFileName,
-            price: item.price
-          }))
-        }));
-    
-        // Create the order using Axios
-        const response = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
-          orderData,
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            timeout: 60000 // 60 seconds timeout
+          if (interacResponse.data.success) {
+            setOrderSuccess(true);
+            // Send confirmation email
+            await sendOrderConfirmationEmail(baseOrderData);
+            console.log('Interac order created successfully:', interacResponse.data);
+            return;
           }
-        );
+        }
     
-         // Send confirmation email
-         await sendOrderConfirmationEmail(orderData);
-        // Handle successful order creation
-        setOrderSuccess(true);
-        console.log('Order created successfully:', response.data);
+        // Handle Stripe payment
+        if (formData.paymentMethod === 'stripe') {
+          const stripeOrderData = {
+            ...baseOrderData,
+            stripePaymentId: stripePaymentMethod
+          };
+    
+          const stripeResponse = await axios.post(
+            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
+            stripeOrderData,
+            {
+              headers: { 'Content-Type': 'application/json' },
+              timeout: 60000
+            }
+          );
+    
+          // Send confirmation email
+          await sendOrderConfirmationEmail(stripeOrderData);
+          setOrderSuccess(true);
+          console.log('Stripe order created successfully:', stripeResponse.data);
+        }
     
       } catch (error) {
-        // Comprehensive error handling
         console.error('Detailed Order Processing Error:', {
           message: error.message,
           response: error.response?.data,
           status: error.response?.status
         });
     
-        // Determine error message
         const errorMessage = error.response?.data?.details 
           || error.response?.data?.error 
           || error.message 
