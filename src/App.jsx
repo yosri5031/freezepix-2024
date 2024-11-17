@@ -338,52 +338,59 @@ const closeProductDetails = () => {
       if (!isOpen) return null;
     
       return (
-        <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
-          <div className="bg-white rounded-lg max-w-xl w-full p-6">
-            <button
-              onClick={onClose}
-              className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded"
-            >
-              <X size={24} />
-            </button>
-            <h2 className="text-lg font-bold mb-4">
-              Product Details for {selectedCountry}
-            </h2>
-            <table className="min-w-full">
-              <thead>
-                <tr>
-                  <th className="border p-2">Category</th>
-                  <th className="border p-2">Product</th>
-                  <th className="border p-2">Country</th>
-                  <th className="border p-2">Price</th>
-                  <th className="border p-2">Image</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredProducts.map((product, index) => (
-                  <tr key={index}>
-                    <td className="border p-2">{product.category}</td>
-                    <td className="border p-2">{product.product}</td>
-                    <td className="border p-2">{product.country || '-'}</td>
-                    <td className="border p-2">{product.price}</td>
-                    <td className="border p-2">
-                      {/* Render a placeholder if no image is found */}
-                      {getImageSrc(product.product) ? (
-                        <img
-                          src={getImageSrc(product.product)}
-                          alt={product.product}
-                          className="max-w-full h-auto"
-                        />
-                      ) : (
-                        <div className="bg-gray-200 h-20 flex items-center justify-center">
-                          No Image Available
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="relative bg-white rounded-lg w-[95%] max-w-4xl h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white p-4 border-b">
+              <h2 className="text-lg font-bold">
+                Product Details for {selectedCountry}
+              </h2>
+              <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                aria-label="Close"
+              >
+                <X size={24} />
+              </button>
+            </div>
+            
+            <div className="p-4">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Country</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {filteredProducts.map((product, index) => (
+                      <tr key={index} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">{product.category}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{product.product}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{product.country || '-'}</td>
+                        <td className="px-6 py-4 whitespace-nowrap">{product.price}</td>
+                        <td className="px-6 py-4">
+                          {getImageSrc(product.product) ? (
+                            <img
+                              src={getImageSrc(product.product)}
+                              alt={product.product}
+                              className="h-20 w-20 object-cover rounded"
+                            />
+                          ) : (
+                            <div className="h-20 w-20 bg-gray-200 rounded flex items-center justify-center text-sm text-gray-500">
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       );
