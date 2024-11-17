@@ -346,100 +346,107 @@ const closeProductDetails = () => {
       if (!isOpen) return null;
     
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <>
           {zoomedImage && (
-            <div className="fixed inset-0 z-60 flex items-center justify-center bg-black bg-opacity-75">
-              <div className="relative w-[94%] max-w-xl">
-                <button
-                  onClick={closeZoom}
-                  className="absolute -top-10 right-0 p-2 text-white hover:bg-gray-700 rounded-full transition-colors"
-                  aria-label="Close zoom"
-                >
-                  <X size={24} />
-                </button>
-                <img
-                  src={zoomedImage}
-                  alt="Zoomed view"
-                  className="w-full h-auto rounded-lg"
-                />
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="relative bg-white rounded-lg w-[94%] max-w-xl">
+                <div className="p-4 border-b flex justify-between items-center">
+                  <h2 className="text-lg font-bold">Image Preview</h2>
+                  <button
+                    onClick={closeZoom}
+                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    aria-label="Close zoom"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <img
+                    src={zoomedImage}
+                    alt="Zoomed view"
+                    className="w-full h-auto rounded-lg"
+                  />
+                </div>
               </div>
             </div>
           )}
           
-          <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white p-4 border-b">
-              <h2 className="text-lg font-bold">
-                Product Details for {selectedCountry}
-              </h2>
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Close"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="p-4">
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {filteredProducts.map((product, index) => (
-                      <tr key={index} className="hover:bg-gray-50">
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">{product.category}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">{product.product}</td>
-                        <td className="px-4 py-3 whitespace-nowrap text-sm">{product.price}</td>
-                        <td className="px-4 py-3">
-                          <div className="relative group">
-                            {getImageSrc(product.product) ? (
-                              <div className="relative">
-                                <img
-                                  src={getImageSrc(product.product)}
-                                  alt={product.product}
-                                  className="h-16 w-16 object-cover rounded"
-                                />
-                                <button
-                                  onClick={() => handleImageClick(getImageSrc(product.product))}
-                                  className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded"
-                                >
-                                  <svg
-                                    className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
-                                    />
-                                  </svg>
-                                </button>
-                              </div>
-                            ) : (
-                              <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center text-sm text-gray-500">
-                                No Image
-                              </div>
-                            )}
-                          </div>
-                        </td>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white p-4 border-b">
+                <h2 className="text-lg font-bold">
+                  Product Details for {selectedCountry}
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-4">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredProducts.map((product, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.category}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.product}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.price}</td>
+                          <td className="px-4 py-3">
+                            <div className="relative group">
+                              {getImageSrc(product.product) ? (
+                                <div className="relative">
+                                  <img
+                                    src={getImageSrc(product.product)}
+                                    alt={product.product}
+                                    className="h-16 w-16 object-cover rounded"
+                                  />
+                                  <button
+                                    onClick={() => handleImageClick(getImageSrc(product.product))}
+                                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded"
+                                  >
+                                    <svg
+                                      className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center text-sm text-gray-500">
+                                  No Image
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </>
       );
     };
      // Add these helper functions at the beginning of your component
