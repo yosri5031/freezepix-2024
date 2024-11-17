@@ -809,17 +809,16 @@ const handlePaymentMethodChange = (event) => {
           billingAddress: isBillingAddressSameAsShipping 
             ? formData.shippingAddress 
             : formData.billingAddress,
-          orderItems: photosWithPrices.map(photo => ({
-            id: photo.id,
-            quantity: 1, // Assuming a default quantity of 1 for each photo
-            size: '', // Add size if applicable
-            productType: '', // Add product type if applicable
-            base64Image: photo.file, // Assuming base64Image from photosWithPrices is equivalent to base64 in orderItems
-            fileName: photo.originalFileName // Assuming originalFileName is equivalent to fileName in orderItems
-          })),
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit_interac',
-          orderNote: formData.orderNote || '',
-          discountCode: formData.discountCode || ''
+          orderItems: photosWithPrices,
+          totalAmount: total,
+          currency: country.currency,
+          orderNote: orderNote || '',
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+          stripePaymentId: stripePaymentMethod,
+          customerDetails: {
+            name: formData.name,
+            country: selectedCountry
+          }
         };
     
         // Sanitized logging
@@ -870,6 +869,7 @@ const handlePaymentMethodChange = (event) => {
         setIsProcessingOrder(false);
       }
     };
+    
     
   
 
