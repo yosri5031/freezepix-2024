@@ -1000,7 +1000,7 @@ const handlePaymentMethodChange = (event) => {
       
         try {
           if (activeStep === 2) {
-            if (selectedCountry === 'TUN') {
+            if (selectedCountry === 'TUN' || paymentMethod === 'interac') {
               setIsLoading(true);
               await handleOrderSuccess();
             } else {
@@ -1016,7 +1016,7 @@ const handlePaymentMethodChange = (event) => {
         } finally {
           setIsLoading(false);
         }
-      };
+    };
   
       const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
