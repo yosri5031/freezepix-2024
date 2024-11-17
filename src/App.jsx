@@ -814,7 +814,7 @@ const handlePaymentMethodChange = (event) => {
           currency: country.currency,
           orderNote: orderNote || '',
           paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod,
+          stripePaymentId: stripePaymentMethod || 'null',
           customerDetails: {
             name: formData.name,
             country: selectedCountry
