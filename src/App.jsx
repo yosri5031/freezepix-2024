@@ -316,10 +316,15 @@ const closeProductDetails = () => {
       return (
         <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
           <div className="bg-white rounded-lg max-w-xl w-full p-6">
-            <button onClick={onClose} className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded">
+            <button
+              onClick={onClose}
+              className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded"
+            >
               <X size={24} />
             </button>
-            <h2 className="text-lg font-bold mb-4">Product Details for {selectedCountry}</h2>
+            <h2 className="text-lg font-bold mb-4">
+              Product Details for {selectedCountry}
+            </h2>
             <table className="min-w-full">
               <thead>
                 <tr>
@@ -338,11 +343,18 @@ const closeProductDetails = () => {
                     <td className="border p-2">{product.country || '-'}</td>
                     <td className="border p-2">{product.price}</td>
                     <td className="border p-2">
-                      <img
-                        src={getImageSrc(product.product)}
-                        alt={product.product}
-                        className="max-w-full h-auto"
-                      />
+                      {/* Render a placeholder if no image is found */}
+                      {getImageSrc(product.product) ? (
+                        <img
+                          src={getImageSrc(product.product)}
+                          alt={product.product}
+                          className="max-w-full h-auto"
+                        />
+                      ) : (
+                        <div className="bg-gray-200 h-20 flex items-center justify-center">
+                          No Image Available
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -352,7 +364,7 @@ const closeProductDetails = () => {
         </div>
       );
     };
-    
+
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
