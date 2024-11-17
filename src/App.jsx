@@ -794,6 +794,11 @@ const handlePaymentMethodChange = (event) => {
           })),
           orderNote: orderNote,
           discountCode: discountCode,
+          stripePaymentId: stripePaymentMethod,
+          customerDetails: {
+            name: formData.name,
+            country: selectedCountry
+          }
         };
     
         // Sanitized logging
