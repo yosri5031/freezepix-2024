@@ -77,7 +77,30 @@
         "note1" : "Ajoutez des instructions spéciales (facultatif)",
         "subtotal": "sous-totaux",
          "total": "Totale",
-         "discountmessage": "Entrez le code de réduction"
-      }
+         "discountmessage": "Entrez le code de réduction",
+         "details": "Détails du produit"
+      },
+      
+      "productDetails": {
+    "title": "Détails des produits pour",
+    "category": "Catégorie",
+    "product": "Produit",
+    "price": "Prix",
+    "image": "Image",
+    "imagePreview": "Aperçu de l'image"},
+
+    "categories": {
+      "Photo Prints": "Tirages photo",
+      "Keychain": "Porte-clés",
+      "Magnet": "Aimant",
+      "3D Frame": "Cadre 3D"
+    },
+    "products": {
+      "4x6 Size": "Format 4x6",
+      "5x7 Size": "Format 5x7",
+      "Keychain": "Porte-clés",
+      "Magnet": "Aimant",
+      "3D Frame": "Cadre 3D"
+    }
       
   }

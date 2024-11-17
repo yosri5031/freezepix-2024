@@ -76,6 +76,30 @@
         "note1" : "Add any special instructions (optional)",
         "subtotal": "Subtotal",
         "total": "Total",
-        "discountmessage": "Enter discount code"
-      }
+        "discountmessage": "Enter discount code",
+        "details": "Product Details"
+
+      },
+      "productDetails": {
+    "title": "Product Details for",
+    "category": "Category",
+    "product": "Product",
+    "price": "Price",
+    "image": "Image",
+    "imagePreview": "Image Preview"},
+
+    "categories": {
+      "Photo Prints": "Photo Prints",
+      "Keychain": "Keychain",
+      "Magnet": "Magnet",
+      "3D Frame": "3D Frame"
+    },
+    "products": {
+      "4x6 Size": "4x6 Size",
+      "5x7 Size": "5x7 Size",
+      "Keychain": "Keychain",
+      "Magnet": "Magnet",
+      "3D Frame": "3D Frame"
+    }
   }
+  
