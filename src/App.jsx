@@ -253,6 +253,54 @@ const FreezePIX = () => {
       paymentMethod: 'credit'
     });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
+      const updateFormData = (field, value) => {
+        setFormData(prev => ({
+          ...prev,
+          [field]: value
+        }));
+      };
+      
+      // Add a function to handle address updates
+      const updateAddress = (type, field, value) => {
+        setFormData(prev => ({
+          ...prev,
+          [`${type}Address`]: {
+            ...prev[`${type}Address`],
+            [field]: value
+          }
+        }));
+      };
+
+      const handlePhotoUpload = async (files) => {
+        const newPhotos = await Promise.all(
+          Array.from(files).map(async (file) => {
+            const base64 = await convertImageToBase64(file);
+            return {
+              id: uuidv4(),
+              file,
+              base64,
+              fileName: file.name,
+              fileType: file.type,
+              quantity: 1,
+              size: '4x6', // default size
+              productType: 'print' // default product type
+            };
+          })
+        );
+      
+        setSelectedPhotos(prev => [...prev, ...newPhotos]);
+      };
+      
+      // Function to update photo properties
+      const updatePhotoProperties = (photoId, updates) => {
+        setSelectedPhotos(prev =>
+          prev.map(photo =>
+            photo.id === photoId
+              ? { ...photo, ...updates }
+              : photo
+          )
+        );
+      };
 
 // Function to open the popup
 const openProductDetails = () => {
@@ -754,44 +802,24 @@ const handlePaymentMethodChange = (event) => {
     
         // Construct order data
         const orderData = {
-          orderNumber: orderNumber,
-          customerInfo: {
-            email: formData.email,
-            phone: formData.phone,
-          },
-          shippingAddress: {
-            firstName: formData.shippingAddress.firstName,
-            lastName: formData.shippingAddress.lastName,
-            address: formData.shippingAddress.address,
-            city: formData.shippingAddress.city,
-            postalCode: formData.shippingAddress.postalCode,
-            country: formData.shippingAddress.country,
-            province: formData.shippingAddress.province,
-            state: formData.shippingAddress.state,
-          },
+          orderNumber,
+          email: formData.email,
+          phone: formData.phone,
+          shippingAddress: formData.shippingAddress,
           billingAddress: isBillingAddressSameAsShipping 
-            ? { ...formData.shippingAddress }
-            : {
-                firstName: formData.billingAddress.firstName,
-                lastName: formData.billingAddress.lastName,
-                address: formData.billingAddress.address,
-                city: formData.billingAddress.city,
-                postalCode: formData.billingAddress.postalCode,
-                country: formData.billingAddress.country,
-                province: formData.billingAddress.province,
-                state: formData.billingAddress.state,
-              },
-          orderItems: photosWithPrices,
-          totalAmount: total,
-          currency: country.currency,
-          orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          discountCode: discountCode,
-          stripePaymentId: stripePaymentMethod?.id,
-          customerDetails: {
-            name: formData.name,
-            country: selectedCountry
-          }
+            ? formData.shippingAddress 
+            : formData.billingAddress,
+          orderItems: photosWithPrices.map(photo => ({
+            id: photo.id,
+            quantity: 1, // Assuming a default quantity of 1 for each photo
+            size: '', // Add size if applicable
+            productType: '', // Add product type if applicable
+            base64Image: photo.file, // Assuming base64Image from photosWithPrices is equivalent to base64 in orderItems
+            fileName: photo.originalFileName // Assuming originalFileName is equivalent to fileName in orderItems
+          })),
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit_interac',
+          orderNote: formData.orderNote || '',
+          discountCode: formData.discountCode || ''
         };
     
         // Sanitized logging
