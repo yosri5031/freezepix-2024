@@ -769,81 +769,7 @@ const handlePaymentMethodChange = (event) => {
   setPaymentMethod(event.target.value);
 };
 
-const handleInteracOrder = async () => {
-  try {
-    setIsInteracProcessing(true);
-    setIsProcessingOrder(true);
-        setOrderSuccess(false);
-        setError(null);
-    
-        // Generate order details
-        const orderNumber = generateOrderNumber();
-        setCurrentOrderNumber(orderNumber);
-        const { total, currency } = calculateTotals();
-        const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Validate form data
-    if (!formData.email || !formData.shippingAddress.firstName || !formData.shippingAddress.address) {
-      setError('Please fill in all required fields');
-      setIsInteracProcessing(false);
-      return;
-    }
-    const photosWithPrices = await Promise.all(
-      (selectedPhotos || []).map(async (photo) => {
-        // Convert file to base64 if it's a File object
-        let base64Image = null;
-        if (photo.file instanceof File) {
-          base64Image = await convertFileToBase64(photo.file);
-        }
-
-        return {
-          ...photo,
-          id: photo.id || uuidv4(),
-          file: base64Image,
-          price: calculateItemPrice(photo, country),
-          currency: country.currency,
-          originalFileName: photo.file?.name || 'unknown'
-        };
-      })
-    );
-    // Create order data
-    const orderData = {
-      orderNumber,
-      paymentMethod: 'interac',
-      email: formData.email ,
-      phone: formData.phone,
-      customerInfo: {
-        email: formData.email,
-        phone: formData.phone
-      },
-      shippingAddress: formData.shippingAddress,
-      billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
-      orderItems: photosWithPrices,
-          totalAmount: total,
-          currency: country.currency,
-      orderNote: orderNote,
-      discountCode: discountCode
-    };
-
-    // Send order to your backend
-    const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', orderData);
-
-    if (response.data.success) {
-      setCurrentOrderNumber(response.data.orderNumber);
-      setInteracReference(response.data.interacReference);
-      setOrderSuccess(true);
-      // Clear cart/selected photos
-      setSelectedPhotos([]);
-    } else {
-      throw new Error(response.data.message || 'Failed to process Interac order');
-    }
-
-  } catch (err) {
-    setError(err.message || 'An error occurred while processing your Interac order');
-  } finally {
-    setIsInteracProcessing(false);
-  }
-};
 
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
@@ -1539,20 +1465,7 @@ const handleInteracOrder = async () => {
                         After placing the order, complete the Interac E-Transfer to the provided email.
                       </p>
                       {/* Place Order Button for Interac */}
-                      <button 
-    onClick={handleInteracOrder} 
-    disabled={isInteracProcessing} // Disable button while processing
-    className={`mt-4 bg-blue-500 text-white py-2 px-4 rounded ${isInteracProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
->
-    {isInteracProcessing ? (
-        <span className="flex items-center justify-center gap-2">
-            <Loader className="animate-spin" size={16} />
-            Processing...
-        </span>
-    ) : (
-        'Place Order'
-    )}
-</button>
+                      
                     </div>
                   )}
       
@@ -2096,7 +2009,7 @@ const { t } = useTranslation();
   {/* Only show Next/Place Order button if:
       1. Not on payment page (activeStep !== 2), or
       2. On payment page AND it's a Tunisia order (COD payment) */}
-  {(activeStep !== 2 || selectedCountry === 'TUN') && (
+  {(activeStep !== 2 || selectedCountry === 'TUN' || paymentMethod === 'interac') && (
    <button 
    onClick={handleNext} 
    disabled={!validateStep()} 
