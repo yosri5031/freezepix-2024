@@ -373,72 +373,72 @@ const closeProductDetails = () => {
             )}
             
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-              <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white p-4 border-b">
-                  <h2 className="text-lg font-bold">
-                    {t('productDetails.title')} {initialCountries.find(c => c.value === selectedCountry)?.name}
-                  </h2>
-                  <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
-                    aria-label="Close"
-                  >
-                    <X size={24} />
-                  </button>
-                </div>
-                
-                <div className="p-4">
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('productDetails.category')}
-                          </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('productDetails.product')}
-                          </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('productDetails.price')}
-                          </th>
-                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            {t('productDetails.image')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {productData.map((product, index) => (
-                          <tr key={index} className="hover:bg-gray-50">
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {translateCategory(product.category)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {translateProduct(product.product)}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm">
-                              {product.price}
-                            </td>
-                            <td className="px-4 py-3">
-                              {getImageSrc(product.product) && (
-                                <img
-                                  src={getImageSrc(product.product)}
-                                  alt={translateProduct(product.product)}
-                                  className="h-16 w-16 object-cover cursor-pointer"
-                                  onClick={() => handleImageClick(getImageSrc(product.product))}
-                                />
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
+        <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
+          <div className="sticky top-0 bg-white p-4 border-b">
+            <h2 className="text-lg font-bold">
+              {t('productDetails.title')} {initialCountries.find(c => c.value === selectedCountry)?.name}
+            </h2>
+            <button
+              onClick={onClose}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
+              aria-label="Close"
+            >
+              <X size={24} />
+            </button>
+          </div>
+          
+          <div className="p-4">
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('productDetails.category')}
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('productDetails.product')}
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('productDetails.price')}
+                    </th>
+                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      {t('productDetails.image')}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {productData.map((product, index) => (
+                    <tr key={index} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        {t(`categories.${product.category}`)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        {t(`products.${product.product}`)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-sm">
+                        {product.price}
+                      </td>
+                      <td className="px-4 py-3">
+                        {getImageSrc(product.product) && (
+                          <img
+                            src={getImageSrc(product.product)}
+                            alt={t(`products.${product.product}`)}
+                            className="h-16 w-16 object-cover cursor-pointer"
+                            onClick={() => handleImageClick(getImageSrc(product.product))}
+                          />
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </>
-        );
-      };
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
