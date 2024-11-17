@@ -756,23 +756,44 @@ const handlePaymentMethodChange = (event) => {
     
         // Construct order data
         const orderData = {
-          orderNumber,
-          email: formData.email,
-          phone: formData.phone,
-          shippingAddress: formData.shippingAddress,
+          orderNumber: currentOrderNumber,
+          customerInfo: {
+            email: formData.email,
+            phone: formData.phone,
+          },
+          shippingAddress: {
+            firstName: formData.shippingAddress.firstName,
+            lastName: formData.shippingAddress.lastName,
+            address: formData.shippingAddress.address,
+            city: formData.shippingAddress.city,
+            postalCode: formData.shippingAddress.postalCode,
+            country: formData.shippingAddress.country,
+            province: formData.shippingAddress.province,
+            state: formData.shippingAddress.state,
+          },
           billingAddress: isBillingAddressSameAsShipping 
-            ? formData.shippingAddress 
-            : formData.billingAddress,
-          orderItems: photosWithPrices,
-          totalAmount: total,
-          currency: country.currency,
-          orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod,
-          customerDetails: {
-            name: formData.name,
-            country: selectedCountry
-          }
+            ? { ...formData.shippingAddress }
+            : {
+                firstName: formData.billingAddress.firstName,
+                lastName: formData.billingAddress.lastName,
+                address: formData.billingAddress.address,
+                city: formData.billingAddress.city,
+                postalCode: formData.billingAddress.postalCode,
+                country: formData.billingAddress.country,
+                province: formData.billingAddress.province,
+                state: formData.billingAddress.state,
+              },
+          paymentMethod: formData.paymentMethod,
+          orderItems: selectedPhotos.map(photo => ({
+            id: photo.id,
+            type: photo.type,
+            quantity: photo.quantity,
+            price: photo.price,
+            // Only include base64 if it's necessary and you're sure it won't exceed size limits
+            image: photo.base64 // Be careful with this
+          })),
+          orderNote: orderNote,
+          discountCode: discountCode,
         };
     
         // Sanitized logging
