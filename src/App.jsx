@@ -1419,11 +1419,11 @@ const handlePaymentMethodChange = (event) => {
             ) : selectedCountry === 'CAN' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4">Payment Options for Canada</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
                   
-                  {/* Payment Method Selection */}
+                  {/* Sélection du mode de paiement */}
                   <div className="mb-4">
-                    <h4 className="font-medium">Select Payment Method:</h4>
+                    <h4 className="font-medium">{t('canada.select')}</h4>
                     <label className="block">
                       <input
                         type="radio"
@@ -1432,7 +1432,7 @@ const handlePaymentMethodChange = (event) => {
                         onChange={handlePaymentMethodChange}
                         className="mr-2"
                       />
-                      Interac E-Transfer
+                      {t('canada.interac')}
                     </label>
                     <label className="block">
                       <input
@@ -1442,17 +1442,17 @@ const handlePaymentMethodChange = (event) => {
                         onChange={handlePaymentMethodChange}
                         className="mr-2"
                       />
-                      Credit Card Payment
+                      {t('canada.credit')}
                     </label>
                   </div>
       
-                  {/* Interac Payment Option */}
+                  {/* Option de paiement Interac */}
                   {paymentMethod === 'interac' && (
                     <div className="border rounded-lg p-4 mb-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <h4 className="font-medium">Interac E-Transfer</h4>
-                          <p className="text-sm text-gray-600">Send payment to:</p>
+                          <h4 className="font-medium">{t('canada.interac')}</h4>
+                          <p className="text-sm text-gray-600">{t('canada.send')}</p>
                           <p className="font-bold">Info@freezepix.com</p>
                         </div>
                         <img 
@@ -1462,17 +1462,17 @@ const handlePaymentMethodChange = (event) => {
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-2">
-                        After placing the order, complete the Interac E-Transfer to the provided email.
+                        {t('canada.placing')}
                       </p>
-                      {/* Place Order Button for Interac */}
+                      {/* Bouton de commande pour Interac */}
                       
                     </div>
                   )}
       
-                  {/* Stripe Payment Option */}
+                  {/* Option de paiement par carte de crédit */}
                   {paymentMethod === 'credit' && (
                     <div className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-4">Credit Card Payment</h4>
+                      <h4 className="font-medium mb-4">{t('canada.credit_c')}</h4>
                       <Elements stripe={stripePromise}>
                         <PaymentForm onPaymentSuccess={handleOrderSuccess} />
                       </Elements>
@@ -1484,7 +1484,7 @@ const handlePaymentMethodChange = (event) => {
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-center text-gray-600">
-                    Please complete your payment to place the order
+                    {t('canada.message_c')}
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
