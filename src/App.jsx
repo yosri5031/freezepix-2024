@@ -794,7 +794,7 @@ const handlePaymentMethodChange = (event) => {
           })),
           orderNote: orderNote,
           discountCode: discountCode,
-          stripePaymentId: stripePaymentMethod,
+          stripePaymentId: stripePaymentMethod?.id,
           customerDetails: {
             name: formData.name,
             country: selectedCountry
