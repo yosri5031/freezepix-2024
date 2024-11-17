@@ -756,7 +756,7 @@ const handlePaymentMethodChange = (event) => {
     
         // Construct order data
         const orderData = {
-          orderNumber: currentOrderNumber,
+          orderNumber: orderNumber,
           customerInfo: {
             email: formData.email,
             phone: formData.phone,
@@ -783,11 +783,11 @@ const handlePaymentMethodChange = (event) => {
                 province: formData.billingAddress.province,
                 state: formData.billingAddress.state,
               },
-          paymentMethod: formData.paymentMethod,
           orderItems: photosWithPrices,
           totalAmount: total,
           currency: country.currency,
-          orderNote: orderNote,
+          orderNote: orderNote || '',
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
           discountCode: discountCode,
           stripePaymentId: stripePaymentMethod?.id,
           customerDetails: {
