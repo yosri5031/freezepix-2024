@@ -318,7 +318,7 @@ const closeProductDetails = () => {
     ];
 
     // Only add 3D Frame if the country is not Tunisia
-    if (country !== 'TN') {
+    if (country !== 'TUN') {
       products.push({
         category: '3D Frame',
         product: '3D Frame',
