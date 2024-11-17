@@ -228,32 +228,30 @@ const FreezePIX = () => {
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [formData, setFormData] = useState({
-        email: '',
-        phone: '',
-        shippingAddress: {
-          firstName: '',
-          lastName: '',
-          address: '',
-          city: '',
-          postalCode: '',
-          country: selectedCountry, // Initialize with selected country
-          province: '',
-          state: '',
-        },
-        billingAddress: {
-          firstName: '',
-          lastName: '',
-          address: '',
-          city: '',
-          postalCode: '',
-          country: selectedCountry, // Initialize with selected country
-          province: '',
-          state: '',
-        },
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 
-                 selectedCountry === 'CAN' ? 'interac_or_stripe' : 
-                 'credit'
-      });
+      email: '',
+      phone: '',
+      shippingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        province: '',
+        state: ''
+      },
+      billingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: '',
+        province: '',
+        state: ''
+      },
+      paymentMethod: 'credit'
+    });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
 // Function to open the popup
