@@ -300,57 +300,59 @@ const closeProductDetails = () => {
           // Add other products as needed
       ];
     
-        const filteredProducts = productData.filter(item => item.country === selectedCountry);
-        const getImageSrc = (product) => {
-          const imageName = product.toLowerCase().replace(/\s/g, '');
-          try {
-              return require(`./assets/${imageName}.jpg`);
-          } catch (err) {
-              return '';
-          }
+      const filteredProducts = productData.filter(item => item.country === selectedCountry || !item.country);
+
+      const getImageSrc = (product) => {
+        const imageName = product.toLowerCase().replace(/\s/g, '');
+        try {
+          return require(`./assets/${imageName}.jpg`);
+        } catch (err) {
+          return '';
+        }
       };
     
-        if (!isOpen) return null;
+      if (!isOpen) return null;
     
-        return (
-          <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
-              <div className="bg-white rounded-lg max-w-xl w-full p-6">
-                  <button onClick={onClose} className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded">
-                      <X size={24} />
-                  </button>
-                  <h2 className="text-lg font-bold mb-4">Product Details for {selectedCountry}</h2>
-                  <table className="min-w-full">
-                      <thead>
-                          <tr>
-                              <th className="border p-2">Category</th>
-                              <th className="border p-2">Product</th>
-                              <th className="border p-2">Country</th>
-                              <th className="border p-2">Price</th>
-                              <th className="border p-2">Image</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                          {filteredProducts.map((product, index) => (
-                              <tr key={index}>
-                                  <td className="border p-2">{product.category}</td>
-                                  <td className="border p-2">{product.product}</td>
-                                  <td className="border p-2">{product.country}</td>
-                                  <td className="border p-2">{product.price}</td>
-                                  <td className="border p-2">
-                                  <img
-                                        src={getImageSrc(product.product)}
-                                        alt={product.product}
-                                        className="max-w-full h-auto"
-                                    />
-                                  </td>
-                              </tr>
-                          ))}
-                      </tbody>
-                  </table>
-              </div>
+      return (
+        <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
+          <div className="bg-white rounded-lg max-w-xl w-full p-6">
+            <button onClick={onClose} className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded">
+              <X size={24} />
+            </button>
+            <h2 className="text-lg font-bold mb-4">Product Details for {selectedCountry}</h2>
+            <table className="min-w-full">
+              <thead>
+                <tr>
+                  <th className="border p-2">Category</th>
+                  <th className="border p-2">Product</th>
+                  <th className="border p-2">Country</th>
+                  <th className="border p-2">Price</th>
+                  <th className="border p-2">Image</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredProducts.map((product, index) => (
+                  <tr key={index}>
+                    <td className="border p-2">{product.category}</td>
+                    <td className="border p-2">{product.product}</td>
+                    <td className="border p-2">{product.country || '-'}</td>
+                    <td className="border p-2">{product.price}</td>
+                    <td className="border p-2">
+                      <img
+                        src={getImageSrc(product.product)}
+                        alt={product.product}
+                        className="max-w-full h-auto"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
+        </div>
       );
     };
+    
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
