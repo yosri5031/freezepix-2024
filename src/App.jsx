@@ -227,6 +227,8 @@ const FreezePIX = () => {
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isInteracProcessing, setIsInteracProcessing] = useState(false);
+const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
       email: '',
       phone: '',
@@ -766,6 +768,83 @@ const sendOrderConfirmationEmail = async (orderData) => {
 const handlePaymentMethodChange = (event) => {
   setPaymentMethod(event.target.value);
 };
+
+const handleInteracOrder = async () => {
+  try {
+    setIsInteracProcessing(true);
+    setIsProcessingOrder(true);
+        setOrderSuccess(false);
+        setError(null);
+    
+        // Generate order details
+        const orderNumber = generateOrderNumber();
+        setCurrentOrderNumber(orderNumber);
+        const { total, currency } = calculateTotals();
+        const country = initialCountries.find(c => c.value === selectedCountry);
+
+    // Validate form data
+    if (!formData.email || !formData.shippingAddress.firstName || !formData.shippingAddress.address) {
+      setError('Please fill in all required fields');
+      setIsInteracProcessing(false);
+      return;
+    }
+    const photosWithPrices = await Promise.all(
+      (selectedPhotos || []).map(async (photo) => {
+        // Convert file to base64 if it's a File object
+        let base64Image = null;
+        if (photo.file instanceof File) {
+          base64Image = await convertFileToBase64(photo.file);
+        }
+
+        return {
+          ...photo,
+          id: photo.id || uuidv4(),
+          file: base64Image,
+          price: calculateItemPrice(photo, country),
+          currency: country.currency,
+          originalFileName: photo.file?.name || 'unknown'
+        };
+      })
+    );
+    // Create order data
+    const orderData = {
+      orderNumber,
+      paymentMethod: 'interac',
+      email: formData.email ,
+      phone: formData.phone,
+      customerInfo: {
+        email: formData.email,
+        phone: formData.phone
+      },
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress,
+      orderItems: photosWithPrices,
+          totalAmount: total,
+          currency: country.currency,
+      orderNote: orderNote,
+      discountCode: discountCode
+    };
+
+    // Send order to your backend
+    const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', orderData);
+
+    if (response.data.success) {
+      setCurrentOrderNumber(response.data.orderNumber);
+      setInteracReference(response.data.interacReference);
+      setOrderSuccess(true);
+      // Clear cart/selected photos
+      setSelectedPhotos([]);
+    } else {
+      throw new Error(response.data.message || 'Failed to process Interac order');
+    }
+
+  } catch (err) {
+    setError(err.message || 'An error occurred while processing your Interac order');
+  } finally {
+    setIsInteracProcessing(false);
+  }
+};
+
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
@@ -783,6 +862,7 @@ const handlePaymentMethodChange = (event) => {
         // Process selected photos with base64 conversion
         const photosWithPrices = await Promise.all(
           (selectedPhotos || []).map(async (photo) => {
+            // Convert file to base64 if it's a File object
             let base64Image = null;
             if (photo.file instanceof File) {
               base64Image = await convertFileToBase64(photo.file);
@@ -799,8 +879,8 @@ const handlePaymentMethodChange = (event) => {
           })
         );
     
-        // Base order data structure
-        const baseOrderData = {
+        // Construct order data
+        const orderData = {
           orderNumber,
           email: formData.email,
           phone: formData.phone,
@@ -812,62 +892,51 @@ const handlePaymentMethodChange = (event) => {
           totalAmount: total,
           currency: country.currency,
           orderNote: orderNote || '',
-          paymentMethod: formData.paymentMethod,
+          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+          stripePaymentId: stripePaymentMethod,
           customerDetails: {
             name: formData.name,
             country: selectedCountry
           }
         };
     
-        // Handle Interac payment
-        if (formData.paymentMethod === 'interac') {
-          const interacResponse = await axios.post(
-            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
-            baseOrderData,
-            {
-              headers: { 'Content-Type': 'application/json' },
-              timeout: 60000
-            }
-          );
+        // Sanitized logging
+        console.log('Order Payload:', JSON.stringify({
+          ...orderData,
+          orderItems: orderData.orderItems.map(item => ({
+            id: item.id,
+            originalFileName: item.originalFileName,
+            price: item.price
+          }))
+        }));
     
-          if (interacResponse.data.success) {
-            setOrderSuccess(true);
-            // Send confirmation email
-            await sendOrderConfirmationEmail(baseOrderData);
-            console.log('Interac order created successfully:', interacResponse.data);
-            return;
+        // Create the order using Axios
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
+          orderData,
+          {
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            timeout: 60000 // 60 seconds timeout
           }
-        }
+        );
     
-        // Handle Stripe payment
-        if (formData.paymentMethod === 'stripe') {
-          const stripeOrderData = {
-            ...baseOrderData,
-            stripePaymentId: stripePaymentMethod
-          };
-    
-          const stripeResponse = await axios.post(
-            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
-            stripeOrderData,
-            {
-              headers: { 'Content-Type': 'application/json' },
-              timeout: 60000
-            }
-          );
-    
-          // Send confirmation email
-          await sendOrderConfirmationEmail(stripeOrderData);
-          setOrderSuccess(true);
-          console.log('Stripe order created successfully:', stripeResponse.data);
-        }
+         // Send confirmation email
+         await sendOrderConfirmationEmail(orderData);
+        // Handle successful order creation
+        setOrderSuccess(true);
+        console.log('Order created successfully:', response.data);
     
       } catch (error) {
+        // Comprehensive error handling
         console.error('Detailed Order Processing Error:', {
           message: error.message,
           response: error.response?.data,
           status: error.response?.status
         });
     
+        // Determine error message
         const errorMessage = error.response?.data?.details 
           || error.response?.data?.error 
           || error.message 
@@ -879,6 +948,7 @@ const handlePaymentMethodChange = (event) => {
         setIsProcessingOrder(false);
       }
     };
+    
     
     
   
@@ -1470,11 +1540,11 @@ const handlePaymentMethodChange = (event) => {
                       </p>
                       {/* Place Order Button for Interac */}
                       <button 
-    onClick={handleOrderSuccess} 
-    disabled={isProcessingOrder} // Disable button while processing
-    className={`mt-4 bg-blue-500 text-white py-2 px-4 rounded ${isProcessingOrder ? 'opacity-50 cursor-not-allowed' : ''}`}
+    onClick={handleInteracOrder} 
+    disabled={isInteracProcessing} // Disable button while processing
+    className={`mt-4 bg-blue-500 text-white py-2 px-4 rounded ${isInteracProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
 >
-    {isProcessingOrder ? (
+    {isInteracProcessing ? (
         <span className="flex items-center justify-center gap-2">
             <Loader className="animate-spin" size={16} />
             Processing...
