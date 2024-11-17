@@ -301,18 +301,22 @@ const closeProductDetails = () => {
       ];
     
       const filteredProducts = productData.filter(item => {
-        // Filter products based on country
-        if (selectedCountry && item.country !== selectedCountry) {
-          return false;
+        const countryMatch = initialCountries.find(
+          country =>
+            country.name.toLowerCase() === item.country.toLowerCase() ||
+            country.value.toLowerCase() === item.country.toLowerCase()
+        );
+      
+        if (countryMatch && countryMatch.value === selectedCountry) {
+          return true;
         }
-        // Include products without a specified country
+      
         if (!item.country) {
           return true;
         }
-        // Include products with a matching country
-        return true;
+      
+        return false;
       });
-    
       const getImageSrc = (product) => {
         const imageName = product.toLowerCase().replace(/\s/g, '');
         try {
