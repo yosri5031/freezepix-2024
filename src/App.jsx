@@ -262,9 +262,7 @@ const closeProductDetails = () => {
     
       //Product Details popup
       const ProductDetailsPopup = ({ isOpen, onClose, selectedCountry }) => {
-        const { t, i18n } = useTranslation();
         const [zoomedImage, setZoomedImage] = useState(null);
-        
         const handleImageClick = (imageSrc) => {
           setZoomedImage(imageSrc);
         };
@@ -272,173 +270,185 @@ const closeProductDetails = () => {
         const closeZoom = () => {
           setZoomedImage(null);
         };
+        const productData = [
+          { category: 'Photo Prints', product: '4x6 Size', country: 'United States', price: '$0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Canada', price: '$0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Tunisia', price: '3 TND' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Germany', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'France', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Italy', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Spain', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'United Kingdom', price: '£0.39' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United States', price: '$01.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Canada', price: '$1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Tunisia', price: '5 TND' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Germany', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'France', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Italy', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Spain', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United Kingdom', price: '£1.49' },
+          { category: 'Keychain', product: 'Keychain', country: 'United States', price: '$9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Canada', price: '$9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Tunisia', price: '15 TND' },
+          { category: 'Keychain', product: 'Keychain', country: 'Germany', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'France', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Italy', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Spain', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'United Kingdom', price: '£9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'United States', price: '$9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Canada', price: '$9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Tunisia', price: '15 TND' },
+          { category: 'Magnet', product: 'Magnet', country: 'Germany', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'France', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Italy', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Spain', price: '9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'United Kingdom', price: '£9.99' },
+          { category: '3D Frame', product: '3D Frame', country: 'United States', price: '$140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Canada', price: '$140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Germany', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'France', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Italy', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Spain', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'United Kingdom', price: '£140.00' }
+          
+          // Add other products as needed
+      ];
+    
+      const filteredProducts = productData.filter(item => {
+        const countryMatch = initialCountries.find(
+          country =>
+            country.name.toLowerCase() === item.country.toLowerCase() ||
+            country.value.toLowerCase() === item.country.toLowerCase()
+        );
       
-        const translateCategory = (category) => {
-          return t(`productDetails.categories.${category}`, { defaultValue: category });
+        if (countryMatch && countryMatch.value === selectedCountry) {
+          return true;
+        }
+      
+        if (!item.country) {
+          return true;
+        }
+      
+        return false;
+      });
+      const getImageSrc = (product) => {
+        const imageMap = {
+          '4x6 Size': photoprint4x6,
+          '5x7 Size': photoprint5x7,
+          'Keychain': keychain,
+          'Magnet': magnet,
+          '3D Frame': threeDFrame,
         };
       
-        const translateProduct = (product) => {
-          return t(`productDetails.products.${product}`, { defaultValue: product });
-        };
-      
-        // Define product data with price formatting based on country
-        const getProductData = (country) => {
-          const countryInfo = initialCountries.find(c => c.value === country);
-          if (!countryInfo) return [];
-      
-          let products = [
-            {
-              category: 'photoprints',
-              product: '4x6',
-              country: countryInfo.name,
-              price: countryInfo.currency === 'TND' 
-                ? `${countryInfo.size10x15} TND`
-                : `${countryInfo.currency} ${countryInfo.size4x6}`
-            },
-            {
-              category: 'photoprints',
-              product: '5x7',
-              country: countryInfo.name,
-              price: countryInfo.currency === 'TND'
-                ? `${countryInfo.size15x22} TND`
-                : `${countryInfo.currency} ${countryInfo.size5x7}`
-            },
-            {
-              category: 'keychain',
-              product: 'keychain',
-              country: countryInfo.name,
-              price: `${countryInfo.currency} ${countryInfo.keychain}`
-            },
-            {
-              category: 'magnet',
-              product: 'magnet',
-              country: countryInfo.name,
-              price: `${countryInfo.currency} ${countryInfo.keyring_magnet}`
-            }
-          ];
-      
-          // Only add 3D Frame if country is not Tunisia
-          if (country !== 'TUN') {
-            products.push({
-              category: '3dframe',
-              product: '3dframe',
-              country: countryInfo.name,
-              price: `${countryInfo.currency} ${countryInfo.crystal3d}`
-            });
-          }
-      
-          return products;
-        };
-      
-        const getImageSrc = (product) => {
-          const imageMap = {
-            '4x6 Size': photoprint4x6,
-            '5x7 Size': photoprint5x7,
-            'Keychain': keychain,
-            'Magnet': magnet,
-            '3D Frame': threeDFrame,
-          };
-        
-          return imageMap[product] || '';
-        };
-      
-        if (!isOpen) return null;
-      
-        const productData = getProductData(selectedCountry);
-      
-        return (
-          <>
-            {zoomedImage && (
-              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
-                <div className="relative bg-white rounded-lg w-[94%] max-w-xl">
-                  <div className="p-4 border-b flex justify-between items-center">
-                    <h2 className="text-lg font-bold">{t('productDetails.imagePreview')}</h2>
-                    <button
-                      onClick={closeZoom}
-                      className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                      aria-label="Close zoom"
-                    >
-                      <X size={24} />
-                    </button>
-                  </div>
-                  <div className="p-4">
-                    <img
-                      src={zoomedImage}
-                      alt={t('productDetails.imagePreview')}
-                      className="w-full h-auto rounded-lg"
-                    />
-                  </div>
+        return imageMap[product] || '';
+      };
+    
+      if (!isOpen) return null;
+    
+      return (
+        <>
+          {zoomedImage && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="relative bg-white rounded-lg w-[94%] max-w-xl">
+                <div className="p-4 border-b flex justify-between items-center">
+                  <h2 className="text-lg font-bold">Image Preview</h2>
+                  <button
+                    onClick={closeZoom}
+                    className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    aria-label="Close zoom"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <img
+                    src={zoomedImage}
+                    alt="Zoomed view"
+                    className="w-full h-auto rounded-lg"
+                  />
                 </div>
               </div>
-            )}
-            
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white p-4 border-b">
-            <h2 className="text-lg font-bold">
-              {t('productDetails.title')} {initialCountries.find(c => c.value === selectedCountry)?.name}
-            </h2>
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label="Close"
-            >
-              <X size={24} />
-            </button>
-          </div>
+            </div>
+          )}
           
-          <div className="p-4">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.category')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.product')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.price')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.image')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {productData.map((product, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {t(`categories.${product.category}`)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {t(`products.${product.product}`)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {product.price}
-                      </td>
-                      <td className="px-4 py-3">
-                        {getImageSrc(product.product) && (
-                          <img
-                            src={getImageSrc(product.product)}
-                            alt={t(`products.${product.product}`)}
-                            className="h-16 w-16 object-cover cursor-pointer"
-                            onClick={() => handleImageClick(getImageSrc(product.product))}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-white p-4 border-b">
+                <h2 className="text-lg font-bold">
+                  Product Details for {selectedCountry}
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                  aria-label="Close"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              
+              <div className="p-4">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {filteredProducts.map((product, index) => (
+                        <tr key={index} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.category}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.product}</td>
+                          <td className="px-4 py-3 whitespace-nowrap text-sm">{product.price}</td>
+                          <td className="px-4 py-3">
+                            <div className="relative group">
+                              {getImageSrc(product.product) ? (
+                                <div className="relative">
+                                  <img
+                                    src={getImageSrc(product.product)}
+                                    alt={product.product}
+                                    className="h-16 w-16 object-cover rounded"
+                                  />
+                                  <button
+                                    onClick={() => handleImageClick(getImageSrc(product.product))}
+                                    className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-opacity rounded"
+                                  >
+                                    <svg
+                                      className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"
+                                      />
+                                    </svg>
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="h-16 w-16 bg-gray-200 rounded flex items-center justify-center text-sm text-gray-500">
+                                  No Image
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
-    </>
-  );
-};
+        </>
+      );
+    };
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
