@@ -2011,7 +2011,7 @@ const { t } = useTranslation();
       2. On payment page AND it's a Tunisia order (COD payment) */}
  {(activeStep !== 2 || selectedCountry === 'TUN' || paymentMethod === 'interac') && (
   <button
-    onClick={handleNext}
+    onClick={activeStep === 2 && paymentMethod === 'interac' ? handleProcessOrder : handleNext}
     disabled={!validateStep()}
     className={`px-6 py-2 rounded ${
       validateStep()
