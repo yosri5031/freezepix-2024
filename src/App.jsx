@@ -22,7 +22,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe('pk_test_51QHmgQRvhgQx4g20FEvJ97UMmtc7QcW4yGdmbDN49M75MnwQBb5ZO408FI6Tq1w9NKuWr6yQoMDBqS5FrIEEfdlr00swKtIShp');
+const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
 const initialCountries = [
   { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
@@ -248,7 +248,9 @@ const FreezePIX = () => {
           province: '',
           state: '',
         },
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 
+                 selectedCountry === 'CAN' ? 'interac_or_stripe' : 
+                 'credit'
       });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
@@ -759,8 +761,10 @@ const sendOrderConfirmationEmail = async (orderData) => {
           totalAmount: total,
           currency: country.currency,
           orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod,
+          paymentMethod: selectedCountry === 'CAN' 
+        ? (stripePaymentMethod ? 'stripe' : 'interac') 
+        : (selectedCountry === 'TUN' ? 'cod' : 'credit'),
+      stripePaymentId: stripePaymentMethod, // This will be null for Interac
           customerDetails: {
             name: formData.name,
             country: selectedCountry
@@ -1341,35 +1345,67 @@ const sendOrderConfirmationEmail = async (orderData) => {
         </div>
       );
 
-    case 2:
-      return (
-        <div className="space-y-6">
-          <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
-          {renderInvoice()}
-  
-          {selectedCountry === 'TUN' ? (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-center text-gray-600">
-                {t('order.cod')}
-                </p>
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
+            {renderInvoice()}
+      
+            {selectedCountry === 'TUN' ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    {t('order.cod')}
+                  </p>
+                </div>
               </div>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-center text-gray-600">
-                  Please complete your payment to place the order
-                </p>
+            ) : selectedCountry === 'CAN' ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-4">Payment Options for Canada</h3>
+                  
+                  {/* Interac Payment Option */}
+                  <div className="border rounded-lg p-4 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-medium">Interac E-Transfer</h4>
+                        <p className="text-sm text-gray-600">Send payment to:</p>
+                        <p className="font-bold">Info@freezepix.com</p>
+                      </div>
+                      <img 
+                        src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp9FibB-R9ac8XXEootfuHyEdTuaeJ9bZiQQ&s" 
+                        alt="Interac E-Transfer" 
+                        className="h-12 w-auto"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      After placing the order, complete the Interac E-Transfer to the provided email.
+                    </p>
+                  </div>
+      
+                  {/* Stripe Payment Option */}
+                  <div className="border rounded-lg p-4">
+                    <h4 className="font-medium mb-4">Credit Card Payment</h4>
+                    <Elements stripe={stripePromise}>
+                      <PaymentForm onPaymentSuccess={handleOrderSuccess} />
+                    </Elements>
+                  </div>
+                </div>
               </div>
-              <Elements stripe={stripePromise}>
-                <PaymentForm onPaymentSuccess={handleOrderSuccess} />
-              </Elements>
-            </div>
-          )}
-        </div>
-      );
-
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    Please complete your payment to place the order
+                  </p>
+                </div>
+                <Elements stripe={stripePromise}>
+                  <PaymentForm onPaymentSuccess={handleOrderSuccess} />
+                </Elements>
+              </div>
+            )}
+          </div>
+        );
     default:
       return null;
     }
