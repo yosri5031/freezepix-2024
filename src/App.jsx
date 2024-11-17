@@ -1138,10 +1138,10 @@ const sendOrderConfirmationEmail = async (orderData) => {
                                     onChange={(e) => updateProductType(photo.id, e.target.value)}
                                     className="w-full p-1 border rounded"
                                 >
-                                    <option value="photo_print">Photo Print</option>
-                                    <option value="3d_frame">3D Frame</option>
-                                    <option value="keychain">Keychain</option>
-                                    <option value="keyring_magnet">Magnet</option>
+                                    <option value="photo_print">{t('produits.photo_print')}</option>
+                                    <option value="3d_frame">{t('produits.3d_frame')}</option>
+                                    <option value="keychain">{t('produits.keychain')}</option>
+                                    <option value="keyring_magnet">{t('produits.magnet')}</option>
                                 </select>
                             )}
 
@@ -1156,9 +1156,9 @@ const sendOrderConfirmationEmail = async (orderData) => {
                                         onChange={(e) => updateProductType(photo.id, e.target.value)}
                                         className="w-full p-1 border rounded"
                                     >
-                                        <option value="photo_print">Photo Print</option>
-                                        <option value="keyring_magnet">Magnet</option>
-                                        <option value="keychain">Keychain</option>
+                                        <option value="photo_print">{t('produits.photo_print')}</option>
+                                        <option value="keyring_magnet">{t('produits.magnet')}</option>
+                                        <option value="keychain">{t('produits.keychain')}</option>
                                     </select>
                                 </div>
                             )}
