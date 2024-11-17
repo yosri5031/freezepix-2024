@@ -274,11 +274,13 @@ const closeProductDetails = () => {
   };
 
   const translateCategory = (category) => {
-    return t(`productDetails.categories.${category}`, { defaultValue: category });
+    // Use the categories mapping from translation.json
+    return t(`categories.${category}`, { defaultValue: category });
   };
-
+  
   const translateProduct = (product) => {
-    return t(`productDetails.products.${product}`, { defaultValue: product });
+    // Use the products mapping from translation.json
+    return t(`products.${product}`, { defaultValue: product });
   };
 
   // Define product data with price formatting based on country
