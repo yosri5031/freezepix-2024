@@ -6,6 +6,11 @@ import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
+import photoprint4x6 from './assets/photoprint4x6.jpg';
+import photoprint5x7 from './assets/photoprint5x7.jpg';
+import keychain from './assets/keychain.jpg';
+import magnet from './assets/magnet.jpg';
+import threeDFrame from './assets/3d_frame.jpg';
 //import { sendOrderConfirmation } from './utils/emailService';
 
 import {
@@ -318,19 +323,15 @@ const closeProductDetails = () => {
         return false;
       });
       const getImageSrc = (product) => {
-        const imageName = {
-          '4x6 Size': 'photoprint4x6',
-          '5x7 Size': 'photoprint5x7',
-          'Keychain': 'keychain',
-          'Magnet': 'magnet',
-          '3D Frame': '3d_frame',
-        }[product];
+        const imageMap = {
+          '4x6 Size': photoprint4x6,
+          '5x7 Size': photoprint5x7,
+          'Keychain': keychain,
+          'Magnet': magnet,
+          '3D Frame': threeDFrame,
+        };
       
-        try {
-          return require(`./assets/${imageName}.jpg`);
-        } catch (err) {
-          return '';
-        }
+        return imageMap[product] || '';
       };
     
       if (!isOpen) return null;
