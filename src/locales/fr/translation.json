@@ -15,7 +15,7 @@
     },
     "buttons": {
       "start_printing": "Commencer l'impression",
-      "book_service": "Réserver un service photo",
+      "book_service": "Réserver un service de photographie",
       "add_photos": "Ajouter des Photos",
       "next": "Suivant",
       "back": "Retour",
@@ -103,6 +103,16 @@
       "3D Frame": "Cadre 3D",
       "Rectangle 3D Frame" : "Cadre 3D rectangle",
       "Heart 3D Frame" : "Cadre 3D coeur"
-    }
+    },
+    "canada" : {
+"options": "Options de paiement pour le Canada",
+"select" : "Sélectionnez le mode de paiement :",
+"interac": "Virement Interac",
+"credit": "Paiement par carte de crédit",
+"send": "Envoyer le paiement à :",
+"placing": "Après avoir passé la commande, veuillez compléter le Virement Interac à l'adresse e-mail fournie.",
+"credit_c": "Paiement par carte de crédit",
+"message_c" : "Veuillez compléter votre paiement pour passer la commande"
+}
       
   }
