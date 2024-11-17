@@ -286,7 +286,7 @@ const closeProductDetails = () => {
     const countryInfo = initialCountries.find(c => c.value === country);
     if (!countryInfo) return [];
 
-    return [
+    const products = [
       {
         category: 'Photo Prints',
         product: '4x6 Size',
@@ -314,16 +314,22 @@ const closeProductDetails = () => {
         product: 'Magnet',
         country: countryInfo.name,
         price: `${countryInfo.currency} ${countryInfo.keyring_magnet}`
-      },
-      {
+      }
+    ];
+
+    // Only add 3D Frame if the country is not Tunisia
+    if (country !== 'TN') {
+      products.push({
         category: '3D Frame',
         product: '3D Frame',
         country: countryInfo.name,
         price: countryInfo.crystal3d 
           ? `${countryInfo.currency} ${countryInfo.crystal3d}`
           : 'N/A'
-      }
-    ];
+      });
+    }
+
+    return products;
   };
 
   const getImageSrc = (product) => {
