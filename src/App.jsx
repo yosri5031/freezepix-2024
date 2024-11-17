@@ -7,11 +7,7 @@ import axios from 'axios';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 //import { sendOrderConfirmation } from './utils/emailService';
-import photoprint4x6 from './assets/photoprint4x6.jpg';
-import keychain from './assets/keychain.jpg';
-import magnet from './assets/magnet.jpg';
-import frame3d from './assets/frame3d.jpg';
-import photoprint5x7 from './assets/photoprint5x7.jpg';
+
 import {
   CardElement,
   Elements,
@@ -305,6 +301,14 @@ const closeProductDetails = () => {
       ];
     
         const filteredProducts = productData.filter(item => item.country === selectedCountry);
+        const getImageSrc = (product) => {
+          const imageName = product.toLowerCase().replace(/\s/g, '');
+          try {
+              return require(`./assets/${imageName}.jpg`);
+          } catch (err) {
+              return '';
+          }
+      };
     
         if (!isOpen) return null;
     
@@ -333,23 +337,11 @@ const closeProductDetails = () => {
                                   <td className="border p-2">{product.country}</td>
                                   <td className="border p-2">{product.price}</td>
                                   <td className="border p-2">
-                                      <img
-                                          src={
-                                              product.product === '4x6 Size'
-                                                  ? photoprint4x6
-                                                  : product.product === 'Keychain'
-                                                  ? keychain
-                                                  : product.product === 'Magnet'
-                                                  ? magnet
-                                                  : product.product === '3D Frame'
-                                                  ? frame3d
-                                                  : product.product === '5x7 Size'
-                                                  ? photoprint5x7
-                                                  : ''
-                                          }
-                                          alt={product.product}
-                                          className="max-w-full h-auto"
-                                      />
+                                  <img
+                                        src={getImageSrc(product.product)}
+                                        alt={product.product}
+                                        className="max-w-full h-auto"
+                                    />
                                   </td>
                               </tr>
                           ))}
