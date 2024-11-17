@@ -339,7 +339,7 @@ const closeProductDetails = () => {
     
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div className="relative bg-white rounded-lg w-[90%] max-w-xl h-[90vh] overflow-y-auto">
+        <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white p-4 border-b">
               <h2 className="text-lg font-bold">
                 Product Details for {selectedCountry}
