@@ -100,7 +100,9 @@
       "5x7 Size": "Format 5x7",
       "Keychain": "Porte-clés",
       "Magnet": "Aimant",
-      "3D Frame": "Cadre 3D"
+      "3D Frame": "Cadre 3D",
+      "Rectangle 3D Frame" : "Cadre 3D rectangle",
+      "Heart 3D Frame" : "Cadre 3D coeur"
     }
       
   }

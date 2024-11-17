@@ -99,7 +99,9 @@
       "5x7 Size": "5x7 Size",
       "Keychain": "Keychain",
       "Magnet": "Magnet",
-      "3D Frame": "3D Frame"
+      "3D Frame": "3D Frame",
+      "Rectangle 3D Frame" : "Rectangle 3D Frame",
+      "Heart 3D Frame" : "Heart 3D Frame"
     }
   }
   
