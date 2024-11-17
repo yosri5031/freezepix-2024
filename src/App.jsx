@@ -271,6 +271,14 @@ const closeProductDetails = () => {
           { category: 'Photo Prints', product: '4x6 Size', country: 'Italy', price: '€0.39' },
           { category: 'Photo Prints', product: '4x6 Size', country: 'Spain', price: '€0.39' },
           { category: 'Photo Prints', product: '4x6 Size', country: 'United Kingdom', price: '£0.39' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United States', price: '$01.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Canada', price: '$1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Tunisia', price: '5 TND' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Germany', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'France', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Italy', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Spain', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United Kingdom', price: '£1.49' },
           { category: 'Keychain', product: 'Keychain', country: 'United States', price: '$9.99' },
           { category: 'Keychain', product: 'Keychain', country: 'Canada', price: '$9.99' },
           { category: 'Keychain', product: 'Keychain', country: 'Tunisia', price: '15 TND' },
@@ -293,15 +301,8 @@ const closeProductDetails = () => {
           { category: '3D Frame', product: '3D Frame', country: 'France', price: '€140.00' },
           { category: '3D Frame', product: '3D Frame', country: 'Italy', price: '€140.00' },
           { category: '3D Frame', product: '3D Frame', country: 'Spain', price: '€140.00' },
-          { category: '3D Frame', product: '3D Frame', country: 'United Kingdom', price: '£140.00' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'United States', price: '$01.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'Canada', price: '$1.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'Tunisia', price: '5 TND' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'Germany', price: '€1.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'France', price: '€1.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'Italy', price: '€1.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'Spain', price: '€1.49' },
-          { category: 'Photo Prints', product: '5x7 Size', country: 'United Kingdom', price: '£1.49' }
+          { category: '3D Frame', product: '3D Frame', country: 'United Kingdom', price: '£140.00' }
+          
           // Add other products as needed
       ];
     
