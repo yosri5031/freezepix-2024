@@ -1414,9 +1414,20 @@ const handlePaymentMethodChange = (event) => {
                         After placing the order, complete the Interac E-Transfer to the provided email.
                       </p>
                       {/* Place Order Button for Interac */}
-                      <button onClick={handleOrderSuccess} className="mt-4 bg-blue-500 text-white py-2 px-4 rounded">
-                        Place Order
-                      </button>
+                      <button 
+    onClick={handleOrderSuccess} 
+    disabled={isProcessingOrder} // Disable button while processing
+    className={`mt-4 bg-blue-500 text-white py-2 px-4 rounded ${isProcessingOrder ? 'opacity-50 cursor-not-allowed' : ''}`}
+>
+    {isProcessingOrder ? (
+        <span className="flex items-center justify-center gap-2">
+            <Loader className="animate-spin" size={16} />
+            Processing...
+        </span>
+    ) : (
+        'Place Order'
+    )}
+</button>
                     </div>
                   )}
       
