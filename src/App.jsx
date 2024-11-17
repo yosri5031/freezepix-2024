@@ -213,6 +213,8 @@ const FreezePIX = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
+    const [paymentMethod, setPaymentMethod] = useState('credit'); // Default payment method
+
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
     const [isProcessingOrder, setIsProcessingOrder] = useState(false);
@@ -713,6 +715,10 @@ const sendOrderConfirmationEmail = async (orderData) => {
     });
     throw error;
   }
+};
+
+const handlePaymentMethodChange = (event) => {
+  setPaymentMethod(event.target.value);
 };
     // Inside the FreezePIX component, modify the order success handling:
     const handleOrderSuccess = async (stripePaymentMethod = null) => {
