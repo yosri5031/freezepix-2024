@@ -242,8 +242,98 @@ const FreezePIX = () => {
         },
         paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
       });
-      
+      const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
+
+// Function to open the popup
+const openProductDetails = () => {
+    setIsProductDetailsOpen(true);
+};
+
+// Function to close the popup
+const closeProductDetails = () => {
+    setIsProductDetailsOpen(false);
+};
     
+      //Product Details popup
+      const ProductDetailsPopup = ({ isOpen, onClose, selectedCountry }) => {
+        const productData = [
+          { category: 'Photo Prints', product: '4x6 Size', country: 'United States', price: '$0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Canada', price: '$0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Tunisia', price: '3 TND' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Germany', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'France', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Italy', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'Spain', price: '€0.39' },
+          { category: 'Photo Prints', product: '4x6 Size', country: 'United Kingdom', price: '£0.39' },
+          { category: 'Keychain', product: 'Keychain', country: 'United States', price: '$9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Canada', price: '$9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Tunisia', price: '15 TND' },
+          { category: 'Keychain', product: 'Keychain', country: 'Germany', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'France', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Italy', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'Spain', price: '€9.99' },
+          { category: 'Keychain', product: 'Keychain', country: 'United Kingdom', price: '£9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'United States', price: '$9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Canada', price: '$9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Tunisia', price: '15 TND' },
+          { category: 'Magnet', product: 'Magnet', country: 'Germany', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'France', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Italy', price: '€9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'Spain', price: '9.99' },
+          { category: 'Magnet', product: 'Magnet', country: 'United Kingdom', price: '£9.99' },
+          { category: '3D Frame', product: '3D Frame', country: 'United States', price: '$140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Canada', price: '$140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Germany', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'France', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Italy', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'Spain', price: '€140.00' },
+          { category: '3D Frame', product: '3D Frame', country: 'United Kingdom', price: '£140.00' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United States', price: '$01.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Canada', price: '$1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Tunisia', price: '5 TND' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Germany', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'France', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Italy', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'Spain', price: '€1.49' },
+          { category: 'Photo Prints', product: '5x7 Size', country: 'United Kingdom', price: '£1.49' }
+          // Add other products as needed
+      ];
+    
+        const filteredProducts = productData.filter(item => item.country === selectedCountry);
+    
+        if (!isOpen) return null;
+    
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div className="bg-white rounded-lg max-w-xl w-full p-6">
+                    <button onClick={onClose} className="absolute top-2 right-2 p-2 hover:bg-gray-200 rounded">
+                        <X size={24} />
+                    </button>
+                    <h2 className="text-lg font-bold mb-4">Product Details for {selectedCountry}</h2>
+                    <table className="min-w-full">
+                        <thead>
+                            <tr>
+                                <th className="border p-2">Category</th>
+                                <th className="border p-2">Product</th>
+                                <th className="border p-2">Country</th>
+                                <th className="border p-2">Price</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredProducts.map((product, index) => (
+                                <tr key={index}>
+                                    <td className="border p-2">{product.category}</td>
+                                    <td className="border p-2">{product.product}</td>
+                                    <td className="border p-2">{product.country}</td>
+                                    <td className="border p-2">{product.price}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        );
+    };
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
@@ -898,155 +988,164 @@ const sendOrderConfirmationEmail = async (orderData) => {
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
-        return (
-          <div className="space-y-6">
+    return (
+        <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-              >
-                <Upload size={20} />
-                {t('buttons.add_photos')}
-              </button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                multiple
-                accept="image/*"
-                className="hidden"
-              />
+                <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
+                <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+                >
+                    <Upload size={20} />
+                    {t('buttons.add_photos')}
+                </button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    multiple
+                    accept="image/*"
+                    className="hidden"
+                />
             </div>
-  
+
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-  {(selectedPhotos || []).map(photo => (
-    <div key={photo.id} className="relative border rounded-lg p-2">
-      <img
-        src={photo.preview}
-        alt="preview"
-        className="w-full h-40 object-cover rounded"
-      />
-      <button
-        onClick={() => removePhoto(photo.id)}
-        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-      >
-        <X size={16} />
-      </button>
-      <div className="mt-2 space-y-2">
-        {/* Product Type Selection for US/Canada */}
-        {(['USA', 'CAN', 'DEU','FRA','ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
-          <select
-            value={photo.productType}
-            onChange={(e) => updateProductType(photo.id, e.target.value)}
-            className="w-full p-1 border rounded"
-          >
-            <option value="photo_print">Photo Print</option>
-            <option value="3d_frame">3D Frame</option>
-            <option value="keychain">Keychain</option>
-            <option value="keyring_magnet">Magnet</option>
-          </select>
-        )}
+                {(selectedPhotos || []).map(photo => (
+                    <div key={photo.id} className="relative border rounded-lg p-2">
+                        <img
+                            src={photo.preview}
+                            alt="preview"
+                            className="w-full h-40 object-cover rounded"
+                        />
+                        <button
+                            onClick={() => removePhoto(photo.id)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+                        >
+                            <X size={16} />
+                        </button>
+                        <div className="mt-2 space-y-2">
+                            {/* Product Type Selection for US/Canada */}
+                            {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
+                                <select
+                                    value={photo.productType}
+                                    onChange={(e) => updateProductType(photo.id, e.target.value)}
+                                    className="w-full p-1 border rounded"
+                                >
+                                    <option value="photo_print">Photo Print</option>
+                                    <option value="3d_frame">3D Frame</option>
+                                    <option value="keychain">Keychain</option>
+                                    <option value="keyring_magnet">Magnet</option>
+                                </select>
+                            )}
 
-        {/* Product Type Selection for Tunisia */}
-        {selectedCountry === 'TUN' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('produits.product')}
-            </label>
-          <select
-            value={photo.productType}
-            onChange={(e) => updateProductType(photo.id, e.target.value)}
-            className="w-full p-1 border rounded"
-          >
-            <option value="photo_print">Photo Print</option>
-            <option value="keyring_magnet">Magnet</option>
-            <option value="keychain">Keychain</option>
-          </select>
-          </div>
-        )}
+                            {/* Product Type Selection for Tunisia */}
+                            {selectedCountry === 'TUN' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {t('produits.product')}
+                                    </label>
+                                    <select
+                                        value={photo.productType}
+                                        onChange={(e) => updateProductType(photo.id, e.target.value)}
+                                        className="w-full p-1 border rounded"
+                                    >
+                                        <option value="photo_print">Photo Print</option>
+                                        <option value="keyring_magnet">Magnet</option>
+                                        <option value="keychain">Keychain</option>
+                                    </select>
+                                </div>
+                            )}
 
-        {/* Size selection for photo prints */}
-        {photo.productType === 'photo_print' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('produits.size')}
-            </label>
-          <select
-            value={photo.size}
-            onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-            className="w-full p-1 border rounded"
-          >
-            {selectedCountry === 'TUN' ? (
-              <>
-                <option value="10x15">10x15 cm</option>
-                <option value="15x22">15x22 cm</option>
-              </>
-            ) : (
-              <>
-                <option value="4x6">4x6"</option>
-                <option value="5x7">5x7"</option>
-              </>
-            )}
-          </select>
-          </div>
-        )}
+                            {/* Size selection for photo prints */}
+                            {photo.productType === 'photo_print' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {t('produits.size')}
+                                    </label>
+                                    <select
+                                        value={photo.size}
+                                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+                                        className="w-full p-1 border rounded"
+                                    >
+                                        {selectedCountry === 'TUN' ? (
+                                            <>
+                                                <option value="10x15">10x15 cm</option>
+                                                <option value="15x22">15x22 cm</option>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <option value="4x6">4x6"</option>
+                                                <option value="5x7">5x7"</option>
+                                            </>
+                                        )}
+                                    </select>
+                                </div>
+                            )}
 
-        {/* Crystal shape selection for 3D frame */}
-        {photo.productType === '3d_frame' && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('produits.shape')}
-            </label>
-          <select
-            value={photo.crystalShape}
-            onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
-            className="w-full p-1 border rounded"
-          >
-            <option value="rectangle"> {t('produits.rectangle')}</option>
-            <option value="heart">{t('produits.heart')}</option>
-          </select>
-          </div>
-        )}
+                            {/* Crystal shape selection for 3D frame */}
+                            {photo.productType === '3d_frame' && (
+                                <div>
+                                    <label class Name="block text-sm font-medium text-gray-700 mb-1">
+                                        {t('produits.shape')}
+                                    </label>
+                                    <select
+                                        value={photo.crystalShape}
+                                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
+                                        className="w-full p-1 border rounded"
+                                    >
+                                        <option value="rectangle">{t('produits.rectangle')}</option>
+                                        <option value="heart">{t('produits.heart')}</option>
+                                    </select>
+                                </div>
+                            )}
 
-        {/* Standard Size selection for Keychain and Keyring & Magnet */}
-        {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-            {t('produits.size')}
-            </label>
-            <select
-              value={photo.standardSize || 'standard'}
-              onChange={(e) => updateStandardSize(photo.id, e.target.value)}
-              className="w-full p-1 border rounded"
-            >
-              <option value="standard">Standard</option>
-            </select>
-          </div>
-        )}
+                            {/* Standard Size selection for Keychain and Keyring & Magnet */}
+                            {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        {t('produits.size')}
+                                    </label>
+                                    <select
+                                        value={photo.standardSize || 'standard'}
+                                        onChange={(e) => updateStandardSize(photo.id, e.target.value)}
+                                        className="w-full p-1 border rounded"
+                                    >
+                                        <option value="standard">Standard</option>
+                                    </select>
+                                </div>
+                            )}
 
-        {/* Quantity selection */}
-        <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-        {t('produits.quantity')}
-            </label>
-        <select
-          value={photo.quantity}
-          onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-          className="w-full p-1 border rounded"
-        >
-          {[...Array(99)].map((_, i) => (
-            <option key={i + 1} value={i + 1}>{i + 1}</option>
-          ))}
-        </select>
+                            {/* Quantity selection */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    {t('produits.quantity')}
+                                </label>
+                                <select
+                                    value={photo.quantity}
+                                    onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+                                    className="w-full p-1 border rounded"
+                                >
+                                    {[...Array(99)].map((_, i) => (
+                                        <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Single Details button at the end */}
+                            <button onClick={openProductDetails} className="text-sm text-blue-500 underline">
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+            <ProductDetailsPopup 
+            isOpen={isProductDetailsOpen} 
+            onClose={closeProductDetails} 
+            selectedCountry={selectedCountry} 
+        />
         </div>
-      </div>
-    </div>
-  ))}
-</div>
-          </div>
-        );
-
+    );
       case 1:
       return (
         <div className="space-y-6">
