@@ -300,8 +300,19 @@ const closeProductDetails = () => {
           // Add other products as needed
       ];
     
-      const filteredProducts = productData.filter(item => item.country === selectedCountry || !item.country);
-
+      const filteredProducts = productData.filter(item => {
+        // Filter products based on country
+        if (selectedCountry && item.country !== selectedCountry) {
+          return false;
+        }
+        // Include products without a specified country
+        if (!item.country) {
+          return true;
+        }
+        // Include products with a matching country
+        return true;
+      });
+    
       const getImageSrc = (product) => {
         const imageName = product.toLowerCase().replace(/\s/g, '');
         try {
@@ -364,7 +375,6 @@ const closeProductDetails = () => {
         </div>
       );
     };
-
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = (file) => {
          return new Promise((resolve, reject) => {
