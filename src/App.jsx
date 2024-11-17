@@ -318,7 +318,14 @@ const closeProductDetails = () => {
         return false;
       });
       const getImageSrc = (product) => {
-        const imageName = product.toLowerCase().replace(/\s/g, '');
+        const imageName = {
+          '4x6 Size': 'photo4x6',
+          '5x7 Size': 'photo5x7',
+          'Keychain': 'keychain',
+          'Magnet': 'magnet',
+          '3D Frame': '3d_frame',
+        }[product];
+      
         try {
           return require(`./assets/${imageName}.jpg`);
         } catch (err) {
