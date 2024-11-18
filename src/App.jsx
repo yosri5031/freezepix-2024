@@ -960,7 +960,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         const optimizedPhotosWithPrices = await processImagesInBatches(
           selectedPhotos.map(photo => ({
             ...photo,
-            price: photo.price || calculatePhotoPrice(photo, country)
+            price: photo.price || calculateItemPrice(photo, country)
           })),
           (progress) => {
             setUploadProgress(Math.round(progress));
