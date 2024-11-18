@@ -207,39 +207,7 @@ const BookingPopup = ({ onClose }) => {
       </div>
     );
   };
-  const ProgressBar = ({ progress }) => (
-    <>
-      <style>
-        {`
-          .progress-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-          }
   
-          .progress-bar {
-            height: 20px;
-            background-color: #4CAF50;
-            transition: width 0.5s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-          }
-        `}
-      </style>
-      <div className="progress-container">
-        <div 
-          className="progress-bar" 
-          style={{ width: `${progress}%` }}
-        >
-          {progress}%
-        </div>
-      </div>
-    </>
-  );
 const FreezePIX = () => {
  
 
@@ -897,8 +865,8 @@ const saveStateWithCleanup = async (state) => {
 const submitOrderWithOptimizedChunking = async (orderData) => {
   const { orderItems } = orderData;
   const results = [];
-  const CHUNK_SIZE = 12; // Reduced chunk size
-  const CONCURRENT_CHUNKS = 4; // Number of chunks to process simultaneously
+  const CHUNK_SIZE = 6; // Reduced chunk size
+  const CONCURRENT_CHUNKS = 2; // Number of chunks to process simultaneously
   
   // Split items into smaller chunks
   const chunks = [];
@@ -967,210 +935,55 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
-const generateThumbnail = async (file) => {
-  // Implement thumbnail generation
-  return URL.createObjectURL(file);
-};
-const processImageWithProgress = async (photo, progressCallback) => {
-  return new Promise((resolve, reject) => {
-    // Create a file reader to track upload progress
-    const reader = new FileReader();
-    
-    reader.onprogress = (event) => {
-      if (event.lengthComputable) {
-        const percentLoaded = (event.loaded / event.total) * 100;
-        progressCallback(percentLoaded);
-      }
-    };
-
-    reader.onload = async () => {
-      try {
-        // Simulate image optimization or processing
-        const optimizedImage = await optimizeImage(photo.file);
-        
-        // Generate thumbnail
-        const thumbnail = await generateThumbnail(optimizedImage);
-        
-        // Resolve with processed photo data
-        resolve({
-          ...photo,
-          thumbnail,
-          processed: true
-        });
-      } catch (error) {
-        reject(error);
-      }
-    };
-
-    reader.onerror = (error) => {
-      reject(error);
-    };
-
-    // Start reading the file
-    reader.readAsArrayBuffer(photo.file);
-  });
-};
 
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
-  let orderData = null;
+  let orderData = null; // Declare orderData outside try block
   let orderNumber = null;
 
   try {
-    // Initialize order processing state
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
 
-    // Generate unique order number
+    // Generate order number
     orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
-    // Calculate comprehensive order totals
-    const { 
-      total, 
-      currency, 
-      subtotal, 
-      shippingFee, 
-      taxAmount, 
-      discount 
-    } = calculateTotals();
-    
+    // Calculate order totals
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Advanced photo processing with granular progress tracking
-    const processPhotosWithDetailedProgress = async () => {
-      const photosToProcess = selectedPhotos.map(photo => ({
-        ...photo,
-        price: photo.price || calculateItemPrice(photo, country)
-      }));
-
-      const optimizedPhotosWithPrices = [];
-      const totalPhotos = photosToProcess.length;
-
-      for (let i = 0; i < photosToProcess.length; i++) {
-        const photo = photosToProcess[i];
-        
-        try {
-          // Comprehensive progress tracking
-          const processStages = {
-            reading: 0,
-            optimization: 0,
-            thumbnailGeneration: 0,
-            metadataExtraction: 0
-          };
-
-          // Progress calculation function
-          const updateOverallProgress = () => {
-            const stageWeights = {
-              reading: 0.2,
-              optimization: 0.3,
-              thumbnailGeneration: 0.25,
-              metadataExtraction: 0.25
-            };
-
-            const weightedProgress = Object.keys(processStages).reduce((acc, stage) => {
-              return acc + (processStages[stage] * stageWeights[stage]);
-            }, 0);
-
-            const photoProgress = (i / totalPhotos) * 100;
-            const combinedProgress = Math.min(photoProgress + weightedProgress, 100);
-            
-            setUploadProgress(Math.round(combinedProgress));
-          };
-
-          // Stage 1: File Reading
-          const readFile = (file) => {
-            return new Promise((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onprogress = (event) => {
-                if (event.lengthComputable) {
-                  processStages.reading = (event.loaded / event.total) * 100;
-                  updateOverallProgress();
-                }
-              };
-              reader.onload = () => resolve(reader.result);
-              reader.onerror = reject;
-              reader.readAsArrayBuffer(file);
-            });
-          };
-
-          // Stage 2: Image Optimization
-          const optimizeImage = async (fileBuffer) => {
-            for (let opt = 0; opt <= 100; opt += 10) {
-              await new Promise(resolve => setTimeout(resolve, 50));
-              processStages.optimization = opt;
-              updateOverallProgress();
-            }
-            // Actual image optimization logic would replace this
-            return fileBuffer;
-          };
-
-          // Stage 3: Thumbnail Generation
-          const generateThumbnail = async (optimizedImage) => {
-            for (let thumb = 0; thumb <= 100; thumb += 10) {
-              await new Promise(resolve => setTimeout(resolve, 30));
-              processStages.thumbnailGeneration = thumb;
-              updateOverallProgress();
-            }
-            return URL.createObjectURL(new Blob([optimizedImage]));
-          };
-
-          // Stage 4: Metadata Extraction
-          const extractMetadata = async () => {
-            for (let meta = 0; meta <= 100; meta += 10) {
-              await new Promise(resolve => setTimeout(resolve, 20));
-              processStages.metadataExtraction = meta;
-              updateOverallProgress();
-            }
-            return {
-              name: photo.file.name,
-              size: photo.file.size,
-              type: photo.file.type
-            };
-          };
-
-          // Orchestrate photo processing stages
-          const fileBuffer = await readFile(photo.file);
-          const optimizedImage = await optimizeImage(fileBuffer);
-          const thumbnail = await generateThumbnail(optimizedImage);
-          const metadata = await extractMetadata();
-
-          // Construct processed photo object
-          const processedPhoto = {
+    // Process photos with improved batch processing
+    const processPhotosWithProgress = async () => {
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
             ...photo,
-            file: new File([fileBuffer], photo.file.name),
-            thumbnail,
-            metadata,
-            processed: true
-          };
-
-          optimizedPhotosWithPrices.push(processedPhoto);
-
-          // Periodic state saving
-          if (i % 3 === 0) {
-            await saveStateWithCleanup({
-              orderNumber,
-              progress: Math.round(
-                (optimizedPhotosWithPrices.length / totalPhotos) * 100
-              ),
-              timestamp: new Date().toISOString()
-            });
+            price: photo.price || calculateItemPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+            // Save progress state
+            if (progress % 20 === 0) {
+              saveStateWithCleanup({
+                orderNumber,
+                progress,
+                timestamp: new Date().toISOString()
+              });
+            }
           }
-
-        } catch (photoProcessError) {
-          console.error(`Error processing photo ${i + 1}:`, photoProcessError);
-          // Optional: Add error handling strategy
-        }
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error('Failed to process photos. Please try again.');
       }
-
-      return optimizedPhotosWithPrices;
     };
 
-    // Process photos with detailed progress tracking
-    const optimizedPhotosWithPrices = await processPhotosWithDetailedProgress();
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Construct comprehensive order data
+    // Construct order data
     orderData = {
       orderNumber,
       email: formData.email,
@@ -1187,8 +1000,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         quantity: photo.quantity,
         size: photo.size,
         price: photo.price,
-        productType: photo.productType,
-        metadata: photo.metadata
+        productType: photo.productType
       })),
       totalAmount: total,
       subtotal,
@@ -1207,24 +1019,14 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       discountCode: discountCode || null
     };
 
-    // Submit order with chunked processing
-    const responses = await submitOrderWithOptimizedChunking({
-      ...orderData,
-      onProgress: (chunkProgress) => {
-        // Combine photo processing progress with order submission progress
-        const finalProgress = Math.min(
-          uploadProgress + (chunkProgress * 0.2),
-          100
-        );
-        setUploadProgress(Math.round(finalProgress));
-      }
-    });
+    // Submit order
+    const responses = await submitOrderWithOptimizedChunking(orderData);
 
     if (!responses || responses.length === 0) {
       throw new Error('Failed to process order chunks');
     }
 
-    // Send order confirmation email
+    // Send confirmation email
     await sendOrderConfirmationEmail({
       ...orderData,
       orderItems: orderData.orderItems.map(item => ({
@@ -1234,7 +1036,6 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       }))
     });
 
-    // Mark order as successful
     setOrderSuccess(true);
     console.log('Order created successfully:', {
       orderNumber,
@@ -1242,7 +1043,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       responses
     });
 
-    // Cleanup and state management
+    // Cleanup
     try {
       clearStateChunks();
       await saveStateWithCleanup({
@@ -1259,8 +1060,59 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     }
 
   } catch (error) {
-    console.error('Error handling order:', error);
-    // Handle error as needed
+    console.error('Order Processing Error:', error);
+
+    let errorMessage = 'An unexpected error occurred';
+    
+    if (error.response?.data?.details) {
+      errorMessage = error.response.data.details;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message
+        .replace('TypeError:', '')
+        .replace('Error:', '')
+        .trim();
+    }
+
+    setError(errorMessage);
+    setOrderSuccess(false);
+
+    if (typeof trackError === 'function') {
+      trackError({
+        error,
+        orderNumber,
+        context: 'handleOrderSuccess'
+      });
+    }
+
+    try {
+      await saveStateWithCleanup({
+        failedOrderNumber: orderNumber,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+        recoveryData: {
+          formData,
+          selectedPhotos: selectedPhotos?.map(photo => ({
+            id: photo.id,
+            thumbnail: photo.thumbnail,
+            price: photo.price,
+            quantity: photo.quantity,
+            size: photo.size
+          }))
+        }
+      });
+    } catch (storageError) {
+      console.warn('Failed to save error state:', storageError);
+    }
+
+  } finally {
+    setIsProcessingOrder(false);
+    setUploadProgress(0);
+    
+    if (orderSuccess) {
+      clearStateStorage();
+    }
   }
 };
   
@@ -1863,38 +1715,6 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                       <Elements stripe={stripePromise}>
                         <PaymentForm onPaymentSuccess={handleOrderSuccess} />
                       </Elements>
-                    </div>
-                  )}
-      
-                  {/* Add progress bar here */}
-                  {isProcessingOrder && (
-                    <div className="mt-4">
-                      <style>
-                        {`
-                          .progress-container {
-                            width: 100%;
-                            background-color: #e0e0e0;
-                            border-radius: 5px;
-                            overflow: hidden;
-                            margin-top: 1rem;
-                          }
-      
-                          .progress-bar {
-                            height: 20px;
-                            background-color: #4CAF50;
-                            transition: width 0.5s ease;
-                            display: flex;
-                            align-items: center;
-                            justify-content: center;
-                            color: white;
-                            font-weight: bold;
-                          }
-                        `}
-                      </style>
-                      <div className="text-center mb-2">
-                        {t('order.processing')}
-                      </div>
-                      <ProgressBar progress={uploadProgress} />
                     </div>
                   )}
                 </div>
