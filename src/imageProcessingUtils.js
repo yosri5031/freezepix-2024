@@ -59,7 +59,7 @@ export const convertFileToBase64 = async (file) => {
 };
 
 export const processImagesInBatches = async (photos, onProgress) => {
-  const BATCH_SIZE = 8; // Increased batch size
+  const BATCH_SIZE = 4; // Increased batch size
   const totalPhotos = photos.length;
   let processedCount = 0;
 
