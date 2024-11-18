@@ -15,7 +15,11 @@ import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
-import { saveStateToStorage,clearStateChunks } from './stateManagementUtils';
+import { 
+  loadStateWithValidation,
+  clearStateStorage,
+  checkStorageHealth 
+} from './storageUtilities';
 
 //import { sendOrderConfirmation } from './utils/emailService';
 
@@ -795,87 +799,171 @@ const optimizeImage = async (file, maxSizeMB = 1, maxWidthOrHeight = 1920) => {
   }
 };
 
-// Chunk submission utility
-const CHUNK_SIZE = 3; // Process 3 images at a time
+// Storage optimization utility
+const optimizePhotoForStorage = (photo) => {
+  // Keep only essential data for storage
+  return {
+    id: photo.id,
+    thumbnail: photo.thumbnail,
+    price: photo.price,
+    quantity: photo.quantity,
+    size: photo.size,
+    // Store minimal metadata, drop large file data
+    metadata: {
+      name: photo.file?.name,
+      lastModified: photo.file?.lastModified,
+      type: photo.file?.type
+    }
+  };
+};
 
-const submitOrderInChunks = async (orderData, chunkSize = CHUNK_SIZE) => {
+// Enhanced state storage with cleanup
+const saveStateWithCleanup = async (state) => {
+  try {
+    // Optimize photos before storage
+    const optimizedState = {
+      ...state,
+      selectedPhotos: state.selectedPhotos?.map(optimizePhotoForStorage)
+    };
+
+    // Calculate approximate size
+    const stateSize = new Blob([JSON.stringify(optimizedState)]).size;
+    
+    // If approaching quota (5MB typical limit), clean up old data
+    if (stateSize > 4 * 1024 * 1024) { // 4MB threshold
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('freezepixState_old_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+    }
+
+    const compressedState = LZString.compressToUTF16(JSON.stringify(optimizedState));
+    localStorage.setItem(STORAGE_KEY, compressedState);
+    
+    return true;
+  } catch (error) {
+    if (error.name === 'QuotaExceededError') {
+      // Emergency cleanup - remove everything except current order
+      Object.keys(localStorage).forEach(key => {
+        if (key !== STORAGE_KEY) {
+          localStorage.removeItem(key);
+        }
+      });
+      // Try one more time after cleanup
+      try {
+        return await saveStateWithCleanup(state);
+      } catch (retryError) {
+        console.error('Failed to save state even after cleanup:', retryError);
+        return false;
+      }
+    }
+    return false;
+  }
+};
+
+// Optimized order submission with better chunking and progress tracking
+const submitOrderWithOptimizedChunking = async (orderData) => {
   const { orderItems } = orderData;
   const results = [];
-  let failedChunks = [];
-
-  // Process in smaller chunks
-  for (let i = 0; i < orderItems.length; i += chunkSize) {
-    const chunk = orderItems.slice(i, i + chunkSize);
-    
-    try {
-      const chunkResult = await axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk', 
-        { ...orderData, orderItems: chunk },
-        { 
-          headers: { 'Content-Type': 'application/json' }, 
-          timeout: 30000 // Reduced timeout per chunk
-        }
-      );
-      
-      results.push(chunkResult.data);
-      
-      // Update progress
-      const progress = Math.round(((i + chunk.length) / orderItems.length) * 100);
-      if (typeof orderData.onProgress === 'function') {
-        orderData.onProgress(progress);
-      }
-    } catch (error) {
-      console.error(`Error submitting chunk starting at index ${i}:`, error);
-      failedChunks.push({ startIndex: i, chunk });
-      
-      // Don't fail immediately, try other chunks
-      continue;
-    }
+  const CHUNK_SIZE = 2; // Reduced chunk size
+  const CONCURRENT_CHUNKS = 2; // Number of chunks to process simultaneously
+  
+  // Split items into smaller chunks
+  const chunks = [];
+  for (let i = 0; i < orderItems.length; i += CHUNK_SIZE) {
+    chunks.push(orderItems.slice(i, i + CHUNK_SIZE));
   }
 
-  // Retry failed chunks once
-  if (failedChunks.length > 0) {
-    for (const { startIndex, chunk } of failedChunks) {
-      try {
-        const retryResult = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-          { ...orderData, orderItems: chunk },
-          { 
-            headers: { 'Content-Type': 'application/json' },
-            timeout: 45000 // Longer timeout for retries
+  // Process chunks with controlled concurrency
+  for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
+    const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
+    const chunkPromises = currentChunks.map((chunk, index) => {
+      return axios.post(
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+        { ...orderData, orderItems: chunk },
+        {
+          headers: { 'Content-Type': 'application/json' },
+          timeout: 30000,
+          retries: 2,
+          retryDelay: 1000
+        }
+      ).catch(async (error) => {
+        // Implement exponential backoff for retries
+        let retryCount = 0;
+        const maxRetries = 2;
+        
+        while (retryCount < maxRetries) {
+          try {
+            await new Promise(resolve => 
+              setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+            );
+            return await axios.post(
+              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+              { ...orderData, orderItems: chunk },
+              {
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 45000
+              }
+            );
+          } catch (retryError) {
+            retryCount++;
+            if (retryCount === maxRetries) throw retryError;
           }
-        );
-        results.push(retryResult.data);
-      } catch (error) {
-        console.error(`Failed to retry chunk at index ${startIndex}:`, error);
-        throw error; // Finally fail if retry doesn't work
+        }
+      });
+    });
+
+    // Wait for current batch of chunks to complete
+    const chunkResults = await Promise.allSettled(chunkPromises);
+    
+    // Process results and update progress
+    chunkResults.forEach((result, index) => {
+      if (result.status === 'fulfilled') {
+        results.push(result.value.data);
+      } else {
+        console.error(`Failed to process chunk ${i + index}:`, result.reason);
+        throw result.reason;
       }
+    });
+
+    // Update progress
+    const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
+    if (typeof orderData.onProgress === 'function') {
+      orderData.onProgress(progress);
     }
   }
 
   return results;
 };
 
- const handleOrderSuccess = async (stripePaymentMethod = null) => {
+const handleOrderSuccess = async (stripePaymentMethod = null) => {
   try {
+    // Initial state setup
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
 
+    // Generate order number
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
+    // Calculate order totals
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Process photos in smaller batches with progress
+    // Process photos in smaller batches (2 photos at a time instead of 3)
+    // This helps reduce memory usage and improve reliability
     const optimizedPhotosWithPrices = await processImagesInBatches(
       selectedPhotos || [],
-      CHUNK_SIZE
+      2 // Reduced batch size
     );
 
-    // Construct order data
+    // Construct complete order data
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -900,45 +988,140 @@ const submitOrderInChunks = async (orderData, chunkSize = CHUNK_SIZE) => {
       },
       selectedCountry,
       discountCode: discountCode || null,
-      onProgress: (progress) => setUploadProgress(progress)
+      onProgress: (progress) => {
+        setUploadProgress(progress);
+        // Save progress to prevent data loss
+        if (progress % 20 === 0) { // Save every 20% progress
+          saveStateWithCleanup({
+            orderData,
+            progress,
+            timestamp: new Date().toISOString()
+          });
+        }
+      }
     };
 
-    // Submit order in chunks
-    const responses = await submitOrderInChunks(orderData);
+    // Submit order with optimized chunking
+    const responses = await submitOrderWithOptimizedChunking(orderData);
+
+    // Verify all chunks were processed successfully
+    if (!responses || responses.length === 0) {
+      throw new Error('Failed to process order chunks');
+    }
 
     // Send confirmation email
-    await sendOrderConfirmationEmail(orderData);
+    await sendOrderConfirmationEmail({
+      ...orderData,
+      orderItems: orderData.orderItems.map(item => ({
+        ...item,
+        file: undefined, // Remove large file data from email
+        thumbnail: item.thumbnail // Keep thumbnail for email
+      }))
+    });
 
+    // Order completed successfully
     setOrderSuccess(true);
-    console.log('Order created successfully:', responses);
+    console.log('Order created successfully:', {
+      orderNumber,
+      totalItems: orderData.orderItems.length,
+      responses
+    });
 
-    // Clear state with new utility
-    clearStateChunks();
+    // Clean up after successful order
+    try {
+      // Clear chunked storage first
+      clearStateChunks();
+      
+      // Save minimal order confirmation data
+      await saveStateWithCleanup({
+        orderNumber,
+        orderDate: new Date().toISOString(),
+        totalAmount: total,
+        currency: country.currency,
+        itemCount: orderData.orderItems.length,
+        customerEmail: formData.email
+      });
+
+      // Clear selected photos to free up memory
+      setSelectedPhotos([]);
+      
+      // Reset form data
+      //resetFormData();
+      
+    } catch (cleanupError) {
+      // Log cleanup error but don't fail the order
+      console.warn('Post-order cleanup warning:', cleanupError);
+    }
 
   } catch (error) {
+    // Enhanced error handling
     console.error('Order Processing Error:', {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
+      timestamp: new Date().toISOString()
     });
 
-    const errorMessage = error.response?.data?.details
-      || error.response?.data?.error
-      || error.message
-      || 'An unexpected error occurred';
+    // Construct user-friendly error message
+    let errorMessage = 'An unexpected error occurred';
+    
+    if (error.response?.data?.details) {
+      errorMessage = error.response.data.details;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      // Clean up technical error messages for user display
+      errorMessage = error.message
+        .replace('TypeError:', '')
+        .replace('Error:', '')
+        .trim();
+    }
 
+    // Set error state
     setError(errorMessage);
     setOrderSuccess(false);
 
+    // Track error if analytics is available
     if (typeof trackError === 'function') {
-      trackError(error);
+      trackError({
+        error,
+        orderNumber: orderData?.orderNumber,
+        context: 'handleOrderSuccess'
+      });
     }
+
+    // Try to save error state for recovery
+    try {
+      await saveStateWithCleanup({
+        failedOrderNumber: orderData?.orderNumber,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+        recoveryData: {
+          formData,
+          selectedPhotos: selectedPhotos?.map(photo => ({
+            id: photo.id,
+            thumbnail: photo.thumbnail,
+            price: photo.price,
+            quantity: photo.quantity,
+            size: photo.size
+          }))
+        }
+      });
+    } catch (storageError) {
+      console.warn('Failed to save error state:', storageError);
+    }
+
   } finally {
+    // Reset processing states
     setIsProcessingOrder(false);
     setUploadProgress(0);
+    
+    // Clear any stale data
+    if (orderSuccess) {
+      clearStateStorage();
+    }
   }
 };
-
   
   
 
