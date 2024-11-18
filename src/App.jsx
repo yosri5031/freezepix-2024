@@ -15,11 +15,7 @@ import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
-import { 
-  loadStateWithValidation,
-  clearStateStorage,
-  checkStorageHealth 
-} from './storageUtilities';
+import {clearStateStorage} from './stateManagementUtils';
 
 //import { sendOrderConfirmation } from './utils/emailService';
 
