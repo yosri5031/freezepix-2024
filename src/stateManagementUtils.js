@@ -75,7 +75,7 @@ export const clearStateStorage = () => {
   localStorage.removeItem(STORAGE_KEY);
 };
 
-const clearStateChunks = () => {
+export const clearStateChunks = () => {
   const chunks = localStorage.getItem(`${STORAGE_KEY}_chunks`);
   if (chunks) {
     for (let i = 0; i < parseInt(chunks); i++) {
