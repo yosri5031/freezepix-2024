@@ -13,6 +13,8 @@ import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
 import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
+import imageCompression from 'browser-image-compression';
+
 //import { sendOrderConfirmation } from './utils/emailService';
 
 import {
@@ -772,111 +774,189 @@ const handlePaymentMethodChange = (event) => {
 
 
     // Inside the FreezePIX component, modify the order success handling:
-    const handleOrderSuccess = async (stripePaymentMethod = null) => {
-      try {
-        // Reset states
-        setIsProcessingOrder(true);
-        setOrderSuccess(false);
-        setError(null);
+
+// Utility function for image optimization
+const optimizeImage = async (file, maxSizeMB = 1, maxWidthOrHeight = 1920) => {
+  try {
+    const options = {
+      maxSizeMB,
+      maxWidthOrHeight,
+      useWebWorker: true,
+      fileType: 'image/jpeg'
+    };
+    return await imageCompression(file, options);
+  } catch (error) {
+    console.error('Image optimization error:', error);
+    return file; // Return original file if optimization fails
+  }
+};
+
+// Chunk submission utility
+const submitOrderInChunks = async (orderData, chunkSize = 5) => {
+  const { orderItems } = orderData;
+  const results = [];
+
+  // Split order items into chunks
+  for (let i = 0; i < orderItems.length; i += chunkSize) {
+    const chunk = orderItems.slice(i, i + chunkSize);
     
-        // Generate order details
-        const orderNumber = generateOrderNumber();
-        setCurrentOrderNumber(orderNumber);
-        const { total, currency } = calculateTotals();
-        const country = initialCountries.find(c => c.value === selectedCountry);
-    
-        // Process selected photos with base64 conversion
-        const photosWithPrices = await Promise.all(
-          (selectedPhotos || []).map(async (photo) => {
-            // Convert file to base64 if it's a File object
-            let base64Image = null;
-            if (photo.file instanceof File) {
-              base64Image = await convertFileToBase64(photo.file);
-            }
-    
-            return {
-              ...photo,
-              id: photo.id || uuidv4(),
-              file: base64Image,
-              price: calculateItemPrice(photo, country),
-              currency: country.currency,
-              originalFileName: photo.file?.name || 'unknown'
-            };
-          })
-        );
-    
-        // Construct order data
-        const orderData = {
-          orderNumber,
-          email: formData.email,
-          phone: formData.phone,
-          shippingAddress: formData.shippingAddress,
-          billingAddress: isBillingAddressSameAsShipping 
-            ? formData.shippingAddress 
-            : formData.billingAddress,
-          orderItems: photosWithPrices,
-          totalAmount: total,
-          currency: country.currency,
-          orderNote: orderNote || '',
-          paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-          stripePaymentId: stripePaymentMethod,
-          customerDetails: {
-            name: formData.name,
-            country: selectedCountry
-          }
-        };
-    
-        // Sanitized logging
-        console.log('Order Payload:', JSON.stringify({
-          ...orderData,
-          orderItems: orderData.orderItems.map(item => ({
-            id: item.id,
-            originalFileName: item.originalFileName,
-            price: item.price
-          }))
-        }));
-    
-        // Create the order using Axios
-        const response = await axios.post(
+    try {
+      const chunkResult = await axios.post(
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk', 
+        { ...orderData, orderItems: chunk },
+        { 
+          headers: { 
+            'Content-Type': 'application/json' 
+          }, 
+          timeout: 60000 
+        }
+      );
+      
+      results.push(chunkResult.data);
+    } catch (error) {
+      console.error(`Error submitting chunk starting at index ${i}:`, error);
+      // Fallback to full order submission if chunk submission fails
+      if (i === 0) {
+        return [await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
           orderData,
           {
             headers: {
               'Content-Type': 'application/json'
             },
-            timeout: 60000 // 60 seconds timeout
+            timeout: 60000
           }
-        );
-    
-         // Send confirmation email
-         await sendOrderConfirmationEmail(orderData);
-        // Handle successful order creation
-        setOrderSuccess(true);
-        console.log('Order created successfully:', response.data);
-    
-      } catch (error) {
-        // Comprehensive error handling
-        console.error('Detailed Order Processing Error:', {
-          message: error.message,
-          response: error.response?.data,
-          status: error.response?.status
-        });
-    
-        // Determine error message
-        const errorMessage = error.response?.data?.details 
-          || error.response?.data?.error 
-          || error.message 
-          || 'An unexpected error occurred';
-    
-        setError(errorMessage);
-        setOrderSuccess(false);
-      } finally {
-        setIsProcessingOrder(false);
+        )];
       }
-    };
-    
-    
-    
+      throw error;
+    }
+  }
+
+  return results;
+};
+
+const handleOrderSuccess = async (stripePaymentMethod = null) => {
+  try {
+    // Reset states 
+    setIsProcessingOrder(true);
+    setOrderSuccess(false);
+    setError(null);
+
+    // Generate order details 
+    const orderNumber = generateOrderNumber(); 
+    setCurrentOrderNumber(orderNumber);
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals(); 
+    const country = initialCountries.find(c => c.value === selectedCountry); 
+
+    // Process selected photos with optimization and base64 conversion
+    const optimizedPhotosWithPrices = await Promise.all(
+      (selectedPhotos || []).map(async (photo) => {
+        let optimizedFile = photo.file;
+        let base64Image = null;
+
+        // Optimize image if it's a File object
+        if (photo.file instanceof File) {
+          try {
+            optimizedFile = await optimizeImage(photo.file);
+          } catch (optimizationError) {
+            console.warn('Image optimization failed, using original file', optimizationError);
+          }
+
+          // Convert optimized file to base64
+          base64Image = await convertFileToBase64(optimizedFile);
+        }
+
+        return { 
+          ...photo, 
+          id: photo.id || uuidv4(), 
+          file: base64Image, 
+          price: calculateItemPrice(photo, country), 
+          currency: country.currency, 
+          originalFileName: photo.file?.name || 'unknown' 
+        }; 
+      }) 
+    );
+
+    // Construct comprehensive order data 
+    const orderData = { 
+      orderNumber, 
+      email: formData.email, 
+      phone: formData.phone, 
+      shippingAddress: formData.shippingAddress, 
+      billingAddress: isBillingAddressSameAsShipping 
+        ? formData.shippingAddress 
+        : formData.billingAddress, 
+      orderItems: optimizedPhotosWithPrices, 
+      totalAmount: total, 
+      subtotal,
+      shippingFee,
+      taxAmount,
+      discount,
+      currency: country.currency, 
+      orderNote: orderNote || '', 
+      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit', 
+      stripePaymentId: stripePaymentMethod, 
+      customerDetails: { 
+        name: formData.name, 
+        country: selectedCountry 
+      },
+      // Preserve existing metadata
+      selectedCountry,
+      discountCode: discountCode || null
+    }; 
+
+    // Sanitized logging with additional details
+    console.log('Order Payload:', JSON.stringify({
+      ...orderData,
+      orderItems: orderData.orderItems.map(item => ({
+        id: item.id,
+        originalFileName: item.originalFileName,
+        price: item.price,
+        productType: item.productType,
+        size: item.size
+      }))
+    }));
+
+    // Submit order (with chunk-based submission fallback)
+    const responses = await submitOrderInChunks(orderData);
+
+    // Send confirmation email 
+    await sendOrderConfirmationEmail(orderData); 
+
+    // Handle successful order creation 
+    setOrderSuccess(true); 
+    console.log('Order created successfully:', responses);
+
+    // Clear saved state and reset form
+    localStorage.removeItem('freezepixState');
+    resetForm(); // Assuming you have a method to reset form state
+
+  } catch (error) { 
+    // Comprehensive error handling 
+    console.error('Detailed Order Processing Error:', { 
+      message: error.message, 
+      response: error.response?.data, 
+      status: error.response?.status 
+    }); 
+
+    // Determine error message 
+    const errorMessage = error.response?.data?.details 
+      || error.response?.data?.error 
+      || error.message 
+      || 'An unexpected error occurred'; 
+
+    setError(errorMessage); 
+    setOrderSuccess(false); 
+
+    // Optional: Send error report to monitoring service
+    if (typeof trackError === 'function') {
+      trackError(error);
+    }
+  } finally { 
+    setIsProcessingOrder(false); 
+  } 
+};
+  
   
 
     const PaymentForm = ({ onPaymentSuccess }) => {
