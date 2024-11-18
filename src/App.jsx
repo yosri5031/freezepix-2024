@@ -8,6 +8,7 @@ import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
+import photoprint8x10 from './assets/photoprint8x10.jpg';
 import keychain from './assets/keychain.jpg';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
@@ -29,8 +30,26 @@ import {
 const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
 const initialCountries = [
-  { name: 'United States', value: 'USA', currency: 'USD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
-  { name: 'Canada', value: 'CAN', currency: 'CAD', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99 },
+  {name: 'United States', 
+    value: 'USA', 
+    currency: 'USD', 
+    rate: 1, 
+    size4x6: 0.49,        // Updated from 0.39
+    size5x7: 1.99,        // Updated from 1.49
+    size8x10: 4.99,       // Added new size
+    crystal3d: 140, 
+    keychain: 9.99, 
+    keyring_magnet: 9.99 },
+  { name: 'Canada', 
+    value: 'CAN', 
+    currency: 'CAD', 
+    rate: 1, 
+    size4x6: 0.49,        // Updated from 0.39
+    size5x7: 1.99,        // Updated from 1.49
+    size8x10: 4.99,       // Added new size
+    crystal3d: 140, 
+    keychain: 9.99, 
+    keyring_magnet: 9.99  },
   { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3, size15x22: 5, keychain: 15, keyring_magnet: 15 },
   { name: 'Germany', value: 'DEU', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
   { name: 'France', value: 'FRA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
@@ -399,6 +418,16 @@ const closeProductDetails = () => {
     );
     }
 
+    // Add 8x10" size only for USA and Canada
+  if (country === 'USA' || country === 'CAN') {
+    products.push({
+      category: 'Photo Prints',
+      product: '8x10 Size',
+      country: countryInfo.name,
+      price: `${countryInfo.currency} ${countryInfo.size8x10}`
+    });
+  }
+
     return products;
   };
 
@@ -406,6 +435,7 @@ const closeProductDetails = () => {
     const imageMap = {
       '4x6 Size': photoprint4x6,
       '5x7 Size': photoprint5x7,
+      '8x10 Size': photoprint8x10,
       'Keychain': keychain,
       'Magnet': magnet,
       'Rectangle 3D Frame': Rectangle,
@@ -676,6 +706,7 @@ useEffect(() => {
     switch (photo.size) {
       case '4x6': return country.size4x6;
       case '5x7': return country.size5x7;
+      case '8x10' : return country.size8x10;
       case '10x15': return country.size10x15;
       case '15x22': return country.size15x22;
       default: return 0;
@@ -1295,6 +1326,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         '5x7': 0, 
         '10x15': 0, 
         '15x22': 0, 
+        '8x10': 0,
         '3d_frame': 0, 
         'keychain': 0, 
         'keyring_magnet': 0 
@@ -1305,39 +1337,42 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         '5x7': 0, 
         '10x15': 0, 
         '15x22': 0, 
+        '8x10' : 0,
         '3d_frame': 0, 
         'keychain': 0, 
         'keyring_magnet': 0 
     }; 
 
     // Count quantities and calculate subtotals for each size/product 
-    selectedPhotos.forEach(photo => { 
-        if (photo.productType === 'photo_print') { 
-            quantities[photo.size] += photo.quantity || 1; 
-            if (selectedCountry === 'TUN') { 
-                if (photo.size === '10x15') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15; 
-                } else if (photo.size === '15x22') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22; 
-                } 
-            } else { 
-                if (photo.size === '4x6') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6; 
-                } else if (photo.size === '5x7') { 
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7; 
-                } 
-            } 
-        } else if (photo.productType === '3d_frame') { 
-            quantities['3d_frame'] += photo.quantity || 1; 
-            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d; 
-        } else if (photo.productType === 'keychain') { 
-            quantities['keychain'] += photo.quantity || 1; 
-            subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain; 
-        } else if (photo.productType === 'keyring_magnet') { 
-            quantities['keyring_magnet'] += photo.quantity || 1; 
-            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet; 
-        } 
-    }); 
+    selectedPhotos.forEach(photo => {
+      if (photo.productType === 'photo_print') {
+          quantities[photo.size] += photo.quantity || 1;
+          if (selectedCountry === 'TUN') {
+              if (photo.size === '10x15') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
+              } else if (photo.size === '15x22') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
+              }
+          } else {
+              if (photo.size === '4x6') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+              } else if (photo.size === '5x7') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+              } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN') && photo.size === '8x10') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
+              }
+          }
+      } else if (photo.productType === '3d_frame') {
+          quantities['3d_frame'] += photo.quantity || 1;
+          subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+          quantities['keychain'] += photo.quantity || 1;
+          subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+          quantities['keyring_magnet'] += photo.quantity || 1;
+          subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+      }
+  });
 
     // Calculate subtotal 
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
@@ -1483,22 +1518,28 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                                         {t('produits.size')}
                                     </label>
                                     <select
-                                        value={photo.size}
-                                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-                                        className="w-full p-1 border rounded"
-                                    >
-                                        {selectedCountry === 'TUN' ? (
-                                            <>
-                                                <option value="10x15">10x15 cm</option>
-                                                <option value="15x22">15x22 cm</option>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <option value="4x6">4x6"</option>
-                                                <option value="5x7">5x7"</option>
-                                            </>
-                                        )}
-                                    </select>
+    value={photo.size}
+    onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+    className="w-full p-1 border rounded"
+>
+    {selectedCountry === 'TUN' ? (
+        <>
+            <option value="10x15">10x15 cm</option>
+            <option value="15x22">15x22 cm</option>
+        </>
+    ) : selectedCountry === 'USA' || selectedCountry === 'CAN' ? (
+        <>
+            <option value="4x6">4x6"</option>
+            <option value="5x7">5x7"</option>
+            <option value="8x10">8x10"</option>
+        </>
+    ) : (
+        <>
+            <option value="4x6">4x6"</option>
+            <option value="5x7">5x7"</option>
+        </>
+    )}
+</select>
                                 </div>
                             )}
 
@@ -1829,6 +1870,12 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         <div className="flex justify-between py-2">
           <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+      {(selectedCountry === 'USA' || selectedCountry === 'CAN') && quantities['8x10'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
     </>
