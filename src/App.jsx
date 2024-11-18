@@ -14,6 +14,8 @@ import threeDFrame from './assets/3d_frame.jpg';
 import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
+import { processImagesInBatches } from './imageProcessingUtils';
+import { saveStateToStorage,clearStateChunks } from './stateManagementUtils';
 
 //import { sendOrderConfirmation } from './utils/emailService';
 
@@ -230,6 +232,8 @@ const FreezePIX = () => {
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+
 const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
       email: '',
@@ -792,11 +796,14 @@ const optimizeImage = async (file, maxSizeMB = 1, maxWidthOrHeight = 1920) => {
 };
 
 // Chunk submission utility
-const submitOrderInChunks = async (orderData, chunkSize = 5) => {
+const CHUNK_SIZE = 3; // Process 3 images at a time
+
+const submitOrderInChunks = async (orderData, chunkSize = CHUNK_SIZE) => {
   const { orderItems } = orderData;
   const results = [];
+  let failedChunks = [];
 
-  // Split order items into chunks
+  // Process in smaller chunks
   for (let i = 0; i < orderItems.length; i += chunkSize) {
     const chunk = orderItems.slice(i, i + chunkSize);
     
@@ -805,157 +812,133 @@ const submitOrderInChunks = async (orderData, chunkSize = 5) => {
         'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk', 
         { ...orderData, orderItems: chunk },
         { 
-          headers: { 
-            'Content-Type': 'application/json' 
-          }, 
-          timeout: 60000 
+          headers: { 'Content-Type': 'application/json' }, 
+          timeout: 30000 // Reduced timeout per chunk
         }
       );
       
       results.push(chunkResult.data);
+      
+      // Update progress
+      const progress = Math.round(((i + chunk.length) / orderItems.length) * 100);
+      if (typeof orderData.onProgress === 'function') {
+        orderData.onProgress(progress);
+      }
     } catch (error) {
       console.error(`Error submitting chunk starting at index ${i}:`, error);
-      // Fallback to full order submission if chunk submission fails
-      if (i === 0) {
-        return [await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders', 
-          orderData,
-          {
-            headers: {
-              'Content-Type': 'application/json'
-            },
-            timeout: 60000
+      failedChunks.push({ startIndex: i, chunk });
+      
+      // Don't fail immediately, try other chunks
+      continue;
+    }
+  }
+
+  // Retry failed chunks once
+  if (failedChunks.length > 0) {
+    for (const { startIndex, chunk } of failedChunks) {
+      try {
+        const retryResult = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          { ...orderData, orderItems: chunk },
+          { 
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 45000 // Longer timeout for retries
           }
-        )];
+        );
+        results.push(retryResult.data);
+      } catch (error) {
+        console.error(`Failed to retry chunk at index ${startIndex}:`, error);
+        throw error; // Finally fail if retry doesn't work
       }
-      throw error;
     }
   }
 
   return results;
 };
 
-const handleOrderSuccess = async (stripePaymentMethod = null) => {
+ const handleOrderSuccess = async (stripePaymentMethod = null) => {
   try {
-    // Reset states 
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
+    setUploadProgress(0);
 
-    // Generate order details 
-    const orderNumber = generateOrderNumber(); 
+    const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
-    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals(); 
-    const country = initialCountries.find(c => c.value === selectedCountry); 
+    
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Process selected photos with optimization and base64 conversion
-    const optimizedPhotosWithPrices = await Promise.all(
-      (selectedPhotos || []).map(async (photo) => {
-        let optimizedFile = photo.file;
-        let base64Image = null;
-
-        // Optimize image if it's a File object
-        if (photo.file instanceof File) {
-          try {
-            optimizedFile = await optimizeImage(photo.file);
-          } catch (optimizationError) {
-            console.warn('Image optimization failed, using original file', optimizationError);
-          }
-
-          // Convert optimized file to base64
-          base64Image = await convertFileToBase64(optimizedFile);
-        }
-
-        return { 
-          ...photo, 
-          id: photo.id || uuidv4(), 
-          file: base64Image, 
-          price: calculateItemPrice(photo, country), 
-          currency: country.currency, 
-          originalFileName: photo.file?.name || 'unknown' 
-        }; 
-      }) 
+    // Process photos in smaller batches with progress
+    const optimizedPhotosWithPrices = await processImagesInBatches(
+      selectedPhotos || [],
+      CHUNK_SIZE
     );
 
-    // Construct comprehensive order data 
-    const orderData = { 
-      orderNumber, 
-      email: formData.email, 
-      phone: formData.phone, 
-      shippingAddress: formData.shippingAddress, 
-      billingAddress: isBillingAddressSameAsShipping 
-        ? formData.shippingAddress 
-        : formData.billingAddress, 
-      orderItems: optimizedPhotosWithPrices, 
-      totalAmount: total, 
+    // Construct order data
+    const orderData = {
+      orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
+      orderItems: optimizedPhotosWithPrices,
+      totalAmount: total,
       subtotal,
       shippingFee,
       taxAmount,
       discount,
-      currency: country.currency, 
-      orderNote: orderNote || '', 
-      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit', 
-      stripePaymentId: stripePaymentMethod, 
-      customerDetails: { 
-        name: formData.name, 
-        country: selectedCountry 
+      currency: country.currency,
+      orderNote: orderNote || '',
+      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+      stripePaymentId: stripePaymentMethod,
+      customerDetails: {
+        name: formData.name,
+        country: selectedCountry
       },
-      // Preserve existing metadata
       selectedCountry,
-      discountCode: discountCode || null
-    }; 
+      discountCode: discountCode || null,
+      onProgress: (progress) => setUploadProgress(progress)
+    };
 
-    // Sanitized logging with additional details
-    console.log('Order Payload:', JSON.stringify({
-      ...orderData,
-      orderItems: orderData.orderItems.map(item => ({
-        id: item.id,
-        originalFileName: item.originalFileName,
-        price: item.price,
-        productType: item.productType,
-        size: item.size
-      }))
-    }));
-
-    // Submit order (with chunk-based submission fallback)
+    // Submit order in chunks
     const responses = await submitOrderInChunks(orderData);
 
-    // Send confirmation email 
-    await sendOrderConfirmationEmail(orderData); 
+    // Send confirmation email
+    await sendOrderConfirmationEmail(orderData);
 
-    // Handle successful order creation 
-    setOrderSuccess(true); 
+    setOrderSuccess(true);
     console.log('Order created successfully:', responses);
 
-    // Clear saved state and reset form
-    localStorage.removeItem('freezepixState');
-    resetForm(); // Assuming you have a method to reset form state
+    // Clear state with new utility
+    clearStateChunks();
 
-  } catch (error) { 
-    // Comprehensive error handling 
-    console.error('Detailed Order Processing Error:', { 
-      message: error.message, 
-      response: error.response?.data, 
-      status: error.response?.status 
-    }); 
+  } catch (error) {
+    console.error('Order Processing Error:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status
+    });
 
-    // Determine error message 
-    const errorMessage = error.response?.data?.details 
-      || error.response?.data?.error 
-      || error.message 
-      || 'An unexpected error occurred'; 
+    const errorMessage = error.response?.data?.details
+      || error.response?.data?.error
+      || error.message
+      || 'An unexpected error occurred';
 
-    setError(errorMessage); 
-    setOrderSuccess(false); 
+    setError(errorMessage);
+    setOrderSuccess(false);
 
-    // Optional: Send error report to monitoring service
     if (typeof trackError === 'function') {
       trackError(error);
     }
-  } finally { 
-    setIsProcessingOrder(false); 
-  } 
+  } finally {
+    setIsProcessingOrder(false);
+    setUploadProgress(0);
+  }
 };
+
   
   
 
