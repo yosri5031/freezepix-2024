@@ -937,15 +937,17 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 };
 
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
+  let orderData = null; // Declare orderData outside try block
+  let orderNumber = null;
+
   try {
-    // Initial state setup
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
 
     // Generate order number
-    const orderNumber = generateOrderNumber();
+    orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
     // Calculate order totals
@@ -954,35 +956,35 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
     // Process photos with improved batch processing
     const processPhotosWithProgress = async () => {
-      const totalPhotos = selectedPhotos.length;
-      let processedPhotos = [];
-      
-      const optimizedPhotosWithPrices = await processImagesInBatches(
-        selectedPhotos.map(photo => ({
-          ...photo,
-          price: photo.price || calculatePhotoPrice(photo, country)
-        })),
-        (progress) => {
-          setUploadProgress(Math.round(progress));
-          // Save progress state
-          if (progress % 20 === 0) {
-            saveStateWithCleanup({
-              orderNumber,
-              progress,
-              processedCount: processedPhotos.length,
-              timestamp: new Date().toISOString()
-            });
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
+            ...photo,
+            price: photo.price || calculatePhotoPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+            // Save progress state
+            if (progress % 20 === 0) {
+              saveStateWithCleanup({
+                orderNumber,
+                progress,
+                timestamp: new Date().toISOString()
+              });
+            }
           }
-        }
-      );
-
-      return optimizedPhotosWithPrices;
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error('Failed to process photos. Please try again.');
+      }
     };
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Construct order data with memory-optimized photos
-    const orderData = {
+    // Construct order data
+    orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
@@ -992,8 +994,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         : formData.billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
-        // Keep only necessary data for each photo
-        file: photo.file, // Compressed base64
+        file: photo.file,
         thumbnail: photo.thumbnail,
         id: photo.id,
         quantity: photo.quantity,
@@ -1018,24 +1019,23 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       discountCode: discountCode || null
     };
 
-    // Submit order with optimized chunking
+    // Submit order
     const responses = await submitOrderWithOptimizedChunking(orderData);
 
     if (!responses || responses.length === 0) {
       throw new Error('Failed to process order chunks');
     }
 
-    // Send confirmation email with optimized data
+    // Send confirmation email
     await sendOrderConfirmationEmail({
       ...orderData,
       orderItems: orderData.orderItems.map(item => ({
         ...item,
-        file: undefined, // Remove base64 data
+        file: undefined,
         thumbnail: item.thumbnail
       }))
     });
 
-    // Order success handling
     setOrderSuccess(true);
     console.log('Order created successfully:', {
       orderNumber,
@@ -1043,10 +1043,9 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       responses
     });
 
-    // Cleanup operations
+    // Cleanup
     try {
       clearStateChunks();
-      
       await saveStateWithCleanup({
         orderNumber,
         orderDate: new Date().toISOString(),
@@ -1055,22 +1054,13 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         itemCount: orderData.orderItems.length,
         customerEmail: formData.email
       });
-
-      // Clear memory
       setSelectedPhotos([]);
-      
     } catch (cleanupError) {
       console.warn('Post-order cleanup warning:', cleanupError);
     }
 
   } catch (error) {
-    // Error handling
-    console.error('Order Processing Error:', {
-      message: error.message,
-      response: error.response?.data,
-      status: error.response?.status,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Order Processing Error:', error);
 
     let errorMessage = 'An unexpected error occurred';
     
@@ -1091,15 +1081,14 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     if (typeof trackError === 'function') {
       trackError({
         error,
-        orderNumber: orderData?.orderNumber,
+        orderNumber,
         context: 'handleOrderSuccess'
       });
     }
 
-    // Save error state
     try {
       await saveStateWithCleanup({
-        failedOrderNumber: orderData?.orderNumber,
+        failedOrderNumber: orderNumber,
         errorMessage,
         timestamp: new Date().toISOString(),
         recoveryData: {
