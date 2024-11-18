@@ -865,7 +865,7 @@ const saveStateWithCleanup = async (state) => {
 const submitOrderWithOptimizedChunking = async (orderData) => {
   const { orderItems } = orderData;
   const results = [];
-  const CHUNK_SIZE = 4; // Reduced chunk size
+  const CHUNK_SIZE = 6; // Reduced chunk size
   const CONCURRENT_CHUNKS = 2; // Number of chunks to process simultaneously
   
   // Split items into smaller chunks
