@@ -21,13 +21,15 @@ import {clearStateStorage} from './stateManagementUtils';
 //import { sendOrderConfirmation } from './utils/emailService';
 
 import {
-  CardElement,
+  CardNumberElement,
+  CardExpiryElement,
+  CardCvcElement,
   Elements,
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe('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');
+const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
 const initialCountries = [
   {name: 'United States', 
@@ -971,10 +973,85 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
+const CheckoutForm = ({ onSubmit, processing }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const { t } = useTranslation();
+
+  const cardElementOptions = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+  };
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="p-4 border rounded-lg bg-white">
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('checkout.cardNumber')}
+          </label>
+          <div className="p-3 border rounded-md bg-white">
+            <CardNumberElement options={cardElementOptions} />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('checkout.expiryDate')}
+            </label>
+            <div className="p-3 border rounded-md bg-white">
+              <CardExpiryElement options={cardElementOptions} />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('checkout.cvc')}
+            </label>
+            <div className="p-3 border rounded-md bg-white">
+              <CardCvcElement options={cardElementOptions} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={!stripe || processing}
+        className={`w-full py-3 px-4 text-white font-medium rounded-md ${
+          processing || !stripe
+            ? 'bg-gray-400 cursor-not-allowed'
+            : 'bg-blue-600 hover:bg-blue-700'
+        }`}
+      >
+        {processing ? (
+          <div className="flex items-center justify-center">
+            <Loader className="animate-spin mr-2" size={20} />
+            {t('checkout.processing')}
+          </div>
+        ) : (
+          t('checkout.payNow')
+        )}
+      </button>
+    </form>
+  );
+};
 
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
-  let orderData = null; // Declare orderData outside try block
+  let orderData = null;
   let orderNumber = null;
+  let paymentIntent = null;
 
   try {
     setIsProcessingOrder(true);
@@ -1000,7 +1077,6 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
           })),
           (progress) => {
             setUploadProgress(Math.round(progress));
-            // Save progress state
             if (progress % 20 === 0) {
               saveStateWithCleanup({
                 orderNumber,
@@ -1018,6 +1094,37 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     };
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
+    // Handle Stripe payment if not COD
+    if (selectedCountry !== 'TUN' && stripePaymentMethod) {
+      try {
+        // Create payment intent
+        const paymentResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent', {
+          amount: total,
+          currency: country.currency.toLowerCase(),
+          payment_method: stripePaymentMethod,
+          payment_method_types: ['card'],
+          metadata: {
+            orderNumber: orderNumber,
+            customerEmail: formData.email
+          }
+        });
+
+        paymentIntent = paymentResponse.data;
+
+        // Confirm the payment
+        const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
+        const confirmPayment = await stripe.confirmCardPayment(paymentIntent.client_secret);
+
+        if (confirmPayment.error) {
+          throw new Error(confirmPayment.error.message);
+        }
+
+        stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
+      } catch (paymentError) {
+        throw new Error(`Payment failed: ${paymentError.message}`);
+      }
+    }
 
     // Construct order data
     orderData = {
@@ -1047,6 +1154,8 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       orderNote: orderNote || '',
       paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
       stripePaymentId: stripePaymentMethod,
+      paymentIntentId: paymentIntent?.id,
+      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
       customerDetails: {
         name: formData.name,
         country: selectedCountry
@@ -1154,81 +1263,104 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
   
   
 
-    const PaymentForm = ({ onPaymentSuccess }) => {
-      const stripe = useStripe();
-      const elements = useElements();
-      const [isProcessing, setIsProcessing] = useState(false);
-      const [error, setError] = useState(null);
+const PaymentForm = ({ onPaymentSuccess }) => {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState(null);
+
+  const CARD_ELEMENT_OPTIONS = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
+  };
+  
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    
+    if (!stripe || !elements) {
+      return;
+    }
+    
+    setIsProcessing(true);
+    setError(null);
+    
+    try {
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardNumberElement),
+      });
       
-      const handleSubmit = async (event) => {
-        event.preventDefault();
-        
-        if (!stripe || !elements) {
-          return;
-        }
-        
-        setIsProcessing(true);
-        setError(null);
-        
-        try {
-          const { error, paymentMethod } = await stripe.createPaymentMethod({
-            type: 'card',
-            card: elements.getElement(CardElement),
-          });
-          
-          if (error) {
-            setError('Payment processing failed. Please try again.');
-            return;
-          }
-          
-          await onPaymentSuccess(paymentMethod?.id);
-        } catch (err) {
-          setError('Payment processing failed. Please try again.');
-        } finally {
-          setIsProcessing(false);
-        }
-      };
+      if (error) {
+        setError('Payment processing failed. Please try again.');
+        return;
+      }
       
-      return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+      await onPaymentSuccess(paymentMethod?.id);
+    } catch (err) {
+      setError('Payment processing failed. Please try again.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+  
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex flex-col space-y-4">
+        <div className="p-4 border rounded">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Card Number
+          </label>
+          <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
           <div className="p-4 border rounded">
-            <CardElement
-              options={{
-                style: {
-                  base: {
-                    fontSize: '16px',
-                    color: '#424770',
-                    '::placeholder': {
-                      color: '#aab7c4',
-                    },
-                  },
-                  invalid: {
-                    color: '#9e2146',
-                  },
-                },
-              }}
-            />
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Expiration Date
+            </label>
+            <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
           </div>
-          {error && (
-            <div className="text-red-500 text-sm">{error}</div>
-          )}
-          <button
-    type="submit"
-    disabled={!stripe || isProcessing || isProcessingOrder} // Disable if processing order
-    className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
->
-    {isProcessing || isProcessingOrder ? ( // Show loading state
-        <span className="flex items-center justify-center gap-2">
+
+          <div className="p-4 border rounded">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              CVC
+            </label>
+            <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
+          </div>
+        </div>
+      </div>
+
+      {error && (
+        <div className="text-red-500 text-sm">{error}</div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing || isProcessingOrder}
+        className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {isProcessing || isProcessingOrder ? (
+          <span className="flex items-center justify-center gap-2">
             <Loader className="animate-spin" size={16} />
             Processing Payment...
-        </span>
-    ) : (
-        'Pay Now'
-    )}
-</button>
-        </form>
-      );
-    };
+          </span>
+        ) : (
+          'Pay Now'
+        )}
+      </button>
+    </form>
+  );
+};
   
 
       const validateDiscountCode = (code) => {
@@ -1755,13 +1887,13 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       
                   {/* Option de paiement par carte de crédit */}
                   {paymentMethod === 'credit' && (
-                    <div className="border rounded-lg p-4">
-                      <h4 className="font-medium mb-4">{t('canada.credit_c')}</h4>
-                      <Elements stripe={stripePromise}>
-                        <PaymentForm onPaymentSuccess={handleOrderSuccess} />
-                      </Elements>
-                    </div>
-                  )}
+  <Elements stripe={stripePromise}>
+    <CheckoutForm
+      onSubmit={handleOrderSuccess}
+      processing={isProcessingOrder}
+    />
+  </Elements>
+)}
                 </div>
               </div>
             ) : (
