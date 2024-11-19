@@ -114,6 +114,21 @@
       "credit_c": "Credit Card Payment",
       "message_c" : "Please complete your payment to place the order"
 
-    }
+    },
+    "checkout": {
+    "serverError": "There was a problem processing your payment. Please try again.",
+    "networkError": "Network error. Please check your connection and try again.",
+    "tryAgain": "Try Again"
+  },
+  "payment": {
+    "serverError": "The payment server is temporarily unavailable. Please try again later.",
+    "genericError": "There was a problem processing your payment. Please try again.",
+    "cardDeclined": "Your card was declined. Please try another card.",
+    "cardExpired": "Your card has expired. Please use a different card.",
+    "invalidCVC": "The security code (CVC) is incorrect.",
+    "processingError": "There was an error processing your card.",
+    "insufficientFunds": "Insufficient funds in your account.",
+    "incorrectPostalCode": "The postal code doesn't match your card."
+  }
   }
   

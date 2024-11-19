@@ -114,6 +114,21 @@
 "placing": "Après avoir passé la commande, veuillez compléter le Virement Interac à l'adresse e-mail fournie.",
 "credit_c": "Paiement par carte de crédit",
 "message_c" : "Veuillez compléter votre paiement pour passer la commande"
-}
+},
+"checkout": {
+    "serverError": "Il y a eu un problème lors du traitement de votre paiement. Veuillez réessayer.",
+    "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
+    "tryAgain": "Réessayer"
+  },
+  "payment": {
+    "serverError": "Le serveur de paiement est temporairement indisponible. Veuillez réessayer plus tard.",
+    "genericError": "Il y a eu un problème lors du traitement de votre paiement. Veuillez réessayer.",
+    "cardDeclined": "Votre carte a été refusée. Veuillez essayer une autre carte.",
+    "cardExpired": "Votre carte a expiré. Veuillez utiliser une carte différente.",
+    "invalidCVC": "Le code de sécurité (CVC) est incorrect.",
+    "processingError": "Une erreur s'est produite lors du traitement de votre carte.",
+    "insufficientFunds": "Fonds insuffisants sur votre compte.",
+    "incorrectPostalCode": "Le code postal ne correspond pas à votre carte."
+  }
       
   }

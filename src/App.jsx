@@ -982,6 +982,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
   const [postalCode, setPostalCode] = useState('');
   const [postalCodeError, setPostalCodeError] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [serverError, setServerError] = useState('');
 
   const cardElementOptions = {
     style: {
@@ -1031,9 +1032,10 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
       return;
     }
 
-    // Reset errors
+    // Reset all errors
     setCardError('');
     setPostalCodeError('');
+    setServerError('');
     setProcessing(true);
 
     // Validate postal code
@@ -1049,9 +1051,9 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
       return;
     }
 
-    // Create payment method
     try {
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
+      // First validate the card details with Stripe
+      const { error: cardValidationError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: elements.getElement(CardNumberElement),
         billing_details: {
@@ -1061,14 +1063,32 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
         },
       });
 
-      if (error) {
-        setCardError(error.message);
+      if (cardValidationError) {
+        setCardError(cardValidationError.message);
         setProcessing(false);
         return;
       }
 
       // Proceed with payment submission
-      await onSubmit(paymentMethod.id, postalCode);
+      try {
+        await onSubmit(paymentMethod.id, postalCode);
+      } catch (error) {
+        // Handle specific error types
+        if (error.response?.status === 500) {
+          setServerError(t('checkout.serverError'));
+        } else if (error.name === 'AxiosError') {
+          setServerError(t('checkout.networkError'));
+        } else {
+          setCardError(error.message || t('checkout.paymentProcessingError'));
+        }
+        
+        // Clear the form fields on server error
+        if (error.response?.status === 500) {
+          elements.getElement(CardNumberElement).clear();
+          elements.getElement(CardExpiryElement).clear();
+          elements.getElement(CardCvcElement).clear();
+        }
+      }
     } catch (err) {
       setCardError(t('checkout.paymentProcessingError'));
     } finally {
@@ -1129,10 +1149,22 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
           )}
         </div>
 
-        {/* Error Message */}
-        {cardError && (
+        {/* Error Messages */}
+        {(cardError || serverError) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-sm text-red-600">{cardError}</p>
+            {cardError && <p className="text-sm text-red-600">{cardError}</p>}
+            {serverError && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-red-600">{serverError}</p>
+                <button 
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="ml-2 text-blue-600 hover:text-blue-800 underline text-sm"
+                >
+                  {t('checkout.tryAgain')}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -1179,7 +1211,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Process photos with improved batch processing
+    // Process photos with improved batch processing and error handling
     const processPhotosWithProgress = async () => {
       try {
         const optimizedPhotosWithPrices = await processImagesInBatches(
@@ -1201,7 +1233,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         return optimizedPhotosWithPrices;
       } catch (processError) {
         console.error('Photo processing error:', processError);
-        throw new Error('Failed to process photos. Please try again.');
+        throw new Error(t('errors.photoProcessingFailed'));
       }
     };
 
@@ -1210,15 +1242,46 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     // Handle Stripe payment if not COD
     if (selectedCountry !== 'TUN' && stripePaymentMethod) {
       try {
-        // Create payment intent
-        const paymentResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent', {
-          amount: total,
-          currency: country.currency.toLowerCase(),
-          payment_method: stripePaymentMethod,
-          payment_method_types: ['card'],
-          metadata: {
-            orderNumber: orderNumber,
-            customerEmail: formData.email
+        // Create payment intent with enhanced error handling
+        const paymentResponse = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
+          {
+            amount: total,
+            currency: country.currency.toLowerCase(),
+            payment_method: stripePaymentMethod,
+            payment_method_types: ['card'],
+            metadata: {
+              orderNumber: orderNumber,
+              customerEmail: formData.email
+            }
+          },
+          {
+            timeout: 15000, // 15 second timeout
+            retries: 3,     // Allow 3 retries
+            retryDelay: 1000 // Wait 1 second between retries
+          }
+        ).catch(error => {
+          console.error('Payment Intent Creation Error:', error);
+          
+          // Network or server errors
+          if (!error.response) {
+            throw new Error(t('payment.networkError'));
+          }
+          
+          // Handle specific HTTP status codes
+          switch (error.response.status) {
+            case 500:
+              throw new Error(t('payment.serverError'));
+            case 400:
+              throw new Error(error.response.data.error || t('payment.invalidRequest'));
+            case 401:
+              throw new Error(t('payment.authenticationError'));
+            case 403:
+              throw new Error(t('payment.permissionDenied'));
+            case 404:
+              throw new Error(t('payment.serviceUnavailable'));
+            default:
+              throw new Error(error.response.data.error || t('payment.genericError'));
           }
         });
 
@@ -1248,16 +1311,22 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
             case 'incorrect_postal_code':
               errorMessage = t('payment.incorrectPostalCode');
               break;
+            case 'authentication_required':
+              errorMessage = t('payment.authenticationRequired');
+              break;
+            case 'rate_limit_exceeded':
+              errorMessage = t('payment.tooManyAttempts');
+              break;
             default:
-              errorMessage = confirmPayment.error.message;
+              errorMessage = confirmPayment.error.message || t('payment.genericError');
           }
           throw new Error(errorMessage);
         }
 
         stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
       } catch (paymentError) {
-        setError(paymentError.message);
-        throw new Error(paymentError.message);
+        console.error('Payment Processing Error:', paymentError);
+        throw new Error(paymentError.message || t('payment.genericError'));
       }
     }
 
@@ -1296,25 +1365,57 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         country: selectedCountry
       },
       selectedCountry,
-      discountCode: discountCode || null
+      discountCode: discountCode || null,
+      createdAt: new Date().toISOString()
     };
 
-    // Submit order
-    const responses = await submitOrderWithOptimizedChunking(orderData);
+    // Submit order with retry mechanism
+    const maxRetries = 3;
+    let retryCount = 0;
+    let responses;
 
-    if (!responses || responses.length === 0) {
-      throw new Error('Failed to process order chunks');
+    while (retryCount < maxRetries) {
+      try {
+        responses = await submitOrderWithOptimizedChunking(orderData);
+        if (responses && responses.length > 0) {
+          break;
+        }
+        throw new Error('Empty response received');
+      } catch (submitError) {
+        retryCount++;
+        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+        
+        if (retryCount === maxRetries) {
+          throw new Error(t('errors.orderSubmissionFailed'));
+        }
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
     }
 
-    // Send confirmation email
-    await sendOrderConfirmationEmail({
-      ...orderData,
-      orderItems: orderData.orderItems.map(item => ({
-        ...item,
-        file: undefined,
-        thumbnail: item.thumbnail
-      }))
-    });
+    // Send confirmation email with retry
+    let emailSent = false;
+    retryCount = 0;
+    
+    while (retryCount < maxRetries && !emailSent) {
+      try {
+        await sendOrderConfirmationEmail({
+          ...orderData,
+          orderItems: orderData.orderItems.map(item => ({
+            ...item,
+            file: undefined,
+            thumbnail: item.thumbnail
+          }))
+        });
+        emailSent = true;
+      } catch (emailError) {
+        retryCount++;
+        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+        if (retryCount < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+        }
+      }
+    }
 
     setOrderSuccess(true);
     console.log('Order created successfully:', {
@@ -1342,7 +1443,16 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
   } catch (error) {
     console.error('Order Processing Error:', error);
 
-    let errorMessage = 'An unexpected error occurred';
+    // Attempt to rollback/cleanup any partial processing
+    try {
+      if (paymentIntent?.id) {
+        await stripe.cancelPaymentIntent(paymentIntent.id);
+      }
+    } catch (rollbackError) {
+      console.error('Rollback failed:', rollbackError);
+    }
+
+    let errorMessage = t('errors.genericError');
     
     if (error.response?.data?.details) {
       errorMessage = error.response.data.details;
@@ -1362,10 +1472,12 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       trackError({
         error,
         orderNumber,
-        context: 'handleOrderSuccess'
+        context: 'handleOrderSuccess',
+        timestamp: new Date().toISOString()
       });
     }
 
+    // Save error state for recovery
     try {
       await saveStateWithCleanup({
         failedOrderNumber: orderNumber,
@@ -1385,6 +1497,8 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     } catch (storageError) {
       console.warn('Failed to save error state:', storageError);
     }
+
+    throw error; // Re-throw to be handled by the form
 
   } finally {
     setIsProcessingOrder(false);
