@@ -1191,6 +1191,84 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
   );
 };
 
+const handlePayment = async (stripePaymentMethod, amount, currency, metadata) => {
+  try {
+    // Step 1: Create Payment Intent
+    const paymentIntentResponse = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
+      {
+        amount,
+        currency,
+        payment_method: stripePaymentMethod,
+        metadata
+      },
+      {
+        timeout: 15000,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!paymentIntentResponse.data || !paymentIntentResponse.data.clientSecret) {
+      throw new Error('Invalid payment intent response');
+    }
+
+    // Step 2: Confirm Payment
+    const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+      paymentIntentResponse.data.clientSecret
+    );
+
+    if (confirmError) {
+      // Handle specific card errors
+      switch (confirmError.code) {
+        case 'card_declined':
+          throw new Error('Your card was declined. Please try another card.');
+        case 'expired_card':
+          throw new Error('Your card has expired. Please use a different card.');
+        case 'incorrect_cvc':
+          throw new Error('The security code is incorrect. Please try again.');
+        case 'processing_error':
+          throw new Error('An error occurred while processing your card. Please try again.');
+        case 'insufficient_funds':
+          throw new Error('Insufficient funds. Please use a different card.');
+        default:
+          throw new Error(confirmError.message);
+      }
+    }
+
+    return {
+      success: true,
+      paymentIntentId: paymentIntent.id,
+      paymentMethod: paymentIntent.payment_method
+    };
+
+  } catch (error) {
+    // Handle axios errors
+    if (error.isAxiosError) {
+      if (!error.response) {
+        throw new Error('Network error. Please check your connection and try again.');
+      }
+
+      switch (error.response.status) {
+        case 400:
+          throw new Error(error.response.data.details || 'Invalid payment request.');
+        case 402:
+          throw new Error(error.response.data.details || 'Payment failed. Please try again.');
+        case 429:
+          throw new Error('Too many attempts. Please wait a moment and try again.');
+        case 500:
+          throw new Error('Payment service is temporarily unavailable. Please try again later.');
+        default:
+          throw new Error('An error occurred while processing your payment.');
+      }
+    }
+
+    // Re-throw other errors
+    throw error;
+  }
+};
 
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
   let orderData = null;
@@ -1533,30 +1611,51 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     },
   };
   
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     
-    if (!stripe || !elements) {
+    if (isProcessing || !stripe || !elements) {
       return;
     }
-    
+  
     setIsProcessing(true);
     setError(null);
-    
+  
     try {
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
+      // Create payment method
+      const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: elements.getElement(CardNumberElement),
+        billing_details: {
+          address: {
+            postal_code: postalCode,
+          },
+        },
       });
-      
-      if (error) {
-        setError('Payment processing failed. Please try again.');
-        return;
+  
+      if (methodError) {
+        throw new Error(methodError.message);
       }
-      
-      await onPaymentSuccess(paymentMethod?.id);
-    } catch (err) {
-      setError('Payment processing failed. Please try again.');
+  
+      // Process payment
+      const paymentResult = await handlePayment(
+        paymentMethod.id,
+        amount,
+        currency,
+        { orderNumber, customerEmail }
+      );
+  
+      // Handle successful payment
+      if (paymentResult.success) {
+        await onSubmit(paymentResult.paymentMethod, postalCode);
+      }
+  
+    } catch (error) {
+      setError(error.message);
+      // Clear sensitive form fields on error
+      elements.getElement(CardNumberElement).clear();
+      elements.getElement(CardExpiryElement).clear();
+      elements.getElement(CardCvcElement).clear();
     } finally {
       setIsProcessing(false);
     }
