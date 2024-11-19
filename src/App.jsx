@@ -27,7 +27,7 @@ import {
   useElements,
 } from "@stripe/react-stripe-js";
 
-const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
+const stripePromise = loadStripe('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');
 
 const initialCountries = [
   {name: 'United States', 
@@ -383,7 +383,21 @@ const closeProductDetails = () => {
         price: countryInfo.currency === 'TND'
           ? `${countryInfo.size15x22} TND`
           : `${countryInfo.currency} ${countryInfo.size5x7}`
-      },
+      }
+    ];
+
+    // Add 8x10" size after 5x7" only for USA and Canada
+    if (country === 'USA' || country === 'CAN') {
+      products.splice(2, 0, {
+        category: 'Photo Prints',
+        product: '8x10 Size',
+        country: countryInfo.name,
+        price: `${countryInfo.currency} ${countryInfo.size8x10}`
+      });
+    }
+
+    // Add remaining products
+    products.push(
       {
         category: 'Keychain',
         product: 'Keychain',
@@ -396,40 +410,29 @@ const closeProductDetails = () => {
         country: countryInfo.name,
         price: `${countryInfo.currency} ${countryInfo.keyring_magnet}`
       }
-    ];
+    );
 
     // Only add 3D Frame if the country is not Tunisia
     if (country !== 'TUN') {
       products.push({
         category: '3D Frame',
-        product: 'Rectangle 3D Frame',
+        product: 'Rectangle',
         country: countryInfo.name,
         price: countryInfo.crystal3d 
           ? `${countryInfo.currency} ${countryInfo.crystal3d}`
           : 'N/A'
       },{
         category: '3D Frame',
-        product: 'Heart 3D Frame',
+        product: 'Heart',
         country: countryInfo.name,
         price: countryInfo.crystal3d 
           ? `${countryInfo.currency} ${countryInfo.crystal3d}`
           : 'N/A'
-      }
-    );
+      });
     }
 
-    // Add 8x10" size only for USA and Canada
-  if (country === 'USA' || country === 'CAN') {
-    products.push({
-      category: 'Photo Prints',
-      product: '8x10 Size',
-      country: countryInfo.name,
-      price: `${countryInfo.currency} ${countryInfo.size8x10}`
-    });
-  }
-
     return products;
-  };
+};
 
   const getImageSrc = (product) => {
     const imageMap = {
@@ -491,52 +494,54 @@ const closeProductDetails = () => {
           </div>
           
           <div className="p-4">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.category')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.product')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.price')}
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      {t('productDetails.image')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {productData.map((product, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {translateCategory(product.category)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {translateProduct(product.product)}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm">
-                        {product.price}
-                      </td>
-                      <td className="px-4 py-3">
-                        {getImageSrc(product.product) && (
-                          <img
-                            src={getImageSrc(product.product)}
-                            alt={translateProduct(product.product)}
-                            className="h-16 w-16 object-cover cursor-pointer"
-                            onClick={() => handleImageClick(getImageSrc(product.product))}
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+  <div className="grid grid-cols-1 gap-4">
+    {productData.map((product, index) => (
+      <div key={index} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+        <div className="grid grid-cols-2 p-4 items-center">
+          <div className="space-y-4">
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase">
+                {t('productDetails.category')}
+              </div>
+              <div className="text-sm">
+                {translateCategory(product.category)}
+              </div>
+            </div>
+            
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase">
+                {t('productDetails.product')}
+              </div>
+              <div className="text-sm">
+                {translateProduct(product.product)}
+              </div>
+            </div>
+            
+            <div>
+              <div className="text-xs font-medium text-gray-500 uppercase">
+                {t('productDetails.price')}
+              </div>
+              <div className="text-sm">
+                {product.price}
+              </div>
             </div>
           </div>
+          
+          <div className="justify-self-center">
+            {getImageSrc(product.product) && (
+              <img
+                src={getImageSrc(product.product)}
+                alt={translateProduct(product.product)}
+                className="h-32 w-32 object-cover cursor-pointer rounded-lg"
+                onClick={() => handleImageClick(getImageSrc(product.product))}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+</div>
         </div>
       </div>
     </>
@@ -1228,7 +1233,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-        const validCodes = ['B2B', 'MOHAMED'];
+        const validCodes = ['B2B', 'MOHAMED','MCF99'];
         const upperCode = code.toUpperCase();
         
         if (code && !validCodes.includes(upperCode)) {
@@ -1379,7 +1384,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
     // Calculate shipping fee based on country 
     let shippingFee = 0;
-    const isOrderOverThreshold = subtotal < 50; // Base threshold value
+    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN') {
@@ -1396,8 +1401,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     }
 
     // Calculate discount if applicable 
-    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : 0; 
-
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : (discountCode.toUpperCase() === 'MCF99') ? (subtotal + shippingFee) * 0.99 : 0;
     // Calculate tax based on location, including shipping fee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
@@ -1977,13 +1981,13 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
           </div>
         )}
 
-        {/* Discount */}
-        {discount > 0 && (
-          <div className="flex justify-between py-2 text-green-600">
-            <span>{t('order.discount')} (50%)</span>
-            <span>-{discount.toFixed(2)} {country?.currency}</span>
-          </div>
-        )}
+       {/* Discount */}
+{discount > 0 && (
+  <div className="flex justify-between py-2 text-green-600">
+    <span>{t('order.discount')} ({discountCode.toUpperCase() === 'MCF99' ? '99%' : '50%'})</span>
+    <span>-{discount.toFixed(2)} {country?.currency}</span>
+  </div>
+)}
 
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">

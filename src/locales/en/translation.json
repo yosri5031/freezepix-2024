@@ -100,8 +100,9 @@
       "Keychain": "Keychain",
       "Magnet": "Magnet",
       "3D Frame": "3D Frame",
-      "Rectangle 3D Frame" : "Rectangle 3D Frame",
-      "Heart 3D Frame" : "Heart 3D Frame"
+      "Rectangle 3D Frame" : "Rectangle",
+      "Heart 3D Frame" : "Heart",
+      "8x10 Size": "8x10 Size"
     },
     "canada" : {
       "options": "Payment Options for Canada",
