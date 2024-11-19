@@ -116,8 +116,18 @@
 
     },
     "checkout": {
-    "serverError": "There was a problem processing your payment. Please try again.",
-    "networkError": "Network error. Please check your connection and try again.",
+      "cardNumber": "Card Number",
+    "expiryDate": "Expiry Date", 
+    "cvc": "CVC",
+    "zipCode": "Zip Code",
+    "postalCode": "Postal Code",
+    "postalCodeRequired": "Postal code is required",
+    "invalidPostalCode": "Invalid postal code for the selected country",
+    "serverError": "An error occurred on our server. Please try again.",
+    "networkError": "Network error. Please check your connection.",
+    "paymentProcessingError": "Unable to process payment. Please try again.",
+    "processing": "Processing...",
+    "payNow": "Pay Now",
     "tryAgain": "Try Again"
   },
   "payment": {

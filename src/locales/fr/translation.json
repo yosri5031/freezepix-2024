@@ -116,9 +116,19 @@
 "message_c" : "Veuillez compléter votre paiement pour passer la commande"
 },
 "checkout": {
-    "serverError": "Il y a eu un problème lors du traitement de votre paiement. Veuillez réessayer.",
-    "networkError": "Erreur réseau. Veuillez vérifier votre connexion et réessayer.",
-    "tryAgain": "Réessayer"
+  "cardNumber": "Numéro de carte",
+  "expiryDate": "Date d'expiration",
+  "cvc": "Code CVC", 
+  "zipCode": "Code postal",
+  "postalCode": "Code postal",
+  "postalCodeRequired": "Le code postal est requis",
+  "invalidPostalCode": "Code postal invalide pour le pays sélectionné",
+  "serverError": "Une erreur est survenue sur notre serveur. Veuillez réessayer.",
+  "networkError": "Erreur réseau. Veuillez vérifier votre connexion.",
+  "paymentProcessingError": "Impossible de traiter le paiement. Veuillez réessayer.",
+  "processing": "Traitement...",
+  "payNow": "Payer maintenant",
+  "tryAgain": "Réessayer"
   },
   "payment": {
     "serverError": "Le serveur de paiement est temporairement indisponible. Veuillez réessayer plus tard.",

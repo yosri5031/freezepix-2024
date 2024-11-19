@@ -31,7 +31,7 @@ import {
 
 const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
-const stripe = new Stripe('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');
+const stripe = require('stripe')('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');
 const initialCountries = [
   {name: 'United States', 
     value: 'USA', 
@@ -1002,7 +1002,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
         iconColor: '#9e2146',
       },
     },
-    hidePostalCode: true, // We'll use our own postal code input
+    hidePostalCode: true,
   };
 
   const validatePostalCode = (code, country) => {
@@ -1211,22 +1211,23 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       }
     );
 
-    // Validate response data
+    // Enhanced Validation of Payment Intent Response
     const clientSecret = paymentIntentResponse.data?.clientSecret;
-    if (!clientSecret) {
-      console.error('Invalid payment intent response:', paymentIntentResponse.data);
-      throw new Error('Payment intent is missing client secret');
+    const paymentIntentId = paymentIntentResponse.data?.id;
+    
+    if (!clientSecret || typeof clientSecret !== 'string') {
+      console.error('Invalid client secret:', {
+        type: typeof clientSecret,
+        value: clientSecret,
+        fullResponse: paymentIntentResponse.data
+      });
+      throw new Error('Invalid or missing client secret from payment intent');
     }
 
-    // Step 2: Confirm Payment
+    // Load Stripe
     const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
     
-    // Add explicit type checking and logging
-    if (typeof clientSecret !== 'string') {
-      console.error('Client secret is not a string:', typeof clientSecret, clientSecret);
-      throw new Error('Invalid client secret type');
-    }
-
+    // Confirm Card Payment
     const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
       clientSecret,
       {
@@ -1234,23 +1235,29 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       }
     );
 
+    // Handle Confirmation Errors
     if (confirmError) {
       console.error('Confirmation Error:', confirmError);
+      
       // Detailed error handling
-      switch (confirmError.code) {
-        case 'card_declined':
-          throw new Error('Your card was declined. Please try another card.');
-        case 'expired_card':
-          throw new Error('Your card has expired. Please use a different card.');
-        case 'incorrect_cvc':
-          throw new Error('The security code is incorrect. Please try again.');
-        case 'processing_error':
-          throw new Error('An error occurred while processing your card. Please try again.');
-        case 'insufficient_funds':
-          throw new Error('Insufficient funds. Please use a different card.');
-        default:
-          throw new Error(confirmError.message || 'Payment confirmation failed');
-      }
+      const errorMap = {
+        'card_declined': 'Your card was declined. Please try another card.',
+        'expired_card': 'Your card has expired. Please use a different card.',
+        'incorrect_cvc': 'The security code is incorrect. Please try again.',
+        'processing_error': 'An error occurred while processing your card. Please try again.',
+        'insufficient_funds': 'Insufficient funds. Please use a different card.'
+      };
+
+      const errorMessage = errorMap[confirmError.code] || 
+        confirmError.message || 
+        'Payment confirmation failed';
+
+      throw new Error(errorMessage);
+    }
+
+    // Verify Payment Intent Status
+    if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+      throw new Error(`Payment did not succeed. Status: ${paymentIntent?.status}`);
     }
 
     return {
@@ -1260,7 +1267,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
     };
 
   } catch (error) {
-    // Enhanced error logging
+    // Comprehensive Error Logging
     console.error('Payment Processing Error:', {
       message: error.message,
       name: error.name,
@@ -1268,7 +1275,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       responseData: error.response?.data
     });
 
-    // Rethrow or transform error
+    // Error Transformation
     if (error.isAxiosError) {
       throw new Error(error.response?.data?.details || 'Network error during payment');
     }
