@@ -31,7 +31,6 @@ import {
 
 const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
-const stripe = require('stripe')('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');
 const initialCountries = [
   {name: 'United States', 
     value: 'USA', 
