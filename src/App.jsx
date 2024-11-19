@@ -973,14 +973,15 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
-const CheckoutForm = ({ onSubmit, processing, selectedCountry }) => {
+const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { t } = useTranslation();
+  
+  const [cardError, setCardError] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [postalCodeError, setPostalCodeError] = useState('');
-
-  const requiresPostalCode = ['USA', 'CAN', 'GBR'].includes(selectedCountry);
+  const [processing, setProcessing] = useState(false);
 
   const cardElementOptions = {
     style: {
@@ -990,40 +991,111 @@ const CheckoutForm = ({ onSubmit, processing, selectedCountry }) => {
         '::placeholder': {
           color: '#aab7c4',
         },
+        ':-webkit-autofill': {
+          color: '#424770',
+        },
       },
       invalid: {
         color: '#9e2146',
+        iconColor: '#9e2146',
       },
     },
+    hidePostalCode: true, // We'll use our own postal code input
+  };
+
+  const validatePostalCode = (code, country) => {
+    if (!code) return false;
+    
+    if (country === 'USA') {
+      return /^\d{5}(-\d{4})?$/.test(code.trim());
+    } else if (country === 'CAN') {
+      return /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(code.trim());
+    }
+    return true;
+  };
+
+  const handlePostalCodeChange = (e) => {
+    const value = e.target.value;
+    setPostalCode(value);
+    setPostalCodeError('');
+    
+    if (value && !validatePostalCode(value, selectedCountry)) {
+      setPostalCodeError(t('checkout.invalidPostalCode'));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (requiresPostalCode && !postalCode) {
-      setPostalCodeError(t('checkout.postalCodeRequired'));
+    
+    if (isProcessing || processing || !stripe || !elements) {
       return;
     }
-    onSubmit(e, postalCode);
+
+    // Reset errors
+    setCardError('');
+    setPostalCodeError('');
+    setProcessing(true);
+
+    // Validate postal code
+    if (!postalCode) {
+      setPostalCodeError(t('checkout.postalCodeRequired'));
+      setProcessing(false);
+      return;
+    }
+
+    if (!validatePostalCode(postalCode, selectedCountry)) {
+      setPostalCodeError(t('checkout.invalidPostalCode'));
+      setProcessing(false);
+      return;
+    }
+
+    // Create payment method
+    try {
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardNumberElement),
+        billing_details: {
+          address: {
+            postal_code: postalCode,
+          },
+        },
+      });
+
+      if (error) {
+        setCardError(error.message);
+        setProcessing(false);
+        return;
+      }
+
+      // Proceed with payment submission
+      await onSubmit(paymentMethod.id, postalCode);
+    } catch (err) {
+      setCardError(t('checkout.paymentProcessingError'));
+    } finally {
+      setProcessing(false);
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded-lg bg-white">
+      <div className="p-4 border rounded-lg bg-white shadow-sm">
+        {/* Card Number */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('checkout.cardNumber')}
           </label>
-          <div className="p-3 border rounded-md bg-white">
+          <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
             <CardNumberElement options={cardElementOptions} />
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        {/* Expiry and CVC */}
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('checkout.expiryDate')}
             </label>
-            <div className="p-3 border rounded-md bg-white">
+            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
               <CardExpiryElement options={cardElementOptions} />
             </div>
           </div>
@@ -1032,54 +1104,57 @@ const CheckoutForm = ({ onSubmit, processing, selectedCountry }) => {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               {t('checkout.cvc')}
             </label>
-            <div className="p-3 border rounded-md bg-white">
+            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
               <CardCvcElement options={cardElementOptions} />
             </div>
           </div>
         </div>
 
-        {requiresPostalCode && (
-          <div className="mt-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('checkout.postalCode')}
-            </label>
-            <input
-              type="text"
-              value={postalCode}
-              onChange={(e) => {
-                setPostalCode(e.target.value);
-                setPostalCodeError('');
-              }}
-              className={`p-3 border rounded-md w-full ${
-                postalCodeError ? 'border-red-500' : 'border-gray-300'
-              }`}
-              placeholder={t('checkout.postalCodePlaceholder')}
-            />
-            {postalCodeError && (
-              <p className="mt-1 text-sm text-red-600">{postalCodeError}</p>
-            )}
-          </div>
-        )}
-      </div>
+        {/* Postal Code */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {selectedCountry === 'USA' ? t('checkout.zipCode') : t('checkout.postalCode')}
+          </label>
+          <input
+            type="text"
+            value={postalCode}
+            onChange={handlePostalCodeChange}
+            className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+              postalCodeError ? 'border-red-500' : 'border-gray-300'
+            }`}
+            placeholder={selectedCountry === 'USA' ? '12345' : 'A1A 1A1'}
+          />
+          {postalCodeError && (
+            <p className="mt-1 text-sm text-red-600">{postalCodeError}</p>
+          )}
+        </div>
 
-      <button
-        type="submit"
-        disabled={!stripe || processing}
-        className={`w-full py-3 px-4 text-white font-medium rounded-md ${
-          processing || !stripe
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-blue-600 hover:bg-blue-700'
-        }`}
-      >
-        {processing ? (
-          <div className="flex items-center justify-center">
-            <Loader className="animate-spin mr-2" size={20} />
-            {t('checkout.processing')}
+        {/* Error Message */}
+        {cardError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+            <p className="text-sm text-red-600">{cardError}</p>
           </div>
-        ) : (
-          t('checkout.payNow')
         )}
-      </button>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={!stripe || processing || isProcessing}
+          className={`w-full py-3 px-4 rounded-md text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors
+            ${(processing || isProcessing) 
+              ? 'bg-gray-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700'}`}
+        >
+          {processing || isProcessing ? (
+            <div className="flex items-center justify-center">
+              <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+              {t('checkout.processing')}
+            </div>
+          ) : (
+            t('checkout.payNow')
+          )}
+        </button>
+      </div>
     </form>
   );
 };
