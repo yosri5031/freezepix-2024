@@ -441,8 +441,8 @@ const closeProductDetails = () => {
       '8x10 Size': photoprint8x10,
       'Keychain': keychain,
       'Magnet': magnet,
-      'Rectangle 3D Frame': Rectangle,
-      'Heart 3D Frame' : Heart
+      'Rectangle': Rectangle,
+      'Heart' : Heart
     };
   
     return imageMap[product] || '';
