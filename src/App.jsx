@@ -17,7 +17,7 @@ import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
-
+import Stripe from 'stripe';
 //import { sendOrderConfirmation } from './utils/emailService';
 
 import {
@@ -31,6 +31,7 @@ import {
 
 const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
+const stripe = new Stripe('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');
 const initialCountries = [
   {name: 'United States', 
     value: 'USA', 
@@ -1210,18 +1211,32 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       }
     );
 
-    if (!paymentIntentResponse.data || !paymentIntentResponse.data.clientSecret) {
-      throw new Error('Invalid payment intent response');
+    // Validate response data
+    const clientSecret = paymentIntentResponse.data?.clientSecret;
+    if (!clientSecret) {
+      console.error('Invalid payment intent response:', paymentIntentResponse.data);
+      throw new Error('Payment intent is missing client secret');
     }
 
     // Step 2: Confirm Payment
     const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
+    
+    // Add explicit type checking and logging
+    if (typeof clientSecret !== 'string') {
+      console.error('Client secret is not a string:', typeof clientSecret, clientSecret);
+      throw new Error('Invalid client secret type');
+    }
+
     const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-      paymentIntentResponse.data.clientSecret
+      clientSecret,
+      {
+        payment_method: stripePaymentMethod
+      }
     );
 
     if (confirmError) {
-      // Handle specific card errors
+      console.error('Confirmation Error:', confirmError);
+      // Detailed error handling
       switch (confirmError.code) {
         case 'card_declined':
           throw new Error('Your card was declined. Please try another card.');
@@ -1234,7 +1249,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
         case 'insufficient_funds':
           throw new Error('Insufficient funds. Please use a different card.');
         default:
-          throw new Error(confirmError.message);
+          throw new Error(confirmError.message || 'Payment confirmation failed');
       }
     }
 
@@ -1245,27 +1260,19 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
     };
 
   } catch (error) {
-    // Handle axios errors
-    if (error.isAxiosError) {
-      if (!error.response) {
-        throw new Error('Network error. Please check your connection and try again.');
-      }
+    // Enhanced error logging
+    console.error('Payment Processing Error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      responseData: error.response?.data
+    });
 
-      switch (error.response.status) {
-        case 400:
-          throw new Error(error.response.data.details || 'Invalid payment request.');
-        case 402:
-          throw new Error(error.response.data.details || 'Payment failed. Please try again.');
-        case 429:
-          throw new Error('Too many attempts. Please wait a moment and try again.');
-        case 500:
-          throw new Error('Payment service is temporarily unavailable. Please try again later.');
-        default:
-          throw new Error('An error occurred while processing your payment.');
-      }
+    // Rethrow or transform error
+    if (error.isAxiosError) {
+      throw new Error(error.response?.data?.details || 'Network error during payment');
     }
 
-    // Re-throw other errors
     throw error;
   }
 };
