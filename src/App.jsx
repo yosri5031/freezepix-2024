@@ -973,10 +973,14 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
-const CheckoutForm = ({ onSubmit, processing }) => {
+const CheckoutForm = ({ onSubmit, processing, selectedCountry }) => {
   const stripe = useStripe();
   const elements = useElements();
   const { t } = useTranslation();
+  const [postalCode, setPostalCode] = useState('');
+  const [postalCodeError, setPostalCodeError] = useState('');
+
+  const requiresPostalCode = ['USA', 'CAN', 'GBR'].includes(selectedCountry);
 
   const cardElementOptions = {
     style: {
@@ -993,8 +997,17 @@ const CheckoutForm = ({ onSubmit, processing }) => {
     },
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (requiresPostalCode && !postalCode) {
+      setPostalCodeError(t('checkout.postalCodeRequired'));
+      return;
+    }
+    onSubmit(e, postalCode);
+  };
+
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 border rounded-lg bg-white">
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1024,6 +1037,29 @@ const CheckoutForm = ({ onSubmit, processing }) => {
             </div>
           </div>
         </div>
+
+        {requiresPostalCode && (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              {t('checkout.postalCode')}
+            </label>
+            <input
+              type="text"
+              value={postalCode}
+              onChange={(e) => {
+                setPostalCode(e.target.value);
+                setPostalCodeError('');
+              }}
+              className={`p-3 border rounded-md w-full ${
+                postalCodeError ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder={t('checkout.postalCodePlaceholder')}
+            />
+            {postalCodeError && (
+              <p className="mt-1 text-sm text-red-600">{postalCodeError}</p>
+            )}
+          </div>
+        )}
       </div>
 
       <button
@@ -1047,6 +1083,7 @@ const CheckoutForm = ({ onSubmit, processing }) => {
     </form>
   );
 };
+
 
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
   let orderData = null;
@@ -1112,17 +1149,40 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
         paymentIntent = paymentResponse.data;
 
-        // Confirm the payment
         const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
         const confirmPayment = await stripe.confirmCardPayment(paymentIntent.client_secret);
 
         if (confirmPayment.error) {
-          throw new Error(confirmPayment.error.message);
+          let errorMessage = '';
+          switch (confirmPayment.error.code) {
+            case 'card_declined':
+              errorMessage = t('payment.cardDeclined');
+              break;
+            case 'expired_card':
+              errorMessage = t('payment.cardExpired');
+              break;
+            case 'incorrect_cvc':
+              errorMessage = t('payment.invalidCVC');
+              break;
+            case 'processing_error':
+              errorMessage = t('payment.processingError');
+              break;
+            case 'insufficient_funds':
+              errorMessage = t('payment.insufficientFunds');
+              break;
+            case 'incorrect_postal_code':
+              errorMessage = t('payment.incorrectPostalCode');
+              break;
+            default:
+              errorMessage = confirmPayment.error.message;
+          }
+          throw new Error(errorMessage);
         }
 
         stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
       } catch (paymentError) {
-        throw new Error(`Payment failed: ${paymentError.message}`);
+        setError(paymentError.message);
+        throw new Error(paymentError.message);
       }
     }
 
