@@ -1114,46 +1114,6 @@ const calculateShippingFee = () => {
     }
   };
 
-  const handleCheckout = async () => {
-    
-    try {
-      setLoading(true);
-      setError(null);
-      setOrderSuccess(false);
-      setError(null);
-      setIsProcessingOrder(true);
-      const orderData = prepareOrderData();
-  
-
-      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(orderData),
-      });
-
-      const { sessionId } = await response.json();
-      
-      // Redirect to Checkout
-      const stripe = await stripePromise;
-      const { error } = await stripe.redirectToCheckout({
-        sessionId,
-      });
-
-      if (error) {
-        setError(error.message);
-      }
-      else {
-        setOrderSuccess(true);
-      }
-    } catch (err) {
-      setError('Failed to initialize checkout');
-    } finally {
-      setLoading(false);
-      setIsProcessingOrder(false);
-    }
-  };
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -1164,7 +1124,7 @@ const calculateShippingFee = () => {
       )}
       
       <button
-        onClick={handleCheckout}
+        onClick={() => handleOrderSuccess(true)}
         disabled={loading}
         className={`w-full py-3 px-4 rounded-md text-white font-medium
           ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
@@ -1176,17 +1136,18 @@ const calculateShippingFee = () => {
 };
 
 
-const handleOrderSuccess = async (stripePaymentMethod = null) => {
+const handleOrderSuccess = async (checkoutMode = false) => {
   let orderData = null;
   let orderNumber = null;
   let paymentIntent = null;
+  const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
   try {
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
-
+    
     // Generate order number
     orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
@@ -1223,98 +1184,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Handle Stripe payment if not COD
-    if (selectedCountry !== 'TUN' && stripePaymentMethod) {
-      try {
-        // Create payment intent with enhanced error handling
-        const paymentResponse = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
-          {
-            amount: total,
-            currency: country.currency.toLowerCase(),
-            payment_method: stripePaymentMethod,
-            payment_method_types: ['card'],
-            metadata: {
-              orderNumber: orderNumber,
-              customerEmail: formData.email
-            }
-          },
-          {
-            timeout: 15000, // 15 second timeout
-            retries: 3,     // Allow 3 retries
-            retryDelay: 1000 // Wait 1 second between retries
-          }
-        ).catch(error => {
-          console.error('Payment Intent Creation Error:', error);
-          
-          // Network or server errors
-          if (!error.response) {
-            throw new Error(t('payment.networkError'));
-          }
-          
-          // Handle specific HTTP status codes
-          switch (error.response.status) {
-            case 500:
-              throw new Error(t('payment.serverError'));
-            case 400:
-              throw new Error(error.response.data.error || t('payment.invalidRequest'));
-            case 401:
-              throw new Error(t('payment.authenticationError'));
-            case 403:
-              throw new Error(t('payment.permissionDenied'));
-            case 404:
-              throw new Error(t('payment.serviceUnavailable'));
-            default:
-              throw new Error(error.response.data.error || t('payment.genericError'));
-          }
-        });
-
-        paymentIntent = paymentResponse.data;
-
-        const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
-        const confirmPayment = await stripe.confirmCardPayment(paymentIntent.client_secret);
-
-        if (confirmPayment.error) {
-          let errorMessage = '';
-          switch (confirmPayment.error.code) {
-            case 'card_declined':
-              errorMessage = t('payment.cardDeclined');
-              break;
-            case 'expired_card':
-              errorMessage = t('payment.cardExpired');
-              break;
-            case 'incorrect_cvc':
-              errorMessage = t('payment.invalidCVC');
-              break;
-            case 'processing_error':
-              errorMessage = t('payment.processingError');
-              break;
-            case 'insufficient_funds':
-              errorMessage = t('payment.insufficientFunds');
-              break;
-            case 'incorrect_postal_code':
-              errorMessage = t('payment.incorrectPostalCode');
-              break;
-            case 'authentication_required':
-              errorMessage = t('payment.authenticationRequired');
-              break;
-            case 'rate_limit_exceeded':
-              errorMessage = t('payment.tooManyAttempts');
-              break;
-            default:
-              errorMessage = confirmPayment.error.message || t('payment.genericError');
-          }
-          throw new Error(errorMessage);
-        }
-
-        stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
-      } catch (paymentError) {
-        console.error('Payment Processing Error:', paymentError);
-        throw new Error(paymentError.message || t('payment.genericError'));
-      }
-    }
-
-    // Construct order data
+    // Construct base order data
     orderData = {
       orderNumber,
       email: formData.email,
@@ -1341,9 +1211,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       currency: country.currency,
       orderNote: orderNote || '',
       paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-      stripePaymentId: stripePaymentMethod,
-      paymentIntentId: paymentIntent?.id,
-      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
+      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'pending',
       customerDetails: {
         name: formData.name,
         country: selectedCountry
@@ -1352,6 +1220,63 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
+
+    // Handle payment based on mode
+    if (checkoutMode) {
+      try {
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(orderData),
+        });
+
+        const { sessionId } = await response.json();
+        
+        // Redirect to Checkout
+        const stripe = await stripePromise;
+        const { error } = await stripe.redirectToCheckout({
+          sessionId,
+        });
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        
+        return; // Exit early as we're redirecting to Stripe
+      } catch (checkoutError) {
+        throw new Error(checkoutError.message || 'Failed to initialize checkout');
+      }
+    } else if (selectedCountry !== 'TUN') {
+      // Handle direct payment
+      try {
+        const paymentResponse = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
+          {
+            amount: total,
+            currency: country.currency.toLowerCase(),
+            payment_method_types: ['card'],
+            metadata: {
+              orderNumber: orderNumber,
+              customerEmail: formData.email
+            }
+          },
+          {
+            timeout: 15000,
+            retries: 3,
+            retryDelay: 1000
+          }
+        );
+
+        paymentIntent = paymentResponse.data;
+        orderData.paymentIntentId = paymentIntent.id;
+        orderData.paymentStatus = 'paid';
+      } catch (paymentError) {
+        console.error('Payment Processing Error:', paymentError);
+        throw new Error(paymentError.message || t('payment.genericError'));
+      }
+    }
 
     // Submit order with retry mechanism
     const maxRetries = 3;
@@ -1372,7 +1297,6 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         if (retryCount === maxRetries) {
           throw new Error(t('errors.orderSubmissionFailed'));
         }
-        // Exponential backoff
         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
       }
     }
@@ -1394,34 +1318,37 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         emailSent = true;
       } catch (emailError) {
         retryCount++;
-        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
-        if (retryCount < maxRetries) {
+        if (retryCount === maxRetries) {
+          console.error('Failed to send confirmation email:', emailError);
+        } else {
           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
         }
       }
     }
 
-    setOrderSuccess(true);
-    console.log('Order created successfully:', {
-      orderNumber,
-      totalItems: orderData.orderItems.length,
-      responses
-    });
-
-    // Cleanup
-    try {
-      clearStateChunks();
-      await saveStateWithCleanup({
+    if (!checkoutMode) {
+      setOrderSuccess(true);
+      console.log('Order created successfully:', {
         orderNumber,
-        orderDate: new Date().toISOString(),
-        totalAmount: total,
-        currency: country.currency,
-        itemCount: orderData.orderItems.length,
-        customerEmail: formData.email
+        totalItems: orderData.orderItems.length,
+        responses
       });
-      setSelectedPhotos([]);
-    } catch (cleanupError) {
-      console.warn('Post-order cleanup warning:', cleanupError);
+
+      // Cleanup
+      try {
+        clearStateChunks();
+        await saveStateWithCleanup({
+          orderNumber,
+          orderDate: new Date().toISOString(),
+          totalAmount: total,
+          currency: country.currency,
+          itemCount: orderData.orderItems.length,
+          customerEmail: formData.email
+        });
+        setSelectedPhotos([]);
+      } catch (cleanupError) {
+        console.warn('Post-order cleanup warning:', cleanupError);
+      }
     }
 
   } catch (error) {
@@ -1430,6 +1357,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     // Attempt to rollback/cleanup any partial processing
     try {
       if (paymentIntent?.id) {
+        const stripe = await stripePromise;
         await stripe.cancelPaymentIntent(paymentIntent.id);
       }
     } catch (rollbackError) {
@@ -1482,7 +1410,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       console.warn('Failed to save error state:', storageError);
     }
 
-    throw error; // Re-throw to be handled by the form
+    throw error;
 
   } finally {
     setIsProcessingOrder(false);
@@ -2146,8 +2074,8 @@ const PaymentForm = ({ onPaymentSuccess }) => {
   orderData={orderData} 
   onSuccess={(orderId) => console.log('Payment successful:', orderId)} 
   onError={(error) => console.error('Payment failed:', error)} 
-  onSubmit={handleCheckout}
       processing={isProcessingOrder}
+      paymentMethod={paymentMethod}
 />
   </Elements>
 )}
