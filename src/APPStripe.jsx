@@ -973,320 +973,224 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
-const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const { t } = useTranslation();
-  
-  const [cardError, setCardError] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [postalCodeError, setPostalCodeError] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [serverError, setServerError] = useState('');
+const CheckoutForm = ({ orderData, onSuccess, onError }) => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-        ':-webkit-autofill': {
-          color: '#424770',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-        iconColor: '#9e2146',
-      },
+  useEffect(() => {
+    // Check if this is a redirect back from Checkout
+    const query = new URLSearchParams(window.location.search);
+    
+    if (query.get('success')) {
+      const sessionId = query.get('session_id');
+      validatePayment(sessionId);
+    }
+
+    if (query.get('canceled')) {
+      setError('Order canceled -- continue to shop around and checkout when you\'re ready.');
+    }
+  }, []);
+
+  // Add this function to calculate Canadian taxes
+const calculateCanadianTaxes = (province, subtotal) => {
+  const taxes = TAX_RATES['CA'][province];
+  let totalTax = 0;
+
+  if (taxes) {
+    if (taxes.HST) {
+      totalTax = subtotal * (taxes.HST / 100);
+    } else {
+      if (taxes.GST) totalTax += subtotal * (taxes.GST / 100);
+      if (taxes.PST) totalTax += subtotal * (taxes.PST / 100);
+      if (taxes.QST) totalTax += subtotal * (taxes.QST / 100);
+    }
+  }
+
+  return totalTax;
+};
+
+// Add this function to prepare order data
+const prepareOrderData = () => {
+  const subtotal = calculateSubtotal();
+  const shippingFee = calculateShippingFee();
+  let tax = 0;
+  let orderNumber = null;
+  // Generate order number
+  orderNumber = generateOrderNumber();
+  setCurrentOrderNumber(orderNumber);
+
+  if (formData.shippingAddress.country === 'CAN') {
+    tax = calculateCanadianTaxes(formData.shippingAddress.province, subtotal);
+  }
+
+  const total = subtotal + shippingFee + tax;
+
+  return {
+    orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
+    orderItems: selectedPhotos.map(photo => ({
+      id: photo.id,
+      quantity: photo.quantity,
+      size: photo.size,
+      productType: photo.productType,
+      fileName: photo.fileName
+    })),
+    customerInfo: {
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping 
+        ? formData.shippingAddress 
+        : formData.billingAddress
     },
-    hidePostalCode: true,
+    orderDetails: {
+      subtotal,
+      tax,
+      shippingFee,
+      total,
+      currency: initialCountries.find(c => c.value === selectedCountry)?.currency,
+      paymentMethod: paymentMethod
+    },
+    orderNote: orderNote,
+    discountCode: discountCode
   };
+};
 
-  const validatePostalCode = (code, country) => {
-    if (!code) return false;
+const calculateSubtotal = () => {
+  const countryInfo = initialCountries.find(c => c.value === selectedCountry);
+  
+  return selectedPhotos.reduce((total, photo) => {
+    let price = 0;
     
-    if (country === 'USA') {
-      return /^\d{5}(-\d{4})?$/.test(code.trim());
-    } else if (country === 'CAN') {
-      return /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(code.trim());
+    switch (photo.productType) {
+      case 'print':
+        switch (photo.size) {
+          case '4x6': price = countryInfo.size4x6; break;
+          case '5x7': price = countryInfo.size5x7; break;
+          case '8x10': price = countryInfo.size8x10; break;
+          default: price = 0;
+        }
+        break;
+      case 'keychain': price = countryInfo.keychain; break;
+      case 'magnet': price = countryInfo.keyring_magnet; break;
+      case '3d_frame': price = countryInfo.crystal3d; break;
+      default: price = 0;
     }
-    return true;
-  };
-
-  const handlePostalCodeChange = (e) => {
-    const value = e.target.value;
-    setPostalCode(value);
-    setPostalCodeError('');
     
-    if (value && !validatePostalCode(value, selectedCountry)) {
-      setPostalCodeError(t('checkout.invalidPostalCode'));
-    }
-  };
+    return total + (price * photo.quantity);
+  }, 0);
+};
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isProcessing || processing || !stripe || !elements) {
-      return;
-    }
+// Helper function to calculate shipping fee
+const calculateShippingFee = () => {
+  const countryInfo = initialCountries.find(c => c.value === selectedCountry);
+  return countryInfo?.shippingFee || 0;
+};
 
-    // Reset all errors
-    setCardError('');
-    setPostalCodeError('');
-    setServerError('');
-    setProcessing(true);
-
-    // Validate postal code
-    if (!postalCode) {
-      setPostalCodeError(t('checkout.postalCodeRequired'));
-      setProcessing(false);
-      return;
-    }
-
-    if (!validatePostalCode(postalCode, selectedCountry)) {
-      setPostalCodeError(t('checkout.invalidPostalCode'));
-      setProcessing(false);
-      return;
-    }
-
+  const validatePayment = async (sessionId) => {
     try {
-      // First validate the card details with Stripe
-      const { error: cardValidationError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardNumberElement),
-        billing_details: {
-          address: {
-            postal_code: postalCode,
-          },
+      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ sessionId }),
       });
 
-      if (cardValidationError) {
-        setCardError(cardValidationError.message);
-        setProcessing(false);
-        return;
-      }
-
-      // Proceed with payment submission
-      try {
-        await onSubmit(paymentMethod.id, postalCode);
-      } catch (error) {
-        // Handle specific error types
-        if (error.response?.status === 500) {
-          setServerError(t('checkout.serverError'));
-        } else if (error.name === 'AxiosError') {
-          setServerError(t('checkout.networkError'));
-        } else {
-          setCardError(error.message || t('checkout.paymentProcessingError'));
-        }
-        
-        // Clear the form fields on server error
-        if (error.response?.status === 500) {
-          elements.getElement(CardNumberElement).clear();
-          elements.getElement(CardExpiryElement).clear();
-          elements.getElement(CardCvcElement).clear();
-        }
+      const data = await response.json();
+      
+      if (data.success) {
+        onSuccess(data.orderId);
+      } else {
+        onError(data.error);
       }
     } catch (err) {
-      setCardError(t('checkout.paymentProcessingError'));
-    } finally {
-      setProcessing(false);
+      onError('Failed to validate payment');
     }
   };
 
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded-lg bg-white shadow-sm">
-        {/* Card Number */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('checkout.cardNumber')}
-          </label>
-          <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-            <CardNumberElement options={cardElementOptions} />
-          </div>
+    <div className="w-full max-w-md mx-auto">
+      {error && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+          <p className="text-sm text-red-600">{error}</p>
         </div>
-
-        {/* Expiry and CVC */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('checkout.expiryDate')}
-            </label>
-            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-              <CardExpiryElement options={cardElementOptions} />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('checkout.cvc')}
-            </label>
-            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-              <CardCvcElement options={cardElementOptions} />
-            </div>
-          </div>
-        </div>
-
-        {/* Postal Code */}
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {selectedCountry === 'USA' ? t('checkout.zipCode') : t('checkout.postalCode')}
-          </label>
-          <input
-            type="text"
-            value={postalCode}
-            onChange={handlePostalCodeChange}
-            className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              postalCodeError ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder={selectedCountry === 'USA' ? '12345' : 'A1A 1A1'}
-          />
-          {postalCodeError && (
-            <p className="mt-1 text-sm text-red-600">{postalCodeError}</p>
-          )}
-        </div>
-
-        {/* Error Messages */}
-        {(cardError || serverError) && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            {cardError && <p className="text-sm text-red-600">{cardError}</p>}
-            {serverError && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-red-600">{serverError}</p>
-                <button 
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="ml-2 text-blue-600 hover:text-blue-800 underline text-sm"
-                >
-                  {t('checkout.tryAgain')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={!stripe || processing || isProcessing}
-          className={`w-full py-3 px-4 rounded-md text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors
-            ${(processing || isProcessing) 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'}`}
-        >
-          {processing || isProcessing ? (
-            <div className="flex items-center justify-center">
-              <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
-              {t('checkout.processing')}
-            </div>
-          ) : (
-            t('checkout.payNow')
-          )}
-        </button>
-      </div>
-    </form>
+      )}
+      
+      <button
+        onClick={() => handleOrderSuccess(true)}
+        disabled={loading}
+        className={`w-full py-3 px-4 rounded-md text-white font-medium
+          ${loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'}`}
+      >
+        {loading ? 'Processing...' : 'Proceed to Checkout'}
+      </button>
+    </div>
   );
 };
+const calculateCanadianTaxes = (province, subtotal) => {
+  const provinceTaxes = TAX_RATES['CA'][province];
+  let taxDetails = {};
+  let totalTax = 0;
 
-const handlePayment = async (stripePaymentMethod, amount, currency, metadata) => {
-  try {
-    // Step 1: Create Payment Intent
-    const paymentIntentResponse = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
-      {
-        amount,
-        currency,
-        payment_method: stripePaymentMethod,
-        metadata
-      },
-      {
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json'
-        }
+  if (provinceTaxes) {
+    if (provinceTaxes.HST) {
+      totalTax = subtotal * (provinceTaxes.HST / 100);
+      taxDetails = { HST: provinceTaxes.HST, amount: totalTax };
+    } else {
+      let gstAmount = 0;
+      let pstAmount = 0;
+      let qstAmount = 0;
+
+      if (provinceTaxes.GST) {
+        gstAmount = subtotal * (provinceTaxes.GST / 100);
+        taxDetails.GST = { rate: provinceTaxes.GST, amount: gstAmount };
+        totalTax += gstAmount;
       }
-    );
-
-    // Enhanced Validation of Payment Intent Response
-    const clientSecret = paymentIntentResponse.data?.clientSecret;
-    const paymentIntentId = paymentIntentResponse.data?.id;
-    
-    if (!clientSecret || typeof clientSecret !== 'string') {
-      console.error('Invalid client secret:', {
-        type: typeof clientSecret,
-        value: clientSecret,
-        fullResponse: paymentIntentResponse.data
-      });
-      throw new Error('Invalid or missing client secret from payment intent');
-    }
-
-    // Load Stripe
-    const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
-    
-    // Confirm Card Payment
-    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-      clientSecret,
-      {
-        payment_method: stripePaymentMethod
+      if (provinceTaxes.PST) {
+        pstAmount = subtotal * (provinceTaxes.PST / 100);
+        taxDetails.PST = { rate: provinceTaxes.PST, amount: pstAmount };
+        totalTax += pstAmount;
       }
-    );
-
-    // Handle Confirmation Errors
-    if (confirmError) {
-      console.error('Confirmation Error:', confirmError);
-      
-      // Detailed error handling
-      const errorMap = {
-        'card_declined': 'Your card was declined. Please try another card.',
-        'expired_card': 'Your card has expired. Please use a different card.',
-        'incorrect_cvc': 'The security code is incorrect. Please try again.',
-        'processing_error': 'An error occurred while processing your card. Please try again.',
-        'insufficient_funds': 'Insufficient funds. Please use a different card.'
-      };
-
-      const errorMessage = errorMap[confirmError.code] || 
-        confirmError.message || 
-        'Payment confirmation failed';
-
-      throw new Error(errorMessage);
+      if (provinceTaxes.QST) {
+        qstAmount = subtotal * (provinceTaxes.QST / 100);
+        taxDetails.QST = { rate: provinceTaxes.QST, amount: qstAmount };
+        totalTax += qstAmount;
+      }
     }
-
-    // Verify Payment Intent Status
-    if (!paymentIntent || paymentIntent.status !== 'succeeded') {
-      throw new Error(`Payment did not succeed. Status: ${paymentIntent?.status}`);
-    }
-
-    return {
-      success: true,
-      paymentIntentId: paymentIntent.id,
-      paymentMethod: paymentIntent.payment_method
-    };
-
-  } catch (error) {
-    // Comprehensive Error Logging
-    console.error('Payment Processing Error:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack,
-      responseData: error.response?.data
-    });
-
-    // Error Transformation
-    if (error.isAxiosError) {
-      throw new Error(error.response?.data?.details || 'Network error during payment');
-    }
-
-    throw error;
   }
-};
 
-const handleOrderSuccess = async (stripePaymentMethod = null) => {
+  return { taxAmount: totalTax, taxDetails };
+};
+  // Add orderData state
+  const [orderData, setOrderData] = useState({
+    items: [],
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+    total: 0,
+    discounts: [],
+    currency: 'USD'
+  });
+
+  // Function to update order data
+  const updateOrderData = useCallback((updates) => {
+    setOrderData(prevData => ({
+      ...prevData,
+      ...updates
+    }));
+  }, []);
+const handleOrderSuccess = async (checkoutMode = false) => {
   let orderData = null;
   let orderNumber = null;
   let paymentIntent = null;
+  const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
   try {
     setIsProcessingOrder(true);
@@ -1294,12 +1198,47 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     setError(null);
     setUploadProgress(0);
 
+    // Validate Canadian province
+    if (selectedCountry === 'CAN' && !formData.shippingAddress?.province) {
+      throw new Error(t('errors.provinceRequired'));
+    }
+
     // Generate order number
     orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
-    
-    // Calculate order totals
-    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+
+    // Calculate order totals with tax handling
+    const calculateTotals = () => {
+      const country = initialCountries.find(c => c.value === selectedCountry);
+      const subtotal = selectedPhotos.reduce((acc, photo) => {
+        return acc + (calculateItemPrice(photo, country) * photo.quantity);
+      }, 0);
+
+      let taxAmount = 0;
+      let taxDetails = {};
+
+      if (selectedCountry === 'CAN' && formData.shippingAddress?.province) {
+        const canadianTaxes = calculateCanadianTaxes(formData.shippingAddress.province, subtotal);
+        taxAmount = canadianTaxes.taxAmount;
+        taxDetails = canadianTaxes.taxDetails;
+      }
+
+      const shippingFee = country.shippingFee || 0;
+    const discountAmount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : (discountCode.toUpperCase() === 'MCF99') ? (subtotal + shippingFee) * 0.99 : 0;
+      const total = subtotal + taxAmount + shippingFee - discountAmount;
+
+      return {
+        total,
+        subtotal,
+        taxAmount,
+        taxDetails,
+        shippingFee,
+        currency: country.currency,
+        discount: discountAmount
+      };
+    };
+
+    const { total, currency, subtotal, shippingFee, taxAmount, taxDetails, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Process photos with improved batch processing and error handling
@@ -1330,106 +1269,23 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Handle Stripe payment if not COD
-    if (selectedCountry !== 'TUN' && stripePaymentMethod) {
-      try {
-        // Create payment intent with enhanced error handling
-        const paymentResponse = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
-          {
-            amount: total,
-            currency: country.currency.toLowerCase(),
-            payment_method: stripePaymentMethod,
-            payment_method_types: ['card'],
-            metadata: {
-              orderNumber: orderNumber,
-              customerEmail: formData.email
-            }
-          },
-          {
-            timeout: 15000, // 15 second timeout
-            retries: 3,     // Allow 3 retries
-            retryDelay: 1000 // Wait 1 second between retries
-          }
-        ).catch(error => {
-          console.error('Payment Intent Creation Error:', error);
-          
-          // Network or server errors
-          if (!error.response) {
-            throw new Error(t('payment.networkError'));
-          }
-          
-          // Handle specific HTTP status codes
-          switch (error.response.status) {
-            case 500:
-              throw new Error(t('payment.serverError'));
-            case 400:
-              throw new Error(error.response.data.error || t('payment.invalidRequest'));
-            case 401:
-              throw new Error(t('payment.authenticationError'));
-            case 403:
-              throw new Error(t('payment.permissionDenied'));
-            case 404:
-              throw new Error(t('payment.serviceUnavailable'));
-            default:
-              throw new Error(error.response.data.error || t('payment.genericError'));
-          }
-        });
-
-        paymentIntent = paymentResponse.data;
-
-        const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
-        const confirmPayment = await stripe.confirmCardPayment(paymentIntent.client_secret);
-
-        if (confirmPayment.error) {
-          let errorMessage = '';
-          switch (confirmPayment.error.code) {
-            case 'card_declined':
-              errorMessage = t('payment.cardDeclined');
-              break;
-            case 'expired_card':
-              errorMessage = t('payment.cardExpired');
-              break;
-            case 'incorrect_cvc':
-              errorMessage = t('payment.invalidCVC');
-              break;
-            case 'processing_error':
-              errorMessage = t('payment.processingError');
-              break;
-            case 'insufficient_funds':
-              errorMessage = t('payment.insufficientFunds');
-              break;
-            case 'incorrect_postal_code':
-              errorMessage = t('payment.incorrectPostalCode');
-              break;
-            case 'authentication_required':
-              errorMessage = t('payment.authenticationRequired');
-              break;
-            case 'rate_limit_exceeded':
-              errorMessage = t('payment.tooManyAttempts');
-              break;
-            default:
-              errorMessage = confirmPayment.error.message || t('payment.genericError');
-          }
-          throw new Error(errorMessage);
-        }
-
-        stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
-      } catch (paymentError) {
-        console.error('Payment Processing Error:', paymentError);
-        throw new Error(paymentError.message || t('payment.genericError'));
-      }
-    }
-
-    // Construct order data
+    // Construct enhanced order data
     orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress: formData.shippingAddress,
+      shippingAddress: {
+        ...formData.shippingAddress,
+        country: selectedCountry,
+        province: selectedCountry === 'CAN' ? formData.shippingAddress.province : undefined
+      },
       billingAddress: isBillingAddressSameAsShipping
-        ? formData.shippingAddress
-        : formData.billingAddress,
+        ? { ...formData.shippingAddress }
+        : {
+            ...formData.billingAddress,
+            country: selectedCountry,
+            province: selectedCountry === 'CAN' ? formData.billingAddress.province : undefined
+          },
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -1440,96 +1296,103 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         price: photo.price,
         productType: photo.productType
       })),
-      totalAmount: total,
-      subtotal,
-      shippingFee,
-      taxAmount,
-      discount,
+      pricing: {
+        subtotal,
+        tax: {
+          amount: taxAmount,
+          details: taxDetails
+        },
+        shipping: shippingFee,
+        discount,
+        total
+      },
       currency: country.currency,
       orderNote: orderNote || '',
       paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-      stripePaymentId: stripePaymentMethod,
-      paymentIntentId: paymentIntent?.id,
-      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
+      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'pending',
       customerDetails: {
         name: formData.name,
         country: selectedCountry
       },
       selectedCountry,
       discountCode: discountCode || null,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      taxDetails: selectedCountry === 'CAN' ? taxDetails : undefined
     };
 
-    // Submit order with retry mechanism
-    const maxRetries = 3;
-    let retryCount = 0;
-    let responses;
-
-    while (retryCount < maxRetries) {
-      try {
-        responses = await submitOrderWithOptimizedChunking(orderData);
-        if (responses && responses.length > 0) {
-          break;
-        }
-        throw new Error('Empty response received');
-      } catch (submitError) {
-        retryCount++;
-        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
-        
-        if (retryCount === maxRetries) {
-          throw new Error(t('errors.orderSubmissionFailed'));
-        }
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-      }
+     // Submit order with retry mechanism
+     const maxRetries = 3;
+     let retryCount = 0;
+     let responses;
+ 
+     while (retryCount < maxRetries) {
+       try {
+         responses = await submitOrderWithOptimizedChunking(orderData);
+         if (responses && responses.length > 0) {
+           break;
+         }
+         throw new Error('Empty response received');
+       } catch (submitError) {
+         retryCount++;
+         console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+         
+         if (retryCount === maxRetries) {
+           throw new Error(t('errors.orderSubmissionFailed'));
+         }
+         // Exponential backoff
+         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+       }
+     }
+     if (orderData) {
+      updateOrderData(orderData);
     }
 
-    // Send confirmation email with retry
-    let emailSent = false;
-    retryCount = 0;
-    
-    while (retryCount < maxRetries && !emailSent) {
-      try {
-        await sendOrderConfirmationEmail({
-          ...orderData,
-          orderItems: orderData.orderItems.map(item => ({
-            ...item,
-            file: undefined,
-            thumbnail: item.thumbnail
-          }))
-        });
-        emailSent = true;
-      } catch (emailError) {
-        retryCount++;
-        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-        }
-      }
-    }
-
-    setOrderSuccess(true);
-    console.log('Order created successfully:', {
-      orderNumber,
-      totalItems: orderData.orderItems.length,
-      responses
-    });
-
-    // Cleanup
-    try {
-      clearStateChunks();
-      await saveStateWithCleanup({
-        orderNumber,
-        orderDate: new Date().toISOString(),
-        totalAmount: total,
-        currency: country.currency,
-        itemCount: orderData.orderItems.length,
-        customerEmail: formData.email
-      });
-      setSelectedPhotos([]);
-    } catch (cleanupError) {
-      console.warn('Post-order cleanup warning:', cleanupError);
-    }
+     // Send confirmation email with retry
+     let emailSent = false;
+     retryCount = 0;
+     
+     while (retryCount < maxRetries && !emailSent) {
+       try {
+         await sendOrderConfirmationEmail({
+           ...orderData,
+           orderItems: orderData.orderItems.map(item => ({
+             ...item,
+             file: undefined,
+             thumbnail: item.thumbnail
+           }))
+         });
+         emailSent = true;
+       } catch (emailError) {
+         retryCount++;
+         console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+         if (retryCount < maxRetries) {
+           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+         }
+       }
+     }
+ 
+     setOrderSuccess(true);
+     console.log('Order created successfully:', {
+       orderNumber,
+       totalItems: orderData.orderItems.length,
+       responses
+     });
+ 
+     // Cleanup
+     try {
+       clearStateChunks();
+       await saveStateWithCleanup({
+         orderNumber,
+         orderDate: new Date().toISOString(),
+         totalAmount: total,
+         currency: country.currency,
+         itemCount: orderData.orderItems.length,
+         customerEmail: formData.email
+       });
+       setSelectedPhotos([]);
+     } catch (cleanupError) {
+       console.warn('Post-order cleanup warning:', cleanupError);
+     }
 
   } catch (error) {
     console.error('Order Processing Error:', error);
@@ -1537,6 +1400,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     // Attempt to rollback/cleanup any partial processing
     try {
       if (paymentIntent?.id) {
+        const stripe = await stripePromise;
         await stripe.cancelPaymentIntent(paymentIntent.id);
       }
     } catch (rollbackError) {
@@ -1568,7 +1432,6 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       });
     }
 
-    // Save error state for recovery
     try {
       await saveStateWithCleanup({
         failedOrderNumber: orderNumber,
@@ -1589,7 +1452,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       console.warn('Failed to save error state:', storageError);
     }
 
-    throw error; // Re-throw to be handled by the form
+    throw error;
 
   } finally {
     setIsProcessingOrder(false);
@@ -2249,10 +2112,13 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   {/* Option de paiement par carte de crédit */}
                   {paymentMethod === 'credit' && (
   <Elements stripe={stripePromise}>
-    <CheckoutForm
-      onSubmit={handleOrderSuccess}
+   <CheckoutForm 
+  orderData={orderData} 
+  onSuccess={(orderId) => console.log('Payment successful:', orderId)} 
+  onError={(error) => console.error('Payment failed:', error)} 
       processing={isProcessingOrder}
-    />
+      paymentMethod={paymentMethod}
+/>
   </Elements>
 )}
                 </div>
