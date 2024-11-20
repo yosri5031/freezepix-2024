@@ -1168,7 +1168,24 @@ const calculateCanadianTaxes = (province, subtotal) => {
 
   return { taxAmount: totalTax, taxDetails };
 };
+  // Add orderData state
+  const [orderData, setOrderData] = useState({
+    items: [],
+    subtotal: 0,
+    tax: 0,
+    shipping: 0,
+    total: 0,
+    discounts: [],
+    currency: 'USD'
+  });
 
+  // Function to update order data
+  const updateOrderData = useCallback((updates) => {
+    setOrderData(prevData => ({
+      ...prevData,
+      ...updates
+    }));
+  }, []);
 const handleOrderSuccess = async (checkoutMode = false) => {
   let orderData = null;
   let orderNumber = null;
@@ -1326,7 +1343,10 @@ const handleOrderSuccess = async (checkoutMode = false) => {
          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
        }
      }
- 
+     if (orderData) {
+      updateOrderData(orderData);
+    }
+    
      // Send confirmation email with retry
      let emailSent = false;
      retryCount = 0;
