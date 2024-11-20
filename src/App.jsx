@@ -991,6 +991,107 @@ const CheckoutForm = ({ orderData, onSuccess, onError }) => {
     }
   }, []);
 
+  // Add this function to calculate Canadian taxes
+const calculateCanadianTaxes = (province, subtotal) => {
+  const taxes = TAX_RATES['CA'][province];
+  let totalTax = 0;
+
+  if (taxes) {
+    if (taxes.HST) {
+      totalTax = subtotal * (taxes.HST / 100);
+    } else {
+      if (taxes.GST) totalTax += subtotal * (taxes.GST / 100);
+      if (taxes.PST) totalTax += subtotal * (taxes.PST / 100);
+      if (taxes.QST) totalTax += subtotal * (taxes.QST / 100);
+    }
+  }
+
+  return totalTax;
+};
+
+// Add this function to prepare order data
+const prepareOrderData = () => {
+  const subtotal = calculateSubtotal();
+  const shippingFee = calculateShippingFee();
+  let tax = 0;
+  let orderNumber = null;
+  // Generate order number
+  orderNumber = generateOrderNumber();
+  setCurrentOrderNumber(orderNumber);
+
+  if (formData.shippingAddress.country === 'CAN') {
+    tax = calculateCanadianTaxes(formData.shippingAddress.province, subtotal);
+  }
+
+  const total = subtotal + shippingFee + tax;
+
+  return {
+    orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
+    orderItems: selectedPhotos.map(photo => ({
+      id: photo.id,
+      quantity: photo.quantity,
+      size: photo.size,
+      productType: photo.productType,
+      fileName: photo.fileName
+    })),
+    customerInfo: {
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping 
+        ? formData.shippingAddress 
+        : formData.billingAddress
+    },
+    orderDetails: {
+      subtotal,
+      tax,
+      shippingFee,
+      total,
+      currency: initialCountries.find(c => c.value === selectedCountry)?.currency,
+      paymentMethod: paymentMethod
+    },
+    orderNote: orderNote,
+    discountCode: discountCode
+  };
+};
+
+const calculateSubtotal = () => {
+  const countryInfo = initialCountries.find(c => c.value === selectedCountry);
+  
+  return selectedPhotos.reduce((total, photo) => {
+    let price = 0;
+    
+    switch (photo.productType) {
+      case 'print':
+        switch (photo.size) {
+          case '4x6': price = countryInfo.size4x6; break;
+          case '5x7': price = countryInfo.size5x7; break;
+          case '8x10': price = countryInfo.size8x10; break;
+          default: price = 0;
+        }
+        break;
+      case 'keychain': price = countryInfo.keychain; break;
+      case 'magnet': price = countryInfo.keyring_magnet; break;
+      case '3d_frame': price = countryInfo.crystal3d; break;
+      default: price = 0;
+    }
+    
+    return total + (price * photo.quantity);
+  }, 0);
+};
+
+// Helper function to calculate shipping fee
+const calculateShippingFee = () => {
+  const countryInfo = initialCountries.find(c => c.value === selectedCountry);
+  return countryInfo?.shippingFee || 0;
+};
+
   const validatePayment = async (sessionId) => {
     try {
       const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment', {
@@ -1014,58 +1115,15 @@ const CheckoutForm = ({ orderData, onSuccess, onError }) => {
   };
 
   const handleCheckout = async () => {
-    let orderData = null;
-    let orderNumber = null;
+    
     try {
       setLoading(true);
       setError(null);
       setOrderSuccess(false);
       setError(null);
+      setIsProcessingOrder(true);
+      const orderData = prepareOrderData();
   
-      // Generate order number
-      orderNumber = generateOrderNumber();
-      setCurrentOrderNumber(orderNumber);
-      
-      // Calculate order totals
-      const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
-      const country = initialCountries.find(c => c.value === selectedCountry);
-      orderData = {
-        orderNumber,
-        email: formData.email,
-        phone: formData.phone,
-        shippingAddress: formData.shippingAddress,
-        billingAddress: isBillingAddressSameAsShipping
-          ? formData.shippingAddress
-          : formData.billingAddress,
-        orderItems: optimizedPhotosWithPrices.map(photo => ({
-          ...photo,
-          file: photo.file,
-          thumbnail: photo.thumbnail,
-          id: photo.id,
-          quantity: photo.quantity,
-          size: photo.size,
-          price: photo.price,
-          productType: photo.productType
-        })),
-        totalAmount: total,
-        subtotal,
-        shippingFee,
-        taxAmount,
-        discount,
-        currency: country.currency,
-        orderNote: orderNote || '',
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
-        stripePaymentId: stripePaymentMethod,
-        paymentIntentId: paymentIntent?.id,
-        paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
-        customerDetails: {
-          name: formData.name,
-          country: selectedCountry
-        },
-        selectedCountry,
-        discountCode: discountCode || null,
-        createdAt: new Date().toISOString()
-      };
 
       const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
         method: 'POST',
@@ -1093,6 +1151,7 @@ const CheckoutForm = ({ orderData, onSuccess, onError }) => {
       setError('Failed to initialize checkout');
     } finally {
       setLoading(false);
+      setIsProcessingOrder(false);
     }
   };
 
