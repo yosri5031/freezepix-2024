@@ -1726,7 +1726,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-        const validCodes = ['B2B', 'MOHAMED','MCF99'];
+        const validCodes = ['B2B', 'MOHAMED','MCF99','ABCC'];
         const upperCode = code.toUpperCase();
         
         if (code && !validCodes.includes(upperCode)) {
@@ -1894,8 +1894,13 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     }
 
     // Calculate discount if applicable 
-    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : (discountCode.toUpperCase() === 'MCF99') ? (subtotal + shippingFee) * 0.99 : 0;
-    // Calculate tax based on location, including shipping fee 
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
+    ? subtotal * 0.5 
+    : (discountCode.toUpperCase() === 'MCF99') 
+        ? (subtotal + shippingFee) * 0.99 
+        : (discountCode.toUpperCase() === 'ABCC') 
+            ? subtotal * 0.1 // 10% discount for "ABCC"
+            : 0;    // Calculate tax based on location, including shipping fee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN') { 
@@ -2477,7 +2482,12 @@ const PaymentForm = ({ onPaymentSuccess }) => {
        {/* Discount */}
 {discount > 0 && (
   <div className="flex justify-between py-2 text-green-600">
-    <span>{t('order.discount')} ({discountCode.toUpperCase() === 'MCF99' ? '99%' : '50%'})</span>
+    <span>{t('order.discount')} (
+      {discountCode.toUpperCase() === 'MCF99' ? '99%' : 
+      discountCode.toUpperCase() === 'MOHAMED' || discountCode.toUpperCase() === 'B2B' ? '50%' : 
+      discountCode.toUpperCase() === 'ABCC' ? '10%' : '0%'}
+    )
+    </span>
     <span>-{discount.toFixed(2)} {country?.currency}</span>
   </div>
 )}
