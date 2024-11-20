@@ -1447,7 +1447,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       discount,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+      paymentMethod: selectedCountry === 'TUN' ? 'cod' : paymentMethod === 'interac' ? 'interac' : 'credit',
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
       paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
