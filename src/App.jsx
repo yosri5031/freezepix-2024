@@ -1303,8 +1303,76 @@ const handleOrderSuccess = async (checkoutMode = false) => {
       taxDetails: selectedCountry === 'CAN' ? taxDetails : undefined
     };
 
-    // Rest of your existing code for handling payments, checkout, and order submission
-    // ... (Keep all the payment processing, order submission, email sending, and cleanup logic the same)
+     // Submit order with retry mechanism
+     const maxRetries = 3;
+     let retryCount = 0;
+     let responses;
+ 
+     while (retryCount < maxRetries) {
+       try {
+         responses = await submitOrderWithOptimizedChunking(orderData);
+         if (responses && responses.length > 0) {
+           break;
+         }
+         throw new Error('Empty response received');
+       } catch (submitError) {
+         retryCount++;
+         console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+         
+         if (retryCount === maxRetries) {
+           throw new Error(t('errors.orderSubmissionFailed'));
+         }
+         // Exponential backoff
+         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+       }
+     }
+ 
+     // Send confirmation email with retry
+     let emailSent = false;
+     retryCount = 0;
+     
+     while (retryCount < maxRetries && !emailSent) {
+       try {
+         await sendOrderConfirmationEmail({
+           ...orderData,
+           orderItems: orderData.orderItems.map(item => ({
+             ...item,
+             file: undefined,
+             thumbnail: item.thumbnail
+           }))
+         });
+         emailSent = true;
+       } catch (emailError) {
+         retryCount++;
+         console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+         if (retryCount < maxRetries) {
+           await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+         }
+       }
+     }
+ 
+     setOrderSuccess(true);
+     console.log('Order created successfully:', {
+       orderNumber,
+       totalItems: orderData.orderItems.length,
+       responses
+     });
+ 
+     // Cleanup
+     try {
+       clearStateChunks();
+       await saveStateWithCleanup({
+         orderNumber,
+         orderDate: new Date().toISOString(),
+         totalAmount: total,
+         currency: country.currency,
+         itemCount: orderData.orderItems.length,
+         customerEmail: formData.email
+       });
+       setSelectedPhotos([]);
+     } catch (cleanupError) {
+       console.warn('Post-order cleanup warning:', cleanupError);
+     }
 
   } catch (error) {
     console.error('Order Processing Error:', error);
