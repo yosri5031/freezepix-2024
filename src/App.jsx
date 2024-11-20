@@ -1224,8 +1224,8 @@ const handleOrderSuccess = async (checkoutMode = false) => {
       }
 
       const shippingFee = country.shippingFee || 0;
-      const discountAmount = calculateDiscount(subtotal);
-      const total = subtotal + taxAmount + shippingFee - discountAmount;
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') ? subtotal * 0.5 : (discountCode.toUpperCase() === 'MCF99') ? (subtotal + shippingFee) * 0.99 : 0;
+      const total = subtotal + taxAmount + shippingFee - discount;
 
       return {
         total,
@@ -1346,7 +1346,7 @@ const handleOrderSuccess = async (checkoutMode = false) => {
      if (orderData) {
       updateOrderData(orderData);
     }
-    
+
      // Send confirmation email with retry
      let emailSent = false;
      retryCount = 0;
