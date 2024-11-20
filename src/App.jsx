@@ -1014,9 +1014,58 @@ const CheckoutForm = ({ orderData, onSuccess, onError }) => {
   };
 
   const handleCheckout = async () => {
+    let orderData = null;
+    let orderNumber = null;
     try {
       setLoading(true);
       setError(null);
+      setOrderSuccess(false);
+      setError(null);
+  
+      // Generate order number
+      orderNumber = generateOrderNumber();
+      setCurrentOrderNumber(orderNumber);
+      
+      // Calculate order totals
+      const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+      const country = initialCountries.find(c => c.value === selectedCountry);
+      orderData = {
+        orderNumber,
+        email: formData.email,
+        phone: formData.phone,
+        shippingAddress: formData.shippingAddress,
+        billingAddress: isBillingAddressSameAsShipping
+          ? formData.shippingAddress
+          : formData.billingAddress,
+        orderItems: optimizedPhotosWithPrices.map(photo => ({
+          ...photo,
+          file: photo.file,
+          thumbnail: photo.thumbnail,
+          id: photo.id,
+          quantity: photo.quantity,
+          size: photo.size,
+          price: photo.price,
+          productType: photo.productType
+        })),
+        totalAmount: total,
+        subtotal,
+        shippingFee,
+        taxAmount,
+        discount,
+        currency: country.currency,
+        orderNote: orderNote || '',
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+        stripePaymentId: stripePaymentMethod,
+        paymentIntentId: paymentIntent?.id,
+        paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
+        customerDetails: {
+          name: formData.name,
+          country: selectedCountry
+        },
+        selectedCountry,
+        discountCode: discountCode || null,
+        createdAt: new Date().toISOString()
+      };
 
       const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
         method: 'POST',
