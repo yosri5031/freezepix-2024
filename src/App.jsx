@@ -1195,7 +1195,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
   try {
     // Step 1: Create Payment Intent
     const paymentIntentResponse = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/create-payment-intent',
       {
         amount,
         currency,
