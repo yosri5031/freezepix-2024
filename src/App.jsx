@@ -1335,7 +1335,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       try {
         // Create payment intent with enhanced error handling
         const paymentResponse = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-payment-intent',
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/create-payment-intent',
           {
             amount: total,
             currency: country.currency.toLowerCase(),
