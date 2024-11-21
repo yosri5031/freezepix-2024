@@ -1213,7 +1213,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
     // Enhanced Validation of Payment Intent Response
     const clientSecret = paymentIntentResponse.data?.clientSecret;
     const paymentIntentId = paymentIntentResponse.data?.id;
-    
+
     if (!clientSecret || typeof clientSecret !== 'string') {
       console.error('Invalid client secret:', {
         type: typeof clientSecret,
@@ -1223,12 +1223,12 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       throw new Error('Invalid or missing client secret from payment intent');
     }
 
-    // Load Stripe
+    // Load Stripe (ensure this is properly imported)
     const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
-    
-    // Confirm Card Payment
+
+    // Confirm Card Payment with explicit error handling
     const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
-      clientSecret,
+      clientSecret,  // Ensure this is passed correctly
       {
         payment_method: stripePaymentMethod
       }
@@ -1237,7 +1237,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
     // Handle Confirmation Errors
     if (confirmError) {
       console.error('Confirmation Error:', confirmError);
-      
+
       // Detailed error handling
       const errorMap = {
         'card_declined': 'Your card was declined. Please try another card.',
