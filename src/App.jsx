@@ -1895,12 +1895,12 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
-    ? subtotal * 0.5 
+    ? (subtotal * 0.5).toFixed(2)
     : (discountCode.toUpperCase() === 'MCF99') 
-        ? (subtotal + shippingFee) * 0.99 
+        ? ((subtotal + shippingFee) * 0.99).toFixed(2)
         : (discountCode.toUpperCase() === 'ABCC') 
-            ? subtotal * 0.1 // 10% discount for "ABCC"
-            : 0;    // Calculate tax based on location, including shipping fee 
+            ? (subtotal * 0.1).toFixed(2) // 10% discount for "ABCC"
+            : 0;  // Calculate tax based on location, including shipping fee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN') { 
