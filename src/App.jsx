@@ -1230,6 +1230,18 @@ const CheckoutForm = ({
               }} 
             />
           </div>
+
+          <div className="postal-code-input">
+        <label>Postal Code</label>
+        <input
+          type="text"
+          value={postalCode}
+          onChange={(e) => setPostalCode(e.target.value)}
+          placeholder="Enter Postal Code"
+          required
+        />
+      </div>
+      
           </div>
       {/* Error Display */}
       {error && (
