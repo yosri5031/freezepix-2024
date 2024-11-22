@@ -989,6 +989,25 @@ const CheckoutForm = ({
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const cardElementRef = useRef(null);
+
+  useEffect(() => {
+    if (cardElementRef.current) {
+      const iframe = cardElementRef.current.iframe;
+      const iframeStyles = `
+        .InputElement {
+          display: block;
+          width: 100%;
+          margin-bottom: 8px;
+        }
+      `;
+
+      const styleElement = document.createElement('style');
+      styleElement.innerHTML = iframeStyles;
+      iframe.contentDocument.head.appendChild(styleElement);
+    }
+  }, []);
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -1068,12 +1087,6 @@ const CheckoutForm = ({
       },
     },
     hidePostalCode: true,
-    classes: {
-      base: 'flex flex-wrap',
-      focus: 'outline-none ring-2 ring-blue-500',
-      empty: 'text-gray-400',
-      invalid: 'text-red-500',
-    },
   };
 
   return (
@@ -1111,7 +1124,7 @@ const CheckoutForm = ({
         <label className="block text-gray-700 text-sm font-bold mb-2">
           Card Details
         </label>
-        <CardElement options={cardElementOptions} />
+        <CardElement options={cardElementOptions} ref={cardElementRef} />
       </div>
 
       {/* Error Display */}
