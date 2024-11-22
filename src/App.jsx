@@ -1068,6 +1068,12 @@ const CheckoutForm = ({
       },
     },
     hidePostalCode: true,
+    classes: {
+      base: 'flex flex-wrap',
+      focus: 'outline-none ring-2 ring-blue-500',
+      empty: 'text-gray-400',
+      invalid: 'text-red-500',
+    },
   };
 
   return (
