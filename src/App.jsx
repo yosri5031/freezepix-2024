@@ -1928,22 +1928,36 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     setError(null);
   
     try {
-      // Safely get card elements
-      const cardNumberElement = elements.getElement(CardNumberElement);
-      const cardExpiryElement = elements.getElement(CardExpiryElement);
-      const cardCvcElement = elements.getElement(CardCvcElement);
+      // Use a try-catch with JSON.stringify to catch circular references
+      const safeSubmit = (paymentMethod) => {
+        try {
+          // Attempt to stringify to catch any remaining circular references
+          const serializedMethod = JSON.parse(JSON.stringify(paymentMethod));
+          return onSubmit(serializedMethod);
+        } catch (serializationError) {
+          // Fallback to manual object creation
+          const sanitizedMethod = {
+            id: paymentMethod.id,
+            type: paymentMethod.type,
+            // Manually extract only primitive values
+            billing_details: {
+              name: paymentMethod.billing_details.name,
+              email: paymentMethod.billing_details.email,
+              phone: paymentMethod.billing_details.phone,
+              address: {
+                line1: formData.shippingAddress,
+                country: selectedCountry,
+                postal_code: formData.postalCode
+              }
+            }
+          };
+          return onSubmit(sanitizedMethod);
+        }
+      };
   
-      // Validate individual card elements
-      if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
-        setError('Card details are incomplete. Please check and try again.');
-        setIsSubmitting(false);
-        return;
-      }
-  
-      // Create payment method
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardNumberElement, // Use the entire element instead of breaking it down
+        card: elements.getElement(CardNumberElement),
         billing_details: {
           name: formData.name,
           email: formData.email,
@@ -1956,22 +1970,13 @@ const PaymentForm = ({ onPaymentSuccess }) => {
         }
       });
   
-      // Handle potential errors
       if (error) {
         setError(error.message);
         setIsSubmitting(false);
         return;
       }
   
-      // Additional safeguard to prevent circular reference
-      const cleanPaymentMethod = {
-        id: paymentMethod.id,
-        type: paymentMethod.type,
-        billing_details: paymentMethod.billing_details
-      };
-  
-      // Call the onSubmit handler with a clean payment method
-      await onSubmit(cleanPaymentMethod);
+      await safeSubmit(paymentMethod);
       
       setIsSubmitting(false);
     } catch (err) {
