@@ -990,6 +990,42 @@ const CheckoutForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cardElementRef = useRef(null);
+  const stripeCustomStyles = `
+  .StripeElement {
+    display: block;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  }
+  
+  .StripeElement--focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0,123,255,0.3);
+  }
+  
+  /* Separate card fields */
+  .stripe-card-number {
+    grid-area: number;
+  }
+  
+  .stripe-card-expiry {
+    grid-area: expiry;
+  }
+  
+  .stripe-card-cvc {
+    grid-area: cvc;
+  }
+  
+  .stripe-card-container {
+    display: grid;
+    grid-template-areas: 
+      "number number"
+      "expiry cvc";
+    gap: 10px;
+  }
+`;
 
   useEffect(() => {
     if (cardElementRef.current) {
@@ -1010,6 +1046,41 @@ const CheckoutForm = ({
           width: 100%;
           margin-bottom: 8px;
         }
+        
+        .StripeElement {
+    display: block;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+  }
+  
+  .StripeElement--focus {
+    border-color: #007bff;
+    box-shadow: 0 0 5px rgba(0,123,255,0.3);
+  }
+  
+  /* Separate card fields */
+  .stripe-card-number {
+    grid-area: number;
+  }
+  
+  .stripe-card-expiry {
+    grid-area: expiry;
+  }
+  
+  .stripe-card-cvc {
+    grid-area: cvc;
+  }
+  
+  .stripe-card-container {
+    display: grid;
+    grid-template-areas: 
+      "number number"
+      "expiry cvc";
+    gap: 10px;
+  }
       `;
 
       const styleElement = document.createElement('style');
