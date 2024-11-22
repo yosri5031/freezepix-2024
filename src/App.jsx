@@ -1206,7 +1206,6 @@ const CheckoutForm = ({
           <label>Card Number</label>
           <CardNumberElement 
             options={{ 
-              style: cardStyles,
               placeholder: 'Card Number' 
             }} 
           />
@@ -1217,7 +1216,6 @@ const CheckoutForm = ({
             <label>Expiry</label>
             <CardExpiryElement 
               options={{ 
-                style: cardStyles,
                 placeholder: 'MM/YY' 
               }} 
             />
@@ -1227,7 +1225,7 @@ const CheckoutForm = ({
             <label>CVC</label>
             <CardCvcElement 
               options={{ 
-                style: cardStyles,
+                
                 placeholder: 'CVC' 
               }} 
             />
