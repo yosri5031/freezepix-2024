@@ -2384,15 +2384,15 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   {paymentMethod === 'credit' && (
  
     <Elements stripe={stripePromise}>
-      <CheckoutForm
-        onSubmit={handleCheckout}
-        processing={isProcessingOrder}
-        total={calculateTotals().total}
-        currency={currency_curr}
-        formData={formData}
-        selectedPhotos={selectedPhotos}
-        selectedCountry={selectedCountry}
-      />
+     <CheckoutForm
+  onSubmit={handleCheckout}
+  processing={isProcessingOrder}
+  total={calculateTotals().total}
+  currency={initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD'} // Use the currency from the selected country
+  formData={formData}
+  selectedPhotos={selectedPhotos}
+  selectedCountry={selectedCountry}
+/>
     </Elements>
 
 )}
@@ -2406,15 +2406,15 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
-      <CheckoutForm
-        onSubmit={handleCheckout}
-        processing={isProcessingOrder}
-        total={calculateTotals().total}
-        currency={currency_curr}
-        formData={formData}
-        selectedPhotos={selectedPhotos}
-        selectedCountry={selectedCountry}
-      />
+                <CheckoutForm
+  onSubmit={handleCheckout}
+  processing={isProcessingOrder}
+  total={calculateTotals().total}
+  currency={initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD'} // Use the currency from the selected country
+  formData={formData}
+  selectedPhotos={selectedPhotos}
+  selectedCountry={selectedCountry}
+/>
     </Elements>
               </div>
             )}
