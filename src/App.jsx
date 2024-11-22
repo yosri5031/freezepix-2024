@@ -1000,6 +1000,16 @@ const CheckoutForm = ({
           width: 100%;
           margin-bottom: 8px;
         }
+          .CardElement {
+          display: flex;
+          flex-direction: column;
+        }
+
+        .CardElement input {
+          display: block;
+          width: 100%;
+          margin-bottom: 8px;
+        }
       `;
 
       const styleElement = document.createElement('style');
