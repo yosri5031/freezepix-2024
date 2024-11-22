@@ -1202,13 +1202,37 @@ const CheckoutForm = ({
       </div>
 
       {/* Card Details Input */}
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          Card Details
-        </label>
-        <CardElement options={cardElementOptions} ref={cardElementRef} />
-      </div>
-
+      <div className="card-number-wrapper">
+          <label>Card Number</label>
+          <CardNumberElement 
+            options={{ 
+              style: cardStyles,
+              placeholder: 'Card Number' 
+            }} 
+          />
+        </div>
+        
+        <div className="card-details-wrapper">
+          <div className="card-expiry-wrapper">
+            <label>Expiry</label>
+            <CardExpiryElement 
+              options={{ 
+                style: cardStyles,
+                placeholder: 'MM/YY' 
+              }} 
+            />
+          </div>
+          
+          <div className="card-cvc-wrapper">
+            <label>CVC</label>
+            <CardCvcElement 
+              options={{ 
+                style: cardStyles,
+                placeholder: 'CVC' 
+              }} 
+            />
+          </div>
+          </div>
       {/* Error Display */}
       {error && (
         <div 
