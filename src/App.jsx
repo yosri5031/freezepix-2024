@@ -2071,7 +2071,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 };
 
   const renderStepContent = () => {
-    const currency_curr = selectedCountryData ? selectedCountryData.currency : 'USD'; // USD as fallback
+    const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
     switch (activeStep) {
       case 0:
     return (
