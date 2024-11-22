@@ -1099,10 +1099,10 @@ const CheckoutForm = ({
     }
   
     // Validate form data
-    if (!formData.name || !formData.email || !formData.phone) {
-      setError('Please fill in all required contact information.');
-      return;
-    }
+    //if (!formData.name || !formData.email || !formData.phone) {
+      //setError('Please fill in all required contact information.');
+     // return;
+    //}
   
     if (!formData.shippingAddress || !formData.postalCode) {
       setError('Please provide a complete shipping address and postal code.');
