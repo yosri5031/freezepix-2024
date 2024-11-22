@@ -44,7 +44,7 @@ const initialCountries = [
     keychain: 9.99, 
     keyring_magnet: 9.99 },
   { name: 'Canada', 
-    value: 'CAN', 
+    value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
@@ -199,7 +199,7 @@ const BookingPopup = ({ onClose }) => {
           </select>
         )}
   
-        {data.country === 'CAN' && (
+        {data.country === 'CA' && (
           <select
             value={data.province || ''}
             onChange={handleInputChange('province')}
@@ -390,7 +390,7 @@ const closeProductDetails = () => {
     ];
 
     // Add 8x10" size after 5x7" only for USA and Canada
-    if (country === 'USA' || country === 'CAN') {
+    if (country === 'USA' || country === 'CA') {
       products.splice(2, 0, {
         category: 'Photo Prints',
         product: '8x10 Size',
@@ -1987,7 +1987,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
               } else if (photo.size === '5x7') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-              } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN') && photo.size === '8x10') {
+              } else if ((selectedCountry === 'USA' || selectedCountry === 'CA') && photo.size === '8x10') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
               }
           }
@@ -2015,7 +2015,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
             shippingFee = 8; // 8 TND for Tunisia
         } else if (selectedCountry === 'USA') {
             shippingFee = 9; // 9$ for USA
-        } else if (selectedCountry === 'CAN') {
+        } else if (selectedCountry === 'CA') {
             shippingFee = 9; // 9$ for Canada
         } else if (selectedCountry === 'GBR') {
             shippingFee = 9; // 9£ for United Kingdom
@@ -2036,7 +2036,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
-    } else if (selectedCountry === 'CAN') { 
+    } else if (selectedCountry === 'CA') { 
         const province = formData.shippingAddress.province; 
         const provinceTaxes = TAX_RATES['CA'][province]; 
 
@@ -2114,7 +2114,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                         </button>
                         <div className="mt-2 space-y-2">
                             {/* Product Type Selection for US/Canada */}
-                            {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
+                            {(['USA', 'CA', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
                                 <select
                                     value={photo.productType}
                                     onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -2161,7 +2161,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
             <option value="10x15">10x15 cm</option>
             <option value="15x22">15x22 cm</option>
         </>
-    ) : selectedCountry === 'USA' || selectedCountry === 'CAN' ? (
+    ) : selectedCountry === 'USA' || selectedCountry === 'CA' ? (
         <>
             <option value="4x6">4x6"</option>
             <option value="5x7">5x7"</option>
@@ -2330,7 +2330,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                   </p>
                 </div>
               </div>
-            ) : selectedCountry === 'CAN' ? (
+            ) : selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
@@ -2521,7 +2521,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
           <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
-      {(selectedCountry === 'USA' || selectedCountry === 'CAN') && quantities['8x10'] > 0 && (
+      {(selectedCountry === 'USA' || selectedCountry === 'CA') && quantities['8x10'] > 0 && (
         <div className="flex justify-between py-2">
           <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
@@ -2562,7 +2562,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     
     if (selectedCountry === 'TUN') {
         taxAmount = taxableAmount * 0.19;
-    } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
+    } else if (selectedCountry === 'CA' && formData.shippingAddress.province) {
         const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
         if (provinceTaxes) {
             if (provinceTaxes.HST) {
@@ -2601,7 +2601,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
         )}
 
         {/* Tax for Canada */}
-        {selectedCountry === 'CAN' && formData.shippingAddress.province && (
+        {selectedCountry === 'CA' && formData.shippingAddress.province && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
               <span>Tax</span>
@@ -2742,9 +2742,9 @@ const validateStep = () => {
 
       // State/Province validation based on country
       const stateValid = 
-        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
+        (selectedCountry !== 'USA' && selectedCountry !== 'CA') || // Other countries don't need state
         (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
+        (selectedCountry === 'CA' && shippingAddress.province);       // Canada needs province
 
       return basicFieldsValid && stateValid;
 
