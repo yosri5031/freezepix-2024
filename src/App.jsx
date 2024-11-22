@@ -1241,19 +1241,11 @@ const CheckoutForm = ({
             />
           </div>
 
-          <div className="postal-code-input">
+         {/* <div className="postal-code-input">
         <label>Postal Code</label>
-        <input
-    type="text"
-    value={formData.postalCode}
-    onChange={(e) => setFormData(prev => ({
-      ...prev, 
-      postalCode: e.target.value
-    }))}
-    placeholder="Postal Code"
-    required
+       
   />
-      </div>
+      </div> */}
 
           </div>
       {/* Error Display */}
