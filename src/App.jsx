@@ -1091,58 +1091,68 @@ const CheckoutForm = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+  
     // Validate input fields
     if (!stripe || !elements) {
-      // Stripe.js has not yet loaded.
       setError('Stripe has not loaded. Please try again.');
       return;
     }
-
+  
     // Validate form data
     if (!formData.name || !formData.email || !formData.phone) {
       setError('Please fill in all required contact information.');
       return;
     }
-
-    if (!formData.shippingAddress) {
-      setError('Please provide a shipping address.');
+  
+    if (!formData.shippingAddress || !formData.postalCode) {
+      setError('Please provide a complete shipping address and postal code.');
       return;
     }
-
+  
     if (selectedPhotos.length === 0) {
       setError('You must have at least one item in your order.');
       return;
     }
-
+  
     // Prevent multiple submissions
     if (processing || isSubmitting) return;
-
+  
     setIsSubmitting(true);
     setError(null);
-
+  
     try {
-      // Create payment method
+      // Get individual card elements
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      const cardExpiryElement = elements.getElement(CardExpiryElement);
+      const cardCvcElement = elements.getElement(CardCvcElement);
+  
+      // Create payment method with detailed card and billing information
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: elements.getElement(CardElement),
+        card: {
+          number: cardNumberElement,
+          exp_month: cardExpiryElement,
+          cvc: cardCvcElement
+        },
         billing_details: {
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
           address: {
             line1: formData.shippingAddress,
-            country: selectedCountry
+            country: selectedCountry,
+            postal_code: formData.postalCode  // Custom postal code input
           }
         }
       });
-
+  
+      // Handle potential errors
       if (error) {
         setError(error.message);
         setIsSubmitting(false);
         return;
       }
-
+  
       // Call the onSubmit handler with the payment method
       await onSubmit(paymentMethod);
       
@@ -1234,14 +1244,17 @@ const CheckoutForm = ({
           <div className="postal-code-input">
         <label>Postal Code</label>
         <input
-          type="text"
-          value={postalCode}
-          onChange={(e) => setPostalCode(e.target.value)}
-          placeholder="Enter Postal Code"
-          required
-        />
+    type="text"
+    value={formData.postalCode}
+    onChange={(e) => setFormData(prev => ({
+      ...prev, 
+      postalCode: e.target.value
+    }))}
+    placeholder="Postal Code"
+    required
+  />
       </div>
-      
+
           </div>
       {/* Error Display */}
       {error && (
