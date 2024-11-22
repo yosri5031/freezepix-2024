@@ -1091,49 +1091,39 @@ const CheckoutForm = ({
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-  
+ 
     // Validate input fields
     if (!stripe || !elements) {
       setError('Stripe has not loaded. Please try again.');
       return;
     }
-  
-    // Validate form data
-    //if (!formData.name || !formData.email || !formData.phone) {
-      //setError('Please fill in all required contact information.');
-     // return;
-    //}
-  
+ 
     if (!formData.shippingAddress || !formData.billingAddress.postalCode) {
       setError('Please provide a complete shipping address and postal code.');
       return;
     }
-  
+ 
     if (selectedPhotos.length === 0) {
       setError('You must have at least one item in your order.');
       return;
     }
-  
+ 
     // Prevent multiple submissions
     if (processing || isSubmitting) return;
-  
+ 
     setIsSubmitting(true);
     setError(null);
-  
+ 
     try {
       // Get individual card elements
       const cardNumberElement = elements.getElement(CardNumberElement);
       const cardExpiryElement = elements.getElement(CardExpiryElement);
       const cardCvcElement = elements.getElement(CardCvcElement);
-  
+ 
       // Create payment method with detailed card and billing information
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: {
-          number: cardNumberElement,
-          exp_month: cardExpiryElement,
-          cvc: cardCvcElement
-        },
+        card: cardNumberElement, // Pass the element directly, not individual properties
         billing_details: {
           name: formData.name,
           email: formData.email,
@@ -1141,21 +1131,21 @@ const CheckoutForm = ({
           address: {
             line1: formData.shippingAddress,
             country: selectedCountry,
-            postal_code: formData.billingAddress.postalCode // Custom postal code input
+            postal_code: formData.billingAddress.postalCode
           }
         }
       });
-  
+ 
       // Handle potential errors
       if (error) {
         setError(error.message);
         setIsSubmitting(false);
         return;
       }
-  
+ 
       // Call the onSubmit handler with the payment method
       await onSubmit(paymentMethod);
-      
+     
       setIsSubmitting(false);
     } catch (err) {
       setError(err.message || 'An unexpected error occurred');
@@ -1864,172 +1854,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     }
   }
 };
-  
-  
-
-const PaymentForm = ({ onPaymentSuccess }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState(null);
-
-  const CARD_ELEMENT_OPTIONS = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-  };
-  
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-  
-    // Validate input fields
-    if (!stripe || !elements) {
-      setError('Stripe has not loaded. Please try again.');
-      return;
-    }
-  
-    // Validate form data
-    if (!formData.name || !formData.email || !formData.phone) {
-      setError('Please fill in all required contact information.');
-      return;
-    }
-  
-    if (!formData.shippingAddress || !formData.billingAddress.postalCode) {
-      setError('Please provide a complete shipping address and postal code.');
-      return;
-    }
-  
-    if (selectedPhotos.length === 0) {
-      setError('You must have at least one item in your order.');
-      return;
-    }
-  
-    // Prevent multiple submissions
-    if (isProcessing || isSubmitting) return;
-  
-    setIsSubmitting(true);
-    setError(null);
-  
-    try {
-      // Use a try-catch with JSON.stringify to catch circular references
-      const safeSubmit = (paymentMethod) => {
-        try {
-          // Attempt to stringify to catch any remaining circular references
-          const serializedMethod = JSON.parse(JSON.stringify(paymentMethod));
-          return onSubmit(serializedMethod);
-        } catch (serializationError) {
-          // Fallback to manual object creation
-          const sanitizedMethod = {
-            id: paymentMethod.id,
-            type: paymentMethod.type,
-            // Manually extract only primitive values
-            billing_details: {
-              name: paymentMethod.billing_details.name,
-              email: paymentMethod.billing_details.email,
-              phone: paymentMethod.billing_details.phone,
-              address: {
-                line1: formData.shippingAddress,
-                country: selectedCountry,
-                postal_code: formData.billingAddress.postalCode
-              }
-            }
-          };
-          return onSubmit(sanitizedMethod);
-        }
-      };
-  
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardNumberElement),
-        billing_details: {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          address: {
-            line1: formData.shippingAddress,
-            country: selectedCountry,
-            postal_code: formData.postalCode
-          }
-        }
-      });
-  
-      if (error) {
-        setError(error.message);
-        setIsSubmitting(false);
-        return;
-      }
-  
-      await safeSubmit(paymentMethod);
-      
-      setIsSubmitting(false);
-    } catch (err) {
-      setError(err.message || 'An unexpected error occurred');
-      setIsSubmitting(false);
-    }
-  };
-  
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="flex flex-col space-y-4">
-        <div className="p-4 border rounded">
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Card Number
-          </label>
-          <CardNumberElement options={CARD_ELEMENT_OPTIONS} />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 border rounded">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Expiration Date
-            </label>
-            <CardExpiryElement options={CARD_ELEMENT_OPTIONS} />
-          </div>
-
-          <div className="p-4 border rounded">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              CVC
-            </label>
-            <CardCvcElement options={CARD_ELEMENT_OPTIONS} />
-          </div>
-        </div>
-      </div>
-
-      {error && (
-        <div className="error-container" role="alert">
-          <div className="error-message">
-            {error}
-          </div>
-        </div>
-      )}
-
-      <button
-        type="submit"
-        disabled={!stripe || isProcessing || isProcessingOrder}
-        className="w-full py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {isProcessing || isProcessingOrder ? (
-          <span className="flex items-center justify-center gap-2">
-            <Loader className="animate-spin" size={16} />
-            Processing Payment...
-          </span>
-        ) : (
-          'Pay Now'
-        )}
-      </button>
-    </form>
-  );
-};
-  
+   
 
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
