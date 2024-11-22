@@ -18,7 +18,7 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
-//import { sendOrderConfirmation } from './utils/emailService'..;
+//import { sendOrderConfirmation } from './utils/emailService';
 
 import {
   CardNumberElement,
@@ -1032,11 +1032,13 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
       return;
     }
 
+    // Reset all errors
     setCardError('');
     setPostalCodeError('');
     setServerError('');
     setProcessing(true);
 
+    // Validate postal code
     if (!postalCode) {
       setPostalCodeError(t('checkout.postalCodeRequired'));
       setProcessing(false);
@@ -1050,7 +1052,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
     }
 
     try {
-      // Create payment method
+      // First validate the card details with Stripe
       const { error: cardValidationError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: elements.getElement(CardNumberElement),
@@ -1067,36 +1069,24 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
         return;
       }
 
-      // Create checkout session and process payment
+      // Proceed with payment submission
       try {
-        const result = await handlePayment(
-          paymentMethod.id,
-          onSubmit.amount,
-          onSubmit.currency,
-          {
-            orderItems: onSubmit.orderItems,
-            email: onSubmit.email,
-            shippingAddress: onSubmit.shippingAddress,
-            orderNumber: onSubmit.orderNumber,
-            shippingFee: onSubmit.shippingFee,
-            postalCode: postalCode
-          }
-        );
-
-        if (!result.success) {
-          throw new Error(t('checkout.paymentProcessingError'));
-        }
-
+        await onSubmit(paymentMethod.id, postalCode);
       } catch (error) {
+        // Handle specific error types
         if (error.response?.status === 500) {
           setServerError(t('checkout.serverError'));
-          elements.getElement(CardNumberElement).clear();
-          elements.getElement(CardExpiryElement).clear();
-          elements.getElement(CardCvcElement).clear();
         } else if (error.name === 'AxiosError') {
           setServerError(t('checkout.networkError'));
         } else {
           setCardError(error.message || t('checkout.paymentProcessingError'));
+        }
+        
+        // Clear the form fields on server error
+        if (error.response?.status === 500) {
+          elements.getElement(CardNumberElement).clear();
+          elements.getElement(CardExpiryElement).clear();
+          elements.getElement(CardCvcElement).clear();
         }
       }
     } catch (err) {
@@ -1109,6 +1099,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="p-4 border rounded-lg bg-white shadow-sm">
+        {/* Card Number */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('checkout.cardNumber')}
@@ -1118,6 +1109,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
           </div>
         </div>
 
+        {/* Expiry and CVC */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -1138,6 +1130,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
           </div>
         </div>
 
+        {/* Postal Code */}
         <div className="mb-4">
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {selectedCountry === 'USA' ? t('checkout.zipCode') : t('checkout.postalCode')}
@@ -1156,6 +1149,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
           )}
         </div>
 
+        {/* Error Messages */}
         {(cardError || serverError) && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
             {cardError && <p className="text-sm text-red-600">{cardError}</p>}
@@ -1174,6 +1168,7 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
           </div>
         )}
 
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={!stripe || processing || isProcessing}
@@ -1198,22 +1193,14 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
 
 const handlePayment = async (stripePaymentMethod, amount, currency, metadata) => {
   try {
-    const checkoutSessionResponse = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session',
+    // Step 1: Create Payment Intent
+    const paymentIntentResponse = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/create-payment-intent',
       {
-        orderItems: metadata.orderItems,
-        email: metadata.email,
-        currency,
         amount,
-        shippingAddress: metadata.shippingAddress,
-        orderNumber: metadata.orderNumber,
-        shippingFee: metadata.shippingFee,
-        metadata: {
-          ...metadata,
-          originalPaymentMethod: stripePaymentMethod
-        },
-        success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${window.location.origin}/order-failed`
+        currency,
+        payment_method: stripePaymentMethod,
+        metadata
       },
       {
         timeout: 15000,
@@ -1223,88 +1210,79 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
       }
     );
 
-    const sessionId = checkoutSessionResponse.data.sessionId;
+    // Enhanced Validation of Payment Intent Response
+    const clientSecret = paymentIntentResponse.data?.clientSecret;
+    const paymentIntentId = paymentIntentResponse.data?.id;
 
-    if (!sessionId) {
-      throw new Error('Failed to create checkout session');
+    if (!clientSecret || typeof clientSecret !== 'string') {
+      console.error('Invalid client secret:', {
+        type: typeof clientSecret,
+        value: clientSecret,
+        fullResponse: paymentIntentResponse.data
+      });
+      throw new Error('Invalid or missing client secret from payment intent');
     }
 
+    // Load Stripe (ensure this is properly imported)
     const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
 
-    const { error } = await stripe.redirectToCheckout({
-      sessionId: sessionId
-    });
+    // Confirm Card Payment with explicit error handling
+    const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
+      clientSecret,  // Ensure this is passed correctly
+      {
+        payment_method: stripePaymentMethod
+      }
+    );
 
-    if (error) {
-      console.error('Checkout redirection error:', error);
-      throw error;
+    // Handle Confirmation Errors
+    if (confirmError) {
+      console.error('Confirmation Error:', confirmError);
+
+      // Detailed error handling
+      const errorMap = {
+        'card_declined': 'Your card was declined. Please try another card.',
+        'expired_card': 'Your card has expired. Please use a different card.',
+        'incorrect_cvc': 'The security code is incorrect. Please try again.',
+        'processing_error': 'An error occurred while processing your card. Please try again.',
+        'insufficient_funds': 'Insufficient funds. Please use a different card.'
+      };
+
+      const errorMessage = errorMap[confirmError.code] || 
+        confirmError.message || 
+        'Payment confirmation failed';
+
+      throw new Error(errorMessage);
     }
 
+    // Verify Payment Intent Status
+    if (!paymentIntent || paymentIntent.status !== 'succeeded') {
+      throw new Error(`Payment did not succeed. Status: ${paymentIntent?.status}`);
+    }
+
+    return {
+      success: true,
+      paymentIntentId: paymentIntent.id,
+      paymentMethod: paymentIntent.payment_method
+    };
+
   } catch (error) {
-    console.error('Checkout Session Error:', error);
+    // Comprehensive Error Logging
+    console.error('Payment Processing Error:', {
+      message: error.message,
+      name: error.name,
+      stack: error.stack,
+      responseData: error.response?.data
+    });
+
+    // Error Transformation
+    if (error.isAxiosError) {
+      throw new Error(error.response?.data?.details || 'Network error during payment');
+    }
+
     throw error;
   }
 };
 
-// Create a success page component (OrderSuccess.js)
-const OrderSuccess = () => {
-  const [isValidating, setIsValidating] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    const validatePayment = async () => {
-      try {
-        const queryParams = new URLSearchParams(window.location.search);
-        const sessionId = queryParams.get('session_id');
-
-        if (!sessionId) {
-          throw new Error('No session ID found');
-        }
-
-        const response = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment',
-          { sessionId }
-        );
-
-        if (response.data.success) {
-          setOrderSuccess(true);
-          // Additional success actions like clearing cart, showing success message, etc.
-        } else {
-          throw new Error(response.data.error || 'Payment validation failed');
-        }
-      } catch (error) {
-        console.error('Payment validation error:', error);
-        setError(error.message);
-      } finally {
-        setIsValidating(false);
-      }
-    };
-
-    validatePayment();
-  }, []);
-
-  if (isValidating) {
-    return <div>Validating your payment...</div>;
-  }
-
-  if (error) {
-    return (
-      <div>
-        <h2>Payment Error</h2>
-        <p>{error}</p>
-       
-      </div>
-    );
-  }
-
-  return (
-    <div>
-      <h2>Order Successful!</h2>
-      {/* Add order success content */}
-    </div>
-  );
-};
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
   let orderData = null;
   let orderNumber = null;
@@ -1724,11 +1702,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
       </div>
 
       {error && (
-        <div className="error-container" role="alert">
-          <div className="error-message">
-            {error}
-          </div>
-        </div>
+        <div className="text-red-500 text-sm">{error}</div>
       )}
 
       <button
@@ -1903,7 +1877,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 
     // Calculate shipping fee based on country 
     let shippingFee = 0;
-    const isOrderOverThreshold = subtotal < 50; // Base threshold value
+    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN') {
@@ -1921,12 +1895,12 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
-    ? (subtotal * 0.5)
+    ? (subtotal * 0.5).toFixed(2)
     : (discountCode.toUpperCase() === 'MCF99') 
-        ? ((subtotal + shippingFee) * 0.99)
+        ? ((subtotal + shippingFee) * 0.99).toFixed(2)
         : (discountCode.toUpperCase() === 'ABCC') 
-            ? (subtotal * 0.1) // 10% discount for "ABCC"
-            : 0;  // Calculate tax based on location, including shipping feee 
+            ? (subtotal * 0.1).toFixed(2) // 10% discount for "ABCC"
+            : 0;  // Calculate tax based on location, including shipping fee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN') { 
@@ -2281,7 +2255,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   {paymentMethod === 'credit' && (
   <Elements stripe={stripePromise}>
     <CheckoutForm
-      onSubmit={handlePayment}
+      onSubmit={handleOrderSuccess}
       processing={isProcessingOrder}
     />
   </Elements>
@@ -2296,7 +2270,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
-                  <PaymentForm onPaymentSuccess={handlePayment} />
+                  <PaymentForm onPaymentSuccess={handleOrderSuccess} />
                 </Elements>
               </div>
             )}
