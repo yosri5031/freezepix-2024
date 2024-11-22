@@ -1896,53 +1896,87 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     },
   };
   
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isProcessing || !stripe || !elements) {
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+  
+    // Validate input fields
+    if (!stripe || !elements) {
+      setError('Stripe has not loaded. Please try again.');
       return;
     }
   
-    setIsProcessing(true);
+    // Validate form data
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError('Please fill in all required contact information.');
+      return;
+    }
+  
+    if (!formData.shippingAddress || !formData.postalCode) {
+      setError('Please provide a complete shipping address and postal code.');
+      return;
+    }
+  
+    if (selectedPhotos.length === 0) {
+      setError('You must have at least one item in your order.');
+      return;
+    }
+  
+    // Prevent multiple submissions
+    if (isProcessing || isSubmitting) return;
+  
+    setIsSubmitting(true);
     setError(null);
   
     try {
+      // Safely get card elements
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      const cardExpiryElement = elements.getElement(CardExpiryElement);
+      const cardCvcElement = elements.getElement(CardCvcElement);
+  
+      // Validate individual card elements
+      if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+        setError('Card details are incomplete. Please check and try again.');
+        setIsSubmitting(false);
+        return;
+      }
+  
       // Create payment method
-      const { error: methodError, paymentMethod } = await stripe.createPaymentMethod({
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: elements.getElement(CardNumberElement),
+        card: cardNumberElement, // Use the entire element instead of breaking it down
         billing_details: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
           address: {
-            postal_code: postalCode,
-          },
-        },
+            line1: formData.shippingAddress,
+            country: selectedCountry,
+            postal_code: formData.postalCode
+          }
+        }
       });
   
-      if (methodError) {
-        throw new Error(methodError.message);
+      // Handle potential errors
+      if (error) {
+        setError(error.message);
+        setIsSubmitting(false);
+        return;
       }
   
-      // Process payment
-      const paymentResult = await handlePayment(
-        paymentMethod.id,
-        amount,
-        currency,
-        { orderNumber, customerEmail }
-      );
+      // Additional safeguard to prevent circular reference
+      const cleanPaymentMethod = {
+        id: paymentMethod.id,
+        type: paymentMethod.type,
+        billing_details: paymentMethod.billing_details
+      };
   
-      // Handle successful payment
-      if (paymentResult.success) {
-        await onSubmit(paymentResult.paymentMethod, postalCode);
-      }
-  
-    } catch (error) {
-      setError(error.message);
-      // Clear sensitive form fields on error
-      elements.getElement(CardNumberElement).clear();
-      elements.getElement(CardExpiryElement).clear();
-      elements.getElement(CardCvcElement).clear();
-    } finally {
-      setIsProcessing(false);
+      // Call the onSubmit handler with a clean payment method
+      await onSubmit(cleanPaymentMethod);
+      
+      setIsSubmitting(false);
+    } catch (err) {
+      setError(err.message || 'An unexpected error occurred');
+      setIsSubmitting(false);
     }
   };
   
