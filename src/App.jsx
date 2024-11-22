@@ -973,17 +973,86 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
-const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
+const CheckoutForm = ({ 
+  onSubmit, 
+  processing, 
+  total, 
+  currency,
+  formData,
+  selectedPhotos,
+  selectedCountry
+}) => {
   const stripe = useStripe();
   const elements = useElements();
-  const { t } = useTranslation();
   
-  const [cardError, setCardError] = useState('');
-  const [postalCode, setPostalCode] = useState('');
-  const [postalCodeError, setPostalCodeError] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [serverError, setServerError] = useState('');
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    // Validate input fields
+    if (!stripe || !elements) {
+      // Stripe.js has not yet loaded.
+      setError('Stripe has not loaded. Please try again.');
+      return;
+    }
+
+    // Validate form data
+    if (!formData.name || !formData.email || !formData.phone) {
+      setError('Please fill in all required contact information.');
+      return;
+    }
+
+    if (!formData.shippingAddress) {
+      setError('Please provide a shipping address.');
+      return;
+    }
+
+    if (selectedPhotos.length === 0) {
+      setError('You must have at least one item in your order.');
+      return;
+    }
+
+    // Prevent multiple submissions
+    if (processing || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Create payment method
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: elements.getElement(CardElement),
+        billing_details: {
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          address: {
+            line1: formData.shippingAddress,
+            country: selectedCountry
+          }
+        }
+      });
+
+      if (error) {
+        setError(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Call the onSubmit handler with the payment method
+      await onSubmit(paymentMethod);
+      
+      setIsSubmitting(false);
+    } catch (err) {
+      setError(err.message || 'An unexpected error occurred');
+      setIsSubmitting(false);
+    }
+  };
+
+  // Card element styling
   const cardElementOptions = {
     style: {
       base: {
@@ -992,205 +1061,82 @@ const CheckoutForm = ({ onSubmit, selectedCountry, isProcessing }) => {
         '::placeholder': {
           color: '#aab7c4',
         },
-        ':-webkit-autofill': {
-          color: '#424770',
-        },
       },
       invalid: {
         color: '#9e2146',
-        iconColor: '#9e2146',
       },
     },
     hidePostalCode: true,
   };
 
-  const validatePostalCode = (code, country) => {
-    if (!code) return false;
-    
-    if (country === 'USA') {
-      return /^\d{5}(-\d{4})?$/.test(code.trim());
-    } else if (country === 'CAN') {
-      return /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/.test(code.trim());
-    }
-    return true;
-  };
-
-  const handlePostalCodeChange = (e) => {
-    const value = e.target.value;
-    setPostalCode(value);
-    setPostalCodeError('');
-    
-    if (value && !validatePostalCode(value, selectedCountry)) {
-      setPostalCodeError(t('checkout.invalidPostalCode'));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (isProcessing || processing || !stripe || !elements) {
-      return;
-    }
-
-    setCardError('');
-    setPostalCodeError('');
-    setServerError('');
-    setProcessing(true);
-
-    if (!postalCode) {
-      setPostalCodeError(t('checkout.postalCodeRequired'));
-      setProcessing(false);
-      return;
-    }
-
-    if (!validatePostalCode(postalCode, selectedCountry)) {
-      setPostalCodeError(t('checkout.invalidPostalCode'));
-      setProcessing(false);
-      return;
-    }
-
-    try {
-      // Create payment method
-      const { error: cardValidationError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement(CardNumberElement),
-        billing_details: {
-          address: {
-            postal_code: postalCode,
-          },
-        },
-      });
-
-      if (cardValidationError) {
-        setCardError(cardValidationError.message);
-        setProcessing(false);
-        return;
-      }
-
-      // Create checkout session and process payment
-      try {
-        const result = await handlePayment(
-          paymentMethod.id,
-          onSubmit.amount,
-          onSubmit.currency,
-          {
-            orderItems: onSubmit.orderItems,
-            email: onSubmit.email,
-            shippingAddress: onSubmit.shippingAddress,
-            orderNumber: onSubmit.orderNumber,
-            shippingFee: onSubmit.shippingFee,
-            postalCode: postalCode
-          }
-        );
-
-        if (!result.success) {
-          throw new Error(t('checkout.paymentProcessingError'));
-        }
-
-      } catch (error) {
-        if (error.response?.status === 500) {
-          setServerError(t('checkout.serverError'));
-          elements.getElement(CardNumberElement).clear();
-          elements.getElement(CardExpiryElement).clear();
-          elements.getElement(CardCvcElement).clear();
-        } else if (error.name === 'AxiosError') {
-          setServerError(t('checkout.networkError'));
-        } else {
-          setCardError(error.message || t('checkout.paymentProcessingError'));
-        }
-      }
-    } catch (err) {
-      setCardError(t('checkout.paymentProcessingError'));
-    } finally {
-      setProcessing(false);
-    }
-  };
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-4 border rounded-lg bg-white shadow-sm">
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {t('checkout.cardNumber')}
-          </label>
-          <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-            <CardNumberElement options={cardElementOptions} />
-          </div>
+    <form 
+      onSubmit={handleSubmit} 
+      className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md"
+    >
+      <h2 className="text-2xl font-bold mb-4 text-center">
+        Checkout
+      </h2>
+
+      {/* Order Total Display */}
+      {total && (
+        <div className="mb-4 text-center font-semibold text-xl">
+          Total: {total.toFixed(2)} {currency}
         </div>
+      )}
 
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('checkout.expiryDate')}
-            </label>
-            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-              <CardExpiryElement options={cardElementOptions} />
-            </div>
-          </div>
+      {/* Customer Information */}
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Name on Card
+        </label>
+        <input
+          type="text"
+          value={formData.name}
+          placeholder="Full Name"
+          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+          required
+        />
+      </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              {t('checkout.cvc')}
-            </label>
-            <div className="p-3 border rounded-md bg-white focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-              <CardCvcElement options={cardElementOptions} />
-            </div>
-          </div>
-        </div>
+      {/* Card Details Input */}
+      <div className="mb-4">
+        <label className="block text-gray-700 text-sm font-bold mb-2">
+          Card Details
+        </label>
+        <CardElement options={cardElementOptions} />
+      </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {selectedCountry === 'USA' ? t('checkout.zipCode') : t('checkout.postalCode')}
-          </label>
-          <input
-            type="text"
-            value={postalCode}
-            onChange={handlePostalCodeChange}
-            className={`w-full p-3 border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              postalCodeError ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder={selectedCountry === 'USA' ? '12345' : 'A1A 1A1'}
-          />
-          {postalCodeError && (
-            <p className="mt-1 text-sm text-red-600">{postalCodeError}</p>
-          )}
-        </div>
-
-        {(cardError || serverError) && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-            {cardError && <p className="text-sm text-red-600">{cardError}</p>}
-            {serverError && (
-              <div className="flex items-center justify-between">
-                <p className="text-sm text-red-600">{serverError}</p>
-                <button 
-                  type="button"
-                  onClick={() => window.location.reload()}
-                  className="ml-2 text-blue-600 hover:text-blue-800 underline text-sm"
-                >
-                  {t('checkout.tryAgain')}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={!stripe || processing || isProcessing}
-          className={`w-full py-3 px-4 rounded-md text-white font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors
-            ${(processing || isProcessing) 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'}`}
+      {/* Error Display */}
+      {error && (
+        <div 
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
+          role="alert"
         >
-          {processing || isProcessing ? (
-            <div className="flex items-center justify-center">
-              <Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
-              {t('checkout.processing')}
-            </div>
-          ) : (
-            t('checkout.payNow')
-          )}
-        </button>
+          {error}
+        </div>
+      )}
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={!stripe || processing || isSubmitting}
+        className={`
+          w-full py-3 rounded-md text-white font-bold
+          ${(processing || isSubmitting) 
+            ? 'bg-gray-400 cursor-not-allowed' 
+            : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'}
+        `}
+      >
+        {processing || isSubmitting 
+          ? 'Processing...' 
+          : `Pay ${total ? `${total.toFixed(2)} ${currency}` : ''}`}
+      </button>
+
+      {/* Security Notice */}
+      <div className="text-center text-xs text-gray-500 mt-4">
+        <p>Secure payment processed by Stripe</p>
+        <p>Your card details are encrypted and protected</p>
       </div>
     </form>
   );
@@ -1305,6 +1251,251 @@ const OrderSuccess = () => {
     </div>
   );
 };
+// Handle Stripe payment if not COD
+const handleCheckout = async (paymentMethod) => {
+  let orderData = null;
+  let orderNumber = null;
+
+  try {
+    setIsProcessingOrder(true);
+    setOrderSuccess(false);
+    setError(null);
+    setUploadProgress(0);
+
+    // Generate order number
+    orderNumber = generateOrderNumber();
+    setCurrentOrderNumber(orderNumber);
+    
+    // Calculate order totals
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
+
+    // Process photos with improved batch processing and error handling
+    const processPhotosWithProgress = async () => {
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
+            ...photo,
+            price: photo.price || calculateItemPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+            if (progress % 20 === 0) {
+              saveStateWithCleanup({
+                orderNumber,
+                progress,
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error(t('errors.photoProcessingFailed'));
+      }
+    };
+
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
+    // Prepare checkout data
+    const checkoutData = {
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        id: photo.id,
+        quantity: photo.quantity,
+        size: photo.size,
+        price: photo.price,
+        productType: photo.productType
+      })),
+      customerDetails: {
+        name: formData.name,
+        email: formData.email,
+        country: selectedCountry
+      },
+      orderSummary: {
+        total,
+        currency: country.currency,
+        subtotal,
+        shippingFee,
+        taxAmount,
+        discount
+      },
+      paymentMethodId: paymentMethod.id  // Include Stripe payment method ID
+    };
+
+    // Create payment intent on backend
+    const paymentResponse = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/create-payment-intent', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(checkoutData)
+    });
+
+    const paymentResult = await paymentResponse.json();
+
+    // Confirm payment on client side
+    if (paymentResult.clientSecret) {
+      const confirmPayment = await stripe.confirmCardPayment(paymentResult.clientSecret, {
+        payment_method: paymentMethod.id
+      });
+
+      if (confirmPayment.error) {
+        throw confirmPayment.error;
+      }
+    }
+
+    // Construct order data
+    orderData = {
+      orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress: formData.shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
+        id: photo.id,
+        quantity: photo.quantity,
+        size: photo.size,
+        price: photo.price,
+        productType: photo.productType
+      })),
+      totalAmount: total,
+      subtotal,
+      shippingFee,
+      taxAmount,
+      discount,
+      currency: country.currency,
+      orderNote: orderNote || '',
+      paymentMethod: 'credit',
+      stripePaymentId: paymentMethod.id,
+      paymentStatus: 'paid',
+      customerDetails: {
+        name: formData.name,
+        country: selectedCountry
+      },
+      selectedCountry,
+      discountCode: discountCode || null,
+      createdAt: new Date().toISOString()
+    };
+
+    // Submit order with retry mechanism
+    const maxRetries = 3;
+    let retryCount = 0;
+    let responses;
+
+    while (retryCount < maxRetries) {
+      try {
+        responses = await submitOrderWithOptimizedChunking(orderData);
+        if (responses && responses.length > 0) {
+          break;
+        }
+        throw new Error('Empty response received');
+      } catch (submitError) {
+        retryCount++;
+        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+        
+        if (retryCount === maxRetries) {
+          throw new Error(t('errors.orderSubmissionFailed'));
+        }
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email
+    await sendOrderConfirmationEmail({
+      ...orderData,
+      orderItems: orderData.orderItems.map(item => ({
+        ...item,
+        file: undefined,
+        thumbnail: item.thumbnail
+      }))
+    });
+
+    setOrderSuccess(true);
+    console.log('Order created successfully:', {
+      orderNumber,
+      totalItems: orderData.orderItems.length,
+      responses
+    });
+
+    // Cleanup
+    clearStateChunks();
+    await saveStateWithCleanup({
+      orderNumber,
+      orderDate: new Date().toISOString(),
+      totalAmount: total,
+      currency: country.currency,
+      itemCount: orderData.orderItems.length,
+      customerEmail: formData.email
+    });
+    setSelectedPhotos([]);
+
+  } catch (error) {
+    console.error('Order Processing Error:', error);
+
+    let errorMessage = t('errors.genericError');
+    
+    if (error.response?.data?.details) {
+      errorMessage = error.response.data.details;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message
+        .replace('TypeError:', '')
+        .replace('Error:', '')
+        .trim();
+    }
+
+    setError(errorMessage);
+    setOrderSuccess(false);
+
+    if (typeof trackError === 'function') {
+      trackError({
+        error,
+        orderNumber,
+        context: 'handleCheckout',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Save error state for recovery
+    try {
+      await saveStateWithCleanup({
+        failedOrderNumber: orderNumber,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+        recoveryData: {
+          formData,
+          selectedPhotos: selectedPhotos?.map(photo => ({
+            id: photo.id,
+            thumbnail: photo.thumbnail,
+            price: photo.price,
+            quantity: photo.quantity,
+            size: photo.size
+          }))
+        }
+      });
+    } catch (storageError) {
+      console.warn('Failed to save error state:', storageError);
+    }
+
+    throw error;
+
+  } finally {
+    setIsProcessingOrder(false);
+    setUploadProgress(0);
+    
+    if (orderSuccess) {
+      clearStateStorage();
+    }
+  }
+};
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
   let orderData = null;
   let orderNumber = null;
@@ -1352,97 +1543,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Handle Stripe payment if not COD
-    if (selectedCountry !== 'TUN' && stripePaymentMethod) {
-      try {
-        // Create payment intent with enhanced error handling
-        const paymentResponse = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/create-payment-intent',
-          {
-            amount: total,
-            currency: country.currency.toLowerCase(),
-            payment_method: stripePaymentMethod,
-            payment_method_types: ['card'],
-            metadata: {
-              orderNumber: orderNumber,
-              customerEmail: formData.email
-            }
-          },
-          {
-            timeout: 15000, // 15 second timeout
-            retries: 3,     // Allow 3 retries
-            retryDelay: 1000 // Wait 1 second between retries
-          }
-        ).catch(error => {
-          console.error('Payment Intent Creation Error:', error);
-          
-          // Network or server errors
-          if (!error.response) {
-            throw new Error(t('payment.networkError'));
-          }
-          
-          // Handle specific HTTP status codes
-          switch (error.response.status) {
-            case 500:
-              throw new Error(t('payment.serverError'));
-            case 400:
-              throw new Error(error.response.data.error || t('payment.invalidRequest'));
-            case 401:
-              throw new Error(t('payment.authenticationError'));
-            case 403:
-              throw new Error(t('payment.permissionDenied'));
-            case 404:
-              throw new Error(t('payment.serviceUnavailable'));
-            default:
-              throw new Error(error.response.data.error || t('payment.genericError'));
-          }
-        });
-
-        paymentIntent = paymentResponse.data;
-
-        const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
-        const confirmPayment = await stripe.confirmCardPayment(paymentIntent.client_secret);
-
-        if (confirmPayment.error) {
-          let errorMessage = '';
-          switch (confirmPayment.error.code) {
-            case 'card_declined':
-              errorMessage = t('payment.cardDeclined');
-              break;
-            case 'expired_card':
-              errorMessage = t('payment.cardExpired');
-              break;
-            case 'incorrect_cvc':
-              errorMessage = t('payment.invalidCVC');
-              break;
-            case 'processing_error':
-              errorMessage = t('payment.processingError');
-              break;
-            case 'insufficient_funds':
-              errorMessage = t('payment.insufficientFunds');
-              break;
-            case 'incorrect_postal_code':
-              errorMessage = t('payment.incorrectPostalCode');
-              break;
-            case 'authentication_required':
-              errorMessage = t('payment.authenticationRequired');
-              break;
-            case 'rate_limit_exceeded':
-              errorMessage = t('payment.tooManyAttempts');
-              break;
-            default:
-              errorMessage = confirmPayment.error.message || t('payment.genericError');
-          }
-          throw new Error(errorMessage);
-        }
-
-        stripePaymentMethod = confirmPayment.paymentIntent.payment_method;
-      } catch (paymentError) {
-        console.error('Payment Processing Error:', paymentError);
-        throw new Error(paymentError.message || t('payment.genericError'));
-      }
-    }
-
+    
     // Construct order data
     orderData = {
       orderNumber,
@@ -2279,12 +2380,19 @@ const PaymentForm = ({ onPaymentSuccess }) => {
       
                   {/* Option de paiement par carte de crédit */}
                   {paymentMethod === 'credit' && (
-  <Elements stripe={stripePromise}>
-    <CheckoutForm
-      onSubmit={handlePayment}
-      processing={isProcessingOrder}
-    />
-  </Elements>
+ 
+    <Elements stripe={stripePromise}>
+      <CheckoutForm
+        onSubmit={handleCheckout}
+        processing={isProcessingOrder}
+        total={calculateTotals().total}
+        currency="USD"
+        formData={formData}
+        selectedPhotos={selectedPhotos}
+        selectedCountry={selectedCountry}
+      />
+    </Elements>
+
 )}
                 </div>
               </div>
@@ -2296,8 +2404,16 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
-                  <PaymentForm onPaymentSuccess={handlePayment} />
-                </Elements>
+      <CheckoutForm
+        onSubmit={handleCheckout}
+        processing={isProcessingOrder}
+        total={calculateTotals().total}
+        currency="USD"
+        formData={formData}
+        selectedPhotos={selectedPhotos}
+        selectedCountry={selectedCountry}
+      />
+    </Elements>
               </div>
             )}
           </div>
