@@ -2071,6 +2071,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
 };
 
   const renderStepContent = () => {
+    const currency_curr = selectedCountryData ? selectedCountryData.currency : 'USD'; // USD as fallback
     switch (activeStep) {
       case 0:
     return (
@@ -2387,7 +2388,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
         onSubmit={handleCheckout}
         processing={isProcessingOrder}
         total={calculateTotals().total}
-        currency="USD"
+        currency={currency_curr}
         formData={formData}
         selectedPhotos={selectedPhotos}
         selectedCountry={selectedCountry}
@@ -2409,7 +2410,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
         onSubmit={handleCheckout}
         processing={isProcessingOrder}
         total={calculateTotals().total}
-        currency="USD"
+        currency={currency_curr}
         formData={formData}
         selectedPhotos={selectedPhotos}
         selectedCountry={selectedCountry}
