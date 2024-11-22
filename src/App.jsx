@@ -1167,7 +1167,7 @@ const CheckoutForm = ({
         color: '#9e2146',
       },
     },
-    hidePostalCode: true,
+    hidePostalCode: false,
   };
 
   return (
