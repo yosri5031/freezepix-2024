@@ -1098,7 +1098,8 @@ const CheckoutForm = ({
       return;
     }
  
-    if (!formData.shippingAddress || !formData.billingAddress.postalCode) {
+    // Check for required address fields
+    if (!formData.address || !formData.billingAddress.postalCode) {
       setError('Please provide a complete shipping address and postal code.');
       return;
     }
@@ -1115,35 +1116,33 @@ const CheckoutForm = ({
     setError(null);
  
     try {
-      // Get individual card elements
       const cardNumberElement = elements.getElement(CardNumberElement);
       const cardExpiryElement = elements.getElement(CardExpiryElement);
       const cardCvcElement = elements.getElement(CardCvcElement);
  
-      // Create payment method with detailed card and billing information
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: cardNumberElement, // Pass the element directly, not individual properties
+        card: cardNumberElement,
         billing_details: {
-          name: formData.name,
+          name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
           email: formData.email,
           phone: formData.phone,
           address: {
-            line1: formData.shippingAddress,
-            country: selectedCountry,
+            line1: formData.billingAddress.address,
+            city: formData.billingAddress.city,
+            state: formData.billingAddress.province || formData.billingAddress.state,
+            country: formData.billingAddress.country,
             postal_code: formData.billingAddress.postalCode
           }
         }
       });
  
-      // Handle potential errors
       if (error) {
         setError(error.message);
         setIsSubmitting(false);
         return;
       }
  
-      // Call the onSubmit handler with the payment method
       await onSubmit(paymentMethod);
      
       setIsSubmitting(false);
@@ -1151,7 +1150,7 @@ const CheckoutForm = ({
       setError(err.message || 'An unexpected error occurred');
       setIsSubmitting(false);
     }
-  };
+};
 
   // Card element styling
   const cardElementOptions = {
