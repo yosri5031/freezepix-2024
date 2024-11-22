@@ -1099,8 +1099,8 @@ const CheckoutForm = ({
     }
  
     // Check for required address fields
-    if (!formData.address || !formData.billingAddress.postalCode) {
-      setError('Please provide a complete shipping address and postal code.');
+    if (!formData.billingAddress.postalCode) {
+      setError('Please provide a billing postal code.');
       return;
     }
  
