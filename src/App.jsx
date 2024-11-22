@@ -1104,7 +1104,7 @@ const CheckoutForm = ({
      // return;
     //}
   
-    if (!formData.shippingAddress || !formData.postalCode) {
+    if (!formData.shippingAddress || !formData.billingAddress.postalCode) {
       setError('Please provide a complete shipping address and postal code.');
       return;
     }
@@ -1141,7 +1141,7 @@ const CheckoutForm = ({
           address: {
             line1: formData.shippingAddress,
             country: selectedCountry,
-            postal_code: formData.postalCode  // Custom postal code input
+            postal_code: formData.billingAddress.postalCode // Custom postal code input
           }
         }
       });
