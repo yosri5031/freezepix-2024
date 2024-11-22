@@ -1089,37 +1089,43 @@ const CheckoutForm = ({
     }
   }, []);
 
+  const countryCodes = {
+    'CAN': 'CA',
+    'USA': 'US'
+    // Add more country code conversions as needed
+  };
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
- 
+  
     // Validate input fields
     if (!stripe || !elements) {
       setError('Stripe has not loaded. Please try again.');
       return;
     }
- 
+  
     // Check for required address fields
     if (!formData.billingAddress.postalCode) {
       setError('Please provide a billing postal code.');
       return;
     }
- 
+  
     if (selectedPhotos.length === 0) {
       setError('You must have at least one item in your order.');
       return;
     }
- 
+  
     // Prevent multiple submissions
     if (processing || isSubmitting) return;
- 
+  
     setIsSubmitting(true);
     setError(null);
- 
+  
     try {
       const cardNumberElement = elements.getElement(CardNumberElement);
       const cardExpiryElement = elements.getElement(CardExpiryElement);
       const cardCvcElement = elements.getElement(CardCvcElement);
- 
+  
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumberElement,
@@ -1131,26 +1137,26 @@ const CheckoutForm = ({
             line1: formData.billingAddress.address,
             city: formData.billingAddress.city,
             state: formData.billingAddress.province || formData.billingAddress.state,
-            country: formData.billingAddress.country,
+            country: countryCodes[formData.billingAddress.country] || formData.billingAddress.country, // Convert country code
             postal_code: formData.billingAddress.postalCode
           }
         }
       });
- 
+  
       if (error) {
         setError(error.message);
         setIsSubmitting(false);
         return;
       }
- 
+  
       await onSubmit(paymentMethod);
-     
+  
       setIsSubmitting(false);
     } catch (err) {
       setError(err.message || 'An unexpected error occurred');
       setIsSubmitting(false);
     }
-};
+  };
 
   // Card element styling
   const cardElementOptions = {
