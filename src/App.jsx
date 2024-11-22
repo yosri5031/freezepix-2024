@@ -1159,6 +1159,7 @@ const CheckoutForm = ({
       base: {
         fontSize: '16px',
         color: '#424770',
+        padding:'12px',
         '::placeholder': {
           color: '#aab7c4',
         },
