@@ -1903,7 +1903,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
       return;
     }
   
-    if (!formData.shippingAddress || !formData.postalCode) {
+    if (!formData.shippingAddress || !formData.billingAddress.postalCode) {
       setError('Please provide a complete shipping address and postal code.');
       return;
     }
@@ -1939,7 +1939,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
               address: {
                 line1: formData.shippingAddress,
                 country: selectedCountry,
-                postal_code: formData.postalCode
+                postal_code: formData.billingAddress.postalCode
               }
             }
           };
