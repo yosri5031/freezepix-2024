@@ -2338,7 +2338,6 @@ const countryCodeMap = {
                         checked={paymentMethod === 'credit'}
                         onChange={handlePaymentMethodChange}
                         className="mr-2"
-                        style="display:none"
                       />
                       {t('canada.credit')}
                     </label>
