@@ -1336,6 +1336,7 @@ const handleCheckout = async (paymentMethod) => {
 };
 // Stripe payment handler function
 const createStripeCheckoutSession = async (orderData) => {
+  console.log('Order Data:', orderData);
   const convertCountryCode = (address) => {
     if (!address) return address;
 
@@ -1449,12 +1450,12 @@ const handleOrderSuccess = async ({
 
   // Format shipping address for Stripe
   const shippingAddress = {
-    line1: formData.shippingAddress.address,
-    city: formData.shippingAddress.city,
-    state: formData.shippingAddress.state || formData.shippingAddress.province || '',
-    postal_code: formData.shippingAddress.postalCode,
-    country: selectedCountry,
-    name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
+    line1: formData.shippingAddress?.address || '',
+    city: formData.shippingAddress?.city || '',
+    state: formData.shippingAddress?.state || formData.shippingAddress?.province || '',
+    postal_code: formData.shippingAddress?.postalCode || '',
+    country: selectedCountry || '',
+    name: `${formData.shippingAddress?.firstName || ''} ${formData.shippingAddress?.lastName || ''}`,
     phone: formData.phone || ''
   };
 
@@ -1518,7 +1519,7 @@ const handleOrderSuccess = async ({
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress: formData.shippingAddress,
+      shippingAddress,
       billingAddress: isBillingAddressSameAsShipping
         ? formData.shippingAddress
         : formData.billingAddress,
