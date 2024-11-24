@@ -1690,13 +1690,10 @@ const handleOrderSuccess = async ({
           // If there's a discount, add it as a coupon
           ...(discount > 0 && {
             discounts: [{
-              coupon: {
-                amount_off: Math.round(discount * 100), // Convert discount to cents
-                currency: orderData.currency.toLowerCase(),
-                duration: 'once',
-                name: discountCode || 'Discount',
-                id: `DISCOUNT_${orderNumber}` // Generate unique ID for this discount
-              }
+              type: 'fixed_amount',
+              amount: Math.round(discount * 100),
+              currency: orderData.currency.toLowerCase(),
+              description: `Discount: ${discountCode}`,
             }]
           }),
         };
