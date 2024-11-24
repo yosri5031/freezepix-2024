@@ -1802,13 +1802,27 @@ const CheckoutButton = ({
   return (
     <button
       className={`checkout-button ${isLoading || isProcessing ? 'loading' : ''}`}
+      style={{
+        padding: '10px 20px',
+        backgroundColor: '#3498db',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '5px',
+        cursor: 'pointer',
+        fontSize: '16px',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        outline: 'none',
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        transition: 'background-color 0.3s',
+      }}
       onClick={handleClick}
       disabled={disabled || isLoading || isProcessing}
     >
       {isLoading || isProcessing ? 'Processing...' : 
-      (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'Place Order (COD)' : 'Go to Checkout'}
+      (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'Place Order (COD)' : 'Checkout'}
     </button>
-  );
+);
 };  
 
       const validateDiscountCode = (code) => {
@@ -2318,16 +2332,7 @@ const countryCodeMap = {
                   {/* Sélection du mode de paiement */}
                   <div className="mb-4">
                     <h4 className="font-medium">{t('canada.select')}</h4>
-                    <label className="block">
-                      <input
-                        type="radio"
-                        value="interac"
-                        checked={paymentMethod === 'interac'}
-                        onChange={handlePaymentMethodChange}
-                        className="mr-2"
-                      />
-                      {t('canada.interac')}
-                    </label>
+                    
                     <label className="block">
                       <input
                         type="radio"
