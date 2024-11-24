@@ -1463,6 +1463,28 @@ const handleOrderSuccess = async ({
       !formData?.shippingAddress?.postalCode) {
     throw new Error('Missing required shipping information');
   }
+  const getStripeCountryCode = (countryCode) => {
+    const countryMappings = {
+      'USA': 'US',
+  'CAN': 'CA',
+  'TUN': 'TN', 
+  'DEU': 'DE',
+  'FRA': 'FR',
+  'ITA': 'IT',
+  'GBR': 'GB',
+  'ESP': 'ES',
+  'United States': 'US',
+  'Canada': 'CA',
+  'Tunisia': 'TN',
+  'Germany': 'DE',
+  'France': 'FR',
+  'Italy': 'IT',
+  'Spain': 'ES',
+  'United Kingdom': 'GB'
+      // Add other mappings as needed
+    };
+    return countryMappings[countryCode] || countryCode;
+  };
 
   // Format shipping address for Stripe
   const shippingAddress = {
@@ -1470,7 +1492,7 @@ const handleOrderSuccess = async ({
     city: formData.shippingAddress?.city || '',
     state: formData.shippingAddress?.state || formData.shippingAddress?.province || '',
     postal_code: formData.shippingAddress?.postalCode || '',
-    country: selectedCountry || '',
+    country: getStripeCountryCode(selectedCountry) || '',
     name: `${formData.shippingAddress?.firstName || ''} ${formData.shippingAddress?.lastName || ''}`,
     phone: formData.phone || ''
   };
@@ -1483,7 +1505,7 @@ const handleOrderSuccess = async ({
         city: formData.billingAddress.city,
         state: formData.billingAddress.state || formData.billingAddress.province || '',
         postal_code: formData.billingAddress.postalCode,
-        country: formData.billingAddress.country || selectedCountry,
+        country: getStripeCountryCode(formData.billingAddress.country || selectedCountry),
         name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
         phone: formData.phone || ''
       };
@@ -1536,9 +1558,7 @@ const handleOrderSuccess = async ({
       email: formData.email,
       phone: formData.phone,
       shippingAddress,
-      billingAddress: isBillingAddressSameAsShipping
-        ? formData.shippingAddress
-        : formData.billingAddress,
+      billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
