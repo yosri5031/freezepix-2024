@@ -978,153 +978,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
   return results;
 };
 
-const CheckoutForm = ({ 
-  orderItems, 
-  shippingFee, 
-  taxAmount, 
-  currency, 
-  customerEmail,
-  orderNumber,
-  customerName,
-  shippingAddress,
-  isProcessing,
-  onError 
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
 
-  const convertCountryCode = (address) => {
-    if (!address) return address;
-
-    const countryCodeMap = {
-      'USA': 'US',
-      'CAN': 'CA',
-      'TUN': 'TN',
-      'DEU': 'DE',
-      'FRA': 'FR',
-      'ITA': 'IT',
-      'GBR': 'GB',
-      'ESP': 'ES',
-      'United States': 'US',
-      'Canada': 'CA',
-      'Tunisia': 'TN',
-      'Germany': 'DE',
-      'France': 'FR',
-      'Italy': 'IT',
-      'Spain': 'ES',
-      'United Kingdom': 'GB'
-      // Add more mappings if needed
-    };
-
-    return {
-      ...address,
-      country: countryCodeMap[address.country] || address.country
-    };
-  };
-
-  const handleCheckout = async () => {
-    try {
-      setIsLoading(true);
-      const convertedShippingAddress = convertCountryCode(shippingAddress);
-
-      // Create checkout session
-      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          orderItems,
-          shippingFee,
-          taxAmount,
-          currency,
-          customerEmail,
-          orderNumber,
-          customerName,
-          shippingAddress: convertedShippingAddress
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details || 'Failed to create checkout session');
-      }
-
-      const { url } = await response.json();
-
-      // Redirect to Stripe Checkout
-      window.location.href = url;
-    } catch (error) {
-      console.error('Checkout error:', error);
-      onError?.(error.message || 'Payment processing failed');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Calculate total amount
-  const total = orderItems.reduce((sum, item) => 
-    sum + (item.price * item.quantity), 0) + shippingFee + taxAmount;
-
-  return (
-    <div className="w-full max-w-md mx-auto p-4">
-      {/* Order Summary */}
-      <div className="mb-6 bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
-        {orderItems.map((item, index) => (
-          <div key={index} className="flex justify-between mb-2">
-            <span>{item.productType} - {item.size} (x{item.quantity})</span>
-            <span>{(item.price * item.quantity).toFixed(2)} {currency}</span>
-          </div>
-        ))}
-        <div className="border-t mt-2 pt-2">
-          <div className="flex justify-between mb-1">
-            <span>Shipping</span>
-            <span>{shippingFee.toFixed(2)} {currency}</span>
-          </div>
-          <div className="flex justify-between mb-1">
-            <span>Tax</span>
-            <span>{taxAmount.toFixed(2)} {currency}</span>
-          </div>
-          <div className="flex justify-between font-semibold mt-2 pt-2 border-t">
-            <span>Total</span>
-            <span>{total.toFixed(2)} {currency}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Checkout Button */}
-      <button
-        onClick={handleCheckout}
-        disabled={isLoading || isProcessing}
-        className={`w-full bg-blue-600 text-white py-3 px-4 rounded-lg
-          ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}
-          transition duration-200 ease-in-out`}
-      >
-        {isLoading ? (
-          <span className="flex items-center justify-center">
-            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Processing...
-          </span>
-        ) : (
-          `Pay ${total.toFixed(2)} ${currency}`
-        )}
-      </button>
-
-      {/* Secure Payment Notice */}
-      <div className="mt-4 text-center text-sm text-gray-600">
-        <div className="flex items-center justify-center mb-2">
-          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-          </svg>
-          Secure payment powered by Stripe
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const handlePayment = async (stripePaymentMethod, amount, currency, metadata) => {
   try {
@@ -1655,6 +1509,7 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       createdAt: new Date().toISOString()
     };
 
+    
     if (paymentMethod === 'credit') {
       try {
         checkoutSession = await createStripeCheckoutSession(orderData);
@@ -1812,7 +1667,30 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     }
   }
 };
-   
+const CheckoutButton = ({ onCheckout, isProcessing, disabled }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleClick = async () => {
+    try {
+      setIsLoading(true);
+      await onCheckout({ paymentMethod: 'credit' });
+    } catch (error) {
+      console.error('Checkout error:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <button
+      className={`checkout-button ${isLoading || isProcessing ? 'loading' : ''}`}
+      onClick={handleClick}
+      disabled={disabled || isLoading || isProcessing}
+    >
+      {isLoading || isProcessing ? 'Processing...' : 'Go to Checkout'}
+    </button>
+  );
+};  
 
       const validateDiscountCode = (code) => {
         const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
@@ -2346,18 +2224,10 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                   {paymentMethod === 'credit' && (
  
     <Elements stripe={stripePromise}>
-     <CheckoutForm 
-  orderItems={orderItems}
-  shippingFee={shippingFee}
-  taxAmount={taxAmount}
-  currency={currency}
-  customerEmail={customerEmail}
-  orderNumber={orderNumber}
-  customerName={customerName}
-  shippingAddress={shippingAddress}
-  isProcessing={isProcessing}
-  onError={(error) => setError(error)}
-/>
+     <CheckoutButton 
+        onCheckout={handleOrderSuccess}
+        isProcessing={isProcessingOrder}
+      />
     </Elements>
 
 )}
@@ -2371,15 +2241,10 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
-                <CheckoutForm
-  onSubmit={handleCheckout}
-  processing={isProcessingOrder}
-  total={calculateTotals().total}
-  currency={initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD'} // Use the currency from the selected country
-  formData={formData}
-  selectedPhotos={selectedPhotos}
-  selectedCountry={selectedCountry}
-/>
+                <CheckoutButton 
+        onCheckout={handleOrderSuccess}
+        isProcessing={isProcessingOrder}
+      />
     </Elements>
               </div>
             )}
