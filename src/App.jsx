@@ -992,9 +992,39 @@ const CheckoutForm = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
+  const convertCountryCode = (address) => {
+    if (!address) return address;
+
+    const countryCodeMap = {
+      'USA': 'US',
+      'CAN': 'CA',
+      'TUN': 'TN',
+      'DEU': 'DE',
+      'FRA': 'FR',
+      'ITA': 'IT',
+      'GBR': 'GB',
+      'ESP': 'ES',
+      'United States': 'US',
+      'Canada': 'CA',
+      'Tunisia': 'TN',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Italy': 'IT',
+      'Spain': 'ES',
+      'United Kingdom': 'GB'
+      // Add more mappings if needed
+    };
+
+    return {
+      ...address,
+      country: countryCodeMap[address.country] || address.country
+    };
+  };
+
   const handleCheckout = async () => {
     try {
       setIsLoading(true);
+      const convertedShippingAddress = convertCountryCode(shippingAddress);
 
       // Create checkout session
       const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
@@ -1010,7 +1040,7 @@ const CheckoutForm = ({
           customerEmail,
           orderNumber,
           customerName,
-          shippingAddress
+          shippingAddress: convertedShippingAddress
         }),
       });
 
@@ -1452,6 +1482,39 @@ const handleCheckout = async (paymentMethod) => {
 };
 // Stripe payment handler function
 const createStripeCheckoutSession = async (orderData) => {
+  const convertCountryCode = (address) => {
+    if (!address) return address;
+
+    const countryCodeMap = {
+      'USA': 'US',
+      'CAN': 'CA',
+      'TUN': 'TN',
+      'DEU': 'DE',
+      'FRA': 'FR',
+      'ITA': 'IT',
+      'GBR': 'GB',
+      'ESP': 'ES',
+      'United States': 'US',
+      'Canada': 'CA',
+      'Tunisia': 'TN',
+      'Germany': 'DE',
+      'France': 'FR',
+      'Italy': 'IT',
+      'Spain': 'ES',
+      'United Kingdom': 'GB'
+      // Add more mappings if needed
+    };
+
+    return {
+      ...address,
+      country: countryCodeMap[address.country] || address.country
+    };
+  };
+  const shippingAddressWithCorrectCode = {
+    ...shippingAddress,
+    country: convertCountryCode(shippingAddress.country)
+  };
+
   try {
     const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
       method: 'POST',
@@ -1485,7 +1548,7 @@ const createStripeCheckoutSession = async (orderData) => {
         metadata: {
           orderNumber: orderData.orderNumber,
           customerName: orderData.customerDetails.name,
-          shippingAddress: JSON.stringify(orderData.shippingAddress),
+          shippingAddress: JSON.stringify(shippingAddressWithCorrectCode),
         },
         success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${window.location.origin}/cart`,
