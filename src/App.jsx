@@ -408,7 +408,7 @@ const closeProductDetails = () => {
     ];
 
     // Add 8x10" size after 5x7" only for USA and Canada
-    if (country === 'USA' || country === 'CAN') {
+    if (country === 'USA' || country === 'CAN' || country === 'US' || country ==='CA' ) {
       products.splice(2, 0, {
         category: 'Photo Prints',
         product: '8x10 Size',
@@ -434,7 +434,7 @@ const closeProductDetails = () => {
     );
 
     // Only add 3D Frame if the country is not Tunisia
-    if (country !== 'TUN') {
+    if (country !== 'TN') {
       products.push({
         category: '3D Frame',
         product: 'Rectangle',
