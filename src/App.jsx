@@ -1617,7 +1617,7 @@ const handleOrderSuccess = async ({
         }
       } catch (stripeError) {
         console.error('Stripe checkout error:', stripeError);
-        throw new Error(t('errors.paymentProcessingFailed'));
+        //throw new Error(t('errors.paymentProcessingFailed'));
       }
     }
 
