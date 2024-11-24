@@ -1595,7 +1595,8 @@ const handleOrderSuccess = async ({
     
     if (paymentMethod === 'credit') {
       try {
-        checkoutSession = await createStripeCheckoutSession(orderData);
+        // Declare the variable before assigning to it
+        const checkoutSession = await createStripeCheckoutSession(orderData);
         
         if (checkoutSession.url) {
           // Redirect to Stripe Checkout
