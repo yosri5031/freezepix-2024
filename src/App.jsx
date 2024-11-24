@@ -1437,6 +1437,40 @@ const handleOrderSuccess = async ({
   let paymentIntent = null;
 
   try {
+    // Validate required fields first
+    if (!formData?.email || 
+      !formData?.shippingAddress?.firstName ||
+      !formData?.shippingAddress?.lastName ||
+      !formData?.shippingAddress?.address ||
+      !formData?.shippingAddress?.city ||
+      !formData?.shippingAddress?.postalCode) {
+    throw new Error('Missing required shipping information');
+  }
+
+  // Format shipping address for Stripe
+  const shippingAddress = {
+    line1: formData.shippingAddress.address,
+    city: formData.shippingAddress.city,
+    state: formData.shippingAddress.state || formData.shippingAddress.province || '',
+    postal_code: formData.shippingAddress.postalCode,
+    country: selectedCountry,
+    name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
+    phone: formData.phone || ''
+  };
+
+  // Format billing address
+  const billingAddress = isBillingAddressSameAsShipping 
+    ? shippingAddress
+    : {
+        line1: formData.billingAddress.address,
+        city: formData.billingAddress.city,
+        state: formData.billingAddress.state || formData.billingAddress.province || '',
+        postal_code: formData.billingAddress.postalCode,
+        country: formData.billingAddress.country || selectedCountry,
+        name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
+        phone: formData.phone || ''
+      };
+
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
@@ -1680,42 +1714,26 @@ const CheckoutButton = ({
   onCheckout, 
   isProcessing, 
   disabled,
-  formData, // Add form data prop
+  formData,
   selectedCountry,
   selectedPhotos,
   orderNote,
   discountCode,
-  isBillingAddressSameAsShipping,
-  //validateForm // Add form validation function prop
+  isBillingAddressSameAsShipping
 }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
     try {
-      // Validate form data first
-      if (!formData?.email || !formData?.shippingAddress) {
+      if (!formData?.email || !formData?.shippingAddress?.address) {
         throw new Error('Please fill in all required fields');
-      }
-
-      // Validate photos
-      if (!selectedPhotos?.length) {
-        throw new Error('Please select at least one photo');
       }
 
       setIsLoading(true);
       
-      // Pass all required data to the checkout handler
       await onCheckout({
-        paymentMethod: 'credit',
-        formData: {
-          email: formData.email,
-          phone: formData.phone,
-          name: formData.name,
-          shippingAddress: formData.shippingAddress,
-          billingAddress: isBillingAddressSameAsShipping 
-            ? formData.shippingAddress 
-            : formData.billingAddress,
-        },
+        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+        formData,
         selectedCountry,
         selectedPhotos,
         orderNote,
@@ -1724,7 +1742,6 @@ const CheckoutButton = ({
       });
     } catch (error) {
       console.error('Checkout error:', error);
-      // You might want to show this error to the user
       alert(error.message);
     } finally {
       setIsLoading(false);
@@ -1737,7 +1754,8 @@ const CheckoutButton = ({
       onClick={handleClick}
       disabled={disabled || isLoading || isProcessing}
     >
-      {isLoading || isProcessing ? 'Processing...' : 'Go to Checkout'}
+      {isLoading || isProcessing ? 'Processing...' : 
+       selectedCountry === 'TUN' ? 'Place Order (COD)' : 'Go to Checkout'}
     </button>
   );
 };  
