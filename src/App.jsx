@@ -1676,7 +1676,7 @@ const handleOrderSuccess = async ({
     // Handle payment methods
     if (paymentMethod === 'credit') {
       try {
-        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+        const stripe = await loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
         const checkoutSession = await createStripeCheckoutSession(orderData);
 
         if (!checkoutSession?.url || !checkoutSession?.id) {
