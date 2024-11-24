@@ -37,7 +37,7 @@ const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2K
 
 const initialCountries = [
   {name: 'United States', 
-    value: 'USA', 
+    value: 'US', 
     currency: 'USD', 
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
@@ -47,7 +47,7 @@ const initialCountries = [
     keychain: 9.99, 
     keyring_magnet: 9.99 },
   { name: 'Canada', 
-    value: 'CAN', 
+    value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
@@ -56,12 +56,12 @@ const initialCountries = [
     crystal3d: 140, 
     keychain: 9.99, 
     keyring_magnet: 9.99  },
-  { name: 'Tunisia', value: 'TUN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
-  { name: 'Germany', value: 'DEU', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'France', value: 'FRA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'Italy', value: 'ITA', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'Spain', value: 'ESP', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'United Kingdom', value: 'GBR', currency: 'GBP', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 }
+  { name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
+  { name: 'Germany', value: 'DE', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'France', value: 'FR', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Italy', value: 'IT', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'Spain', value: 'ES', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
+  { name: 'United Kingdom', value: 'GB', currency: 'GBP', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 }
 ];
 
 const TAX_RATES = {
@@ -1492,7 +1492,7 @@ const handleOrderSuccess = async ({
     city: formData.shippingAddress?.city || '',
     state: formData.shippingAddress?.state || formData.shippingAddress?.province || '',
     postal_code: formData.shippingAddress?.postalCode || '',
-    country: getStripeCountryCode(selectedCountry) || '',
+    country: selectedCountry || '',
     name: `${formData.shippingAddress?.firstName || ''} ${formData.shippingAddress?.lastName || ''}`,
     phone: formData.phone || ''
   };
@@ -1505,7 +1505,7 @@ const handleOrderSuccess = async ({
         city: formData.billingAddress.city,
         state: formData.billingAddress.state || formData.billingAddress.province || '',
         postal_code: formData.billingAddress.postalCode,
-        country: getStripeCountryCode(formData.billingAddress.country || selectedCountry),
+        country: formData.billingAddress.country || selectedCountry,
         name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
         phone: formData.phone || ''
       };
@@ -1558,7 +1558,9 @@ const handleOrderSuccess = async ({
       email: formData.email,
       phone: formData.phone,
       shippingAddress,
-      billingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
