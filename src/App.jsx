@@ -269,7 +269,7 @@ const [interacReference, setInteracReference] = useState('');
         address: '',
         city: '',
         postalCode: '',
-        country: '',
+        country: selectedCountry, // Initialize with selectedCountry
         province: '',
         state: ''
       },
@@ -279,13 +279,28 @@ const [interacReference, setInteracReference] = useState('');
         address: '',
         city: '',
         postalCode: '',
-        country: '',
+        country: selectedCountry, // Initialize with selectedCountry
         province: '',
         state: ''
       },
       paymentMethod: 'cod'
     });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
+
+      useEffect(() => {
+        setFormData(prev => ({
+          ...prev,
+          shippingAddress: {
+            ...prev.shippingAddress,
+            country: selectedCountry
+          },
+          billingAddress: {
+            ...prev.billingAddress,
+            country: selectedCountry
+          }
+        }));
+      }, [selectedCountry]);
+      
       const updateFormData = (field, value) => {
         setFormData(prev => ({
           ...prev,
