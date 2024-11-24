@@ -2327,11 +2327,9 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
                   
                   {/* Sélection du mode de paiement */}
                   <div className="mb-4">
-                    <h4 className="font-medium">{t('canada.select')}</h4>
                     
                     <label className="block">
                       <input
