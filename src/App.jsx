@@ -1658,7 +1658,47 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
-        checkoutSession = await createStripeCheckoutSession(orderData);
+
+        const stripeOrderData = {
+          ...orderData,
+          // If there's a discount, create a coupon line item
+          lineItems: [
+            // Regular items
+            ...orderData.orderItems.map(item => ({
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: `Photo Print - ${item.size}`,
+                  
+                },
+                unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
+              },
+              quantity: item.quantity,
+            })),
+            // Shipping fee as separate line item if applicable
+            ...(shippingFee > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Shipping Fee',
+                },
+                unit_amount: Math.round(shippingFee * 100),
+              },
+              quantity: 1,
+            }] : []),
+          ],
+          // If there's a discount, add it as a coupon
+          ...(discount > 0 && {
+            discounts: [{
+              type: 'fixed_amount',
+              amount: Math.round(discount * 100),
+              currency: orderData.currency.toLowerCase(),
+              description: `Discount: ${discountCode}`,
+            }]
+          }),
+        };
+
+        checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
         if (!checkoutSession?.url) {
           throw new Error('Invalid checkout session response: Missing URL');
