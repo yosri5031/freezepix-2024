@@ -692,7 +692,7 @@ useEffect(() => {
                 state: '',
                 province: ''
             },
-            paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit'
+            paymentMethod : (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'credit'
         }));
     }
 }, [selectedCountry]);
@@ -1541,10 +1541,10 @@ const handleOrderSuccess = async ({
       discount,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: selectedCountry === 'TUN' ? 'cod' : paymentMethod === 'interac' ? 'interac' : 'credit',
+      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'credit'),
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
-      paymentStatus: selectedCountry === 'TUN' ? 'pending' : 'paid',
+      paymentStatus: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'pending' : 'paid',
       customerDetails: {
         name: formData.name,
         country: selectedCountry
@@ -1734,7 +1734,7 @@ const CheckoutButton = ({
       setIsLoading(true);
       
       await onCheckout({
-        paymentMethod: selectedCountry === 'TUN' ? 'cod' : 'credit',
+        paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'credit',
         formData,
         selectedCountry,
         selectedPhotos,
@@ -1757,7 +1757,7 @@ const CheckoutButton = ({
       disabled={disabled || isLoading || isProcessing}
     >
       {isLoading || isProcessing ? 'Processing...' : 
-       selectedCountry === 'TUN' ? 'Place Order (COD)' : 'Go to Checkout'}
+      (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'Place Order (COD)' : 'Go to Checkout'}
     </button>
   );
 };  
@@ -1806,7 +1806,7 @@ const CheckoutButton = ({
       
         try {
           if (activeStep === 2) {
-            if (selectedCountry === 'TUN' || paymentMethod === 'interac') {
+            if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
               setIsLoading(true);
               await handleOrderSuccess();
             } else {
@@ -1831,7 +1831,7 @@ const CheckoutButton = ({
           file,
           preview: URL.createObjectURL(file),
           productType: 'photo_print',
-          size: selectedCountry === 'TUN' ? '10x15' : '4x6',
+          size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
           crystalShape: null,
           quantity: 1
         }));
@@ -1843,7 +1843,7 @@ const CheckoutButton = ({
       photo.id === photoId ? {
         ...photo,
         productType: newType,
-        size: newType === 'photo_print' ? (selectedCountry === 'TUN' ? '10x15' : '4x6') : null,
+        size: newType === 'photo_print' ? ((selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6') : null,
         crystalShape: newType === '3d_crystal' ? 'rectangle' : null
       } : photo
     ));
@@ -1883,7 +1883,7 @@ const CheckoutButton = ({
     selectedPhotos.forEach(photo => {
       if (photo.productType === 'photo_print') {
           quantities[photo.size] += photo.quantity || 1;
-          if (selectedCountry === 'TUN') {
+          if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
               if (photo.size === '10x15') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
               } else if (photo.size === '15x22') {
@@ -1894,7 +1894,7 @@ const CheckoutButton = ({
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
               } else if (photo.size === '5x7') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-              } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN') && photo.size === '8x10') {
+              } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '8x10') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
               }
           }
@@ -1918,15 +1918,15 @@ const CheckoutButton = ({
     const isOrderOverThreshold = subtotal >= 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN') {
+        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
             shippingFee = 8; // 8 TND for Tunisia
-        } else if (selectedCountry === 'USA') {
+        } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
             shippingFee = 9; // 9$ for USA
-        } else if (selectedCountry === 'CAN') {
+        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
             shippingFee = 9; // 9$ for Canada
-        } else if (selectedCountry === 'GBR') {
+        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
             shippingFee = 9; // 9£ for United Kingdom
-        } else if (['DEU', 'FRA', 'ITA', 'ESP'].includes(selectedCountry)) {
+        } else if (['DEU', 'FRA', 'ITA', 'ESP','DE','FR','IT','ES'].includes(selectedCountry)) {
             shippingFee = 9; // 9€ for European countries
         }
     }
@@ -1941,9 +1941,9 @@ const CheckoutButton = ({
             : 0;  // Calculate tax based on location, including shipping feee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
-    if (selectedCountry === 'TUN') { 
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
-    } else if (selectedCountry === 'CAN') { 
+    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') { 
         const province = formData.shippingAddress.province; 
         const provinceTaxes = TAX_RATES['CA'][province]; 
 
@@ -1982,6 +1982,24 @@ const CheckoutButton = ({
 
   const renderStepContent = () => {
     const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
+const countryCodeMap = {
+  'USA': 'US',
+  'CAN': 'CA',
+  'TUN': 'TN', 
+  'DEU': 'DE',
+  'FRA': 'FR',
+  'ITA': 'IT',
+  'GBR': 'GB',
+  'ESP': 'ES',
+  'United States': 'US',
+  'Canada': 'CA',
+  'Tunisia': 'TN',
+  'Germany': 'DE',
+  'France': 'FR',
+  'Italy': 'IT',
+  'Spain': 'ES',
+  'United Kingdom': 'GB'
+};
     switch (activeStep) {
       case 0:
     return (
@@ -2021,7 +2039,7 @@ const CheckoutButton = ({
                         </button>
                         <div className="mt-2 space-y-2">
                             {/* Product Type Selection for US/Canada */}
-                            {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR'].includes(selectedCountry)) && (
+                            {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR','US','CA','DE','FR','IT','ES','GB'].includes(selectedCountry)) && (
                                 <select
                                     value={photo.productType}
                                     onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -2035,7 +2053,7 @@ const CheckoutButton = ({
                             )}
 
                             {/* Product Type Selection for Tunisia */}
-                            {selectedCountry === 'TUN' && (
+                            {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         {t('produits.product')}
@@ -2063,12 +2081,12 @@ const CheckoutButton = ({
     onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
     className="w-full p-1 border rounded"
 >
-    {selectedCountry === 'TUN' ? (
+    {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
         <>
             <option value="10x15">10x15 cm</option>
             <option value="15x22">15x22 cm</option>
         </>
-    ) : selectedCountry === 'USA' || selectedCountry === 'CAN' ? (
+    ) : selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'US' || selectedCountry === 'CA' ? (
         <>
             <option value="4x6">4x6"</option>
             <option value="5x7">5x7"</option>
@@ -2173,17 +2191,23 @@ const CheckoutButton = ({
           <div className="space-y-4">
             <h2 className="text-xl font-medium"> {t('form.shipping_a')}</h2>
             <AddressForm
-              type="shipping"
-              data={{
-                ...formData.shippingAddress,
-                country: selectedCountry // Ensure country is passed
-              }}
-              onChange={(newAddress) => setFormData(prevData => ({
-                ...prevData,
-                shippingAddress: newAddress,
-                billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
-              }))}
-            />
+    type="shipping"
+    data={{
+      ...formData.shippingAddress,
+      country: countryCodeMap[selectedCountry] || selectedCountry // Map the country code or use original if not found
+    }}
+    onChange={(newAddress) => setFormData(prevData => ({
+      ...prevData,
+      shippingAddress: {
+        ...newAddress,
+        country: countryCodeMap[newAddress.country] || newAddress.country // Map the country code in the onChange handler
+      },
+      billingAddress: isBillingAddressSameAsShipping ? {
+        ...newAddress,
+        country: countryCodeMap[newAddress.country] || newAddress.country
+      } : prevData.billingAddress
+    }))}
+  />
           </div>
 
           {formData.paymentMethod !== 'cod' && (
@@ -2209,7 +2233,7 @@ const CheckoutButton = ({
                     type="billing"
                     data={{
                       ...formData.billingAddress,
-                      country: selectedCountry // Ensure country is passed
+                      country: countryCodeMap[selectedCountry] || selectedCountry 
                     }}
                     onChange={(newAddress) => setFormData(prevData => ({
                       ...prevData,
@@ -2229,7 +2253,7 @@ const CheckoutButton = ({
             <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
             {renderInvoice()}
       
-            {selectedCountry === 'TUN' ? (
+            {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-center text-gray-600">
@@ -2237,7 +2261,7 @@ const CheckoutButton = ({
                   </p>
                 </div>
               </div>
-            ) : selectedCountry === 'CAN' ? (
+            ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
@@ -2403,7 +2427,7 @@ const CheckoutButton = ({
   <h3 className="font-medium mb-3">{t('order.summary')}</h3>
   
   {/* Photo Prints */}
-  {selectedCountry === 'TUN' ? (
+  {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
     <>
       {quantities['10x15'] > 0 && (
         <div className="flex justify-between py-2">
@@ -2432,7 +2456,7 @@ const CheckoutButton = ({
           <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
-      {(selectedCountry === 'USA' || selectedCountry === 'CAN') && quantities['8x10'] > 0 && (
+      {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['8x10'] > 0 && (
         <div className="flex justify-between py-2">
           <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
@@ -2471,9 +2495,9 @@ const CheckoutButton = ({
     let taxAmount = 0;
     const taxableAmount = subtotal + shippingFee; // Define taxable amount once
     
-    if (selectedCountry === 'TUN') {
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         taxAmount = taxableAmount * 0.19;
-    } else if (selectedCountry === 'CAN' && formData.shippingAddress.province) {
+    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province) {
         const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
         if (provinceTaxes) {
             if (provinceTaxes.HST) {
@@ -2504,7 +2528,7 @@ const CheckoutButton = ({
         </div>
 
         {/* Tax for Tunisia */}
-        {selectedCountry === 'TUN' && (
+        {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
@@ -2512,7 +2536,7 @@ const CheckoutButton = ({
         )}
 
         {/* Tax for Canada */}
-        {selectedCountry === 'CAN' && formData.shippingAddress.province && (
+        {selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
               <span>Tax</span>
@@ -2652,15 +2676,15 @@ const validateStep = () => {
       );
 
       // State/Province validation based on country
-      const stateValid = 
-        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
-        (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
+      const stateValid =
+      (selectedCountry !== 'USA' && selectedCountry !== 'US' && selectedCountry !== 'CAN' && selectedCountry !== 'CA') || // Other countries don't need state or province
+      ((selectedCountry === 'USA' || selectedCountry === 'US') && shippingAddress.state) ||    // US needs state
+      ((selectedCountry === 'CAN' || selectedCountry === 'CA') && shippingAddress.province);    // Canada needs province
 
       return basicFieldsValid && stateValid;
 
     case 2: // Payment step (if applicable)
-      if (selectedCountry === 'TUN') {
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         return true; // COD doesn't need additional validation
       }
       // Add any specific payment validation here if needed
@@ -2804,7 +2828,7 @@ const { t } = useTranslation();
               <p className="font-medium">Order Details:</p>
               <p> {t('order.order_number')}: {currentOrderNumber}</p>
               <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
-              {selectedCountry === 'TUN' && (
+              {selectedCountry === 'TUN' || selectedCountry === 'TN' && (
                 <p className="text-gray-600 mt-2">
                  {t('order.payment_method')}
                 </p>
@@ -2860,7 +2884,7 @@ const { t } = useTranslation();
   {/* Only show Next/Place Order button if:
     1. Not on payment page (activeStep !== 2), or
     2. On payment page AND it's either Tunisia order (COD) or Interac payment */}
-{(activeStep !== 2 || selectedCountry === 'TUN' || paymentMethod === 'interac') && (
+{(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
   <button 
     onClick={handleNext} 
     disabled={!validateStep()} 
@@ -2872,7 +2896,7 @@ const { t } = useTranslation();
   >
     {isLoading 
       ? 'Processing...' 
-      : (activeStep === 2 && (selectedCountry === 'TUN' || paymentMethod === 'interac') 
+      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') 
         ? 'Place Order' 
         : 'Next')}
   </button>
