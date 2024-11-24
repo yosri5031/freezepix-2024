@@ -2035,7 +2035,7 @@ const CheckoutButton = ({
 
     // Calculate shipping fee based on country 
     let shippingFee = 0;
-    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
+    const isOrderOverThreshold = subtotal < 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
