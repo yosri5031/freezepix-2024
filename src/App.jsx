@@ -1337,6 +1337,7 @@ const handleCheckout = async (paymentMethod) => {
 // Stripe payment handler function
 const createStripeCheckoutSession = async (orderData) => {
   console.log('Order Data:', orderData);
+  const { shippingAddress } = orderData;
   const convertCountryCode = (address) => {
     if (!address) return address;
 
