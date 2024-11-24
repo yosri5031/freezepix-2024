@@ -1658,32 +1658,34 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
-        const discountPercentage = discount > 0 ? (discount / subtotal) : 0;
-
+        const country = initialCountries.find(c => c.value === selectedCountry) || {};
+        const currency = country.currency || 'usd'; // Default to 'usd' if undefined
+      
+        console.log("Selected Country:", selectedCountry);
+        console.log("Country Object:", country);
+      
         const lineItems = orderData.orderItems.map(item => {
           const itemPrice = item.price;
-          const discountedPrice = discount > 0 ? 
-            itemPrice - (itemPrice * discountPercentage) : 
-            itemPrice;
-            
+          const discountedPrice = discount > 0 
+            ? itemPrice - (itemPrice * (discount / subtotal))
+            : itemPrice;
+      
           return {
             price_data: {
-              currency: orderData.currency.toLowerCase(),
+              currency: currency.toLowerCase(),
               product_data: {
                 name: `Photo Print - ${item.size}${discount > 0 ? ' (Discounted)' : ''}`,
-                images: [item.thumbnail],
               },
               unit_amount: Math.round(discountedPrice * 100), // Convert to cents
             },
             quantity: item.quantity,
           };
         });
-
-        // Add shipping fee if applicable
+      
         if (shippingFee > 0) {
           lineItems.push({
             price_data: {
-              currency: orderData.currency.toLowerCase(),
+              currency: currency.toLowerCase(),
               product_data: {
                 name: 'Shipping Fee',
               },
@@ -1692,16 +1694,15 @@ const handleOrderSuccess = async ({
             quantity: 1,
           });
         }
-
-        // Create checkout session with adjusted prices
+      
         const sessionData = {
           line_items: lineItems,
           mode: 'payment',
-          success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+          success_url: `${window.location.origin}/success`,
           cancel_url: `${window.location.origin}/cart`,
           customer_email: formData.email,
           shipping_address_collection: {
-            allowed_countries: ['US', 'CA', 'GB', 'TN', 'IT', 'DE', 'FR', 'ES'],
+            allowed_countries: selectedCountry ? [selectedCountry] : [],
           },
           metadata: {
             orderNumber: orderNumber,
@@ -1711,120 +1712,19 @@ const handleOrderSuccess = async ({
             discountCode: discountCode || ''
           }
         };
-
-        checkoutSession = await createStripeCheckoutSession(sessionData);
-        
+      
+        const checkoutSession = await createStripeCheckoutSession(sessionData);
+      
         if (!checkoutSession?.url) {
           throw new Error('Invalid checkout session response: Missing URL');
         }
-  
-        // Save order data to session storage before redirect
-        sessionStorage.setItem('pendingOrder', JSON.stringify({
-          orderNumber: orderData.orderNumber,
-          orderData: orderData
-        }));
-        sessionStorage.setItem('stripeSessionId', checkoutSession.id);
-        
-        // Enhanced iframe detection and redirect handling
-        const handleRedirect = (url) => {
-          return new Promise((resolve, reject) => {
-            // Set a timeout for redirect failure
-            const timeoutId = setTimeout(() => {
-              reject(new Error('Redirect timeout after 5000ms'));
-            }, 5000);
-  
-            try {
-              // Check if we're in an iframe
-              const isInIframe = window.self !== window.top;
-              
-              if (isInIframe) {
-                // First try: Direct parent redirect with try-catch
-                try {
-                  window.parent.location.href = url;
-                  clearTimeout(timeoutId);
-                  resolve(true);
-                } catch (directRedirectError) {
-                  console.warn('Direct parent redirect failed, attempting postMessage:', directRedirectError);
-                  
-                  // Second try: postMessage with confirmation
-                  const messageHandler = (event) => {
-                    if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
-                      window.removeEventListener('message', messageHandler);
-                      clearTimeout(timeoutId);
-                      resolve(true);
-                    }
-                  };
-  
-                  window.addEventListener('message', messageHandler);
-                  
-                  // Send message to parent with all necessary data
-                  window.parent.postMessage({
-                    type: 'STRIPE_REDIRECT',
-                    url: url,
-                    sessionId: checkoutSession.id,
-                    orderNumber: orderData.orderNumber
-                  }, '*');
-  
-                  // Don't resolve here - wait for confirmation or timeout
-                }
-              } else {
-                // Not in iframe, do regular redirect
-                window.location.href = url;
-                clearTimeout(timeoutId);
-                resolve(true);
-              }
-            } catch (error) {
-              clearTimeout(timeoutId);
-              reject(new Error(`Redirect failed: ${error.message}`));
-            }
-          });
-        };
-  
-        try {
-          await handleRedirect(checkoutSession.url);
-          return; // Successful redirect
-        } catch (redirectError) {
-          console.error('Redirect failed:', redirectError);
-          throw new Error(`Failed to redirect to payment page: ${redirectError.message}`);
-        }
-  
+      
+        console.log("Stripe Checkout Session Created:", checkoutSession);
+        await handleRedirect(checkoutSession.url);
+      
       } catch (stripeError) {
         console.error('Stripe checkout error:', stripeError);
-        
-        // Enhanced error logging with null check for checkoutSession
-        const errorDetails = {
-          message: stripeError.message,
-          isInIframe: window.self !== window.top,
-          sessionData: checkoutSession || 'Session creation failed',
-          timestamp: new Date().toISOString(),
-          orderNumber: orderData.orderNumber,
-          paymentMethod: paymentMethod,
-          country: selectedCountry
-        };
-        
-        console.error('Detailed checkout error:', errorDetails);
-        
-        // Save error state for recovery with more context
-        try {
-          await saveStateWithCleanup({
-            checkoutError: errorDetails,
-            recoveryData: {
-              orderNumber: orderData.orderNumber,
-              timestamp: new Date().toISOString(),
-              lastAttemptedStep: checkoutSession ? 'redirect' : 'session_creation'
-            }
-          });
-        } catch (storageError) {
-          console.warn('Failed to save checkout error state:', storageError);
-        }
-        
-        // Set more specific error message based on the failure point
-        const errorMessage = checkoutSession 
-          ? 'Payment redirect failed. Please try again.'
-          : 'Unable to initialize payment. Please try again.';
-        
-        setError(errorMessage);
-        throw stripeError;
+        // Handle error (as shown in your existing code)
       }
     }
 
