@@ -1666,8 +1666,23 @@ const handleOrderSuccess = async ({
           }));
           sessionStorage.setItem('stripeSessionId', checkoutSession.id);
           
-          // Redirect to Stripe Checkout
-          window.location.href = checkoutSession.url;
+          // Check if we're in an iframe
+          if (window.self !== window.top) {
+            // We're in an iframe, try to redirect the parent window
+            try {
+              window.parent.location.href = checkoutSession.url;
+            } catch (e) {
+              // If we can't directly redirect the parent (due to cross-origin),
+              // post a message to the parent
+              window.parent.postMessage({
+                type: 'STRIPE_REDIRECT',
+                url: checkoutSession.url
+              }, '*');
+            }
+          } else {
+            // Not in an iframe, proceed with normal redirect
+            window.location.href = checkoutSession.url;
+          }
           return;
         } else {
           throw new Error('Invalid checkout session response');
