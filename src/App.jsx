@@ -1387,52 +1387,53 @@ const createStripeCheckoutSession = async (orderData) => {
   };
 
   try {
-    const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        orderItems: orderData.orderItems.map(item => ({
-          price_data: {
-            currency: orderData.currency.toLowerCase(),
-            product_data: {
-              name: `${item.productType} - ${item.size}`,
-              images: [item.thumbnail],
-            },
-            unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
-          },
-          quantity: item.quantity,
-        })),
-        shipping_fee: {
-          price_data: {
-            currency: orderData.currency.toLowerCase(),
-            product_data: {
-              name: 'Shipping Fee',
-            },
-            unit_amount: Math.round(orderData.shippingFee * 100),
-          },
-          quantity: 1,
+    const response = await fetch(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-        tax_amount: orderData.taxAmount,
-        customer_email: orderData.email,
-        metadata: {
+        body: JSON.stringify({
+          // Pass orderItems as is (backend will format line items)
+          orderItems: orderData.orderItems.map(item => ({
+            price: item.price, // Backend handles price formatting
+            productType: item.productType,
+            size: item.size,
+            thumbnail: item.thumbnail,
+            quantity: item.quantity,
+          })),
+          // Send shippingFee as a separate field
+          shippingFee: orderData.shippingFee,
+          taxAmount: orderData.taxAmount,
+          customerEmail: orderData.email,
           orderNumber: orderData.orderNumber,
           customerName: orderData.customerDetails.name,
-          shippingAddress: JSON.stringify(shippingAddressWithCorrectCode),
-        },
-        success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${window.location.origin}/cart`,
-      }),
-    });
-
+          shippingAddress: orderData.shippingAddress, // Ensure this is correctly formatted
+          currency: orderData.currency.toLowerCase(),
+          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/cart`,
+        }),
+      }
+    );
+  
+    // Check for HTTP errors
     if (!response.ok) {
-      throw new Error('Failed to create checkout session');
+      const errorDetails = await response.text(); // Capture server error details
+      console.error('Failed to create checkout session. Response:', errorDetails);
+      throw new Error(`Failed to create checkout session: ${errorDetails}`);
     }
-
+  
+    // Parse the response JSON
     const session = await response.json();
+  
+    // Debugging: Log the session response
+    console.log('Checkout session created:', session);
+  
+    // Return the session object
     return session;
   } catch (error) {
+    // Log and rethrow the error
     console.error('Error creating checkout session:', error);
     throw error;
   }
