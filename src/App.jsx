@@ -301,6 +301,57 @@ const [interacReference, setInteracReference] = useState('');
         }));
       }, [selectedCountry]);
 
+      // Add this useEffect in your component to handle the return from Stripe
+useEffect(() => {
+  const validateStripePayment = async () => {
+    const sessionId = new URLSearchParams(window.location.search).get('session_id');
+    const pendingOrder = sessionStorage.getItem('pendingOrder');
+
+    if (sessionId && pendingOrder) {
+      try {
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId,
+            orderNumber: JSON.parse(pendingOrder).orderNumber
+          }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          // Payment successful
+          const orderData = JSON.parse(pendingOrder).orderData;
+          
+          // Send confirmation email
+          await sendOrderConfirmationEmail(orderData);
+          
+          // Update UI state
+          setOrderSuccess(true);
+          setSelectedPhotos([]);
+          setError(null);
+
+          // Clear session storage
+          sessionStorage.removeItem('pendingOrder');
+          sessionStorage.removeItem('stripeSessionId');
+        } else {
+          setError('Payment verification failed');
+          setOrderSuccess(false);
+        }
+      } catch (error) {
+        console.error('Payment validation error:', error);
+        setError('Failed to verify payment');
+        setOrderSuccess(false);
+      }
+    }
+  };
+
+  validateStripePayment();
+}, []);
+
       const updateFormData = (field, value) => {
         setFormData(prev => ({
           ...prev,
@@ -1605,19 +1656,25 @@ const handleOrderSuccess = async ({
     
     if (paymentMethod === 'credit') {
       try {
-        // Declare the variable before assigning to it
         const checkoutSession = await createStripeCheckoutSession(orderData);
         
         if (checkoutSession.url) {
+          // Save order data to session storage before redirect
+          sessionStorage.setItem('pendingOrder', JSON.stringify({
+            orderNumber: orderData.orderNumber,
+            orderData: orderData
+          }));
+          sessionStorage.setItem('stripeSessionId', checkoutSession.id);
+          
           // Redirect to Stripe Checkout
           window.location.href = checkoutSession.url;
-          return; // Stop execution here as we're redirecting
+          return;
         } else {
           throw new Error('Invalid checkout session response');
         }
       } catch (stripeError) {
         console.error('Stripe checkout error:', stripeError);
-        //throw new Error(t('errors.paymentProcessingFailed'));
+        setError('Payment processing failed');
       }
     }
 
