@@ -1658,7 +1658,7 @@ const handleOrderSuccess = async ({
       try {
         const checkoutSession = await createStripeCheckoutSession(orderData);
         
-        if (checkoutSession.url) {
+        if (checkoutSession?.url) {
           // Save order data to session storage before redirect
           sessionStorage.setItem('pendingOrder', JSON.stringify({
             orderNumber: orderData.orderNumber,
@@ -1666,30 +1666,99 @@ const handleOrderSuccess = async ({
           }));
           sessionStorage.setItem('stripeSessionId', checkoutSession.id);
           
-          // Check if we're in an iframe
-          if (window.self !== window.top) {
-            // We're in an iframe, try to redirect the parent window
-            try {
-              window.parent.location.href = checkoutSession.url;
-            } catch (e) {
-              // If we can't directly redirect the parent (due to cross-origin),
-              // post a message to the parent
-              window.parent.postMessage({
-                type: 'STRIPE_REDIRECT',
-                url: checkoutSession.url
-              }, '*');
-            }
-          } else {
-            // Not in an iframe, proceed with normal redirect
-            window.location.href = checkoutSession.url;
+          // Enhanced iframe detection and redirect handling
+          const handleRedirect = (url) => {
+            return new Promise((resolve, reject) => {
+              // Set a timeout for redirect failure
+              const timeoutId = setTimeout(() => {
+                reject(new Error('Redirect timeout'));
+              }, 5000);
+  
+              try {
+                // Check if we're in an iframe
+                const isInIframe = window.self !== window.top;
+                
+                if (isInIframe) {
+                  // First try: Direct parent redirect
+                  try {
+                    window.parent.location.href = url;
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                  } catch (e) {
+                    console.warn('Direct parent redirect failed, trying postMessage:', e);
+                    
+                    // Second try: postMessage with confirmation
+                    const messageHandler = (event) => {
+                      if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
+                        window.removeEventListener('message', messageHandler);
+                        clearTimeout(timeoutId);
+                        resolve(true);
+                      }
+                    };
+  
+                    window.addEventListener('message', messageHandler);
+                    
+                    // Send message to parent
+                    window.parent.postMessage({
+                      type: 'STRIPE_REDIRECT',
+                      url: url,
+                      sessionId: checkoutSession.id,
+                      orderNumber: orderData.orderNumber
+                    }, '*');
+                  }
+                } else {
+                  // Not in iframe, do regular redirect
+                  window.location.href = url;
+                  clearTimeout(timeoutId);
+                  resolve(true);
+                }
+              } catch (error) {
+                clearTimeout(timeoutId);
+                reject(error);
+              }
+            });
+          };
+  
+          try {
+            await handleRedirect(checkoutSession.url);
+            return; // Successful redirect
+          } catch (redirectError) {
+            console.error('Redirect failed:', redirectError);
+            // Fall through to error handling
+            throw new Error('Failed to redirect to payment page');
           }
-          return;
         } else {
           throw new Error('Invalid checkout session response');
         }
       } catch (stripeError) {
         console.error('Stripe checkout error:', stripeError);
+        
+        // Enhanced error logging
+        const errorDetails = {
+          message: stripeError.message,
+          isInIframe: window.self !== window.top,
+          sessionData: checkoutSession,
+          timestamp: new Date().toISOString(),
+          orderNumber: orderData.orderNumber
+        };
+        
+        console.error('Detailed checkout error:', errorDetails);
+        
+        // Save error state for recovery
+        try {
+          await saveStateWithCleanup({
+            checkoutError: errorDetails,
+            recoveryData: {
+              orderNumber: orderData.orderNumber,
+              timestamp: new Date().toISOString()
+            }
+          });
+        } catch (storageError) {
+          console.warn('Failed to save checkout error state:', storageError);
+        }
+        
         setError('Payment processing failed');
+        throw stripeError;
       }
     }
 
