@@ -18,6 +18,9 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
+const stripe = new Stripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ', {
+  apiVersion: 'latest' // Recommended to specify version
+});
 //import { sendOrderConfirmation } from './utils/emailService'..;
 
 import {
@@ -974,307 +977,122 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
   return results;
 };
+
 const CheckoutForm = ({ 
-  onSubmit, 
-  processing, 
-  total, 
-  currency,
-  formData,
-  selectedPhotos,
-  selectedCountry
+  orderItems, 
+  shippingFee, 
+  taxAmount, 
+  currency, 
+  customerEmail,
+  orderNumber,
+  customerName,
+  shippingAddress,
+  isProcessing,
+  onError 
 }) => {
-  const stripe = useStripe();
-  const elements = useElements();
-  
-  const [error, setError] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const cardElementRef = useRef(null);
-  const stripeCustomStyles = `
-  .StripeElement {
-    display: block;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-  }
-  
-  .StripeElement--focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0,123,255,0.3);
-  }
-  
-  /* Separate card fields */
-  .stripe-card-number {
-    grid-area: number;
-  }
-  
-  .stripe-card-expiry {
-    grid-area: expiry;
-  }
-  
-  .stripe-card-cvc {
-    grid-area: cvc;
-  }
-  
-  .stripe-card-container {
-    display: grid;
-    grid-template-areas: 
-      "number number"
-      "expiry cvc";
-    gap: 10px;
-  }
-`;
-
-  useEffect(() => {
-    if (cardElementRef.current) {
-      const iframe = cardElementRef.current.iframe;
-      const iframeStyles = `
-        .InputElement {
-          display: block;
-          width: 100%;
-          margin-bottom: 8px;
-        }
-          .CardElement {
-          display: flex;
-          flex-direction: column;
-        }
-
-        .CardElement input {
-          display: block;
-          width: 100%;
-          margin-bottom: 8px;
-        }
-        
-        .StripeElement {
-    display: block;
-    margin-bottom: 10px;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    background-color: #f9f9f9;
-  }
-  
-  .StripeElement--focus {
-    border-color: #007bff;
-    box-shadow: 0 0 5px rgba(0,123,255,0.3);
-  }
-  
-  /* Separate card fields */
-  .stripe-card-number {
-    grid-area: number;
-  }
-  
-  .stripe-card-expiry {
-    grid-area: expiry;
-  }
-  
-  .stripe-card-cvc {
-    grid-area: cvc;
-  }
-  
-  .stripe-card-container {
-    display: grid;
-    grid-template-areas: 
-      "number number"
-      "expiry cvc";
-    gap: 10px;
-  }
-      `;
-
-      const styleElement = document.createElement('style');
-      styleElement.innerHTML = iframeStyles;
-      iframe.contentDocument.head.appendChild(styleElement);
-    }
-  }, []);
-
-  const countryCodes = {
-    'CAN': 'CA',
-    'USA': 'US'
-    // Add more country code conversions as needed
-  };
-  
-  const handleSubmit = async (event) => {
-    event.preventDefault();
-  
-    // Validate input fields
-    if (!stripe || !elements) {
-      setError('Stripe has not loaded. Please try again.');
-      return;
-    }
-  
-    // Check for required address fields
-    if (!formData.billingAddress.postalCode) {
-      setError('Please provide a billing postal code.');
-      return;
-    }
-  
-    if (selectedPhotos.length === 0) {
-      setError('You must have at least one item in your order.');
-      return;
-    }
-  
-    // Prevent multiple submissions
-    if (processing || isSubmitting) return;
-  
-    setIsSubmitting(true);
-    setError(null);
-  
+  const handleCheckout = async () => {
     try {
-      const cardNumberElement = elements.getElement(CardNumberElement);
-      const cardExpiryElement = elements.getElement(CardExpiryElement);
-      const cardCvcElement = elements.getElement(CardCvcElement);
-  
-      const { error, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardNumberElement,
-        billing_details: {
-          name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
-          email: formData.email,
-          phone: formData.phone,
-          address: {
-            line1: formData.billingAddress.address,
-            city: formData.billingAddress.city,
-            state: formData.billingAddress.province || formData.billingAddress.state,
-            country: countryCodes[formData.billingAddress.country] || formData.billingAddress.country, // Convert country code
-            postal_code: formData.billingAddress.postalCode
-          }
-        }
+      setIsLoading(true);
+
+      // Create checkout session
+      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          orderItems,
+          shippingFee,
+          taxAmount,
+          currency,
+          customerEmail,
+          orderNumber,
+          customerName,
+          shippingAddress
+        }),
       });
-  
-      if (error) {
-        setError(error.message);
-        setIsSubmitting(false);
-        return;
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.details || 'Failed to create checkout session');
       }
-  
-      await onSubmit(paymentMethod);
-  
-      setIsSubmitting(false);
-    } catch (err) {
-      setError(err.message || 'An unexpected error occurred');
-      setIsSubmitting(false);
+
+      const { url } = await response.json();
+
+      // Redirect to Stripe Checkout
+      window.location.href = url;
+    } catch (error) {
+      console.error('Checkout error:', error);
+      onError?.(error.message || 'Payment processing failed');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Card element styling
-  const cardElementOptions = {
-    style: {
-      base: {
-        fontSize: '16px',
-        color: '#424770',
-        padding:'12px',
-        '::placeholder': {
-          color: '#aab7c4',
-        },
-      },
-      invalid: {
-        color: '#9e2146',
-      },
-    },
-    hidePostalCode: false,
-  };
+  // Calculate total amount
+  const total = orderItems.reduce((sum, item) => 
+    sum + (item.price * item.quantity), 0) + shippingFee + taxAmount;
 
   return (
-    <form 
-      onSubmit={handleSubmit} 
-      className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md"
-    >
-      <h2 className="text-2xl font-bold mb-4 text-center">
-        Checkout
-      </h2>
-
-      {/* Order Total Display */}
-      {total && (
-        <div className="mb-4 text-center font-semibold text-xl">
-          Total: {total.toFixed(2)} {currency}
+    <div className="w-full max-w-md mx-auto p-4">
+      {/* Order Summary */}
+      <div className="mb-6 bg-gray-50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
+        {orderItems.map((item, index) => (
+          <div key={index} className="flex justify-between mb-2">
+            <span>{item.productType} - {item.size} (x{item.quantity})</span>
+            <span>{(item.price * item.quantity).toFixed(2)} {currency}</span>
+          </div>
+        ))}
+        <div className="border-t mt-2 pt-2">
+          <div className="flex justify-between mb-1">
+            <span>Shipping</span>
+            <span>{shippingFee.toFixed(2)} {currency}</span>
+          </div>
+          <div className="flex justify-between mb-1">
+            <span>Tax</span>
+            <span>{taxAmount.toFixed(2)} {currency}</span>
+          </div>
+          <div className="flex justify-between font-semibold mt-2 pt-2 border-t">
+            <span>Total</span>
+            <span>{total.toFixed(2)} {currency}</span>
+          </div>
         </div>
-      )}
-
-      {/* Customer Information */}
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
-          Name on Card
-        </label>
-        <input
-          type="text"
-          value={formData.name}
-          placeholder="Full Name"
-          className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-          required
-        />
       </div>
 
-      {/* Card Details Input */}
-      <div className="card-number-wrapper">
-          <label>Card Number</label>
-          <CardNumberElement 
-            options={{ 
-              placeholder: 'Card Number' 
-            }} 
-          />
-        </div>
-        
-        <div className="card-details-wrapper">
-          <div className="card-expiry-wrapper">
-            <label>Expiry</label>
-            <CardExpiryElement 
-              options={{ 
-                placeholder: 'MM/YY' 
-              }} 
-            />
-          </div>
-          
-          <div className="card-cvc-wrapper">
-            <label>CVC</label>
-            <CardCvcElement 
-              options={{ 
-                
-                placeholder: 'CVC' 
-              }} 
-            />
-          </div>
-
-         {/* <div className="postal-code-input">
-        <label>Postal Code</label>
-       
-  />
-      </div> */}
-
-          </div>
-      {/* Error Display */}
-      {error && (
-        <div 
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4"
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
-
-      {/* Submit Button */}
+      {/* Checkout Button */}
       <button
-        type="submit"
-        disabled={!stripe || processing || isSubmitting}
-        className={`
-          w-full py-3 rounded-md text-white font-bold
-          ${(processing || isSubmitting) 
-            ? 'bg-gray-400 cursor-not-allowed' 
-            : 'bg-blue-500 hover:bg-blue-600 active:bg-blue-700'}
-        `}
+        onClick={handleCheckout}
+        disabled={isLoading || isProcessing}
+        className={`w-full bg-blue-600 text-white py-3 px-4 rounded-lg
+          ${(isLoading || isProcessing) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}
+          transition duration-200 ease-in-out`}
       >
-        {processing || isSubmitting 
-          ? 'Processing...' 
-          : `Pay ${total ? `${total.toFixed(2)} ${currency}` : ''}`}
+        {isLoading ? (
+          <span className="flex items-center justify-center">
+            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Processing...
+          </span>
+        ) : (
+          `Pay ${total.toFixed(2)} ${currency}`
+        )}
       </button>
 
-      {/* Security Notice */}
-      <div className="text-center text-xs text-gray-500 mt-4">
-        <p>Secure payment processed by Stripe</p>
-        <p>Your card details are encrypted and protected</p>
+      {/* Secure Payment Notice */}
+      <div className="mt-4 text-center text-sm text-gray-600">
+        <div className="flex items-center justify-center mb-2">
+          <svg className="h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Secure payment powered by Stripe
+        </div>
       </div>
-    </form>
+    </div>
   );
 };
 
@@ -1632,6 +1450,61 @@ const handleCheckout = async (paymentMethod) => {
     }
   }
 };
+// Stripe payment handler function
+const createStripeCheckoutSession = async (orderData) => {
+  try {
+    const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        orderItems: orderData.orderItems.map(item => ({
+          price_data: {
+            currency: orderData.currency.toLowerCase(),
+            product_data: {
+              name: `${item.productType} - ${item.size}`,
+              images: [item.thumbnail],
+            },
+            unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
+          },
+          quantity: item.quantity,
+        })),
+        shipping_fee: {
+          price_data: {
+            currency: orderData.currency.toLowerCase(),
+            product_data: {
+              name: 'Shipping Fee',
+            },
+            unit_amount: Math.round(orderData.shippingFee * 100),
+          },
+          quantity: 1,
+        },
+        tax_amount: orderData.taxAmount,
+        customer_email: orderData.email,
+        metadata: {
+          orderNumber: orderData.orderNumber,
+          customerName: orderData.customerDetails.name,
+          shippingAddress: JSON.stringify(orderData.shippingAddress),
+        },
+        success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${window.location.origin}/cart`,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create checkout session');
+    }
+
+    const session = await response.json();
+    return session;
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
+  }
+};
+
+
 const handleOrderSuccess = async (stripePaymentMethod = null) => {
   let orderData = null;
   let orderNumber = null;
@@ -1718,6 +1591,23 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
+
+    if (paymentMethod === 'credit') {
+      try {
+        checkoutSession = await createStripeCheckoutSession(orderData);
+        
+        if (checkoutSession.url) {
+          // Redirect to Stripe Checkout
+          window.location.href = checkoutSession.url;
+          return; // Stop execution here as we're redirecting
+        } else {
+          throw new Error('Invalid checkout session response');
+        }
+      } catch (stripeError) {
+        console.error('Stripe checkout error:', stripeError);
+        throw new Error(t('errors.paymentProcessingFailed'));
+      }
+    }
 
     // Submit order with retry mechanism
     const maxRetries = 3;
@@ -2393,14 +2283,17 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
                   {paymentMethod === 'credit' && (
  
     <Elements stripe={stripePromise}>
-     <CheckoutForm
-  onSubmit={handleCheckout}
-  processing={isProcessingOrder}
-  total={calculateTotals().total}
-  currency={initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD'} // Use the currency from the selected country
-  formData={formData}
-  selectedPhotos={selectedPhotos}
-  selectedCountry={selectedCountry}
+     <CheckoutForm 
+  orderItems={orderItems}
+  shippingFee={shippingFee}
+  taxAmount={taxAmount}
+  currency={currency}
+  customerEmail={customerEmail}
+  orderNumber={orderNumber}
+  customerName={customerName}
+  shippingAddress={shippingAddress}
+  isProcessing={isProcessing}
+  onError={(error) => setError(error)}
 />
     </Elements>
 
