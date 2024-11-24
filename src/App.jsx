@@ -1422,7 +1422,16 @@ const createStripeCheckoutSession = async (orderData) => {
 };
 
 
-const handleOrderSuccess = async (stripePaymentMethod = null) => {
+const handleOrderSuccess = async ({ 
+  paymentMethod, 
+  formData, 
+  selectedCountry,
+  selectedPhotos,
+  orderNote,
+  discountCode,
+  isBillingAddressSameAsShipping,
+  stripePaymentMethod = null 
+}) => {
   let orderData = null;
   let orderNumber = null;
   let paymentIntent = null;
@@ -1667,15 +1676,56 @@ const handleOrderSuccess = async (stripePaymentMethod = null) => {
     }
   }
 };
-const CheckoutButton = ({ onCheckout, isProcessing, disabled }) => {
+const CheckoutButton = ({ 
+  onCheckout, 
+  isProcessing, 
+  disabled,
+  formData, // Add form data prop
+  selectedCountry,
+  selectedPhotos,
+  orderNote,
+  discountCode,
+  isBillingAddressSameAsShipping,
+  //validateForm // Add form validation function prop
+}) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleClick = async () => {
     try {
+      // Validate form data first
+      if (!formData?.email || !formData?.shippingAddress) {
+        throw new Error('Please fill in all required fields');
+      }
+
+      // Validate photos
+      if (!selectedPhotos?.length) {
+        throw new Error('Please select at least one photo');
+      }
+
       setIsLoading(true);
-      await onCheckout({ paymentMethod: 'credit' });
+      
+      // Pass all required data to the checkout handler
+      await onCheckout({
+        paymentMethod: 'credit',
+        formData: {
+          email: formData.email,
+          phone: formData.phone,
+          name: formData.name,
+          shippingAddress: formData.shippingAddress,
+          billingAddress: isBillingAddressSameAsShipping 
+            ? formData.shippingAddress 
+            : formData.billingAddress,
+        },
+        selectedCountry,
+        selectedPhotos,
+        orderNote,
+        discountCode,
+        isBillingAddressSameAsShipping
+      });
     } catch (error) {
       console.error('Checkout error:', error);
+      // You might want to show this error to the user
+      alert(error.message);
     } finally {
       setIsLoading(false);
     }
@@ -2224,9 +2274,16 @@ const CheckoutButton = ({ onCheckout, isProcessing, disabled }) => {
                   {paymentMethod === 'credit' && (
  
     <Elements stripe={stripePromise}>
-     <CheckoutButton 
+    <CheckoutButton 
         onCheckout={handleOrderSuccess}
         isProcessing={isProcessingOrder}
+        disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+        formData={formData}
+        selectedCountry={selectedCountry}
+        selectedPhotos={selectedPhotos}
+        orderNote={orderNote}
+        discountCode={discountCode}
+        isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
       />
     </Elements>
 
@@ -2244,6 +2301,13 @@ const CheckoutButton = ({ onCheckout, isProcessing, disabled }) => {
                 <CheckoutButton 
         onCheckout={handleOrderSuccess}
         isProcessing={isProcessingOrder}
+        disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+        formData={formData}
+        selectedCountry={selectedCountry}
+        selectedPhotos={selectedPhotos}
+        orderNote={orderNote}
+        discountCode={discountCode}
+        isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
       />
     </Elements>
               </div>
