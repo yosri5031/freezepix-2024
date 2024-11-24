@@ -1524,14 +1524,6 @@ const validatePayment = async (sessionId, orderNumber, maxRetries = 3, timeout =
   throw new Error('Maximum payment validation attempts reached');
 };
 
-const trackError = ({ error, orderNumber, context, timestamp }) => {
-  console.error('[Order Error]', {
-    message: error.message,
-    orderNumber,
-    context,
-    timestamp
-  });
-};
 
 const handleOrderSuccess = async ({
   paymentMethod,
