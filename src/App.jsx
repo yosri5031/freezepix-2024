@@ -1701,7 +1701,7 @@ const handleOrderSuccess = async ({
           cancel_url: `${window.location.origin}/cart`,
           customer_email: formData.email,
           shipping_address_collection: {
-            allowed_countries: selectedCountry,
+            allowed_countries: ['US', 'CA', 'GB', 'TN', 'IT', 'DE', 'FR', 'ES'],
           },
           metadata: {
             orderNumber: orderNumber,
