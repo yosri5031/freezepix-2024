@@ -1430,8 +1430,18 @@ const createStripeCheckoutSession = async (orderData) => {
     // Debugging: Log the session response
     console.log('Checkout session created:', session);
   
-    // Return the session object
-    return session;
+    // Redirect to Stripe Checkout in the top-level browser context
+    if (session.url) {
+      if (window.top) {
+        // Redirect if running inside an iframe
+        window.top.location.href = session.url;
+      } else {
+        // Redirect normally if running outside an iframe
+        window.location.href = session.url;
+      }
+    } else {
+      throw new Error('Checkout session URL is missing from the response.');
+    }
   } catch (error) {
     // Log and rethrow the error
     console.error('Error creating checkout session:', error);
