@@ -2315,7 +2315,7 @@ const countryCodeMap = {
           <div className="space-y-6">
             <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
             {renderInvoice()}
-      
+        
             {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
@@ -2327,63 +2327,19 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  
-                  {/* Sélection du mode de paiement */}
-                  <div className="mb-4">
-                    
-                    <label className="block">
-                      <input
-                        type="radio"
-                        value="credit"
-                        checked={paymentMethod === 'credit'}
-                        onChange={handlePaymentMethodChange}
-                        className="mr-2"
-                      />
-                      {t('canada.credit')}
-                    </label>
-                  </div>
-      
-                  {/* Option de paiement Interac */}
-                  {paymentMethod === 'interac' && (
-                    <div className="border rounded-lg p-4 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{t('canada.interac')}</h4>
-                          <p className="text-sm text-gray-600">{t('canada.send')}</p>
-                          <p className="font-bold">Info@freezepix.com</p>
-                        </div>
-                        <img 
-                          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp9FibB-R9ac8XXEootfuHyEdTuaeJ9bZiQQ&s" 
-                          alt="Interac E-Transfer" 
-                          className="h-12 w-auto"
-                        />
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {t('canada.placing')}
-                      </p>
-                      {/* Bouton de commande pour Interac */}
-                      
-                    </div>
-                  )}
-      
-                  {/* Option de paiement par carte de crédit */}
-                  {paymentMethod === 'credit' && (
- 
-    <Elements stripe={stripePromise}>
-    <CheckoutButton 
-        onCheckout={handleOrderSuccess}
-        isProcessing={isProcessingOrder}
-        disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-        formData={formData}
-        selectedCountry={selectedCountry}
-        selectedPhotos={selectedPhotos}
-        orderNote={orderNote}
-        discountCode={discountCode}
-        isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
-      />
-    </Elements>
-
-)}
+                  <Elements stripe={stripePromise}>
+                    <CheckoutButton 
+                      onCheckout={handleOrderSuccess}
+                      isProcessing={isProcessingOrder}
+                      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+                      formData={formData}
+                      selectedCountry={selectedCountry}
+                      selectedPhotos={selectedPhotos}
+                      orderNote={orderNote}
+                      discountCode={discountCode}
+                      isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
+                    />
+                  </Elements>
                 </div>
               </div>
             ) : (
@@ -2394,18 +2350,18 @@ const countryCodeMap = {
                   </p>
                 </div>
                 <Elements stripe={stripePromise}>
-                <CheckoutButton 
-        onCheckout={handleOrderSuccess}
-        isProcessing={isProcessingOrder}
-        disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-        formData={formData}
-        selectedCountry={selectedCountry}
-        selectedPhotos={selectedPhotos}
-        orderNote={orderNote}
-        discountCode={discountCode}
-        isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
-      />
-    </Elements>
+                  <CheckoutButton 
+                    onCheckout={handleOrderSuccess}
+                    isProcessing={isProcessingOrder}
+                    disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+                    formData={formData}
+                    selectedCountry={selectedCountry}
+                    selectedPhotos={selectedPhotos}
+                    orderNote={orderNote}
+                    discountCode={discountCode}
+                    isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
+                  />
+                </Elements>
               </div>
             )}
           </div>
