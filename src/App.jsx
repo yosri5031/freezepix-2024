@@ -1658,50 +1658,61 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
+        const discountPercentage = discount > 0 ? (discount / subtotal) : 0;
 
-        const stripeOrderData = {
-          ...orderData,
-          // If there's a discount, create a coupon line item
-          lineItems: [
-            // Regular items
-            ...orderData.orderItems.map(item => ({
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: `Photo Print - ${item.size}`,
-                  
-                },
-                unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
+        const lineItems = orderData.orderItems.map(item => {
+          const itemPrice = item.price;
+          const discountedPrice = discount > 0 ? 
+            itemPrice - (itemPrice * discountPercentage) : 
+            itemPrice;
+            
+          return {
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: {
+                name: `Photo Print - ${item.size}${discount > 0 ? ' (Discounted)' : ''}`,
+                images: [item.thumbnail],
               },
-              quantity: item.quantity,
-            })),
-            // Shipping fee as separate line item if applicable
-            ...(shippingFee > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: 'Shipping Fee',
-                },
-                unit_amount: Math.round(shippingFee * 100),
+              unit_amount: Math.round(discountedPrice * 100), // Convert to cents
+            },
+            quantity: item.quantity,
+          };
+        });
+
+        // Add shipping fee if applicable
+        if (shippingFee > 0) {
+          lineItems.push({
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: {
+                name: 'Shipping Fee',
               },
-              quantity: 1,
-            }] : []),
-          ],
-          // If there's a discount, add it as a coupon
-          ...(discount > 0 && {
-            discounts: [{
-              coupon: {
-                amount_off: Math.round(discount * 100), // Convert discount to cents
-                currency: orderData.currency.toLowerCase(),
-                duration: 'once',
-                name: discountCode || 'Discount',
-                id: `DISCOUNT_${orderNumber}` // Generate unique ID for this discount
-              }
-            }]
-          }),
+              unit_amount: Math.round(shippingFee * 100),
+            },
+            quantity: 1,
+          });
+        }
+
+        // Create checkout session with adjusted prices
+        const sessionData = {
+          line_items: lineItems,
+          mode: 'payment',
+          success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/cart`,
+          customer_email: formData.email,
+          shipping_address_collection: {
+            allowed_countries: [getStripeCountryCode(selectedCountry)],
+          },
+          metadata: {
+            orderNumber: orderNumber,
+            discountApplied: discount > 0 ? 'yes' : 'no',
+            originalTotal: subtotal,
+            discountAmount: discount,
+            discountCode: discountCode || ''
+          }
         };
 
-        checkoutSession = await createStripeCheckoutSession(stripeOrderData);
+        checkoutSession = await createStripeCheckoutSession(sessionData);
         
         if (!checkoutSession?.url) {
           throw new Error('Invalid checkout session response: Missing URL');
