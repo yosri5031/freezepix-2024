@@ -189,7 +189,7 @@ const BookingPopup = ({ onClose }) => {
         />
   
         {/* Fix for state/province visibility */}
-        {data.country === 'USA' && (
+        {(data.country === 'USA' || data.country === 'US') && (
           <select
             value={data.state || ''}
             onChange={handleInputChange('state')}
@@ -202,7 +202,7 @@ const BookingPopup = ({ onClose }) => {
           </select>
         )}
   
-        {data.country === 'CAN' && (
+        {(data.country === 'CAN' || data.country === 'CA') && (
           <select
             value={data.province || ''}
             onChange={handleInputChange('province')}
@@ -300,7 +300,7 @@ const [interacReference, setInteracReference] = useState('');
           }
         }));
       }, [selectedCountry]);
-      
+
       const updateFormData = (field, value) => {
         setFormData(prev => ({
           ...prev,
