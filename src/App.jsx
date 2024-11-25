@@ -1688,15 +1688,19 @@ const handleOrderSuccess = async ({
             }] : []),
           ],
           // If there's a discount, add it as a coupon
-          ...(discount > 0 && {
-            discounts: [{
-              type: 'fixed_amount',
-              amount: Math.round(discount * 100),
+          ...(discount > 0 ? [{
+            price_data: {
               currency: orderData.currency.toLowerCase(),
-              description: `Discount: ${discountCode}`,
-            }]
-          }),
-        };
+              product_data: {
+                name: `Discount${discountCode ? ` (${discountCode})` : ''}`,
+              },
+              unit_amount: Math.round(-discount * 100), // Negative amount for discount
+            },
+            quantity: 1,
+          }] : []),
+        
+        // Remove the previous discounts property since we're handling it as a line item
+      };
 
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
