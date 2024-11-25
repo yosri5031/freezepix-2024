@@ -1658,9 +1658,19 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
+        // Map discount codes to their Stripe promotion IDs
+        const getStripePromotionCode = (code) => {
+          const promotionCodes = {
+            'MOHAMED': 'MOHAMED50', // Replace with actual Stripe promo ID
+            'B2B': 'B2B50',        // Replace with actual Stripe promo ID
+            'MCF99': 'MCF99'         // Replace with actual Stripe promo ID
+          };
+          return promotionCodes[code?.toUpperCase()];
+        };
+  
         const stripeOrderData = {
           ...orderData,
-          line_items: [ // Changed from lineItems to line_items (Stripe's expected format)
+          line_items: [
             // Regular items
             ...orderData.orderItems.map(item => ({
               price_data: {
@@ -1697,33 +1707,25 @@ const handleOrderSuccess = async ({
               adjustable_quantity: {
                 enabled: false,
               },
-            }] : []),
-            // Discount as a coupon line item
-            ...(discount > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: discountCode ? `Discount (${discountCode})` : 'Discount',
-                  description: 'Order Discount',
-                },
-                unit_amount: Math.round(discount * 100),
-              },
-              quantity: -1,
-              adjustable_quantity: {
-                enabled: false,
-              },
-            }] : []),
+            }] : [])
           ],
-          allow_promotion_codes: false, // Disable additional promotion codes
+          discounts: discountCode ? [{
+            promotion_code: getStripePromotionCode(discountCode)
+          }] : [],
+          allow_promotion_codes: false,
           mode: 'payment',
           customer_email: formData.email,
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
             taxAmount: taxAmount,
-            discountAmount: discount,
           }
         };
+  
+        // Validate promotion code before creating session
+        if (discountCode && !getStripePromotionCode(discountCode)) {
+          throw new Error('Invalid discount code');
+        }
         
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
