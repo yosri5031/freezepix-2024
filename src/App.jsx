@@ -1658,10 +1658,9 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
-
         const stripeOrderData = {
           ...orderData,
-          lineItems: [
+          line_items: [ // Changed from lineItems to line_items (Stripe's expected format)
             // Regular items
             ...orderData.orderItems.map(item => ({
               price_data: {
@@ -1684,35 +1683,46 @@ const handleOrderSuccess = async ({
               },
               quantity: 1,
             }] : []),
-            // Tax as a separate line item if applicable
+            // Tax as a separate price
             ...(taxAmount > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
-                  name: 'Tax',
+                  name: 'Sales Tax',
+                  description: 'Sales Tax',
                 },
                 unit_amount: Math.round(taxAmount * 100),
               },
               quantity: 1,
+              adjustable_quantity: {
+                enabled: false,
+              },
             }] : []),
-            // Discount as a separate line item if applicable
+            // Discount as a coupon line item
             ...(discount > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: discountCode ? `Discount (${discountCode})` : 'Discount',
+                  description: 'Order Discount',
                 },
                 unit_amount: Math.round(discount * 100),
-                unit_amount_decimal: (Math.round(discount * 100)).toString(),
-                tax_behavior: 'exclusive',
-                adjustable_quantity: {
-                  enabled: false
-                }
               },
-              quantity: -1, // Using negative quantity instead of negative amount
+              quantity: -1,
+              adjustable_quantity: {
+                enabled: false,
+              },
             }] : []),
           ],
-          // Remove the discounts property since we're handling it as a line item
+          allow_promotion_codes: false, // Disable additional promotion codes
+          mode: 'payment',
+          customer_email: formData.email,
+          metadata: {
+            orderNumber: orderNumber,
+            discountCode: discountCode || 'none',
+            taxAmount: taxAmount,
+            discountAmount: discount,
+          }
         };
         
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
