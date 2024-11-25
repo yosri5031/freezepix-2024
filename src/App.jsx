@@ -258,6 +258,9 @@ const FreezePIX = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [globalTaxAmount, setGlobalTaxAmount] = useState(0);
+    const [globalDiscount, setGlobalDiscount] = useState(0);
+    const [globalTotal, setGlobalTotal] = useState(0);
 
 const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
@@ -1697,20 +1700,20 @@ const handleOrderSuccess = async ({
               quantity: 1,
             }] : []),
             // Tax
-            ...(taxAmount > 0 ? [{
+            ...(globalTaxAmount > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: 'Sales Tax',
                 },
-                unit_amount: Math.round(taxAmount * 100),
+                unit_amount: Math.round(globalTaxAmount * 100),
               },
               quantity: 1,
             }] : []),
           ],
-          ...(discountCode && getStripeCouponId(discountCode) ? {
+          ...(globalDiscount > 0 ? {
             discounts: [{
-              coupon: getStripeCouponId(discountCode),
+              coupon: 'your_discount_coupon_code_here',
             }]
           } : {}),
           mode: 'payment',
@@ -1718,7 +1721,8 @@ const handleOrderSuccess = async ({
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
-            taxAmount: taxAmount || 0,
+            taxAmount: globalTaxAmount || 0,
+            discountAmount: globalDiscount || 0,
           },
         };
       
@@ -2250,6 +2254,9 @@ const CheckoutButton = ({
 
     // Calculate total 
     const total = (taxableAmount + taxAmount) - discount; 
+    setGlobalTaxAmount(taxAmount);
+    setGlobalDiscount(discount);
+    setGlobalTotal(total);
 
     return { 
         subtotalsBySize, 
