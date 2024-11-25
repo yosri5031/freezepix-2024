@@ -1536,7 +1536,7 @@ const handleOrderSuccess = async ({
     }
 
     // Resolve country and currency
-    const formattedCountry = getStripeCountryCode(selectedCountry);
+    //const formattedCountry = getStripeCountryCode(selectedCountry);
     const country = initialCountries.find(c => c.value === selectedCountry) || {};
     const currency = country.currency || 'USD';
 
@@ -1557,7 +1557,7 @@ const handleOrderSuccess = async ({
           city: formData.billingAddress.city,
           state: formData.billingAddress.state || formData.billingAddress.province || '',
           postal_code: formData.billingAddress.postalCode,
-          country: getStripeCountryCode(formData.billingAddress.country || selectedCountry),
+          country: formData.billingAddress.country ,
           name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
           phone: formData.phone || ''
         };
@@ -1617,6 +1617,7 @@ const handleOrderSuccess = async ({
 
     // Handle Stripe payment
     if (paymentMethod === 'credit') {
+      
       const stripeOrderData = {
         line_items: [
           {
