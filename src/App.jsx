@@ -1546,7 +1546,7 @@ const handleOrderSuccess = async ({
       city: formData.shippingAddress.city,
       state: formData.shippingAddress.state || formData.shippingAddress.province || '',
       postal_code: formData.shippingAddress.postalCode,
-      country: formattedCountry,
+      country: selectedCountry,
       name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
       phone: formData.phone || ''
     };
