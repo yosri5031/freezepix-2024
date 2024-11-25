@@ -1677,32 +1677,29 @@ const handleOrderSuccess = async ({
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
-                  name: `Order #${orderData.orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
+                  name: `Order #${orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
                 },
-                unit_amount: Math.round(orderData.totalAmount * 100), // Use totalAmount from orderData (converted to cents)
+                unit_amount: Math.round(total * 100), // Convert total to cents
               },
               quantity: 1, // Single quantity for the total amount
             },
           ],
           mode: 'payment',
-          customer_email: orderData.email, // Use email from orderData
+          customer_email: formData.email,
           metadata: {
-            orderNumber: orderData.orderNumber, // Use orderNumber from orderData
+            orderNumber: orderNumber,
             items: JSON.stringify(orderData.orderItems.map(item => ({
-              name: item.productType || item.name, // Include product name or type
+              name: item.name,
               size: item.size,
               quantity: item.quantity,
               price: item.price,
             }))),
-            discountCode: orderData.discountCode || 'none', // Use discountCode from orderData
-            taxAmount: orderData.taxAmount, // Use taxAmount from orderData
-            shippingFee: orderData.shippingFee, // Use shippingFee from orderData
-            subtotal: orderData.subtotal, // Include subtotal
-            discount: orderData.discount, // Include discount
-            totalAmount: orderData.totalAmount, // Include total
+            discountCode: discountCode || 'none',
+            taxAmount: tax,
+            shippingFee: shippingFee,
           },
-          success_url: `${window.location.origin}/success`,
-          cancel_url: `${window.location.origin}/cart`,
+          
+        
         };
       
         console.log('Stripe Order Data:', stripeOrderData);
