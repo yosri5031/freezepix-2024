@@ -1664,13 +1664,13 @@ const handleOrderSuccess = async ({
         console.log('Tax Amount:', taxAmount);
         const getStripeCouponId = (code) => {
           const coupons = {
-            'MOHAMED': 'XpdyHQW8',
-            'B2B': 'QKan8ge3',
-            'MCF99': 'XOZ66RR2'
+            'MOHAMED': 'promo_1QOzC2KmwKMSxU2Dzexmr58J',
+            'B2B': 'promo_1QOz9yKmwKMSxU2Duc7WtDlu',
+            'MCF99': 'promo_1QOzCvKmwKMSxU2D0ItOujrd'
           };
           return coupons[code?.toUpperCase()];
         };
-
+        
         const stripeOrderData = {
           ...orderData,
           line_items: [
