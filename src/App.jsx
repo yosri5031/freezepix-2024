@@ -1661,7 +1661,6 @@ const handleOrderSuccess = async ({
 
         const stripeOrderData = {
           ...orderData,
-          // If there's a discount, create a coupon line item
           lineItems: [
             // Regular items
             ...orderData.orderItems.map(item => ({
@@ -1669,9 +1668,8 @@ const handleOrderSuccess = async ({
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: `Photo Print - ${item.size}`,
-                  
                 },
-                unit_amount: Math.round(item.price * 100), // Stripe expects amounts in cents
+                unit_amount: Math.round(item.price * 100),
               },
               quantity: item.quantity,
             })),
@@ -1686,19 +1684,37 @@ const handleOrderSuccess = async ({
               },
               quantity: 1,
             }] : []),
-          ],
-          // If there's a discount, add it as a coupon
-          ...(discount > 0 && {
-            discounts: [{
-              coupon: {
-                amount_off: Math.round(discount * 100),
+            // Tax as a separate line item if applicable
+            ...(taxAmount > 0 ? [{
+              price_data: {
                 currency: orderData.currency.toLowerCase(),
-                name: discountCode ? `Discount (${discountCode})` : 'Discount',
-                duration: 'once'
-              }
-            }]
-          })
+                product_data: {
+                  name: 'Tax',
+                },
+                unit_amount: Math.round(taxAmount * 100),
+              },
+              quantity: 1,
+            }] : []),
+            // Discount as a separate line item if applicable
+            ...(discount > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: discountCode ? `Discount (${discountCode})` : 'Discount',
+                },
+                unit_amount: Math.round(discount * 100),
+                unit_amount_decimal: (Math.round(discount * 100)).toString(),
+                tax_behavior: 'exclusive',
+                adjustable_quantity: {
+                  enabled: false
+                }
+              },
+              quantity: -1, // Using negative quantity instead of negative amount
+            }] : []),
+          ],
+          // Remove the discounts property since we're handling it as a line item
         };
+        
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
         if (!checkoutSession?.url) {
