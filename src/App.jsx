@@ -1677,29 +1677,32 @@ const handleOrderSuccess = async ({
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
-                  name: `Order #${orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
+                  name: `Order #${orderData.orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
                 },
-                unit_amount: Math.round(total * 100), // Convert total to cents
+                unit_amount: Math.round(orderData.totalAmount * 100), // Use totalAmount from orderData (converted to cents)
               },
               quantity: 1, // Single quantity for the total amount
             },
           ],
           mode: 'payment',
-          customer_email: formData.email,
+          customer_email: orderData.email, // Use email from orderData
           metadata: {
-            orderNumber: orderNumber,
+            orderNumber: orderData.orderNumber, // Use orderNumber from orderData
             items: JSON.stringify(orderData.orderItems.map(item => ({
-              name: item.name,
+              name: item.productType || item.name, // Include product name or type
               size: item.size,
               quantity: item.quantity,
               price: item.price,
             }))),
-            discountCode: discountCode || 'none',
-            taxAmount: tax,
-            shippingFee: shippingFee,
+            discountCode: orderData.discountCode || 'none', // Use discountCode from orderData
+            taxAmount: orderData.taxAmount, // Use taxAmount from orderData
+            shippingFee: orderData.shippingFee, // Use shippingFee from orderData
+            subtotal: orderData.subtotal, // Include subtotal
+            discount: orderData.discount, // Include discount
+            totalAmount: orderData.totalAmount, // Include total
           },
-          
-        
+          success_url: `${window.location.origin}/success`,
+          cancel_url: `${window.location.origin}/cart`,
         };
       
         console.log('Stripe Order Data:', stripeOrderData);
