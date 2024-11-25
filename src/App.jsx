@@ -1711,7 +1711,11 @@ const handleOrderSuccess = async ({
               quantity: 1,
             }] : []),
           ],
-          ...(globalDiscount > 0 ? { discounts: [{ coupon:  getStripeCouponId(discountCode) }] } : {}),
+          ...(globalDiscount > 0 ? {
+            discounts: [{
+              coupon: 'your_discount_coupon_code_here',
+            }]
+          } : {}),
           mode: 'payment',
           customer_email: formData.email,
           metadata: {
