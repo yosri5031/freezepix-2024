@@ -1672,34 +1672,54 @@ const handleOrderSuccess = async ({
         };
 
         const stripeOrderData = {
+          ...orderData,
           line_items: [
-            {
+            // Regular items
+            ...orderData.orderItems.map(item => ({
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
-                  name: `Order #${orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
+                  name: `Photo Print - ${item.size}`,
                 },
-                unit_amount: Math.round(total * 100), // Convert total to cents
+                unit_amount: Math.round(item.price * 100),
               },
-              quantity: 1, // Single quantity for the total amount
-            },
+              quantity: item.quantity,
+            })),
+            // Shipping fee
+            ...(shippingFee > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Shipping Fee',
+                },
+                unit_amount: Math.round(shippingFee * 100),
+              },
+              quantity: 1,
+            }] : []),
+            // Tax
+            ...(taxAmount > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Sales Tax',
+                },
+                unit_amount: Math.round(taxAmount * 100),
+              },
+              quantity: 1,
+            }] : []),
           ],
+          ...(discountCode && getStripeCouponId(discountCode) ? {
+            discounts: [{
+              coupon: getStripeCouponId(discountCode),
+            }]
+          } : {}),
           mode: 'payment',
           customer_email: formData.email,
           metadata: {
             orderNumber: orderNumber,
-            items: JSON.stringify(orderData.orderItems.map(item => ({
-              name: item.name,
-              size: item.size,
-              quantity: item.quantity,
-              price: item.price,
-            }))),
             discountCode: discountCode || 'none',
-            taxAmount: tax,
-            shippingFee: shippingFee,
+            taxAmount: taxAmount || 0,
           },
-          
-        
         };
       
         console.log('Stripe Order Data:', stripeOrderData);
