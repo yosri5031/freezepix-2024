@@ -1503,128 +1503,88 @@ const createStripeCheckoutSession = async (orderData) => {
 };
 
 
-const handleOrderSuccess = async ({ 
-  paymentMethod, 
-  formData, 
+const handleOrderSuccess = async ({
+  paymentMethod,
+  formData,
   selectedCountry,
   selectedPhotos,
   orderNote,
   discountCode,
   isBillingAddressSameAsShipping,
-  stripePaymentMethod = null 
+  stripePaymentMethod = null
 }) => {
   let orderData = null;
   let orderNumber = null;
   let paymentIntent = null;
 
   try {
-    // Validate required fields first
-    if (!formData?.email || 
-      !formData?.shippingAddress?.firstName ||
-      !formData?.shippingAddress?.lastName ||
-      !formData?.shippingAddress?.address ||
-      !formData?.shippingAddress?.city ||
-      !formData?.shippingAddress?.postalCode) {
-    throw new Error('Missing required shipping information');
-  }
-  const getStripeCountryCode = (countryCode) => {
-    const countryMappings = {
-      'USA': 'US',
-  'CAN': 'CA',
-  'TUN': 'TN', 
-  'DEU': 'DE',
-  'FRA': 'FR',
-  'ITA': 'IT',
-  'GBR': 'GB',
-  'ESP': 'ES',
-  'United States': 'US',
-  'Canada': 'CA',
-  'Tunisia': 'TN',
-  'Germany': 'DE',
-  'France': 'FR',
-  'Italy': 'IT',
-  'Spain': 'ES',
-  'United Kingdom': 'GB'
-      // Add other mappings as needed
+    // Validate required fields
+    if (!formData?.email ||
+        !formData?.shippingAddress?.firstName ||
+        !formData?.shippingAddress?.lastName ||
+        !formData?.shippingAddress?.address ||
+        !formData?.shippingAddress?.city ||
+        !formData?.shippingAddress?.postalCode) {
+      throw new Error('Missing required shipping information');
+    }
+    if (!isBillingAddressSameAsShipping) {
+      if (!formData?.billingAddress?.address ||
+          !formData?.billingAddress?.city ||
+          !formData?.billingAddress?.postalCode) {
+        throw new Error('Missing required billing information');
+      }
+    }
+
+    // Resolve country and currency
+    const formattedCountry = getStripeCountryCode(selectedCountry);
+    const country = initialCountries.find(c => c.value === selectedCountry) || {};
+    const currency = country.currency || 'USD';
+
+    // Format addresses
+    const shippingAddress = {
+      line1: formData.shippingAddress.address,
+      city: formData.shippingAddress.city,
+      state: formData.shippingAddress.state || formData.shippingAddress.province || '',
+      postal_code: formData.shippingAddress.postalCode,
+      country: formattedCountry,
+      name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
+      phone: formData.phone || ''
     };
-    return countryMappings[countryCode] || countryCode;
-  };
-
-  // Format shipping address for Stripe
-  const shippingAddress = {
-    line1: formData.shippingAddress?.address || '',
-    city: formData.shippingAddress?.city || '',
-    state: formData.shippingAddress?.state || formData.shippingAddress?.province || '',
-    postal_code: formData.shippingAddress?.postalCode || '',
-    country: selectedCountry || '',
-    name: `${formData.shippingAddress?.firstName || ''} ${formData.shippingAddress?.lastName || ''}`,
-    phone: formData.phone || ''
-  };
-
-  // Format billing address
-  const billingAddress = isBillingAddressSameAsShipping 
-    ? shippingAddress
-    : {
-        line1: formData.billingAddress.address,
-        city: formData.billingAddress.city,
-        state: formData.billingAddress.state || formData.billingAddress.province || '',
-        postal_code: formData.billingAddress.postalCode,
-        country: formData.billingAddress.country || selectedCountry,
-        name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
-        phone: formData.phone || ''
-      };
-
-    setIsProcessingOrder(true);
-    setOrderSuccess(false);
-    setError(null);
-    setUploadProgress(0);
+    const billingAddress = isBillingAddressSameAsShipping
+      ? shippingAddress
+      : {
+          line1: formData.billingAddress.address,
+          city: formData.billingAddress.city,
+          state: formData.billingAddress.state || formData.billingAddress.province || '',
+          postal_code: formData.billingAddress.postalCode,
+          country: getStripeCountryCode(formData.billingAddress.country || selectedCountry),
+          name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
+          phone: formData.phone || ''
+        };
 
     // Generate order number
     orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
-    
+
     // Calculate order totals
-    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
-    const country = initialCountries.find(c => c.value === selectedCountry);
+    const { total, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
 
-    // Process photos with improved batch processing and error handling
-    const processPhotosWithProgress = async () => {
-      try {
-        const optimizedPhotosWithPrices = await processImagesInBatches(
-          selectedPhotos.map(photo => ({
-            ...photo,
-            price: photo.price || calculateItemPrice(photo, country)
-          })),
-          (progress) => {
-            setUploadProgress(Math.round(progress));
-            if (progress % 20 === 0) {
-              saveStateWithCleanup({
-                orderNumber,
-                progress,
-                timestamp: new Date().toISOString()
-              });
-            }
-          }
-        );
-        return optimizedPhotosWithPrices;
-      } catch (processError) {
-        console.error('Photo processing error:', processError);
-        throw new Error(t('errors.photoProcessingFailed'));
-      }
-    };
+    // Process photos
+    const optimizedPhotosWithPrices = await processImagesInBatches(
+      selectedPhotos.map(photo => ({
+        ...photo,
+        price: photo.price || calculateItemPrice(photo, country)
+      })),
+      progress => setUploadProgress(Math.round(progress))
+    );
 
-    const optimizedPhotosWithPrices = await processPhotosWithProgress();
-
-    
     // Construct order data
     orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       shippingAddress,
-      billingAddress: isBillingAddressSameAsShipping
-        ? formData.shippingAddress
-        : formData.billingAddress,
+      billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -1640,327 +1600,72 @@ const handleOrderSuccess = async ({
       shippingFee,
       taxAmount,
       discount,
-      currency: country.currency,
+      currency,
       orderNote: orderNote || '',
-      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'credit'),
+      paymentMethod: formattedCountry === 'TN' ? 'cod' : paymentMethod,
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
-      paymentStatus: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'pending' : 'paid',
+      paymentStatus: formattedCountry === 'TN' ? 'pending' : 'paid',
       customerDetails: {
         name: formData.name,
-        country: selectedCountry
+        country: formattedCountry
       },
       selectedCountry,
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
 
-    
+    // Handle Stripe payment
     if (paymentMethod === 'credit') {
-      let checkoutSession = null;
-  
-      try {
-        console.log('Discount Code:', discountCode);
-        console.log('Tax Amount:', taxAmount);
-        const getStripeCouponId = (code) => {
-          const coupons = {
-            'MOHAMED': 'XpdyHQW8',
-            'B2B': 'QKan8ge3',
-            'MCF99': 'XOZ66RR2'
-          };
-          return coupons[code?.toUpperCase()];
-        };
-
-        const stripeOrderData = {
-          line_items: [
-            {
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: `Order #${orderData.orderNumber} (${orderData.orderItems.length} items)`, // Summary of the order
-                },
-                unit_amount: Math.round(orderData.totalAmount * 100), // Use totalAmount from orderData (converted to cents)
-              },
-              quantity: 1, // Single quantity for the total amount
+      const stripeOrderData = {
+        line_items: [
+          {
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: { name: `Order #${orderData.orderNumber} (${orderData.orderItems.length} items)` },
+              unit_amount: Math.round(orderData.totalAmount * 100)
             },
-          ],
-          mode: 'payment',
-          customer_email: orderData.email, // Use email from orderData
-          metadata: {
-            orderNumber: orderData.orderNumber, // Use orderNumber from orderData
-            items: JSON.stringify(orderData.orderItems.map(item => ({
-              name: item.productType || item.name, // Include product name or type
-              size: item.size,
-              quantity: item.quantity,
-              price: item.price,
-            }))),
-            discountCode: orderData.discountCode || 'none', // Use discountCode from orderData
-            taxAmount: orderData.taxAmount, // Use taxAmount from orderData
-            shippingFee: orderData.shippingFee, // Use shippingFee from orderData
-            subtotal: orderData.subtotal, // Include subtotal
-            discount: orderData.discount, // Include discount
-            totalAmount: orderData.totalAmount, // Include total
-          },
-          success_url: `${window.location.origin}/success`,
-          cancel_url: `${window.location.origin}/cart`,
-        };
-      
-        console.log('Stripe Order Data:', stripeOrderData);
-      
-        checkoutSession = await createStripeCheckoutSession(stripeOrderData);
-        
-        if (!checkoutSession?.url) {
-          throw new Error('Invalid checkout session response: Missing URL');
-        }
-  
-        // Save order data to session storage before redirect
-        sessionStorage.setItem('pendingOrder', JSON.stringify({
+            quantity: 1
+          }
+        ],
+        mode: 'payment',
+        customer_email: orderData.email,
+        metadata: {
           orderNumber: orderData.orderNumber,
-          orderData: orderData
-        }));
-        sessionStorage.setItem('stripeSessionId', checkoutSession.id);
-        
-        // Enhanced iframe detection and redirect handling
-        const handleRedirect = (url) => {
-          return new Promise((resolve, reject) => {
-            // Set a timeout for redirect failure
-            const timeoutId = setTimeout(() => {
-              reject(new Error('Redirect timeout after 5000ms'));
-            }, 5000);
-  
-            try {
-              // Check if we're in an iframe
-              const isInIframe = window.self !== window.top;
-              
-              if (isInIframe) {
-                // First try: Direct parent redirect with try-catch
-                try {
-                  window.parent.location.href = url;
-                  clearTimeout(timeoutId);
-                  resolve(true);
-                } catch (directRedirectError) {
-                  console.warn('Direct parent redirect failed, attempting postMessage:', directRedirectError);
-                  
-                  // Second try: postMessage with confirmation
-                  const messageHandler = (event) => {
-                    if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
-                      window.removeEventListener('message', messageHandler);
-                      clearTimeout(timeoutId);
-                      resolve(true);
-                    }
-                  };
-  
-                  window.addEventListener('message', messageHandler);
-                  
-                  // Send message to parent with all necessary data
-                  window.parent.postMessage({
-                    type: 'STRIPE_REDIRECT',
-                    url: url,
-                    sessionId: checkoutSession.id,
-                    orderNumber: orderData.orderNumber
-                  }, '*');
-  
-                  // Don't resolve here - wait for confirmation or timeout
-                }
-              } else {
-                // Not in iframe, do regular redirect
-                window.location.href = url;
-                clearTimeout(timeoutId);
-                resolve(true);
-              }
-            } catch (error) {
-              clearTimeout(timeoutId);
-              reject(new Error(`Redirect failed: ${error.message}`));
-            }
-          });
-        };
-  
-        try {
-          await handleRedirect(checkoutSession.url);
-          return; // Successful redirect
-        } catch (redirectError) {
-          console.error('Redirect failed:', redirectError);
-          throw new Error(`Failed to redirect to payment page: ${redirectError.message}`);
-        }
-  
-      } catch (stripeError) {
-        console.error('Stripe checkout error:', stripeError);
-        
-        // Enhanced error logging with null check for checkoutSession
-        const errorDetails = {
-          message: stripeError.message,
-          isInIframe: window.self !== window.top,
-          sessionData: checkoutSession || 'Session creation failed',
-          timestamp: new Date().toISOString(),
-          orderNumber: orderData.orderNumber,
-          paymentMethod: paymentMethod,
-          country: selectedCountry
-        };
-        
-        console.error('Detailed checkout error:', errorDetails);
-        
-        // Save error state for recovery with more context
-        try {
-          await saveStateWithCleanup({
-            checkoutError: errorDetails,
-            recoveryData: {
-              orderNumber: orderData.orderNumber,
-              timestamp: new Date().toISOString(),
-              lastAttemptedStep: checkoutSession ? 'redirect' : 'session_creation'
-            }
-          });
-        } catch (storageError) {
-          console.warn('Failed to save checkout error state:', storageError);
-        }
-        
-        // Set more specific error message based on the failure point
-        const errorMessage = checkoutSession 
-          ? 'Payment redirect failed. Please try again.'
-          : 'Unable to initialize payment. Please try again.';
-        
-        setError(errorMessage);
-        throw stripeError;
-      }
+          items: JSON.stringify(orderData.orderItems.map(item => ({
+            name: item.productType || item.name,
+            size: item.size,
+            quantity: item.quantity,
+            price: item.price
+          }))),
+          discountCode: orderData.discountCode || 'none',
+          taxAmount: orderData.taxAmount,
+          shippingFee: orderData.shippingFee,
+          subtotal: orderData.subtotal,
+          discount: orderData.discount,
+          totalAmount: orderData.totalAmount
+        },
+        success_url: `${window.location.origin}/success`,
+        cancel_url: `${window.location.origin}/cart`
+      };
+
+      const checkoutSession = await createStripeCheckoutSession(stripeOrderData);
+      if (!checkoutSession?.url) throw new Error('Invalid Stripe session URL');
+      
+      await handleRedirect(checkoutSession.url);
     }
 
-    // Submit order with retry mechanism
-    const maxRetries = 3;
-    let retryCount = 0;
-    let responses;
-
-    while (retryCount < maxRetries) {
-      try {
-        responses = await submitOrderWithOptimizedChunking(orderData);
-        if (responses && responses.length > 0) {
-          break;
-        }
-        throw new Error('Empty response received');
-      } catch (submitError) {
-        retryCount++;
-        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
-        
-        if (retryCount === maxRetries) {
-          throw new Error(t('errors.orderSubmissionFailed'));
-        }
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-      }
-    }
-
-    // Send confirmation email with retry
-    let emailSent = false;
-    retryCount = 0;
-    
-    while (retryCount < maxRetries && !emailSent) {
-      try {
-        await sendOrderConfirmationEmail({
-          ...orderData,
-          orderItems: orderData.orderItems.map(item => ({
-            ...item,
-            file: undefined,
-            thumbnail: item.thumbnail
-          }))
-        });
-        emailSent = true;
-      } catch (emailError) {
-        retryCount++;
-        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-        }
-      }
-    }
+    // Submit order and send confirmation email
+    await submitOrderWithOptimizedChunking(orderData);
+    await sendOrderConfirmationEmail(orderData);
 
     setOrderSuccess(true);
-    console.log('Order created successfully:', {
-      orderNumber,
-      totalItems: orderData.orderItems.length,
-      responses
-    });
-
-    // Cleanup
-    try {
-      clearStateChunks();
-      await saveStateWithCleanup({
-        orderNumber,
-        orderDate: new Date().toISOString(),
-        totalAmount: total,
-        currency: country.currency,
-        itemCount: orderData.orderItems.length,
-        customerEmail: formData.email
-      });
-      setSelectedPhotos([]);
-    } catch (cleanupError) {
-      console.warn('Post-order cleanup warning:', cleanupError);
-    }
-
   } catch (error) {
     console.error('Order Processing Error:', error);
-
-    // Attempt to rollback/cleanup any partial processing
-    try {
-      if (paymentIntent?.id) {
-        await stripe.cancelPaymentIntent(paymentIntent.id);
-      }
-    } catch (rollbackError) {
-      console.error('Rollback failed:', rollbackError);
-    }
-
-    let errorMessage = t('errors.genericError');
-    
-    if (error.response?.data?.details) {
-      errorMessage = error.response.data.details;
-    } else if (error.response?.data?.error) {
-      errorMessage = error.response.data.error;
-    } else if (error.message) {
-      errorMessage = error.message
-        .replace('TypeError:', '')
-        .replace('Error:', '')
-        .trim();
-    }
-
-    setError(errorMessage);
-    setOrderSuccess(false);
-
-    if (typeof trackError === 'function') {
-      trackError({
-        error,
-        orderNumber,
-        context: 'handleOrderSuccess',
-        timestamp: new Date().toISOString()
-      });
-    }
-
-    // Save error state for recovery
-    try {
-      await saveStateWithCleanup({
-        failedOrderNumber: orderNumber,
-        errorMessage,
-        timestamp: new Date().toISOString(),
-        recoveryData: {
-          formData,
-          selectedPhotos: selectedPhotos?.map(photo => ({
-            id: photo.id,
-            thumbnail: photo.thumbnail,
-            price: photo.price,
-            quantity: photo.quantity,
-            size: photo.size
-          }))
-        }
-      });
-    } catch (storageError) {
-      console.warn('Failed to save error state:', storageError);
-    }
-
-    throw error; // Re-throw to be handled by the form
-
+    setError(error.message || 'Something went wrong. Please try again.');
   } finally {
     setIsProcessingOrder(false);
     setUploadProgress(0);
-    
-    if (orderSuccess) {
-      clearStateStorage();
-    }
   }
 };
 const CheckoutButton = ({ 
