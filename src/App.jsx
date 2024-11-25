@@ -1457,6 +1457,8 @@ const createStripeCheckoutSession = async (orderData) => {
           // Send shippingFee as a separate field
           shippingFee: orderData.shippingFee,
           taxAmount: orderData.taxAmount,
+          discount: orderData.discount,
+          discountCode: orderData.discountCode,
           customerEmail: orderData.email,
           orderNumber: orderData.orderNumber,
           customerName: orderData.customerDetails.name,
@@ -1658,16 +1660,9 @@ const handleOrderSuccess = async ({
       let checkoutSession = null;
   
       try {
-        // Map discount codes to their Stripe coupon IDs
-        const getStripeCouponId = (code) => {
-          const coupons = {
-            'MOHAMED': 'promo_1QOzC2KmwKMSxU2Dzexmr58J',  // Replace with actual ID from Stripe
-            'B2B': 'promo_1QOz9yKmwKMSxU2Duc7WtDlu',     // Replace with actual ID from Stripe
-            'MCF99': 'promo_1QOzCvKmwKMSxU2D0ItOujrd'      // Replace with actual ID from Stripe
-          };
-          return coupons[code?.toUpperCase()];
-        };
-  
+        console.log('Discount Code:', discountCode);
+        console.log('Tax Amount:', taxAmount);
+        
         const stripeOrderData = {
           ...orderData,
           line_items: [
@@ -1705,27 +1700,22 @@ const handleOrderSuccess = async ({
               quantity: 1,
             }] : []),
           ],
-          // Apply coupon if discount code exists
-          ...(discountCode && {
+          ...(discountCode && getStripeCouponId(discountCode) ? {
             discounts: [{
               coupon: getStripeCouponId(discountCode),
             }]
-          }),
-          allow_promotion_codes: false,
+          } : {}),
           mode: 'payment',
           customer_email: formData.email,
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
-            taxAmount: taxAmount
-          }
+            taxAmount: taxAmount || 0,
+          },
         };
-  
-        // Validate coupon before creating session
-        if (discountCode && !getStripeCouponId(discountCode)) {
-          throw new Error('Invalid discount code');
-        }
-        
+      
+        console.log('Stripe Order Data:', stripeOrderData);
+      
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
         if (!checkoutSession?.url) {
