@@ -1602,13 +1602,13 @@ const handleOrderSuccess = async ({
       discount,
       currency,
       orderNote: orderNote || '',
-      paymentMethod: selectedCountry === 'TN' ? 'cod' : paymentMethod,
+      paymentMethod: formattedCountry === 'TN' ? 'cod' : paymentMethod,
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
-      paymentStatus: selectedCountry === 'TN' ? 'pending' : 'paid',
+      paymentStatus: formattedCountry === 'TN' ? 'pending' : 'paid',
       customerDetails: {
         name: formData.name,
-        country: selectedCountry
+        country: formattedCountry
       },
       selectedCountry,
       discountCode: discountCode || null,
