@@ -1722,89 +1722,70 @@ const handleOrderSuccess = async ({
           return coupons[code?.toUpperCase()];
         };
         
-        // Function to calculate tax for a specific country and province
-const calculateTax = (country, province, subtotal) => {
-  if (country === 'CA') {
-    const provinceTaxRates = TAX_RATES.CA[province] || {};
-    
-    // Sum all tax rates for the province
-    const totalTaxRate = Object.values(provinceTaxRates).reduce((sum, rate) => sum + rate, 0) / 100;
-    
-    return subtotal * totalTaxRate;
-  } 
-  
-  // No tax for other countries
-  return 0;
-};
-
-// Calculate subtotal of items
-const itemSubtotal = orderData.orderItems.reduce((total, item) => 
-  total + (item.price * item.quantity), 0);
-
-// Calculate tax amount
-const tax = calculateTax(selectedCountry, orderData.billingAddress.province, itemSubtotal);
-
-const stripeOrderData = {
-  ...orderData,
-  line_items: [
-    // Regular photo items
-    ...orderData.orderItems.map(item => ({
-      price_data: {
-        currency: orderData.currency.toLowerCase(),
-        product_data: {
-          name: `Photo Print - ${item.size}`,
-        },
-        unit_amount: Math.round(item.price * 100),
-      },
-      quantity: item.quantity,
-    })),
-    
-    // Shipping fee (if applicable)
-    ...(shippingFee > 0 ? [{
-      price_data: {
-        currency: orderData.currency.toLowerCase(),
-        product_data: {
-          name: 'Shipping Fee',
-        },
-        unit_amount: Math.round(shippingFee * 100),
-      },
-      quantity: 1,
-    }] : []),
-    
-    
-  ],
-  
-  mode: 'payment',
-  customer_email: formData.email,
-  
-  metadata: {
-    orderNumber: orderNumber,
-    discountCode: discountCode || 'none',
-    taxAmount: taxAmount || 0,
-    shippingFee: shippingFee || 0,
-    country: selectedCountry,
-    province: orderData.billingAddress.province
-  },
-  
-  
-  
-  success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${window.location.origin}/order-cancel`,
-};
-
-// Debug logging with detailed tax information
-console.log('Stripe Checkout Session Data:', {
-  country: orderData.country,
-  province: orderData.province,
-  isTaxApplicable: taxAmount > 0,
-  currency: orderData.currency,
-  lineItemCount: stripeOrderData.line_items.length,
-  subtotal: itemSubtotal,
-  taxAmount: taxAmount,
-  taxRate: taxAmount > 0 ? (taxAmount / itemSubtotal * 100).toFixed(2) + '%' : 'N/A',
-  shippingFee,
-  taxRateId: orderData.country === 'CA' ? process.env.STRIPE_CAN_TAX_RATE_ID : 'N/A'
-});
+        const stripeOrderData = {
+          ...orderData,
+          line_items: [
+            // Regular items
+            ...orderData.orderItems.map(item => ({
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: `Photo Print - ${item.size}`,
+                },
+                unit_amount: Math.round(item.price * 100), // Convert to cents
+              },
+              quantity: item.quantity,
+            })),
+            
+            // Shipping fee (if applicable)
+            ...(shippingFee > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Shipping Fee',
+                },
+                unit_amount: Math.round(shippingFee * 100), // Convert to cents
+              },
+              quantity: 1,
+            }] : []),
+            
+            // Tax (explicitly added)
+            ...(taxAmount > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Sales Tax',
+                },
+                unit_amount: Math.round(taxAmount * 100), // Convert to cents
+              },
+              quantity: 1,
+            }] : []),
+          ],
+          
+          // Discount handling
+          ...(discountCode && getStripeCouponId(discountCode) ? {
+            discounts: [{
+              coupon: getStripeCouponId(discountCode),
+            }]
+          } : {}),
+          
+          mode: 'payment',
+          customer_email: formData.email,
+          
+          // Comprehensive metadata
+          metadata: {
+            orderNumber: orderNumber,
+            discountCode: discountCode || 'none',
+            taxAmount: taxAmount || 0,
+            shippingFee: shippingFee || 0,
+            totalAmount: total
+          },
+          
+          // Success and cancel URLs
+          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/order-cancel`,
+        };
+      
         console.log('Stripe Order Data:', stripeOrderData);
       
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
