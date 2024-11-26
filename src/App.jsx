@@ -1771,17 +1771,7 @@ const stripeOrderData = {
       quantity: 1,
     }] : []),
     
-    // Tax line item for Canada
-    ...(orderData.country === 'CA' && taxAmount > 0 ? [{
-      price_data: {
-        currency: orderData.currency.toLowerCase(),
-        product_data: {
-          name: 'Sales Tax',
-        },
-        unit_amount: Math.round(taxAmount * 100),
-      },
-      quantity: 1,
-    }] : [])
+    
   ],
   
   mode: 'payment',
