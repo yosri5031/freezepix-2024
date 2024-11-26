@@ -1762,12 +1762,6 @@ const handleOrderSuccess = async ({
             }] : []),
           ],
           
-          // Discount handling
-          ...(discountCode || discount > 0 ? {
-            discounts: discount > 0 ? [{
-              amount: Math.round(discount * 100)
-            }] : undefined
-          } : {}),
           
           mode: 'payment',
           customer_email: formData.email,
@@ -1776,6 +1770,7 @@ const handleOrderSuccess = async ({
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
+            discount: discount || 0,
             taxAmount: taxAmount || 0,
             shippingFee: shippingFee || 0,
             totalAmount: total
