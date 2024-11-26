@@ -1722,61 +1722,83 @@ const handleOrderSuccess = async ({
           return coupons[code?.toUpperCase()];
         };
         
-        const stripeOrderData = {
-          ...orderData,
-          line_items: [
-            // Regular photo items
-            ...orderData.orderItems.map(item => ({
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: `Photo Print - ${item.size}`,
-                },
-                unit_amount: Math.round(item.price * 100),
-              },
-              quantity: item.quantity,
-            })),
-            
-            // Shipping fee (if applicable)
-            ...(shippingFee > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: 'Shipping Fee',
-                },
-                unit_amount: Math.round(shippingFee * 100),
-              },
-              quantity: 1,
-            }] : []),
-            
-            // Conditional tax line item for Canada
-            ...((selectedCountry === 'CAN' || selectedCountry === 'CA') && taxAmount > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: 'Sales Tax',
-                },
-                unit_amount: Math.round(taxAmount * 100),
-              },
-              quantity: 1,
-            }] : [])
-          ],
-          
-          mode: 'payment',
-          customer_email: formData.email,
-          
-          metadata: {
-            orderNumber: orderNumber,
-            discountCode: discountCode || 'none',
-            taxAmount: taxAmount || 0,
-            shippingFee: shippingFee || 0,
-            country: selectedCountry
-          },
-          
-          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${window.location.origin}/order-cancel`,
-        };
-      
+        // Function to calculate tax for a specific country and province
+const calculateTax = (country, province, subtotal) => {
+  if (country === 'CA') {
+    const provinceTaxRates = TAX_RATES.CA[province] || {};
+    
+    // Sum all tax rates for the province
+    const totalTaxRate = Object.values(provinceTaxRates).reduce((sum, rate) => sum + rate, 0) / 100;
+    
+    return subtotal * totalTaxRate;
+  } 
+  
+  // No tax for other countries
+  return 0;
+};
+
+// Calculate subtotal of items
+const itemSubtotal = orderData.orderItems.reduce((total, item) => 
+  total + (item.price * item.quantity), 0);
+
+// Calculate tax amount
+const tax = calculateTax(selectedCountry, selectedProvince, itemSubtotal);
+
+const stripeOrderData = {
+  ...orderData,
+  line_items: [
+    // Regular photo items
+    ...orderData.orderItems.map(item => ({
+      price_data: {
+        currency: orderData.currency.toLowerCase(),
+        product_data: {
+          name: `Photo Print - ${item.size}`,
+        },
+        unit_amount: Math.round(item.price * 100),
+      },
+      quantity: item.quantity,
+    })),
+    
+    // Shipping fee (if applicable)
+    ...(shippingFee > 0 ? [{
+      price_data: {
+        currency: orderData.currency.toLowerCase(),
+        product_data: {
+          name: 'Shipping Fee',
+        },
+        unit_amount: Math.round(shippingFee * 100),
+      },
+      quantity: 1,
+    }] : []),
+    
+    // Conditional tax line item
+    ...(tax > 0 ? [{
+      price_data: {
+        currency: orderData.currency.toLowerCase(),
+        product_data: {
+          name: 'Sales Tax',
+        },
+        unit_amount: Math.round(tax * 100),
+      },
+      quantity: 1,
+    }] : [])
+  ],
+  
+  mode: 'payment',
+  customer_email: formData.email,
+  
+  metadata: {
+    orderNumber: orderNumber,
+    discountCode: discountCode || 'none',
+    taxAmount: taxAmount || 0,
+    shippingFee: shippingFee || 0,
+    country: selectedCountry,
+    province: selectedProvince
+  },
+  
+  success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${window.location.origin}/order-cancel`,
+};
         console.log('Stripe Order Data:', stripeOrderData);
       
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
