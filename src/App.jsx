@@ -1793,7 +1793,7 @@ const stripeOrderData = {
     taxAmount: taxAmount || 0,
     shippingFee: shippingFee || 0,
     country: selectedCountry,
-    province: selectedProvince
+    province: orderData.billingAddress.province
   },
   
   success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
