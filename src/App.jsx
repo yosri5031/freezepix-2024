@@ -1732,48 +1732,58 @@ const handleOrderSuccess = async ({
                 product_data: {
                   name: `Photo Print - ${item.size}`,
                 },
-                unit_amount: Math.round(item.price * 100),
+                unit_amount: Math.round(item.price * 100), // Convert to cents
               },
               quantity: item.quantity,
             })),
-            // Shipping fee
+            
+            // Shipping fee (if applicable)
             ...(shippingFee > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: 'Shipping Fee',
                 },
-                unit_amount: Math.round(shippingFee * 100),
+                unit_amount: Math.round(shippingFee * 100), // Convert to cents
               },
               quantity: 1,
             }] : []),
-            // Tax
+            
+            // Tax (explicitly added)
             ...(taxAmount > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: 'Sales Tax',
                 },
-                unit_amount: Math.round(taxAmount * 100),
+                unit_amount: Math.round(taxAmount * 100), // Convert to cents
               },
               quantity: 1,
             }] : []),
           ],
+          
+          // Discount handling
           ...(discountCode && getStripeCouponId(discountCode) ? {
             discounts: [{
               coupon: getStripeCouponId(discountCode),
             }]
           } : {}),
+          
           mode: 'payment',
           customer_email: formData.email,
+          
+          // Comprehensive metadata
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
             taxAmount: taxAmount || 0,
+            shippingFee: shippingFee || 0,
+            totalAmount: total
           },
-           // Add these important fields
-    success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${window.location.origin}/order-cancel`,
+          
+          // Success and cancel URLs
+          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/order-cancel`,
         };
       
         console.log('Stripe Order Data:', stripeOrderData);
