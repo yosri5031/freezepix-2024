@@ -1786,7 +1786,7 @@ const handleOrderSuccess = async ({
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
         
         if (!checkoutSession?.url) {
-          throw new Error('Invalid checkout session response: Missing URL');
+          //throw new Error('Invalid checkout session response: Missing URL');
         }
   
         // Save order data to session storage before redirect
