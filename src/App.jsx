@@ -1742,7 +1742,7 @@ const itemSubtotal = orderData.orderItems.reduce((total, item) =>
   total + (item.price * item.quantity), 0);
 
 // Calculate tax amount
-const tax = calculateTax(selectedCountry, selectedProvince, itemSubtotal);
+const tax = calculateTax(selectedCountry, orderData.billingAddress.province, itemSubtotal);
 
 const stripeOrderData = {
   ...orderData,
