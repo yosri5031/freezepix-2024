@@ -1771,14 +1771,14 @@ const stripeOrderData = {
       quantity: 1,
     }] : []),
     
-    // Conditional tax line item
-    ...(tax > 0 ? [{
+    // Tax line item for Canada
+    ...(orderData.country === 'CA' && taxAmount > 0 ? [{
       price_data: {
         currency: orderData.currency.toLowerCase(),
         product_data: {
           name: 'Sales Tax',
         },
-        unit_amount: Math.round(tax * 100),
+        unit_amount: Math.round(taxAmount * 100),
       },
       quantity: 1,
     }] : [])
@@ -1796,9 +1796,25 @@ const stripeOrderData = {
     province: orderData.billingAddress.province
   },
   
+  
+  
   success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
   cancel_url: `${window.location.origin}/order-cancel`,
 };
+
+// Debug logging with detailed tax information
+console.log('Stripe Checkout Session Data:', {
+  country: orderData.country,
+  province: orderData.province,
+  isTaxApplicable: taxAmount > 0,
+  currency: orderData.currency,
+  lineItemCount: stripeOrderData.line_items.length,
+  subtotal: itemSubtotal,
+  taxAmount: taxAmount,
+  taxRate: taxAmount > 0 ? (taxAmount / itemSubtotal * 100).toFixed(2) + '%' : 'N/A',
+  shippingFee,
+  taxRateId: orderData.country === 'CA' ? process.env.STRIPE_CAN_TAX_RATE_ID : 'N/A'
+});
         console.log('Stripe Order Data:', stripeOrderData);
       
         checkoutSession = await createStripeCheckoutSession(stripeOrderData);
