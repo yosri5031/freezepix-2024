@@ -1771,6 +1771,9 @@ const handleOrderSuccess = async ({
             discountCode: discountCode || 'none',
             taxAmount: taxAmount || 0,
           },
+           // Add these important fields
+    success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${window.location.origin}/order-cancel`,
         };
       
         console.log('Stripe Order Data:', stripeOrderData);
