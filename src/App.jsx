@@ -1488,7 +1488,12 @@ const createStripeCheckoutSession = async (orderData) => {
     country: convertCountryCode(shippingAddress.country)
   };
 
+  const maxRetries = 3;
+  let currentTry = 0;
+  while (currentTry < maxRetries) {
   try {
+    
+
     const response = await fetch(
       'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/create-checkout-session',
       {
@@ -1551,6 +1556,8 @@ const createStripeCheckoutSession = async (orderData) => {
     console.error('Error creating checkout session:', error);
     throw error;
   }
+
+};
 };
 
 
