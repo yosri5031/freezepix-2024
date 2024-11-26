@@ -1725,14 +1725,14 @@ const handleOrderSuccess = async ({
         const stripeOrderData = {
           ...orderData,
           line_items: [
-            // Regular items
+            // Regular photo items
             ...orderData.orderItems.map(item => ({
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: `Photo Print - ${item.size}`,
                 },
-                unit_amount: Math.round(item.price * 100), // Convert to cents
+                unit_amount: Math.round(item.price * 100),
               },
               quantity: item.quantity,
             })),
@@ -1744,44 +1744,35 @@ const handleOrderSuccess = async ({
                 product_data: {
                   name: 'Shipping Fee',
                 },
-                unit_amount: Math.round(shippingFee * 100), // Convert to cents
+                unit_amount: Math.round(shippingFee * 100),
               },
               quantity: 1,
             }] : []),
             
-            // Tax (explicitly added)
-            ...(taxAmount > 0 ? [{
+            // Conditional tax line item for Canada
+            ...((selectedCountry === 'CAN' || selectedCountry === 'CA') && taxAmount > 0 ? [{
               price_data: {
                 currency: orderData.currency.toLowerCase(),
                 product_data: {
                   name: 'Sales Tax',
                 },
-                unit_amount: Math.round(taxAmount * 100), // Convert to cents
+                unit_amount: Math.round(taxAmount * 100),
               },
               quantity: 1,
-            }] : []),
+            }] : [])
           ],
-          
-          // Discount handling
-          ...(discountCode && getStripeCouponId(discountCode) ? {
-            discounts: [{
-              coupon: getStripeCouponId(discountCode),
-            }]
-          } : {}),
           
           mode: 'payment',
           customer_email: formData.email,
           
-          // Comprehensive metadata
           metadata: {
             orderNumber: orderNumber,
             discountCode: discountCode || 'none',
             taxAmount: taxAmount || 0,
             shippingFee: shippingFee || 0,
-            totalAmount: total
+            country: selectedCountry
           },
           
-          // Success and cancel URLs
           success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
           cancel_url: `${window.location.origin}/order-cancel`,
         };
