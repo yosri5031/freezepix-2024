@@ -2274,11 +2274,11 @@ const CheckoutButton = ({
 
     // Calculate discount if applicable 
     const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
-    ? ((subtotal + shippingFee) * 0.5)
+    ? (subtotal * 0.5)
     : (discountCode.toUpperCase() === 'MCF99') 
-        ? ((subtotal + shippingFee) * 0.99)
+        ? (subtotal  * 0.99)
         : (discountCode.toUpperCase() === 'ABCC') 
-            ? ((subtotal + shippingFee) * 0.1) // 10% discount for "ABCC"
+            ? (subtotal  * 0.1) // 10% discount for "ABCC"
             : 0;  // Calculate tax based on location, including shipping feee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
