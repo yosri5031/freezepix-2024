@@ -302,55 +302,106 @@ const [interacReference, setInteracReference] = useState('');
       }, [selectedCountry]);
 
       // Add this useEffect in your component to handle the return from Stripe
-useEffect(() => {
-  const validateStripePayment = async () => {
-    const sessionId = new URLSearchParams(window.location.search).get('session_id');
-    const pendingOrder = sessionStorage.getItem('pendingOrder');
-
-    if (sessionId && pendingOrder) {
-      try {
-        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            sessionId,
-            orderNumber: JSON.parse(pendingOrder).orderNumber
-          }),
-        });
-
-        const result = await response.json();
-
-        if (result.success) {
-          // Payment successful
-          const orderData = JSON.parse(pendingOrder).orderData;
+      useEffect(() => {
+        const validateStripePayment = async () => {
+          const sessionId = new URLSearchParams(window.location.search).get('session_id');
+          const pendingOrder = sessionStorage.getItem('pendingOrder');
           
-          // Send confirmation email
-          await sendOrderConfirmationEmail(orderData);
-          
-          // Update UI state
-          setOrderSuccess(true);
-          setSelectedPhotos([]);
-          setError(null);
-
-          // Clear session storage
-          sessionStorage.removeItem('pendingOrder');
-          sessionStorage.removeItem('stripeSessionId');
-        } else {
-          setError('Payment verification failed');
-          setOrderSuccess(false);
-        }
-      } catch (error) {
-        console.error('Payment validation error:', error);
-        setError('Failed to verify payment');
-        setOrderSuccess(false);
-      }
-    }
-  };
-
-  validateStripePayment();
-}, []);
+          if (sessionId && pendingOrder) {
+            try {
+              const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-payment', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  sessionId,
+                  orderNumber: JSON.parse(pendingOrder).orderNumber
+                }),
+              });
+              
+              const result = await response.json();
+              
+              if (result.success) {
+                const orderData = JSON.parse(pendingOrder).orderData;
+                
+                // Add chunk-based order submission here
+                const maxRetries = 3;
+                let retryCount = 0;
+                let responses;
+     
+                while (retryCount < maxRetries) {
+                  try {
+                    responses = await submitOrderWithOptimizedChunking(orderData);
+                    if (responses && responses.length > 0) {
+                      break;
+                    }
+                    throw new Error('Empty response received');
+                  } catch (submitError) {
+                    retryCount++;
+                    console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+                    
+                    if (retryCount === maxRetries) {
+                      throw new Error('Order submission failed');
+                    }
+                    // Exponential backoff
+                    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+                  }
+                }
+     
+                // Send confirmation email with retry mechanism
+                let emailSent = false;
+                retryCount = 0;
+                
+                while (retryCount < maxRetries && !emailSent) {
+                  try {
+                    await sendOrderConfirmationEmail({
+                      ...orderData,
+                      orderItems: orderData.orderItems.map(item => ({
+                        ...item,
+                        file: undefined,
+                        thumbnail: item.thumbnail
+                      }))
+                    });
+                    emailSent = true;
+                  } catch (emailError) {
+                    retryCount++;
+                    console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+                    if (retryCount < maxRetries) {
+                      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+                    }
+                  }
+                }
+     
+                // Update UI state
+                setOrderSuccess(true);
+                setSelectedPhotos([]);
+                setError(null);
+                
+                // Clear session storage
+                sessionStorage.removeItem('pendingOrder');
+                sessionStorage.removeItem('stripeSessionId');
+     
+                // Log successful order creation
+                console.log('Order created successfully:', {
+                  orderNumber: orderData.orderNumber,
+                  totalItems: orderData.orderItems.length,
+                  responses
+                });
+              } else {
+                setError('Payment verification failed');
+                setOrderSuccess(false);
+              }
+            } catch (error) {
+              console.error('Payment validation or order submission error:', error);
+              setError('Failed to verify payment or submit order');
+              setOrderSuccess(false);
+            }
+          }
+        };
+     
+        validateStripePayment();
+     }, []);
 
       const updateFormData = (field, value) => {
         setFormData(prev => ({
