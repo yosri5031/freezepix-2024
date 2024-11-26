@@ -1763,10 +1763,10 @@ const handleOrderSuccess = async ({
           ],
           
           // Discount handling
-          ...(discountCode && getStripeCouponId(discountCode) ? {
-            discounts: [{
-              coupon: getStripeCouponId(discountCode),
-            }]
+          ...(discountCode || discount > 0 ? {
+            discounts: discount > 0 ? [{
+              amount: Math.round(discount * 100)
+            }] : undefined
           } : {}),
           
           mode: 'payment',
