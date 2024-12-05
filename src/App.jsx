@@ -2157,8 +2157,14 @@ const CheckoutButton = ({
             if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
               setIsLoading(true);
               await handleOrderSuccess({
-                paymentMethod: 'cod'
-            });
+                paymentMethod: 'cod', // or whatever payment method
+                formData: formData,
+                selectedCountry: selectedCountry,
+                selectedPhotos: selectedPhotos,
+                orderNote: orderNote,
+                discountCode: discountCode,
+                isBillingAddressSameAsShipping: isBillingAddressSameAsShipping,
+              });
             } else {
               setActiveStep(prev => prev + 1);
             }
