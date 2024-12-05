@@ -886,7 +886,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
         city: orderData?.shippingAddress?.city || '',
         state: orderData?.shippingAddress?.state || '',
         province: orderData?.shippingAddress?.province || '',
-        postalCode: orderData?.shippingAddress?.postalCode || '',
+        postalCode: orderData?.shippingAddress?.postalCode || orderData?.billingAddress?.postalCode || '',
         country: orderData?.shippingAddress?.country || ''
       },
       phone: orderData.phone || 'N/A',
