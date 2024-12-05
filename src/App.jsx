@@ -2156,7 +2156,9 @@ const CheckoutButton = ({
           if (activeStep === 2) {
             if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
               setIsLoading(true);
-              await handleOrderSuccess();
+              await handleOrderSuccess({
+                paymentMethod: 'cod'
+            });
             } else {
               setActiveStep(prev => prev + 1);
             }
