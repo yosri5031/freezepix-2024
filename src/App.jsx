@@ -880,9 +880,9 @@ const sendOrderConfirmationEmail = async (orderData) => {
       orderNumber: orderData.orderNumber || 'N/A',
       email: orderData.email || 'N/A',
       shippingAddress: {
-        firstName: orderData?.shippingAddress?.firstName || '',
-        lastName: orderData?.shippingAddress?.lastName || '',
-        address: orderData?.shippingAddress?.address || '',
+        firstName: orderData?.shippingAddress?.firstName || orderData?.billingAddress?.firstName || '',
+        lastName: orderData?.shippingAddress?.lastName || orderData?.billingAddress?.lastName || '',
+        address: orderData?.shippingAddress?.address || orderData?.billingAddress?.address || '',
         city: orderData?.shippingAddress?.city || '',
         state: orderData?.shippingAddress?.state || '',
         province: orderData?.shippingAddress?.province || '',
