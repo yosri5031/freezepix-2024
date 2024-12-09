@@ -1,6 +1,7 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
+import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
@@ -2998,43 +2999,46 @@ const validateStep = () => {
 const { t } = useTranslation();
 
   
-  if (showIntro) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="max-w-xl w-full mx-4">
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+if (showIntro) {
+  return (
+    <div className="app-container bg-gray-50">
+      <div className="main-content flex items-center justify-center">
+        <div className="grid-container">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-6xl w-full mx-auto">
             <div className="text-center p-8 space-y-6">
               {/* Logo Section */}
-              <div className="flex justify-center mb-6">
+              <div className="flex justify-between items-center px-4">
                 <div className="text-4xl font-bold tracking-tight">
                   <span className="text-black">freeze</span>
                   <span className="text-yellow-400">PIX</span>
                 </div>
+                <LanguageSelector />
               </div>
+
               <div className="text-sm italic text-gray-600 mb-8">
-              {t('intro.welcome')}
-              <p> <LanguageSelector /> </p>
+                {t('intro.welcome')}
               </div>
               
-              <div className="space-y-6 max-w-md mx-auto">
+              <div className="space-y-6 max-w-3xl mx-auto">
                 <h2 className="text-2xl font-semibold text-gray-800">
-                {t('intro.title')}
+                  {t('intro.title')}
                 </h2>
                 
                 <p className="text-gray-600">
-                {t('intro.subtitle')}                </p>
+                  {t('intro.subtitle')}
+                </p>
       
-                <div className="flex justify-center space-x-4 py-4">
+                <div className="grid grid-cols-3 gap-8 py-4">
                   <div className="text-center">
-                    <Camera className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <Camera className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
                     <div className="text-sm text-gray-600">{t('navigation.choose_photos')}</div>
                   </div>
                   <div className="text-center">
-                    <Package className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <Package className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
                     <div className="text-sm text-gray-600">{t('navigation.select_sizes')}</div>
                   </div>
                   <div className="text-center">
-                    <ShoppingCart className="w-8 h-8 mx-auto mb-2 text-yellow-400" />
+                    <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
                     <div className="text-sm text-gray-600">{t('navigation.quick_checkout')}</div>
                   </div>
                 </div>
@@ -3043,7 +3047,7 @@ const { t } = useTranslation();
                   <p className="text-gray-600 mt-2">{t('navigation.location')}</p>
                 </div>
                 
-                <div className="space-y-4">
+                <div className="max-w-xl mx-auto space-y-4">
                   <select 
                     className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
                     value={selectedCountry}
@@ -3058,17 +3062,17 @@ const { t } = useTranslation();
                   </select>
   
                   <button
-  onClick={() => {
-    if (selectedCountry) {
-      handleCountrySelect(selectedCountry);
-      handleStartPrinting(); // Call handleStartPrinting if selectedCountry is available
-    }
-  }}
-  disabled={!selectedCountry}
-  className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
->
-{t('buttons.start_printing')}
-</button>
+                    onClick={() => {
+                      if (selectedCountry) {
+                        handleCountrySelect(selectedCountry);
+                        handleStartPrinting();
+                      }
+                    }}
+                    disabled={!selectedCountry}
+                    className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {t('buttons.start_printing')}
+                  </button>
   
                   <div className="text-center">
                     <button 
@@ -3085,35 +3089,37 @@ const { t } = useTranslation();
             {/* Archive Policy */}
             <div className="border-t text-center py-3">
               <p className="text-xs text-gray-500">
-              {t('intro.archive_policy')}              </p>
+                {t('intro.archive_policy')}
+              </p>
             </div>
           </div>
-  
-          {/* Booking Popup */}
-          {showBookingPopup && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-              <div className="relative bg-white rounded-lg w-[95%] max-w-xl h-[90vh] max-h-[600px] m-auto">
-                <button 
-                  onClick={() => setShowBookingPopup(false)}
-                  className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
-                  aria-label="Close"
-                >
-                  <X size={24} />
-                </button>
-                
-                <iframe
-                  src="https://freezepix.setmore.com/"
-                  title="Book Photography Service"
-                  className="w-full h-full rounded-lg"
-                  style={{ maxWidth: '100%', maxHeight: '100%' }}
-                />
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Booking Popup */}
+        {showBookingPopup && (
+          <div className="modal-container">
+            <div className="modal-content relative max-w-4xl h-[90vh] max-h-[600px]">
+              <button 
+                onClick={() => setShowBookingPopup(false)}
+                className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
+                aria-label="Close"
+              >
+                <X size={24} />
+              </button>
+              
+              <iframe
+                src="https://freezepix.setmore.com/"
+                title="Book Photography Service"
+                className="w-full h-full rounded-lg"
+                style={{ maxWidth: '100%', maxHeight: '100%' }}
+              />
+            </div>
+          </div>
+        )}
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   if (orderSuccess) {
     return (

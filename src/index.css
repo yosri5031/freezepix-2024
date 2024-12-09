@@ -1,3 +1,59 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom styles */
+@layer components {
+  .app-container {
+    @apply w-full max-w-full m-0 p-0 min-h-screen flex flex-col;
+  }
+
+  .main-content {
+    @apply flex-1 w-full p-5 box-border;
+  }
+
+  .grid-container {
+    @apply grid gap-5 w-full;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+
+  .product-grid {
+    @apply grid gap-5 w-full;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+
+  .form-container {
+    @apply max-w-full mx-auto;
+  }
+
+  .product-image {
+    @apply w-full h-auto object-cover;
+  }
+
+  .modal-container {
+    @apply fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50;
+  }
+
+  .modal-content {
+    @apply bg-white p-5 rounded-lg w-[95%] max-w-[1200px] max-h-[90vh] overflow-y-auto;
+  }
+}
+
+/* Media queries */
+@media (min-width: 1024px) {
+  .form-container {
+    @apply w-full grid gap-8;
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .modal-content {
+    @apply w-[95%] p-4;
+  }
+  
+  .grid-container,
+  .product-grid {
+    grid-template-columns: 1fr;
+  }
+}
