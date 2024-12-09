@@ -3013,11 +3013,12 @@ if (showIntro) {
                   <span className="text-yellow-400">PIX</span>
                 </div>
                 <LanguageSelector />
-              </div>
-
-              <div className="text-sm italic text-gray-600 mb-8">
+                <div className="text-sm italic text-gray-600 mb-8">
                 {t('intro.welcome')}
               </div>
+              </div>
+
+              
               
               <div className="space-y-6 max-w-3xl mx-auto">
                 <h2 className="text-2xl font-semibold text-gray-800">
