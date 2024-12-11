@@ -42,7 +42,7 @@ const initialCountries = [
     currency: 'USD', 
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
-    size5x7: 1.99,        // Updated from 1.49
+    size5x7: 2.99,        // Updated from 1.49
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
     keychain: 9.99, 
@@ -52,17 +52,13 @@ const initialCountries = [
     currency: 'CAD', 
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
-    size5x7: 1.99,        // Updated from 1.49
+    size5x7: 2.99,        // Updated from 1.49
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
     keychain: 9.99, 
     keyring_magnet: 9.99  },
   { name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
-  { name: 'Germany', value: 'DE', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'France', value: 'FR', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'Italy', value: 'IT', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'Spain', value: 'ES', currency: 'EUR', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 },
-  { name: 'United Kingdom', value: 'GB', currency: 'GBP', rate: 1, size4x6: 0.39, size5x7: 1.49, crystal3d: 140, keychain: 9.99, keyring_magnet: 9.99, shippingFee: 9 }
+  
 ];
 
 const TAX_RATES = {
@@ -2271,16 +2267,16 @@ const CheckoutButton = ({
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
 
     // Calculate shipping fee based on country 
-    let shippingFee = 0;
+    let shippingFee = 20;
     const isOrderOverThreshold = subtotal >= 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
             shippingFee = 8; // 8 TND for Tunisia
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-            shippingFee = 9; // 9$ for USA
+            shippingFee = 20; // 9$ for USA
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 9; // 9$ for Canada
+            shippingFee = 20; // 9$ for Canada
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
             shippingFee = 9; // 9£ for United Kingdom
         } else if (['DEU', 'FRA', 'ITA', 'ESP','DE','FR','IT','ES'].includes(selectedCountry)) {

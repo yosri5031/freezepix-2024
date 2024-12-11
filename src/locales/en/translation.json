@@ -54,7 +54,7 @@
       "cod": " Your order will be processed as Cash on Delivery (COD)",
       "discount" : "Discount Code",
       "summary": "Order Summary",
-      "shipping_fee": "Shipping Fee"
+      "shipping_fee": "Shipping and handling"
     },
     "validation": {
       "contact_info": "Contact Information",

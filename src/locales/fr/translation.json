@@ -54,7 +54,7 @@
       "cod": " livraison à domicile",
       "discount" : "Code de réduction",
       "summary": "Résumé de la commande",
-       "shipping_fee": "Frais d'expédition"
+       "shipping_fee": "Frais de port et de manutention"
     },
     "validation": {
         "contact_info": "Coordonnées",
