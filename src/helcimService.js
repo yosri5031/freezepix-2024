@@ -12,7 +12,7 @@ export const initializeHelcimPayCheckout = async ({
     try {
       const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
         customerData: {
-          name: `${formData.billingAddressAddress?.firstName} ${formData.billingAddress?.lastName}`,
+          name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
           email: formData.email,
           phone: formData.phone,
           address: {
