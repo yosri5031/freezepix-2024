@@ -2459,12 +2459,7 @@ const countryCodeMap = {
   'Spain': 'ES',
   'United Kingdom': 'GB'
 };
-const orderData = {
-  billingAddress: formData.billingAddress,
-  email: formData.email,
-  currency: selectedCountry === 'US' ? 'USD' : 'CAD',
-  orderNumber: currentOrderNumber
-};
+
     switch (activeStep) {
       case 0:
     return (

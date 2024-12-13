@@ -14,6 +14,7 @@ export const initializeHelcimPayCheckout = async ({
         customerData: {
           name: `${orderData.billingAddress?.firstName} ${orderData.billingAddress?.lastName}`,
           email: orderData.email,
+          phone: orderData.phone,
           address: {
             street: orderData.billingAddress?.address,
             city: orderData.billingAddress?.city,
