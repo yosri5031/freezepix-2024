@@ -6,7 +6,7 @@ const HelcimPayButton = ({
     onPaymentSuccess,
     isProcessing,
     disabled,
-    formData, 
+    orderData, 
     selectedCountry, 
     selectedPhotos,
     orderNote,
@@ -136,7 +136,7 @@ const HelcimPayButton = ({
     const handlePayment = async () => {
       try {
         // Initialize checkout
-        await initializeHelcimPayCheckout(formData);
+        await initializeHelcimPayCheckout(orderData);
   
         // Open Helcim Pay modal
         if (window.appendHelcimPayIframe && checkoutToken) {
