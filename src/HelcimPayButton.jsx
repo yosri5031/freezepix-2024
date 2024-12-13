@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { initializeHelcimPayCheckout } from './helcimService';
 
 const HelcimPayButton = ({ 
     onPaymentSuccess,
@@ -72,40 +73,7 @@ const HelcimPayButton = ({
     }, [checkoutToken]);
   
     // Initialize Helcim Pay Checkout
-    const initializeHelcimPayCheckout = async ({
-        formData,
-        selectedCountry,
-        total,
-        subtotalsBySize
-      }) => {
-        try {
-          const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
-            customerData: {
-              name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
-              email: formData.email,
-              phone: formData.phone,
-              address: {
-                street: formData.shippingAddress?.address,
-                city: formData.shippingAddress?.city,
-                province: formData.shippingAddress?.state || formData.shippingAddress?.province,
-                country: selectedCountry,
-                postalCode: formData.shippingAddress?.postalCode
-              }
-            },
-            selectedPhotos: subtotalsBySize,
-            selectedCountry: selectedCountry,
-            total: total
-          });
-      
-          return {
-            checkoutToken: response.data.checkoutToken,
-            secretToken: response.data.secretToken
-          };
-        } catch (error) {
-          console.error('Helcim initialization error:', error);
-          throw new Error('Failed to initialize Helcim payment: ' + (error.response?.data?.message || error.message));
-        }
-      };
+    
   
     // Validate Transaction
     const validateTransaction = async (eventMessage) => {
@@ -168,7 +136,7 @@ const HelcimPayButton = ({
     const handlePayment = async () => {
       try {
         // Initialize checkout
-        await initializeHelcimPayCheckout();
+        await initializeHelcimPayCheckout(formData);
   
         // Open Helcim Pay modal
         if (window.appendHelcimPayIframe && checkoutToken) {
