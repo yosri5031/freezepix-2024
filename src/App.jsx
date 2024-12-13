@@ -24,8 +24,8 @@ const stripe = new Stripe('sk_live_51Nefi9KmwKMSxU2DNSmHypO0KXNtIrudfnpFLY5KsQNS
 });
 //import { sendOrderConfirmation } from './utils/emailService'..;
 
-import {HelcimPayButton , initializeHelcimPayCheckout} from './HelcimPayButton';
-
+import {HelcimPayButton } from './HelcimPayButton';
+import { initializeHelcimPayCheckout } from './helcimService';
 const initialCountries = [
   {name: 'United States', 
     value: 'US', 
@@ -1701,7 +1701,12 @@ const handleOrderSuccess = async ({
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
-
+    const subtotalsBySize = selectedPhotos.reduce((acc, photo) => {
+      const size = photo.size;
+      const amount = (photo.price || 0) * (photo.quantity || 1);
+      acc[size] = (acc[size] || 0) + amount;
+      return acc;
+    }, {});
 
       if (paymentMethod === 'helcim') {
       try {
@@ -2113,6 +2118,23 @@ const cancelHelcimPayment = async (paymentId) => {
     if (orderSuccess) {
       clearStateStorage();
     }
+  }
+};
+const handleHelcimPaymentSuccess = async (helcimPaymentData) => {
+  try {
+    await handleOrderSuccess({
+      paymentMethod: 'helcim',
+      formData,
+      selectedCountry,
+      selectedPhotos,
+      orderNote,
+      discountCode,
+      isBillingAddressSameAsShipping,
+      helcimPaymentData
+    });
+  } catch (error) {
+    console.error('Helcim payment processing error:', error);
+    setError(error.message);
   }
 };
 const CheckoutButton = ({ 
@@ -2690,30 +2712,30 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton 
-      onPaymentSuccess={handleOrderSuccess}
-      isProcessing={isProcessingOrder}
-      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-      formData={formData}
-      selectedCountry={selectedCountry}
-      selectedPhotos={selectedPhotos}
-      orderNote={orderNote}
-      discountCode={discountCode}
-  calculateTotals={calculateTotals} // Pass the function
+                <HelcimPayButton
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  formData={formData}
+  selectedCountry={selectedCountry}
+  selectedPhotos={selectedPhotos}
+  orderNote={orderNote}
+  discountCode={discountCode}
+  calculateTotals={calculateTotals}
   TAX_RATES={TAX_RATES}
   initialCountries={initialCountries}
-      customerData={{
-        name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
-        email: formData.email,
-        address: {
-          street: formData.shippingAddress.address,
-          city: formData.shippingAddress.city,
-          province: formData.shippingAddress.province || formData.shippingAddress.state,
-          country: formData.shippingAddress.country,
-          postalCode: formData.shippingAddress.postalCode
-        }
-      }}
-    />
+  customerData={{
+    name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
+    address: {
+      street: formData.shippingAddress?.address,
+      city: formData.shippingAddress?.city,
+      province: formData.shippingAddress?.state || formData.shippingAddress?.province,
+      country: selectedCountry,
+      postalCode: formData.shippingAddress?.postalCode
+    },
+    email: formData.email
+  }}
+/>
                 </div>
               </div>
             ) : (
@@ -2723,30 +2745,30 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <HelcimPayButton 
-      onPaymentSuccess={handleOrderSuccess}
-      isProcessing={isProcessingOrder}
-      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-      formData={formData}
-      selectedCountry={selectedCountry}
-      selectedPhotos={selectedPhotos}
-      orderNote={orderNote}
-      discountCode={discountCode}
-  calculateTotals={calculateTotals} // Pass the function
+                <HelcimPayButton
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  formData={formData}
+  selectedCountry={selectedCountry}
+  selectedPhotos={selectedPhotos}
+  orderNote={orderNote}
+  discountCode={discountCode}
+  calculateTotals={calculateTotals}
   TAX_RATES={TAX_RATES}
   initialCountries={initialCountries}
-      customerData={{
-        name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
-        email: formData.email,
-        address: {
-          street: formData.shippingAddress.address,
-          city: formData.shippingAddress.city,
-          province: formData.shippingAddress.province || formData.shippingAddress.state,
-          country: formData.shippingAddress.country,
-          postalCode: formData.shippingAddress.postalCode
-        }
-      }}
-    />
+  customerData={{
+    name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
+    address: {
+      street: formData.shippingAddress?.address,
+      city: formData.shippingAddress?.city,
+      province: formData.shippingAddress?.state || formData.shippingAddress?.province,
+      country: selectedCountry,
+      postalCode: formData.shippingAddress?.postalCode
+    },
+    email: formData.email
+  }}
+/>
               </div>
             )}
           </div>
