@@ -1,56 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-
-const HelcimPayButton = () => {
-  const [checkoutToken, setCheckoutToken] = useState(null);
-  const [secretToken, setSecretToken] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(null);
-
-  // Helcim Pay API configuration
-  const API_TOKEN = process.env.REACT_APP_HELCIM_API_TOKEN || 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
-  const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
-
-  // Load Helcim Pay.js script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://secure.helcim.app/helcim-pay/services/start.js';
-    script.async = true;
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
-  // Listen for payment response events
-  useEffect(() => {
-    const handlePaymentResponse = (event) => {
-      // Validate the event is from Helcim Pay.js
-      if (event.data.eventName === `helcim-pay-js-${checkoutToken}`) {
-        if (event.data.eventStatus === 'ABORTED') {
-          setPaymentStatus({
-            success: false,
-            message: 'Transaction Aborted',
-            details: event.data.eventMessage
-          });
-        }
-
-        if (event.data.eventStatus === 'SUCCESS') {
-          // Validate the transaction response
-          validateTransaction(event.data.eventMessage);
-        }
-      }
-    };
-
-    window.addEventListener('message', handlePaymentResponse);
-
-    return () => {
-      window.removeEventListener('message', handlePaymentResponse);
-    };
-  }, [checkoutToken]);
-
-  // Initialize Helcim Pay Checkout
-  const initializeHelcimPayCheckout = async () => {
+// Initialize Helcim Pay Checkout
+const initializeHelcimPayCheckout = async () => {
     const requestPayload = {
         customerRequest: {
           billingAddress: {
@@ -106,6 +57,56 @@ const HelcimPayButton = () => {
       throw error;
     }
   };
+
+const HelcimPayButton = () => {
+  const [checkoutToken, setCheckoutToken] = useState(null);
+  const [secretToken, setSecretToken] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState(null);
+
+  // Helcim Pay API configuration
+  const API_TOKEN = process.env.REACT_APP_HELCIM_API_TOKEN || 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
+  const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
+
+  // Load Helcim Pay.js script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://secure.helcim.app/helcim-pay/services/start.js';
+    script.async = true;
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+    };
+  }, []);
+
+  // Listen for payment response events
+  useEffect(() => {
+    const handlePaymentResponse = (event) => {
+      // Validate the event is from Helcim Pay.js
+      if (event.data.eventName === `helcim-pay-js-${checkoutToken}`) {
+        if (event.data.eventStatus === 'ABORTED') {
+          setPaymentStatus({
+            success: false,
+            message: 'Transaction Aborted',
+            details: event.data.eventMessage
+          });
+        }
+
+        if (event.data.eventStatus === 'SUCCESS') {
+          // Validate the transaction response
+          validateTransaction(event.data.eventMessage);
+        }
+      }
+    };
+
+    window.addEventListener('message', handlePaymentResponse);
+
+    return () => {
+      window.removeEventListener('message', handlePaymentResponse);
+    };
+  }, [checkoutToken]);
+
+  
 
   // Validate Transaction
   const validateTransaction = async (eventMessage) => {
