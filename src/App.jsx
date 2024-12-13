@@ -2737,13 +2737,13 @@ const countryCodeMap = {
   TAX_RATES={TAX_RATES}
   initialCountries={initialCountries}
   customerData={{
-    name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
+    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
     address: {
-      street: formData.shippingAddress?.address,
-      city: formData.shippingAddress?.city,
-      province: formData.shippingAddress?.state || formData.shippingAddress?.province,
+      street: formData.billingAddress?.address,
+      city: formData.billingAddress?.city,
+      province: formData.billingAddress?.state || formData.billingAddress?.province,
       country: selectedCountry,
-      postalCode: formData.shippingAddress?.postalCode
+      postalCode: formData.billingAddress?.postalCode
     },
     email: formData.email
   }}
@@ -2770,13 +2770,13 @@ const countryCodeMap = {
   TAX_RATES={TAX_RATES}
   initialCountries={initialCountries}
   customerData={{
-    name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
+    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
     address: {
-      street: formData.shippingAddress?.address,
-      city: formData.shippingAddress?.city,
-      province: formData.shippingAddress?.state || formData.shippingAddress?.province,
+      street: formData.billingAddress?.address,
+      city: formData.billingAddress?.city,
+      province: formData.billingAddress?.state || formData.billingAddress?.province,
       country: selectedCountry,
-      postalCode: formData.shippingAddress?.postalCode
+      postalCode: formData.billingAddress?.postalCode
     },
     email: formData.email
   }}
