@@ -72,63 +72,40 @@ const HelcimPayButton = ({
     }, [checkoutToken]);
   
     // Initialize Helcim Pay Checkout
-    const initializeHelcimPayCheckout = async () => {
-      const requestPayload = {
-        customerRequest: {
-          billingAddress: {
-            name: customerData.name,
-            street1: customerData.address.street,
-            city: customerData.address.city,
-            province: customerData.address.province,
-            country: customerData.address.country,
-            postalCode: customerData.address.postalCode,
-            email: customerData.email
-          },
-          customerCode: `CUST-${Date.now()}`,
-          contactName: customerData.name
-        },
-        invoiceRequest: {
-          lineItems: Object.entries(subtotalsBySize)
-            .filter(([_, amount]) => amount > 0)
-            .map(([size, amount]) => ({
-              description: size,
-              quantity: 1,
-              price: amount,
-              total: amount
-            })),
-          invoiceNumber: `INV-${Date.now()}`,
-          note: orderNote || ''
-        },
-        paymentType: 'purchase',
-        amount: total,
-        currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
-        paymentMethod: 'cc-ach'
+    const initializeHelcimPayCheckout = async ({
+        formData,
+        selectedCountry,
+        total,
+        subtotalsBySize
+      }) => {
+        try {
+          const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
+            customerData: {
+              name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
+              email: formData.email,
+              phone: formData.phone,
+              address: {
+                street: formData.shippingAddress?.address,
+                city: formData.shippingAddress?.city,
+                province: formData.shippingAddress?.state || formData.shippingAddress?.province,
+                country: selectedCountry,
+                postalCode: formData.shippingAddress?.postalCode
+              }
+            },
+            selectedPhotos: subtotalsBySize,
+            selectedCountry: selectedCountry,
+            total: total
+          });
+      
+          return {
+            checkoutToken: response.data.checkoutToken,
+            secretToken: response.data.secretToken
+          };
+        } catch (error) {
+          console.error('Helcim initialization error:', error);
+          throw new Error('Failed to initialize Helcim payment: ' + (error.response?.data?.message || error.message));
+        }
       };
-  
-      try {
-        const response = await axios.post(HELCIM_API_URL, requestPayload, {
-          headers: {
-            'accept': 'application/json',
-            'api-token': API_TOKEN,
-            'content-type': 'application/json'
-          }
-        });
-  
-        // Store checkout and secret tokens
-        setCheckoutToken(response.data.checkoutToken);
-        setSecretToken(response.data.secretToken);
-  
-        return response.data;
-      } catch (error) {
-        console.error('Initialization Error:', error);
-        setPaymentStatus({
-          success: false,
-          message: 'Payment Initialization Failed',
-          details: error.message
-        });
-        throw error;
-      }
-    };
   
     // Validate Transaction
     const validateTransaction = async (eventMessage) => {

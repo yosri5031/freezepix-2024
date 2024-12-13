@@ -4,18 +4,14 @@ const API_TOKEN = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDc
 const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
 
 export const initializeHelcimPayCheckout = async ({
-  formData,
-  selectedCountry,
-  total,
-  subtotalsBySize
-}) => {
-  try {
-    const response = await axios.post(
-      `${HELCIM_API_URL}`,
-      {
-        amount: total,
-        currency: selectedCountry === 'CA' ? 'CAD' : 'USD',
-        customer: {
+    formData,
+    selectedCountry,
+    total,
+    subtotalsBySize
+  }) => {
+    try {
+      const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
+        customerData: {
           name: `${formData.shippingAddress?.firstName} ${formData.shippingAddress?.lastName}`,
           email: formData.email,
           phone: formData.phone,
@@ -27,29 +23,17 @@ export const initializeHelcimPayCheckout = async ({
             postalCode: formData.shippingAddress?.postalCode
           }
         },
-        orderDetails: {
-          subtotals: subtotalsBySize,
-          items: Object.entries(subtotalsBySize).map(([size, amount]) => ({
-            name: `Photo Print - ${size}`,
-            amount: amount
-          }))
-        }
-      },
-      {
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': `Bearer ${API_TOKEN}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    return {
-      checkoutToken: response.data.token,
-      secretToken: response.data.secretToken
-    };
-  } catch (error) {
-    console.error('Helcim initialization error:', error);
-    throw new Error('Failed to initialize Helcim payment: ' + (error.response?.data?.message || error.message));
-  }
-};
+        selectedPhotos: subtotalsBySize,
+        selectedCountry: selectedCountry,
+        total: total
+      });
+  
+      return {
+        checkoutToken: response.data.checkoutToken,
+        secretToken: response.data.secretToken
+      };
+    } catch (error) {
+      console.error('Helcim initialization error:', error);
+      throw new Error('Failed to initialize Helcim payment: ' + (error.response?.data?.message || error.message));
+    }
+  };
