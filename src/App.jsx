@@ -1547,6 +1547,12 @@ const createStripeCheckoutSession = async (orderData) => {
 };
 };
 
+const formIsValid = (formData) => {
+  // Basic form validation
+  if (!formData) return false;
+
+  return true;
+};
 
 const handleOrderSuccess = async ({ 
   paymentMethod, 
@@ -1573,6 +1579,10 @@ const handleOrderSuccess = async ({
       !formData?.shippingAddress?.city ||
       !formData?.shippingAddress?.postalCode) {
     throw new Error('Missing required shipping information');
+  }
+
+  if (!formIsValid(formData)) {
+    throw new Error('Please fill in all required fields correctly');
   }
   const getStripeCountryCode = (countryCode) => {
     const countryMappings = {
@@ -2137,6 +2147,8 @@ const handleHelcimPaymentSuccess = async (helcimPaymentData) => {
     setError(error.message);
   }
 };
+
+
 const CheckoutButton = ({ 
   onCheckout, 
   isProcessing, 
