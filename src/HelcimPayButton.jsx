@@ -134,25 +134,37 @@ const HelcimPayButton = ({
   
     // Handle Payment Initialization
     const handlePayment = async () => {
-      try {
-        // Initialize checkout
-        await initializeHelcimPayCheckout(formData);
-  
-        // Open Helcim Pay modal
+        try {
+            
+            // Use billing address if different from shipping, otherwise use shipping address
+            const billingAddress = formData.isBillingAddressSameAsShipping 
+              ? formData.shippingAddress 
+              : formData.billingAddress;
+      
+            if (!billingAddress) {
+              throw new Error('Billing address information is required');
+            }
+      
+            const response = await initializeHelcimPayCheckout({
+              ...formData,
+              billingAddress: billingAddress
+            });
+            
+              // Open Helcim Pay modal
         if (window.appendHelcimPayIframe && checkoutToken) {
-          window.appendHelcimPayIframe(checkoutToken, true);
-        } else {
-          throw new Error('Helcim Pay.js not loaded or checkout token missing');
+            window.appendHelcimPayIframe(checkoutToken, true);
+          } else {
+            throw new Error('Helcim Pay.js not loaded or checkout token missing');
+          }
+        } catch (error) {
+          console.error('Payment Initialization Error:', error);
+          setPaymentStatus({
+            success: false,
+            message: 'Payment Initialization Failed',
+            details: error.message
+          });
         }
-      } catch (error) {
-        console.error('Payment Initialization Error:', error);
-        setPaymentStatus({
-          success: false,
-          message: 'Payment Initialization Failed',
-          details: error.message
-        });
-      }
-    };
+      };
   
     return (
       <div className="helcim-pay-container">
@@ -163,7 +175,7 @@ const HelcimPayButton = ({
         >
           {isProcessing 
             ? 'Processing...' 
-            : `Pay ${selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD'} ${total.toFixed(2)}`
+            : `Helcim Pay ( ${selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD'} ${total.toFixed(2)} )`
           }
         </button>
   

@@ -2728,7 +2728,12 @@ const countryCodeMap = {
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
-  formData={formData}
+  formData={{
+    ...formData,
+    isBillingAddressSameAsShipping,
+    shippingAddress: formData.shippingAddress,
+    billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress
+  }}
   selectedCountry={selectedCountry}
   selectedPhotos={selectedPhotos}
   orderNote={orderNote}
@@ -2761,7 +2766,12 @@ const countryCodeMap = {
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
-  formData={formData}
+  formData={{
+    ...formData,
+    isBillingAddressSameAsShipping,
+    shippingAddress: formData.shippingAddress,
+    billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress
+  }}
   selectedCountry={selectedCountry}
   selectedPhotos={selectedPhotos}
   orderNote={orderNote}
