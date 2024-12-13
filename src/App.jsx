@@ -24,17 +24,7 @@ const stripe = new Stripe('sk_live_51Nefi9KmwKMSxU2DNSmHypO0KXNtIrudfnpFLY5KsQNS
 });
 //import { sendOrderConfirmation } from './utils/emailService'..;
 
-import {
-  CardNumberElement,
-  CardExpiryElement,
-  CardCvcElement,
-  Elements,
-  useStripe,
-  useElements,
-  CardElement
-} from "@stripe/react-stripe-js";
-
-const stripePromise = loadStripe('pk_live_51Nefi9KmwKMSxU2Df5F2MRHCcFSbjZRPWRT2KwC6xIZgkmAtVLFbXW2Nu78jbPtI9ta8AaPHPY6WsYsIQEOuOkWK00tLJiKQsQ');
+import {HelcimPayButton , initializeHelcimPayCheckout} from './HelcimPayButton';
 
 const initialCountries = [
   {name: 'United States', 
@@ -239,7 +229,7 @@ const FreezePIX = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('credit'); // Default payment method
+    const [paymentMethod, setPaymentMethod] = useState('helcim'); // Default payment method
 
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
@@ -806,7 +796,7 @@ useEffect(() => {
             state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '', // Preserve state
             province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : '' // Preserve province
           },
-          paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'credit'
+          paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
         }));
       }
     }, [selectedCountry]);
@@ -1323,7 +1313,7 @@ const handleCheckout = async (paymentMethod) => {
       discount,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: 'credit',
+      paymentMethod: 'helcim',
       stripePaymentId: paymentMethod.id,
       paymentStatus: 'paid',
       customerDetails: {
@@ -1566,7 +1556,9 @@ const handleOrderSuccess = async ({
   orderNote,
   discountCode,
   isBillingAddressSameAsShipping,
-  stripePaymentMethod = null 
+  stripePaymentMethod = null,
+  helcimPaymentData = null  // New parameter for Helcim payment data
+
 }) => {
   let orderData = null;
   let orderNumber = null;
@@ -1697,7 +1689,7 @@ const handleOrderSuccess = async ({
       discount,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'credit'),
+      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'helcim'),
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
       paymentStatus: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'pending' : 'paid',
@@ -1710,7 +1702,46 @@ const handleOrderSuccess = async ({
       createdAt: new Date().toISOString()
     };
 
-    
+
+      if (paymentMethod === 'helcim') {
+      try {
+        // Initialize Helcim payment
+        const helcimResponse = await initializeHelcimPayCheckout({
+          formData,
+          selectedCountry,
+          total,
+          subtotalsBySize
+        });
+
+        if (!helcimResponse?.checkoutToken) {
+          throw new Error('Failed to initialize Helcim payment');
+        }
+
+        // Store Helcim payment data
+        orderData = {
+          ...orderData,
+          paymentMethod: 'helcim',
+          helcimPaymentId: helcimResponse.checkoutToken,
+          paymentStatus: helcimPaymentData?.success ? 'paid' : 'pending'
+        };
+
+        // If payment was successful, proceed with order processing
+        if (helcimPaymentData?.success) {
+          // Validate Helcim payment response
+          const isValid = await validateHelcimPayment(helcimPaymentData, helcimResponse.secretToken);
+          if (!isValid) {
+            throw new Error('Invalid Helcim payment validation');
+          }
+        } else {
+          throw new Error('Helcim payment not completed');
+        }
+
+      } catch (helcimError) {
+        console.error('Helcim payment error:', helcimError);
+        throw new Error(`Helcim payment failed: ${helcimError.message}`);
+      }
+    }
+
     if (paymentMethod === 'credit') {
       let checkoutSession = null;
   
@@ -1902,6 +1933,47 @@ const handleOrderSuccess = async ({
         throw stripeError;
       }
     }
+// Helper function to validate Helcim payment
+const validateHelcimPayment = async (paymentData, secretToken) => {
+  try {
+    // Generate hash for validation
+    const generateHash = (data, secretToken) => {
+      const jsonData = JSON.stringify(data);
+      return window.crypto.subtle.digest(
+        'SHA-256', 
+        new TextEncoder().encode(jsonData + secretToken)
+      );
+    };
+
+    const localHash = await generateHash(paymentData.data, secretToken);
+    const remoteHash = paymentData.hash;
+
+    return localHash === remoteHash;
+  } catch (error) {
+    console.error('Payment validation error:', error);
+    return false;
+  }
+};
+
+// Helper function to cancel Helcim payment
+const cancelHelcimPayment = async (paymentId) => {
+  try {
+    await axios.post(
+      `${HELCIM_API_URL}/cancel`,
+      { paymentId },
+      {
+        headers: {
+          'accept': 'application/json',
+          'api-token': API_TOKEN,
+          'content-type': 'application/json'
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Failed to cancel Helcim payment:', error);
+    throw error;
+  }
+};
 
     // Submit order with retry mechanism
     const maxRetries = 3;
@@ -2353,6 +2425,7 @@ const countryCodeMap = {
   'Spain': 'ES',
   'United Kingdom': 'GB'
 };
+
     switch (activeStep) {
       case 0:
     return (
@@ -2617,19 +2690,30 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  <Elements stripe={stripePromise}>
-                    <CheckoutButton 
-                      onCheckout={handleOrderSuccess}
-                      isProcessing={isProcessingOrder}
-                      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-                      formData={formData}
-                      selectedCountry={selectedCountry}
-                      selectedPhotos={selectedPhotos}
-                      orderNote={orderNote}
-                      discountCode={discountCode}
-                      isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
-                    />
-                  </Elements>
+                <HelcimPayButton 
+      onPaymentSuccess={handleOrderSuccess}
+      isProcessing={isProcessingOrder}
+      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+      formData={formData}
+      selectedCountry={selectedCountry}
+      selectedPhotos={selectedPhotos}
+      orderNote={orderNote}
+      discountCode={discountCode}
+  calculateTotals={calculateTotals} // Pass the function
+  TAX_RATES={TAX_RATES}
+  initialCountries={initialCountries}
+      customerData={{
+        name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
+        email: formData.email,
+        address: {
+          street: formData.shippingAddress.address,
+          city: formData.shippingAddress.city,
+          province: formData.shippingAddress.province || formData.shippingAddress.state,
+          country: formData.shippingAddress.country,
+          postalCode: formData.shippingAddress.postalCode
+        }
+      }}
+    />
                 </div>
               </div>
             ) : (
@@ -2639,19 +2723,30 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <Elements stripe={stripePromise}>
-                  <CheckoutButton 
-                    onCheckout={handleOrderSuccess}
-                    isProcessing={isProcessingOrder}
-                    disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
-                    formData={formData}
-                    selectedCountry={selectedCountry}
-                    selectedPhotos={selectedPhotos}
-                    orderNote={orderNote}
-                    discountCode={discountCode}
-                    isBillingAddressSameAsShipping={isBillingAddressSameAsShipping}
-                  />
-                </Elements>
+                <HelcimPayButton 
+      onPaymentSuccess={handleOrderSuccess}
+      isProcessing={isProcessingOrder}
+      disabled={!formData.email || !formData.shippingAddress || !selectedPhotos.length}
+      formData={formData}
+      selectedCountry={selectedCountry}
+      selectedPhotos={selectedPhotos}
+      orderNote={orderNote}
+      discountCode={discountCode}
+  calculateTotals={calculateTotals} // Pass the function
+  TAX_RATES={TAX_RATES}
+  initialCountries={initialCountries}
+      customerData={{
+        name: `${formData.shippingAddress.firstName} ${formData.shippingAddress.lastName}`,
+        email: formData.email,
+        address: {
+          street: formData.shippingAddress.address,
+          city: formData.shippingAddress.city,
+          province: formData.shippingAddress.province || formData.shippingAddress.state,
+          country: formData.shippingAddress.country,
+          postalCode: formData.shippingAddress.postalCode
+        }
+      }}
+    />
               </div>
             )}
           </div>
