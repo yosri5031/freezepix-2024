@@ -218,4 +218,4 @@ const HelcimPayButton = () => {
   );
 };
 
-export default HelcimPayButton;
+export  {HelcimPayButton,initializeHelcimPayCheckout};
