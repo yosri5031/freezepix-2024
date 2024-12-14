@@ -137,9 +137,7 @@ const HelcimPayButton = ({
         try {
             
             // Use billing address if different from shipping, otherwise use shipping address
-            const billing = formData.isBillingAddressSameAsShipping 
-              ? formData.shippingAddress 
-              : formData.billingAddress;
+            const billing = formData.billingAddress;
       
             if (!formData.billingAddress) {
               throw new Error('Billing address information is required');

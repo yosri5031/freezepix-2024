@@ -12,15 +12,15 @@ export const initializeHelcimPayCheckout = async ({
     try {
       const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
         customerData: {
-          name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
-          email: formData.email,
-          phone: formData.phone,
+          name: `${formData.billingAddress?.firstName} || '' ${formData.billingAddress?.lastName || ''}`,
+          email: formData.email || '',
+          phone: formData.phone || '',
           address: {
-            street: formData.billingAddress?.address,
-            city: formData.billingAddress?.city,
-            province: formData.billingAddress?.state || formData.billingAddress?.province,
-            country: selectedCountry,
-            postalCode: formData.billingAddress?.postalCode
+            street: formData.billingAddress?.address || '',
+            city: formData.billingAddress?.city || '',
+            province: formData.billingAddress?.state || formData.billingAddress?.province || '',
+            country: selectedCountry || '',
+            postalCode: formData.billingAddress?.postalCode || ''
           }
         },
         selectedPhotos: subtotalsBySize,
