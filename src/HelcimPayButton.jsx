@@ -143,10 +143,7 @@ const HelcimPayButton = ({
               throw new Error('Billing address information is required');
             }
       
-            const response = await initializeHelcimPayCheckout({
-              ...formData,
-               billing
-            });
+            const response = await initializeHelcimPayCheckout(formData);
             
               // Open Helcim Pay modal
         if (window.appendHelcimPayIframe && checkoutToken) {
