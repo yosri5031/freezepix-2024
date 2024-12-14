@@ -1734,7 +1734,7 @@ const handleOrderSuccess = async ({
 
         // Store Helcim payment data
         orderData = {
-          ...orderData,
+          ...formData,
           paymentMethod: 'helcim',
           helcimPaymentId: helcimResponse.checkoutToken,
           paymentStatus: helcimPaymentData?.success ? 'paid' : 'pending'
