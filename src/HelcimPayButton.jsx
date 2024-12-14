@@ -137,7 +137,7 @@ const HelcimPayButton = ({
         try {
             
             // Use billing address if different from shipping, otherwise use shipping address
-            const billingAddress = formData.isBillingAddressSameAsShipping 
+            const billing = formData.isBillingAddressSameAsShipping 
               ? formData.shippingAddress 
               : formData.billingAddress;
       
@@ -147,7 +147,7 @@ const HelcimPayButton = ({
       
             const response = await initializeHelcimPayCheckout({
               ...formData,
-              billingAddress: billingAddress
+              billingAddress: billing
             });
             
               // Open Helcim Pay modal
