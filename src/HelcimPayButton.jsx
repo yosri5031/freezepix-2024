@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { initializeHelcimPayCheckout } from './helcimService';
+import CryptoJS from 'crypto-js'; // Add this import for proper hashing
+
 
 const HelcimPayButton = ({ 
   onPaymentSuccess,
@@ -64,42 +66,46 @@ const HelcimPayButton = ({
     // Validate Transaction
     const validateTransaction = async (eventMessage) => {
       try {
-        // Generate hash for validation (this would typically be done server-side)
-        const generateHash = (data, secretToken) => {
-          const jsonData = JSON.stringify(data);
-          // In a real implementation, use a secure hashing method
-          // This is a simplified example
-          return window.crypto.subtle.digest(
-            'SHA-256', 
-            new TextEncoder().encode(jsonData + secretToken)
-          );
+        // Updated hash generation function
+        const generateHash = (data, token) => {
+          const payload = JSON.stringify(data);
+          // Use HMAC-SHA256 for hashing
+          return CryptoJS.HmacSHA256(payload, token).toString();
         };
   
-        // Validate response
-        const localHash = await generateHash(eventMessage.data, secretToken);
-        const remoteHash = eventMessage.hash;
+        // Get the transaction details from the event message
+        const transactionData = {
+          amount: total,
+          currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
+          orderNumber: eventMessage.data.orderNumber,
+          transactionId: eventMessage.data.transactionId,
+          timestamp: eventMessage.data.timestamp
+        };
   
-        // Compare hashes (simplified)
-        if (localHash === remoteHash) {
+        // Generate hash using the secret token
+        const localHash = generateHash(transactionData, secretToken);
+  
+        // Verify the transaction with your backend
+        const verificationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/verify-helcim-payment', {
+          transactionData,
+          hash: eventMessage.hash,
+          localHash
+        });
+  
+        if (verificationResponse.data.verified) {
           setPaymentStatus({
             success: true,
             message: 'Payment Successful',
             details: eventMessage.data
           });
   
-          // Call onPaymentSuccess callback
           if (onPaymentSuccess) {
             onPaymentSuccess(eventMessage.data);
           }
   
-          // Remove Helcim Pay iframe
           removeHelcimPayIframe();
         } else {
-          setPaymentStatus({
-            success: false,
-            message: 'Transaction Validation Failed',
-            details: 'Hash mismatch'
-          });
+          throw new Error('Transaction verification failed');
         }
       } catch (error) {
         setPaymentStatus({
@@ -109,6 +115,7 @@ const HelcimPayButton = ({
         });
       }
     };
+  
   
     // Remove Helcim Pay iframe
     const removeHelcimPayIframe = () => {
@@ -121,29 +128,31 @@ const HelcimPayButton = ({
     // Handle Payment Initialization
     const handlePayment = async () => {
       try {
-          const response = await initializeHelcimPayCheckout({
-              selectedCountry,
-              total 
-          });
-          
-          setCheckoutToken(response.checkoutToken);
-          setSecretToken(response.secretToken);
+        const response = await initializeHelcimPayCheckout({
+          selectedCountry,
+          total,
+          currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
+          orderNumber: `ORDER-${Date.now()}`, // Generate unique order number
+          timestamp: new Date().toISOString()
+        });
+        
+        setCheckoutToken(response.checkoutToken);
+        setSecretToken(response.secretToken);
   
-          // Open Helcim Pay modal
-          if (window.appendHelcimPayIframe && response.checkoutToken) {
-              window.appendHelcimPayIframe(response.checkoutToken, true);
-          } else {
-              throw new Error('Helcim Pay.js not loaded or checkout token missing');
-          }
+        if (window.appendHelcimPayIframe && response.checkoutToken) {
+          window.appendHelcimPayIframe(response.checkoutToken, true);
+        } else {
+          throw new Error('Helcim Pay.js not loaded or checkout token missing');
+        }
       } catch (error) {
-          console.error('Payment Initialization Error:', error);
-          setPaymentStatus({
-              success: false,
-              message: 'Payment Initialization Failed',
-              details: error.message
-          });
+        console.error('Payment Initialization Error:', error);
+        setPaymentStatus({
+          success: false,
+          message: 'Payment Initialization Failed',
+          details: error.message
+        });
       }
-  };
+    };
   
     return (
       <div className="helcim-pay-container">
