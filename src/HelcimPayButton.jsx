@@ -48,7 +48,6 @@ const HelcimPayButton = ({
   
           if (event.data.eventStatus === 'SUCCESS') {
             // Validate the transaction response
-            console.log(event.data.eventMessage);
             validateTransaction(event.data.eventMessage);
           }
         }
