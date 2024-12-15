@@ -5,12 +5,14 @@ const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
 
 export const initializeHelcimPayCheckout = async ({
   selectedCountry,
-  total
+  total,
+  calculateTotals
 }) => {
   try {
     const response = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/initialize-payment', {
       selectedCountry,
-      total
+      total,
+      calculateTotals
     });
 
     return {
