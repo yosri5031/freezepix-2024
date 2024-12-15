@@ -2742,15 +2742,15 @@ const countryCodeMap = {
   TAX_RATES={TAX_RATES}
   initialCountries={initialCountries}
   customerData={{
-    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
+    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}` || '',
     address: {
-      street: formData.billingAddress?.address,
-      city: formData.billingAddress?.city,
-      province: formData.billingAddress?.state || formData.billingAddress?.province,
+      street: formData.billingAddress?.address || '',
+      city: formData.billingAddress?.city || '',
+      province: formData.billingAddress?.state || formData.billingAddress?.province || '',
       country: selectedCountry,
-      postalCode: formData.billingAddress?.postalCode
+      postalCode: formData.billingAddress?.postalCode || ''
     },
-    email: formData.email
+    email: formData.email || ''
   }}
 />
                 </div>
