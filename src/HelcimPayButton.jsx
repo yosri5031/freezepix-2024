@@ -7,6 +7,7 @@ const HelcimPayButton = ({
   isProcessing,
   disabled,
   selectedCountry, 
+  calculateTotals,
   total, 
   }) => {
     const [checkoutToken, setCheckoutToken] = useState(null);
@@ -122,7 +123,8 @@ const HelcimPayButton = ({
       try {
           const response = await initializeHelcimPayCheckout({
               selectedCountry,
-              total
+              total,
+              calculateTotals 
           });
           
           setCheckoutToken(response.checkoutToken);
