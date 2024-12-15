@@ -220,6 +220,60 @@ const BookingPopup = ({ onClose }) => {
     );
   };
   
+  // Add this function before the FreezePIX component
+const calculateTotals = (items, country, discountCode = null) => {
+  const selectedCountryData = initialCountries.find(c => c.value === country);
+  if (!selectedCountryData) return { subtotal: 0, tax: 0, total: 0 };
+
+  // Calculate subtotal
+  const subtotal = items.reduce((acc, item) => {
+    let price = 0;
+    switch(item.productType) {
+      case 'print':
+        switch(item.size) {
+          case '4x6': price = selectedCountryData.size4x6; break;
+          case '5x7': price = selectedCountryData.size5x7; break;
+          case '8x10': price = selectedCountryData.size8x10; break;
+          default: price = 0;
+        }
+        break;
+      case 'keychain': price = selectedCountryData.keychain; break;
+      case 'magnet': price = selectedCountryData.keyring_magnet; break;
+      case 'crystal3d': price = selectedCountryData.crystal3d; break;
+      default: price = 0;
+    }
+    return acc + (price * item.quantity);
+  }, 0);
+
+  // Apply discount if valid
+  let discountAmount = 0;
+  if (discountCode) {
+    // Add your discount logic here
+  }
+
+  // Calculate tax based on country and region
+  let taxRate = 0;
+  if (TAX_RATES[country]) {
+    if (typeof TAX_RATES[country].default === 'number') {
+      taxRate = TAX_RATES[country].default;
+    } else if (TAX_RATES[country][items[0]?.region]) {
+      const regionTaxes = TAX_RATES[country][items[0]?.region];
+      taxRate = Object.values(regionTaxes).reduce((acc, rate) => acc + rate, 0);
+    }
+  }
+
+  const taxAmount = (subtotal - discountAmount) * (taxRate / 100);
+  const total = subtotal - discountAmount + taxAmount;
+
+  return {
+    subtotal,
+    discount: discountAmount,
+    tax: taxAmount,
+    total,
+    taxRate
+  };
+};
+
 const FreezePIX = () => {
  
 
