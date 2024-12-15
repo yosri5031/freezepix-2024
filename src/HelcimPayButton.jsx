@@ -17,14 +17,6 @@ const HelcimPayButton = ({
     const API_TOKEN = process.env.REACT_APP_HELCIM_API_TOKEN || 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
     const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
   
-    // Calculate total using the passed function
-    const { total, subtotalsBySize } = calculateTotals({
-      selectedPhotos,
-      selectedCountry,
-      discountCode,
-      TAX_RATES,
-      initialCountries
-    });
   
     // Load Helcim Pay.js script
     useEffect(() => {
