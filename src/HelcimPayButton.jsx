@@ -77,7 +77,6 @@ const HelcimPayButton = ({
         const transactionData = {
           amount: total,
           currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
-          orderNumber: eventMessage.data.orderNumber || `ORDER-${Date.now()}`,
           transactionId: eventMessage.data.transactionId,
           timestamp: eventMessage.data.timestamp
         };
@@ -130,10 +129,7 @@ const HelcimPayButton = ({
       try {
         const response = await initializeHelcimPayCheckout({
           selectedCountry,
-          total,
-          currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
-          orderNumber: `ORDER-${Date.now()}`, // Generate unique order number
-          timestamp: new Date().toISOString()
+          total
         });
         
         setCheckoutToken(response.checkoutToken);
