@@ -1209,6 +1209,7 @@ const handleCheckout = async (paymentMethod) => {
     setCurrentOrderNumber(orderNumber);
     
     // Calculate order totals
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Process photos with improved batch processing and error handling
@@ -1640,6 +1641,7 @@ const handleOrderSuccess = async ({
     setCurrentOrderNumber(orderNumber);
     
     // Calculate order totals
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Process photos with improved batch processing and error handling
@@ -2439,7 +2441,6 @@ const CheckoutButton = ({
 //..
   const renderStepContent = () => {
     const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
-    const { total } = calculateTotals();
 const countryCodeMap = {
   'USA': 'US',
   'CAN': 'CA',
