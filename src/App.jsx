@@ -2436,7 +2436,7 @@ const CheckoutButton = ({
         discount 
     }; 
 };
-
+//..
   const renderStepContent = () => {
     const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
     const { total } = calculateTotals();
