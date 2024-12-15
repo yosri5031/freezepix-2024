@@ -77,7 +77,7 @@ const HelcimPayButton = ({
         const transactionData = {
           amount: total,
           currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
-          orderNumber: eventMessage.data.orderNumber,
+          orderNumber: eventMessage.data.orderNumber || `ORDER-${Date.now()}`,
           transactionId: eventMessage.data.transactionId,
           timestamp: eventMessage.data.timestamp
         };
