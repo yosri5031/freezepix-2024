@@ -123,8 +123,7 @@ const HelcimPayButton = ({
       try {
           const response = await initializeHelcimPayCheckout({
               selectedCountry,
-              total,
-              calculateTotals 
+              total 
           });
           
           setCheckoutToken(response.checkoutToken);

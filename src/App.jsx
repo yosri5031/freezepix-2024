@@ -2734,7 +2734,6 @@ const countryCodeMap = {
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
   total={total}  // Make sure to pass the total
-  calculateTotals={calculateTotals}
 />
                 </div>
               </div>
