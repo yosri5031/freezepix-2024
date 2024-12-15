@@ -76,7 +76,9 @@ const HelcimPayButton = ({
         // Get the transaction details from the event message
         const transactionData = {
           amount: total,
-          currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD'
+          currency: selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD',
+          transactionId: eventMessage.data.transactionId,
+          timestamp: eventMessage.data.timestamp
         };
   
         // Generate hash using the secret token
