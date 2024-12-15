@@ -2441,6 +2441,7 @@ const CheckoutButton = ({
 
   const renderStepContent = () => {
     const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
+    const { total } = calculateTotals();
 const countryCodeMap = {
   'USA': 'US',
   'CAN': 'CA',
@@ -2728,30 +2729,8 @@ const countryCodeMap = {
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
-  formData={{
-    ...formData,
-    isBillingAddressSameAsShipping,
-    shippingAddress: formData.shippingAddress,
-    billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress
-  }}
   selectedCountry={selectedCountry}
-  selectedPhotos={selectedPhotos}
-  orderNote={orderNote}
-  discountCode={discountCode}
-  calculateTotals={calculateTotals}
-  TAX_RATES={TAX_RATES}
-  initialCountries={initialCountries}
-  customerData={{
-    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}` || '',
-    address: {
-      street: formData.billingAddress?.address || '',
-      city: formData.billingAddress?.city || '',
-      province: formData.billingAddress?.state || formData.billingAddress?.province || '',
-      country: selectedCountry,
-      postalCode: formData.billingAddress?.postalCode || ''
-    },
-    email: formData.email || ''
-  }}
+  total={total}  // Make sure to pass the total
 />
                 </div>
               </div>
@@ -2766,30 +2745,8 @@ const countryCodeMap = {
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
-  formData={{
-    ...formData,
-    isBillingAddressSameAsShipping,
-    shippingAddress: formData.shippingAddress,
-    billingAddress: isBillingAddressSameAsShipping ? formData.shippingAddress : formData.billingAddress
-  }}
   selectedCountry={selectedCountry}
-  selectedPhotos={selectedPhotos}
-  orderNote={orderNote}
-  discountCode={discountCode}
-  calculateTotals={calculateTotals}
-  TAX_RATES={TAX_RATES}
-  initialCountries={initialCountries}
-  customerData={{
-    name: `${formData.billingAddress?.firstName} ${formData.billingAddress?.lastName}`,
-    address: {
-      street: formData.billingAddress?.address,
-      city: formData.billingAddress?.city,
-      province: formData.billingAddress?.state || formData.billingAddress?.province,
-      country: selectedCountry,
-      postalCode: formData.billingAddress?.postalCode
-    },
-    email: formData.email
-  }}
+  total={total}  // Make sure to pass the total
 />
               </div>
             )}

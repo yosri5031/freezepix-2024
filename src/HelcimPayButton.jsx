@@ -3,18 +3,11 @@ import axios from 'axios';
 import { initializeHelcimPayCheckout } from './helcimService';
 
 const HelcimPayButton = ({ 
-    onPaymentSuccess,
-    isProcessing,
-    disabled,
-    formData, 
-    selectedCountry, 
-    selectedPhotos,
-    orderNote,
-    discountCode,
-    calculateTotals,
-    TAX_RATES,
-    initialCountries,
-    customerData
+  onPaymentSuccess,
+  isProcessing,
+  disabled,
+  selectedCountry, 
+  total, 
   }) => {
     const [checkoutToken, setCheckoutToken] = useState(null);
     const [secretToken, setSecretToken] = useState(null);
@@ -134,32 +127,30 @@ const HelcimPayButton = ({
   
     // Handle Payment Initialization
     const handlePayment = async () => {
-        try {
-            
-            // Use billing address if different from shipping, otherwise use shipping address
-            const billing = formData.billingAddress;
-      
-            if (!formData.billingAddress) {
-              throw new Error('Billing address information is required');
-            }
-      
-            const response = await initializeHelcimPayCheckout(formData);
-            
-              // Open Helcim Pay modal
-        if (window.appendHelcimPayIframe && checkoutToken) {
-            window.appendHelcimPayIframe(checkoutToken, true);
+      try {
+          const response = await initializeHelcimPayCheckout({
+              selectedCountry,
+              total
+          });
+          
+          setCheckoutToken(response.checkoutToken);
+          setSecretToken(response.secretToken);
+  
+          // Open Helcim Pay modal
+          if (window.appendHelcimPayIframe && response.checkoutToken) {
+              window.appendHelcimPayIframe(response.checkoutToken, true);
           } else {
-            throw new Error('Helcim Pay.js not loaded or checkout token missing');
+              throw new Error('Helcim Pay.js not loaded or checkout token missing');
           }
-        } catch (error) {
+      } catch (error) {
           console.error('Payment Initialization Error:', error);
           setPaymentStatus({
-            success: false,
-            message: 'Payment Initialization Failed',
-            details: error.message
+              success: false,
+              message: 'Payment Initialization Failed',
+              details: error.message
           });
-        }
-      };
+      }
+  };
   
     return (
       <div className="helcim-pay-container">
