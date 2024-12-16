@@ -2734,6 +2734,9 @@ const countryCodeMap = {
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
   total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
 />
                 </div>
               </div>
