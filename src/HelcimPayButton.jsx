@@ -15,7 +15,8 @@ const HelcimPayButton = ({
     const [checkoutToken, setCheckoutToken] = useState(null);
     const [secretToken, setSecretToken] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState(null);
-  
+    const [orderSuccess, setOrderSuccess] = useState(false);
+
     // Helcim Pay API configuration
     const API_TOKEN = process.env.REACT_APP_HELCIM_API_TOKEN || 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
     const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
@@ -48,7 +49,7 @@ const HelcimPayButton = ({
   
           if (event.data.eventStatus === 'SUCCESS') {
             // Validate the transaction response
-            validateTransaction(event.data.eventMessage);
+            setOrderSuccess(true);
           }
         }
       };
