@@ -57,7 +57,9 @@ const HelcimPayButton = ({
         details: error.message
       });
     } finally {
-      setLoading(false); // Set loading state back to false after payment initialization
+      setTimeout(() => {
+        setLoading(false); // Set loading state back to false after 5 seconds
+      }, 5000); // 5 seconds delay
     }
   };
 
