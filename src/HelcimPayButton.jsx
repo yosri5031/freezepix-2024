@@ -13,8 +13,7 @@ const HelcimPayButton = ({
   total, 
   setOrderSuccess,
   setError,
-  setIsProcessingOrder,
-  orderData
+  setIsProcessingOrder
   }) => {
     const [checkoutToken, setCheckoutToken] = useState(null);
     const [secretToken, setSecretToken] = useState(null);
@@ -39,7 +38,7 @@ const HelcimPayButton = ({
   
     // Listen for payment response events
     useEffect(() => {
-      const handlePaymentResponse = async (event) => {
+      const handlePaymentResponse = (event) => {
         // Validate the event is from Helcim Pay.js
         if (event.data.eventName === `helcim-pay-js-${checkoutToken}`) {
           if (event.data.eventStatus === 'ABORTED') {
@@ -52,31 +51,6 @@ const HelcimPayButton = ({
   
           if (event.data.eventStatus === 'SUCCESS') {
             // Validate the transaction response
-            setIsProcessingOrder(true);
-      
-            // Submit order to database
-            const orderResponse = await axios.post(
-              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
-              {
-                ...orderData,
-                paymentDetails: paymentResponse,
-                paymentStatus: 'completed',
-                paymentMethod: 'helcim'
-              }
-            );
-      
-            // Send confirmation email
-            await axios.post(
-              'https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation',
-              {
-                orderDetails: orderResponse.data,
-                email: orderData.email
-              }
-            );
-      
-            setOrderSuccess(true);
-            setIsProcessingOrder(false);
-            setError(null);
             setOrderSuccess(true);
           }
         }
