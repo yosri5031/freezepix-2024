@@ -2445,6 +2445,43 @@ const CheckoutButton = ({
   const renderStepContent = () => {
     const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
     const { total } = calculateTotals();
+    orderData = {
+      orderNumber: currentOrderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      shippingAddress,
+      billingAddress: isBillingAddressSameAsShipping
+        ? formData.shippingAddress
+        : formData.billingAddress,
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
+        id: photo.id,
+        quantity: photo.quantity,
+        size: photo.size,
+        price: photo.price,
+        productType: photo.productType
+      })),
+      totalAmount: total,
+      subtotal,
+      shippingFee,
+      taxAmount,
+      discount,
+      currency: country.currency,
+      orderNote: orderNote || '',
+      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'helcim'),
+      stripePaymentId: stripePaymentMethod,
+      paymentIntentId: paymentIntent?.id,
+      paymentStatus: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'pending' : 'paid',
+      customerDetails: {
+        name: formData.name,
+        country: selectedCountry
+      },
+      selectedCountry,
+      discountCode: discountCode || null,
+      createdAt: new Date().toISOString()
+    };
 const countryCodeMap = {
   'USA': 'US',
   'CAN': 'CA',
@@ -2733,6 +2770,7 @@ const countryCodeMap = {
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
+  orderData={orderData}
   total={total}  // Make sure to pass the total
   setOrderSuccess={setOrderSuccess}
       setError={setError}
@@ -2752,7 +2790,11 @@ const countryCodeMap = {
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
+  orderData={orderData}
   total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
 />
               </div>
             )}
