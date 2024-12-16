@@ -19,6 +19,7 @@ const HelcimPayButton = ({
   const [secretToken, setSecretToken] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(false); // Add loading state
+  const [paymentWindowOpened, setPaymentWindowOpened] = useState(false);
 
   // Load Helcim Pay.js script
   useEffect(() => {
@@ -46,6 +47,7 @@ const HelcimPayButton = ({
 
       if (window.appendHelcimPayIframe && response.checkoutToken) {
         window.appendHelcimPayIframe(response.checkoutToken, true);
+        setPaymentWindowOpened(true);
       } else {
         throw new Error('Helcim Pay.js not loaded or checkout token missing');
       }
@@ -66,7 +68,7 @@ const HelcimPayButton = ({
       <button 
         onClick={handlePayment}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        disabled={disabled || isProcessing || loading} // Disable button when loading
+        disabled={disabled || isProcessing || loading || !paymentWindowOpened} // Disable button when loading or if payment window not opened
       >
         {loading 
           ? 'Loading...' 
