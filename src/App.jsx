@@ -282,7 +282,6 @@ const [interacReference, setInteracReference] = useState('');
           ...prev,
           shippingAddress: {
             ...prev.shippingAddress,
-            [field]: e.target.value,
             country: selectedCountry
           },
           billingAddress: {
