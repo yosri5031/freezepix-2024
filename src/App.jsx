@@ -2684,8 +2684,8 @@ const countryCodeMap = {
           </div>
 
           {formData.paymentMethod !== 'cod' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
+            <div className="space-y-4 hidden">
+              <div className="flex items-center gap-2 hidden">
                 <input
                   type="checkbox"
                   checked={isBillingAddressSameAsShipping}
@@ -2701,6 +2701,7 @@ const countryCodeMap = {
 
               {!isBillingAddressSameAsShipping && (
                 <>
+                <div class="hidden">
                   <h2 className="text-xl font-medium">{t('form.billing_a')}</h2>
                   <AddressForm
                     type="billing"
@@ -2712,7 +2713,9 @@ const countryCodeMap = {
                       ...prevData,
                       billingAddress: newAddress
                     }))}
+
                   />
+                  </div>
                 </>
               )}
             </div>

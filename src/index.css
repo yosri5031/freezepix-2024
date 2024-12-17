@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+.hidden {
+  display: none;
+}
 /* Custom styles */
 @layer components {
   .app-container {
