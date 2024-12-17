@@ -282,6 +282,7 @@ const [interacReference, setInteracReference] = useState('');
           ...prev,
           shippingAddress: {
             ...prev.shippingAddress,
+            [field]: e.target.value,
             country: selectedCountry
           },
           billingAddress: {
@@ -1295,7 +1296,16 @@ const handleCheckout = async (paymentMethod) => {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress: formData.shippingAddress,
+      shippingAddress: {
+        firstName: formData.shippingAddress.firstName,
+        lastName: formData.shippingAddress.lastName,
+        address: formData.shippingAddress.address,
+        city: formData.shippingAddress.city,
+        postalCode: formData.shippingAddress.postalCode,
+        country: formData.shippingAddress.country,
+        province: formData.shippingAddress.province,
+        state: formData.shippingAddress.state
+      },
       billingAddress: isBillingAddressSameAsShipping
         ? formData.shippingAddress
         : formData.billingAddress,
