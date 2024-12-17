@@ -2737,15 +2737,6 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                  {/* Add this condition where your payment buttons are */}
-{selectedCountry === 'CA' && (
-  <button
-    onClick={() => handleOrderSuccess()}
-    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 mb-4"
-  >
-    Place Order
-  </button>
-)}
                 <HelcimPayButton
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
