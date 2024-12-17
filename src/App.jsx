@@ -3298,7 +3298,7 @@ if (showIntro) {
   {/* Only show Next/Place Order button if:
     1. Not on payment page (activeStep !== 2), or
     2. On payment page AND it's either Tunisia order (COD) or Interac payment */}
-{(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
+{(activeStep !== 2 ) && (
   <button 
     onClick={handleNext} 
     disabled={!validateStep()} 
@@ -3310,7 +3310,7 @@ if (showIntro) {
   >
     {isLoading 
       ? 'Processing...' 
-      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') 
+      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || selectedCountry === 'CA' || paymentMethod === 'interac') 
         ? 'Place Order' 
         : 'Next')}
   </button>
