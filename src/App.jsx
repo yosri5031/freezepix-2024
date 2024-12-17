@@ -785,7 +785,22 @@ useEffect(() => {
         );
 
         // Update form data
-        
+        setFormData(prev => ({
+          ...prev,
+          shippingAddress: {
+            ...prev.shippingAddress,
+            country: selectedCountry,
+            state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '', // Preserve state
+            province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : '' // Preserve province
+          },
+          billingAddress: {
+            ...prev.billingAddress,
+            country: selectedCountry,
+            state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '', // Preserve state
+            province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : '' // Preserve province
+          },
+          paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
+        }));
       }
     }, [selectedCountry]);
 
