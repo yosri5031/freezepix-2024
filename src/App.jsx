@@ -2269,7 +2269,7 @@ const CheckoutButton = ({
       
         try {
           if (activeStep === 2) {
-            if (selectedCountry === 'TUN' || selectedCountry === 'TN' || selectedCountry === 'CA' || paymentMethod === 'interac') {
+            if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
               setIsLoading(true);
               await handleOrderSuccess({
                 paymentMethod: 'cod', // or whatever payment method
@@ -3298,7 +3298,7 @@ if (showIntro) {
   {/* Only show Next/Place Order button if:
     1. Not on payment page (activeStep !== 2), or
     2. On payment page AND it's either Tunisia order (COD) or Interac payment */}
-{(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || selectedCountry === 'CA' || paymentMethod === 'interac') && (
+{(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
   <button 
     onClick={handleNext} 
     disabled={!validateStep()} 
@@ -3310,7 +3310,7 @@ if (showIntro) {
   >
     {isLoading 
       ? 'Processing...' 
-      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || selectedCountry === 'CA' || paymentMethod === 'interac') 
+      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') 
         ? 'Place Order' 
         : 'Next')}
   </button>
