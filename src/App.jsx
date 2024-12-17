@@ -3242,11 +3242,7 @@ if (showIntro) {
               <p className="font-medium">Order Details:</p>
               <p> {t('order.order_number')}: {currentOrderNumber}</p>
               <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
-              {selectedCountry === 'TUN' || selectedCountry === 'TN' && (
-                <p className="text-gray-600 mt-2">
-                 {t('order.payment_method')}
-                </p>
-              )}
+             
             </div>
             <button
               onClick={() => window.location.reload()}
