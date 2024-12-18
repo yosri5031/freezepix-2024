@@ -2150,28 +2150,20 @@ const handleSecretTokenReceived = (token) => {
 
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
-    // Check the structure of eventMessage
+    // Log the received data
     console.log('Full EventMessage:', eventMessage);
-
-    // Parse the stringified eventMessage if it's a string
-    const parsedEventMessage = typeof eventMessage.eventMessage === 'string' 
-      ? JSON.parse(eventMessage.eventMessage) 
-      : eventMessage.eventMessage;
     
-    // Extract the nested data
-    const helcimData = parsedEventMessage.data;
-    
+    // The data is already in the correct format, no need to parse it again
     const rawDataResponse = {
-      transactionId: helcimData.data.transactionId,
-      amount: helcimData.data.amount,
-      currency: helcimData.data.currency,
-      status: helcimData.data.status,
-      cardNumber: helcimData.data.cardNumber
+      transactionId: eventMessage.data.transactionId,
+      amount: eventMessage.data.amount,
+      currency: eventMessage.data.currency,
+      status: eventMessage.data.status,
+      cardNumber: eventMessage.data.cardNumber
     };
 
-    // Detailed logging
     console.log('Raw Data Response:', rawDataResponse);
-    console.log('Hash:', helcimData.hash);
+    console.log('Hash:', eventMessage.hash);
 
     // Additional logging for hash generation
     const dataToHash = { ...rawDataResponse };
