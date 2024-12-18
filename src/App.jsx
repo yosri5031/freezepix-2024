@@ -2190,7 +2190,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         cardLastFour: paymentData.cardNumber?.slice(-4)
       },
       subtotal :"",
-      shippingFee :"20",
+      shippingFee : 20,
       taxAmount :"",
       discount :"",
       orderNote: "",
