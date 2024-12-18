@@ -2807,13 +2807,14 @@ const countryCodeMap = {
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                 <HelcimPayButton 
-  amount={total}
-  currency={selectedCountry.currency}
-  onSuccess={handleHelcimPaymentSuccess}
-  onError={(error) => {
-    setError(error.message);
-    setIsProcessingOrder(false);
-  }}
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
 />
                 </div>
               </div>
@@ -2825,13 +2826,14 @@ const countryCodeMap = {
                   </p>
                 </div>
                 <HelcimPayButton 
-  amount={total}
-  currency={selectedCountry.currency}
-  onSuccess={handleHelcimPaymentSuccess}
-  onError={(error) => {
-    setError(error.message);
-    setIsProcessingOrder(false);
-  }}
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
 />
               </div>
             )}

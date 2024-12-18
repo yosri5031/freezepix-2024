@@ -74,7 +74,7 @@ const HelcimPayButton = ({
           ? 'Loading...' 
           : isProcessing 
             ? 'Processing...' 
-            : ` Pay Order )`
+            : ` Pay Order `
         }
       </button>
 
