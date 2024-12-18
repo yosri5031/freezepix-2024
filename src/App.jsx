@@ -2151,7 +2151,7 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
       ? JSON.parse(eventMessage.eventMessage) 
       : eventMessage.eventMessage;
     
-    // Extract the relevant data
+    // Extract the relevant data using the correct structure
     const rawDataResponse = {
       transactionId: parsedMessage.data.data.transactionId,
       amount: parsedMessage.data.data.amount,
@@ -2175,15 +2175,15 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
       customerInfo: formData,
       orderItems: selectedPhotos.map(photo => ({
         ...photo,
-        file: undefined, // Remove file object for order submission
+        file: undefined,
         thumbnail: photo.base64
       })),
       paymentDetails: {
         method: 'helcim',
-        transactionId: parsedMessage.data.data.transactionId,
-        amount: parsedMessage.data.data.amount,
-        currency: parsedMessage.data.data.currency,
-        status: parsedMessage.data.data.status
+        transactionId: rawDataResponse.transactionId,
+        amount: rawDataResponse.amount,
+        currency: rawDataResponse.currency,
+        status: rawDataResponse.status
       }
     };
 
@@ -2214,7 +2214,7 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
         ...orderData,
         paymentDetails: {
           ...orderData.paymentDetails,
-          cardLastFour: parsedMessage.data.data.cardNumber
+          cardLastFour: rawDataResponse.cardNumber
         }
       });
     } catch (emailError) {
