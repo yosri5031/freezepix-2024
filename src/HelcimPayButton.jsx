@@ -72,13 +72,12 @@ const HelcimPayButton = ({
 
       if (event.data.eventStatus === 'SUCCESS') {
         try {
-          // Parse the response data
           let parsedEventMessage;
           try {
             parsedEventMessage = typeof event.data.eventMessage === 'string' 
               ? JSON.parse(event.data.eventMessage) 
               : event.data.eventMessage;
-
+      
             if (typeof parsedEventMessage.data === 'string') {
               parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
             }
@@ -86,12 +85,11 @@ const HelcimPayButton = ({
             console.error('Error parsing event message:', parseError);
             throw new Error('Invalid payment response format');
           }
-
-          const paymentData = parsedEventMessage.data;
+      
+          const paymentData = parsedEventMessage.data.data;
           console.log('Parsed payment data:', paymentData);
-
+      
           if (paymentData && paymentData.status === 'APPROVED') {
-            // Extract relevant payment details
             const paymentDetails = {
               transactionId: paymentData.transactionId || paymentData.cardToken,
               amount: paymentData.amount,
@@ -103,12 +101,12 @@ const HelcimPayButton = ({
               invoiceNumber: paymentData.invoiceNumber,
               dateCreated: paymentData.dateCreated
             };
-
+      
             console.log('Payment approved, proceeding with success handler:', paymentDetails);
-
-            // Call the parent's success handler
+      
+            // Assuming onPaymentSuccess is an asynchronous function
             await onPaymentSuccess(paymentDetails);
-
+      
             setPaymentStatus({
               success: true,
               message: 'Payment Successful',
