@@ -2146,23 +2146,42 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
     setIsProcessingOrder(true);
     
-    // Handle both string and object eventMessage formats
-    const parsedMessage = typeof eventMessage.eventMessage === 'string' 
-      ? JSON.parse(eventMessage.eventMessage) 
-      : eventMessage.eventMessage;
-    
-    // Extract the relevant data using the correct structure
+    // First, log the incoming message to understand its structure
+    console.log('Raw event message:', eventMessage);
+
+    // Safely parse the event message
+    let parsedData;
+    try {
+      if (typeof eventMessage === 'string') {
+        parsedData = JSON.parse(eventMessage);
+      } else if (eventMessage.eventMessage) {
+        parsedData = typeof eventMessage.eventMessage === 'string' 
+          ? JSON.parse(eventMessage.eventMessage) 
+          : eventMessage.eventMessage;
+      } else {
+        throw new Error('Invalid message format');
+      }
+    } catch (parseError) {
+      console.error('Parse error:', parseError);
+      throw new Error('Failed to parse payment response');
+    }
+
+    console.log('Parsed data:', parsedData);
+
+    // Extract the relevant data
     const rawDataResponse = {
-      transactionId: parsedMessage.data.data.transactionId,
-      amount: parsedMessage.data.data.amount,
-      currency: parsedMessage.data.data.currency,
-      status: parsedMessage.data.data.status,
-      cardNumber: parsedMessage.data.data.cardNumber
+      transactionId: parsedData.data.data.transactionId,
+      amount: parsedData.data.data.amount,
+      currency: parsedData.data.data.currency,
+      status: parsedData.data.data.status,
+      cardNumber: parsedData.data.data.cardNumber
     };
+
+    console.log('Extracted raw data:', rawDataResponse);
 
     const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
       rawDataResponse,
-      hash: parsedMessage.data.hash
+      hash: parsedData.data.hash
     });
 
     if (!validationResponse.data.valid) {
