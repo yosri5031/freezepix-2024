@@ -22,31 +22,56 @@ const HelcimPayButton = ({
   // Handle Helcim payment response
   useEffect(() => {
     const handleHelcimResponse = (event) => {
-      if (event.data && event.data.helcimPay) {
-        const response = event.data.helcimPay;
-        
-        if (response.status === 'success' && secretToken) {
-          // Create hash for validation
-          const dataString = JSON.stringify(response.data);
+      console.log('Received message:', event.data); // Debug log
+
+      // Check for different possible response formats
+      const helcimResponse = event.data.helcimPay || event.data;
+      
+      if (helcimResponse) {
+        console.log('Helcim response:', helcimResponse); // Debug log
+
+        if (helcimResponse.status === 'success' || helcimResponse.success) {
+          console.log('Payment successful, processing response...'); // Debug log
+          
+          const responseData = helcimResponse.data || helcimResponse;
+          const dataString = JSON.stringify(responseData);
           const hash = CryptoJS.HmacSHA256(dataString, secretToken).toString();
 
-          // Call the success callback with both data and hash
+          console.log('Prepared payment data:', { data: responseData, hash }); // Debug log
+
+          // Update payment status
+          setPaymentStatus({
+            success: true,
+            message: 'Payment Successful',
+            details: responseData
+          });
+
+          // Call onPaymentSuccess
           onPaymentSuccess({
-            data: response.data,
+            data: responseData,
             hash: hash
           });
-        } else if (response.status === 'error') {
+
+        } else if (helcimResponse.status === 'error' || helcimResponse.error) {
+          console.log('Payment failed:', helcimResponse); // Debug log
+          const errorMessage = helcimResponse.message || helcimResponse.error || 'Payment failed';
+          
           setPaymentStatus({
             success: false,
             message: 'Payment Failed',
-            details: response.message
+            details: errorMessage
           });
-          setError('Payment failed: ' + response.message);
+          
+          setError('Payment failed: ' + errorMessage);
         }
       }
     };
 
     window.addEventListener('message', handleHelcimResponse);
+
+    // Debug log for initialization
+    console.log('Event listener initialized with secretToken:', secretToken);
+
     return () => {
       window.removeEventListener('message', handleHelcimResponse);
     };
@@ -57,6 +82,15 @@ const HelcimPayButton = ({
     const script = document.createElement('script');
     script.src = 'https://secure.helcim.app/helcim-pay/services/start.js';
     script.async = true;
+    
+    script.onload = () => {
+      console.log('Helcim Pay.js script loaded'); // Debug log
+    };
+    
+    script.onerror = (error) => {
+      console.error('Error loading Helcim Pay.js:', error); // Debug log
+    };
+
     document.head.appendChild(script);
 
     return () => {
@@ -68,15 +102,20 @@ const HelcimPayButton = ({
   const handlePayment = async () => {
     setLoading(true);
     try {
+      console.log('Initializing payment with:', { selectedCountry, total }); // Debug log
+      
       const response = await initializeHelcimPayCheckout({
         selectedCountry,
         total
       });
       
+      console.log('Initialization response:', response); // Debug log
+
       setCheckoutToken(response.checkoutToken);
       setSecretToken(response.secretToken);
 
       if (window.appendHelcimPayIframe && response.checkoutToken) {
+        console.log('Appending Helcim iframe with token:', response.checkoutToken); // Debug log
         window.appendHelcimPayIframe(response.checkoutToken, true);
       } else {
         throw new Error('Helcim Pay.js not loaded or checkout token missing');
