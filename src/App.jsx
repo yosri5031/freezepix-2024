@@ -2188,7 +2188,15 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         currency: paymentData.currency,
         status: paymentData.status,
         cardLastFour: paymentData.cardNumber?.slice(-4)
-      }
+      },
+      subtotal :"",
+      shippingFee :"20",
+      taxAmount :"",
+      discount :"",
+      orderNote: "",
+      stripePaymentId: "",
+      discountCode: ""
+
     };
 
     console.log('Submitting order with data:', orderData);
