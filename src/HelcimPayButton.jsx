@@ -55,7 +55,7 @@ const HelcimPayButton = ({
 
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
-      console.log('Received message:', event.data);
+      console.log('Raw received message:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
         setPaymentStatus({
@@ -70,21 +70,40 @@ const HelcimPayButton = ({
 
       if (event.data.eventStatus === 'SUCCESS') {
         try {
-          const paymentData = event.data.eventMessage.data.data;
+          // Parse the eventMessage if it's a string
+          let parsedEventMessage;
+          try {
+            parsedEventMessage = typeof event.data.eventMessage === 'string' 
+              ? JSON.parse(event.data.eventMessage) 
+              : event.data.eventMessage;
+
+            // If data is still a string, parse it again
+            if (typeof parsedEventMessage.data === 'string') {
+              parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
+            }
+            
+            console.log('Parsed event message:', parsedEventMessage);
+          } catch (parseError) {
+            console.error('Error parsing event message:', parseError);
+            throw new Error('Invalid payment response format');
+          }
+
+          // Extract payment data
+          const paymentData = parsedEventMessage.data;
           
           // Early validation
-          if (paymentData.status !== 'APPROVED') {
-            setError('Transaction not approved');
-            setIsProcessingOrder(false);
-            return;
+          if (!paymentData || !paymentData.data || paymentData.data.status !== 'APPROVED') {
+            throw new Error('Transaction not approved');
           }
 
           // Create payment success event message with required data
           const eventMessage = {
-            data: paymentData,
+            data: paymentData.data,
             secretToken: secretTokenRef.current,
-            hash: event.data.eventMessage.hash
+            hash: parsedEventMessage.hash
           };
+
+          console.log('Processed payment data:', eventMessage);
 
           // Call the parent's payment success handler
           await onPaymentSuccess(eventMessage);
@@ -92,7 +111,7 @@ const HelcimPayButton = ({
           setPaymentStatus({
             success: true,
             message: 'Payment Successful',
-            details: paymentData
+            details: paymentData.data
           });
         } catch (error) {
           console.error('Error processing payment success:', error);
