@@ -2175,20 +2175,86 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
     .toString(CryptoJS.enc.Hex);
 
     console.log('Client-side Calculated Hash:', calculatedClientHash);
-    console.log('Received Hash:', helcimData.hash);
-    console.log('Hash Match:', calculatedClientHash === helcimData.hash);
+    console.log('Received Hash:', eventMessage.hash);
+    console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
 
     const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
       rawDataResponse,
-      hash: helcimData.hash,
+      hash: eventMessage.hash,
       clientCalculatedHash: calculatedClientHash  // Send client-side calculated hash for comparison
     });
+    
+    if (!validationResponse.data.valid) {
+      throw new Error(validationResponse.data.error || 'Payment validation failed');
+    }
+
+    // If payment is valid, proceed with order submission
+    const orderData = {
+      orderNumber: currentOrderNumber,
+      customerInfo: formData,
+      orderItems: selectedPhotos.map(photo => ({
+        ...photo,
+        file: undefined,
+        thumbnail: photo.base64
+      })),
+      paymentDetails: {
+        method: 'helcim',
+        transactionId: rawDataResponse.transactionId,
+        amount: rawDataResponse.amount,
+        currency: rawDataResponse.currency,
+        status: rawDataResponse.status
+      }
+    };
+
+    // Submit order with optimized chunking
+    const maxRetries = 3;
+    let retryCount = 0;
+    let orderResponse;
 
     // Rest of the existing code remains the same
+    while (retryCount < maxRetries) {
+      try {
+        orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        if (orderResponse && orderResponse.success) {
+          break;
+        }
+        throw new Error('Order submission failed');
+      } catch (error) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmationEmail({
+        ...orderData,
+        paymentDetails: {
+          ...orderData.paymentDetails,
+          cardLastFour: rawDataResponse.cardNumber
+        }
+      });
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Continue with success flow even if email fails
+    }
+
+    // Update UI state
+    setOrderSuccess(true);
+    setSelectedPhotos([]);
+    setError(null);
+    setIsProcessingOrder(false);
+
+    // Clear session storage
+    clearStateStorage();
+
   } catch (error) {
-    console.error('Full Error Object:', error);
-    console.error('Detailed error:', error.response?.data || error.message);
-    setError(error.response?.data?.error || 'Failed to process payment');
+    console.error('Payment processing error:', error);
+    setError(error.response?.data?.error || 'Failed to process payment or submit order');
+    setOrderSuccess(false);
     setIsProcessingOrder(false);
   }
 }
