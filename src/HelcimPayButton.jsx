@@ -103,6 +103,11 @@ const HelcimPayButton = ({
             () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(CryptoJS.enc.Hex),
             () => CryptoJS.SHA256(JSON.stringify(rawDataResponse) + secretTokenRef.current).toString(),
             () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(),
+            () => {
+              // Try exact string concatenation method
+              const hashInput = JSON.stringify(rawDataResponse) + secretTokenRef.current;
+              return CryptoJS.SHA256(hashInput).toString(CryptoJS.enc.Hex);
+            }
           ];
       
           console.log('Attempting multiple hash generation methods:');
