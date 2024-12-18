@@ -2146,42 +2146,21 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
     setIsProcessingOrder(true);
     
-    // First, log the incoming message to understand its structure
-    console.log('Raw event message:', eventMessage);
-
-    // Safely parse the event message
-    let parsedData;
-    try {
-      if (typeof eventMessage === 'string') {
-        parsedData = JSON.parse(eventMessage);
-      } else if (eventMessage.eventMessage) {
-        parsedData = typeof eventMessage.eventMessage === 'string' 
-          ? JSON.parse(eventMessage.eventMessage) 
-          : eventMessage.eventMessage;
-      } else {
-        throw new Error('Invalid message format');
-      }
-    } catch (parseError) {
-      console.error('Parse error:', parseError);
-      throw new Error('Failed to parse payment response');
-    }
-
-    console.log('Parsed data:', parsedData);
-
-    // Extract the relevant data
+    // Extract data directly from the provided structure
     const rawDataResponse = {
-      transactionId: parsedData.data.data.transactionId,
-      amount: parsedData.data.data.amount,
-      currency: parsedData.data.data.currency,
-      status: parsedData.data.data.status,
-      cardNumber: parsedData.data.data.cardNumber
+      transactionId: eventMessage.data.transactionId,
+      amount: eventMessage.data.amount,
+      currency: eventMessage.data.currency,
+      status: eventMessage.data.status,
+      cardNumber: eventMessage.data.cardNumber
     };
 
-    console.log('Extracted raw data:', rawDataResponse);
+    // Use the hash directly from the eventMessage
+    const hash = eventMessage.hash;
 
     const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
       rawDataResponse,
-      hash: parsedData.data.hash
+      hash
     });
 
     if (!validationResponse.data.valid) {
