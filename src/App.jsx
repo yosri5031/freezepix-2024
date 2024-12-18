@@ -2144,30 +2144,47 @@ const cancelHelcimPayment = async (paymentId) => {
 };
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
-    setIsProcessingOrder(true);
+    // Parse the stringified eventMessage
+    const parsedEventMessage = JSON.parse(eventMessage.eventMessage);
     
-    // Extract data directly from the provided structure
+    // Extract the nested data
+    const helcimData = parsedEventMessage.data;
+    
     const rawDataResponse = {
-      transactionId: eventMessage.data.transactionId,
-      amount: eventMessage.data.amount,
-      currency: eventMessage.data.currency,
-      status: eventMessage.data.status,
-      cardNumber: eventMessage.data.cardNumber
+      transactionId: helcimData.data.transactionId,
+      amount: helcimData.data.amount,
+      currency: helcimData.data.currency,
+      status: helcimData.data.status,
+      cardNumber: helcimData.data.cardNumber
     };
 
-    // Log the exact data being sent
-    console.log('Sending to server:', {
-      rawDataResponse,
-      hash: eventMessage.hash
-    });
+    // Detailed logging
+    console.log('Raw Data Response:', rawDataResponse);
+    console.log('Hash:', helcimData.hash);
+
+    // Additional logging for hash generation
+    const dataToHash = { ...rawDataResponse };
+    const cleanedData = JSON.stringify(dataToHash);
+    const secretToken = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
+    
+    const calculatedClientHash = crypto
+      .createHash('sha256')
+      .update(cleanedData + secretToken)
+      .digest('hex');
+
+    console.log('Client-side Calculated Hash:', calculatedClientHash);
+    console.log('Received Hash:', helcimData.hash);
+    console.log('Hash Match:', calculatedClientHash === helcimData.hash);
 
     const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
       rawDataResponse,
-      hash: eventMessage.hash  // Explicitly send hash
+      hash: helcimData.hash,
+      clientCalculatedHash: calculatedClientHash  // Send client-side calculated hash for comparison
     });
 
-    // Rest of the code remains the same
+    // Rest of the existing code remains the same
   } catch (error) {
+    console.error('Full Error Object:', error);
     console.error('Detailed error:', error.response?.data || error.message);
     setError(error.response?.data?.error || 'Failed to process payment');
     setIsProcessingOrder(false);
