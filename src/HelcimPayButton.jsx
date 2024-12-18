@@ -35,7 +35,11 @@ const HelcimPayButton = ({
 
       if (event.data && event.data.eventStatus === 'SUCCESS') {
         try {
-          const parsedEventMessage = JSON.parse(event.data.eventMessage);
+          // Parse the event message if it's a string
+          const parsedEventMessage = typeof event.data.eventMessage === 'string' 
+            ? JSON.parse(event.data.eventMessage) 
+            : event.data.eventMessage;
+
           console.log('Parsed event message:', parsedEventMessage);
 
           if (parsedEventMessage.data) {
@@ -52,6 +56,9 @@ const HelcimPayButton = ({
                 cardNumber: paymentData.cardNumber
               };
 
+              // Log secret token before hash calculation
+              console.log('Using secret token for hash:', secretTokenRef.current);
+
               // Calculate hash using the stored secret token
               const dataToHash = { ...rawDataResponse };
               const cleanedData = JSON.stringify(dataToHash);
@@ -64,7 +71,7 @@ const HelcimPayButton = ({
               const successData = {
                 data: rawDataResponse,
                 hash: parsedEventMessage.data.hash,
-                secretToken: secretTokenRef.current  // Pass the secret token to parent
+                secretToken: secretTokenRef.current  // Include the secret token
               };
 
               console.log('Calling onPaymentSuccess with:', successData);
@@ -89,17 +96,6 @@ const HelcimPayButton = ({
     return () => window.removeEventListener('message', handleHelcimResponse);
   }, [onPaymentSuccess, setError]);
 
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://secure.helcim.app/helcim-pay/services/start.js';
-    script.async = true;
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
-
   const handlePayment = async () => {
     setLoading(true);
     try {
@@ -108,8 +104,10 @@ const HelcimPayButton = ({
         total
       });
       
+      console.log('Helcim initialization response:', response);
+      
       setCheckoutToken(response.checkoutToken);
-      secretTokenRef.current = response.secretToken; // Store secret token in ref
+      secretTokenRef.current = response.secretToken;
       console.log('Stored secret token:', response.secretToken);
 
       if (window.appendHelcimPayIframe && response.checkoutToken) {
