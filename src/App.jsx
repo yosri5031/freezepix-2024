@@ -2148,12 +2148,18 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
 
     // Validate the payment response
     const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
-      rawDataResponse: eventMessage.data,
+      rawDataResponse: {
+        transactionId: eventMessage.data.transactionId,
+        amount: eventMessage.data.amount,
+        currency: eventMessage.data.currency,
+        status: eventMessage.data.status,
+        cardNumber: eventMessage.data.cardNumber
+      },
       hash: eventMessage.hash
     });
 
     if (!validationResponse.data.valid) {
-      throw new Error('Payment validation failed');
+      throw new Error(validationResponse.data.error || 'Payment validation failed');
     }
 
     // If payment is valid, proceed with order submission
@@ -2220,7 +2226,7 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
 
   } catch (error) {
     console.error('Payment processing error:', error);
-    setError('Failed to process payment or submit order');
+    setError(error.response?.data?.error || 'Failed to process payment or submit order');
     setOrderSuccess(false);
     setIsProcessingOrder(false);
   }
