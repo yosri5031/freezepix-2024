@@ -8,7 +8,6 @@ const HelcimPayButton = ({
   isProcessing,
   disabled,
   selectedCountry, 
-  calculateTotals,
   total, 
   setOrderSuccess,
   setError,
@@ -16,25 +15,21 @@ const HelcimPayButton = ({
 }) => {
   const [checkoutToken, setCheckoutToken] = useState(null);
   const [secretToken, setSecretToken] = useState(null);
-  const [paymentStatus, setPaymentStatus] = useState(null);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const handleHelcimResponse = (event) => {
       console.log('Received message:', event.data);
-
+    
       if (event.data && event.data.eventStatus === 'SUCCESS') {
         try {
-          // Parse the eventMessage string to get the actual response data
           const parsedEventMessage = JSON.parse(event.data.eventMessage);
           console.log('Parsed event message:', parsedEventMessage);
-
+    
           if (parsedEventMessage.data) {
-            const paymentData = parsedEventMessage.data.data; // Access the nested data object
+            const paymentData = parsedEventMessage.data.data;
             console.log('Payment data:', paymentData);
-
+    
             if (paymentData.status === 'APPROVED') {
-              // Format the data for onPaymentSuccess
               const successData = {
                 data: {
                   transactionId: paymentData.transactionId,
@@ -43,19 +38,12 @@ const HelcimPayButton = ({
                   status: paymentData.status,
                   cardNumber: paymentData.cardNumber
                 },
-                hash: parsedEventMessage.data.hash
+                hash: parsedEventMessage.data.hash,
+                // Add the secret token to the success data
+                secretToken: secretToken
               };
-
-              console.log('Calling onPaymentSuccess with:', successData);
-              
-              // Update payment status
-              setPaymentStatus({
-                success: true,
-                message: 'Payment Successful',
-                details: paymentData
-              });
-
-              // Call onPaymentSuccess with the formatted data
+    
+              // Call onPaymentSuccess with the enhanced successData
               onPaymentSuccess(successData);
             }
           }
@@ -68,19 +56,7 @@ const HelcimPayButton = ({
 
     window.addEventListener('message', handleHelcimResponse);
     return () => window.removeEventListener('message', handleHelcimResponse);
-  }, [onPaymentSuccess, setError]);
-
-  // Load Helcim Pay.js script
-  useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://secure.helcim.app/helcim-pay/services/start.js';
-    script.async = true;
-    document.head.appendChild(script);
-
-    return () => {
-      document.head.removeChild(script);
-    };
-  }, []);
+  }, [onPaymentSuccess, setError, secretToken]); // Add secretToken to dependency array
 
   const handlePayment = async () => {
     setLoading(true);
@@ -91,7 +67,7 @@ const HelcimPayButton = ({
       });
       
       setCheckoutToken(response.checkoutToken);
-      setSecretToken(response.secretToken);
+      setSecretToken(response.secretToken); // Store the secret token
 
       if (window.appendHelcimPayIframe && response.checkoutToken) {
         window.appendHelcimPayIframe(response.checkoutToken, true);
