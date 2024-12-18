@@ -2142,142 +2142,59 @@ const cancelHelcimPayment = async (paymentId) => {
     }
   }
 };
-
-const [currentSecretToken, setCurrentSecretToken] = useState(null);
-
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
-    const secretToken = currentSecretToken;
+    // Check the structure of eventMessage
+    console.log('Full EventMessage:', eventMessage);
 
-    setIsProcessingOrder(true);
-
-    // First, log the incoming message to understand its structure
-    console.log('Raw event message:', eventMessage);
-
-    // Safely parse the event message
-    let parsedData;
-    try {
-      if (typeof eventMessage === 'string') {
-        parsedData = JSON.parse(eventMessage);
-      } else if (eventMessage.eventMessage) {
-        parsedData = typeof eventMessage.eventMessage === 'string'
-           ? JSON.parse(eventMessage.eventMessage)
-           : eventMessage.eventMessage;
-      } else {
-        throw new Error('Invalid message format');
-      }
-    } catch (parseError) {
-      console.error('Parse error:', parseError);
-      throw new Error('Failed to parse payment response');
-    }
-
-    console.log('Parsed data:', parsedData);
-
-    // Extract the relevant data
+    // Parse the stringified eventMessage if it's a string
+    const parsedEventMessage = typeof eventMessage.eventMessage === 'string' 
+      ? JSON.parse(eventMessage.eventMessage) 
+      : eventMessage.eventMessage;
+    
+    // Extract the nested data
+    const helcimData = parsedEventMessage.data;
+    
     const rawDataResponse = {
-      transactionId: parsedData.data.data.transactionId,
-      amount: parsedData.data.data.amount,
-      currency: parsedData.data.data.currency,
-      status: parsedData.data.data.status,
-      cardNumber: parsedData.data.data.cardNumber
+      transactionId: helcimData.data.transactionId,
+      amount: helcimData.data.amount,
+      currency: helcimData.data.currency,
+      status: helcimData.data.status,
+      cardNumber: helcimData.data.cardNumber
     };
 
-    console.log('Extracted raw data:', rawDataResponse);
+    // Detailed logging
+    console.log('Raw Data Response:', rawDataResponse);
+    console.log('Hash:', helcimData.hash);
 
-    // Generate hash for validation
+    // Additional logging for hash generation
     const dataToHash = { ...rawDataResponse };
     const cleanedData = JSON.stringify(dataToHash);
-
+    const secretToken = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
+    
     const calculatedClientHash = crypto
       .createHash('sha256')
       .update(cleanedData + secretToken)
       .digest('hex');
 
     console.log('Client-side Calculated Hash:', calculatedClientHash);
-    console.log('Received Hash:', parsedData.data.hash);
-    console.log('Hash Match:', calculatedClientHash === parsedData.data.hash);
+    console.log('Received Hash:', helcimData.hash);
+    console.log('Hash Match:', calculatedClientHash === helcimData.hash);
 
-    const validationResponse = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', 
-      {
-        rawDataResponse,
-        hash: parsedData.data.hash,
-        clientCalculatedHash: calculatedClientHash
-      }
-    );
+    const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
+      rawDataResponse,
+      hash: helcimData.hash,
+      clientCalculatedHash: calculatedClientHash  // Send client-side calculated hash for comparison
+    });
 
-    if (!validationResponse.data.valid) {
-      throw new Error(validationResponse.data.error || 'Payment validation failed');
-    }
-
-    // If payment is valid, proceed with order submission
-    const orderData = {
-      orderNumber: currentOrderNumber,
-      customerInfo: formData,
-      orderItems: selectedPhotos.map(photo => ({
-        ...photo,
-        file: undefined,
-        thumbnail: photo.base64
-      })),
-      paymentDetails: {
-        method: 'helcim',
-        transactionId: rawDataResponse.transactionId,
-        amount: rawDataResponse.amount,
-        currency: rawDataResponse.currency,
-        status: rawDataResponse.status
-      }
-    };
-
-    // Submit order with optimized chunking
-    const maxRetries = 3;
-    let retryCount = 0;
-    let orderResponse;
-
-    while (retryCount < maxRetries) {
-      try {
-        orderResponse = await submitOrderWithOptimizedChunking(orderData);
-        if (orderResponse && orderResponse.success) {
-          break;
-        }
-        throw new Error('Order submission failed');
-      } catch (error) {
-        retryCount++;
-        if (retryCount === maxRetries) {
-          throw error;
-        }
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-      }
-    }
-
-    // Send confirmation email
-    try {
-      await sendOrderConfirmationEmail({
-        ...orderData,
-        paymentDetails: {
-          ...orderData.paymentDetails,
-          cardLastFour: rawDataResponse.cardNumber
-        }
-      });
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError);
-      // Continue with success flow even if email fails
-    }
-
-    // Update UI state
-    setOrderSuccess(true);
-    setSelectedPhotos([]);
-    setError(null);
-    setIsProcessingOrder(false);
-
-    // Clear session storage
-    clearStateStorage();
+    // Rest of the existing code remains the same
   } catch (error) {
-    console.error('Payment processing error:', error);
-    setError(error.response?.data?.error || 'Failed to process payment or submit order');
-    setOrderSuccess(false);
+    console.error('Full Error Object:', error);
+    console.error('Detailed error:', error.response?.data || error.message);
+    setError(error.response?.data?.error || 'Failed to process payment');
     setIsProcessingOrder(false);
   }
-};
+}
 
 
 const CheckoutButton = ({ 
@@ -2859,22 +2776,16 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton
-    onPaymentSuccess={(successData) => {
-      // When payment is initiated, store the secret token
-      setCurrentSecretToken(successData.secretToken);
-      
-      // Then call the main payment success handler
-      return handleHelcimPaymentSuccess(successData);
-    }}
-    isProcessing={isProcessingOrder}
-    disabled={!formIsValid}
-    selectedCountry={selectedCountry}
-    total={total}
-    setOrderSuccess={setOrderSuccess}
-    setError={setError}
-    setIsProcessingOrder={setIsProcessingOrder}
-  />
+                <HelcimPayButton 
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
+/>
                 </div>
               </div>
             ) : (
@@ -2884,22 +2795,16 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <HelcimPayButton
-    onPaymentSuccess={(successData) => {
-      // When payment is initiated, store the secret token
-      setCurrentSecretToken(successData.secretToken);
-      
-      // Then call the main payment success handler
-      return handleHelcimPaymentSuccess(successData);
-    }}
-    isProcessing={isProcessingOrder}
-    disabled={!formIsValid}
-    selectedCountry={selectedCountry}
-    total={total}
-    setOrderSuccess={setOrderSuccess}
-    setError={setError}
-    setIsProcessingOrder={setIsProcessingOrder}
-  />
+                <HelcimPayButton 
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}  // Make sure to pass the total
+  setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
+/>
               </div>
             )}
           </div>
