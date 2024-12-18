@@ -2167,11 +2167,20 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     const orderData = {
       orderNumber: Number,
       customerInfo: formData,
+      email: formData.email,
+      phone: formData.phone,
       orderItems: selectedPhotos.map(photo => ({
         ...photo,
         file: undefined,
         thumbnail: photo.base64
       })),
+      totalAmount : paymentData.amount,
+      currency : paymentData.currency,
+      customerDetails: {
+        name: formData.shippingAddress.firstName,
+        country: selectedCountry,
+      },
+      selectedCountry, 
       paymentDetails: {
         method: 'helcim',
         transactionId: paymentData.transactionId,
