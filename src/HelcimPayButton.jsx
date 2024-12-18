@@ -71,61 +71,57 @@ const HelcimPayButton = ({
 
       if (event.data && event.data.eventStatus === 'SUCCESS') {
         try {
-          const parsedEventMessage = typeof event.data.eventMessage === 'string' 
-            ? JSON.parse(event.data.eventMessage) 
+          console.log('FULL EVENT DATA:', JSON.stringify(event.data, null, 2));
+          
+          // Parse the eventMessage
+          const parsedEventMessage = typeof event.data.eventMessage === 'string'
+            ? JSON.parse(event.data.eventMessage)
             : event.data.eventMessage;
-
-          console.log('Parsed event message:', parsedEventMessage);
-
-          if (parsedEventMessage.data) {
-            const paymentData = parsedEventMessage.data.data;
-            console.log('Payment data:', paymentData);
-
-            if (paymentData.status === 'APPROVED') {
-              const rawDataResponse = {
-                transactionId: paymentData.transactionId,
-                amount: paymentData.amount,
-                currency: paymentData.currency,
-                status: paymentData.status,
-                cardNumber: paymentData.cardNumber
-              };
-              
-              const dataToHash = {
-                transactionId: rawDataResponse.transactionId,
-                amount: rawDataResponse.amount,
-                currency: rawDataResponse.currency,
-                status: rawDataResponse.status,
-                cardNumber: rawDataResponse.cardNumber
-              };
-              
-              const cleanedData = JSON.stringify(dataToHash);
-              const calculatedHash = CryptoJS.SHA256(cleanedData + secretTokenRef.current)
-                .toString(CryptoJS.enc.Hex);
-              
-              // Log details for debugging
-              console.log('Client-side Data for Hash:', cleanedData);
-              console.log('Client-side Secret Token:', secretTokenRef.current);
-              console.log('Client-side Calculated Hash:', calculatedHash);
-              console.log('Received Hash:', parsedEventMessage.data.hash);
-              
-              const successData = {
-                data: rawDataResponse,
-                hash: parsedEventMessage.data.hash,
-                secretToken: secretTokenRef.current,
-                clientCalculatedHash: calculatedHash  // Add this for server-side verification
-              };
-
-              console.log('Calling onPaymentSuccess with:', successData);
-              
-              setPaymentStatus({
-                success: true,
-                message: 'Payment Successful',
-                details: paymentData
-              });
-
-              onPaymentSuccess(successData);
-            }
-          }
+          
+          console.log('PARSED EVENT MESSAGE:', JSON.stringify(parsedEventMessage, null, 2));
+          
+          // Extract the actual data and hash
+          const helcimData = parsedEventMessage.data;
+          const receivedHash = helcimData.hash;
+          const paymentData = helcimData.data;
+          
+          console.log('Helcim Received Hash:', receivedHash);
+          console.log('Helcim Payment Data:', JSON.stringify(paymentData, null, 2));
+      
+          // Reconstruct the hash generation exactly as Helcim might do
+          const rawDataResponse = {
+            transactionId: paymentData.transactionId,
+            amount: paymentData.amount,
+            currency: paymentData.currency,
+            status: paymentData.status,
+            cardNumber: paymentData.cardNumber
+          };
+      
+          // Try different hash generation methods
+          const hashMethods = [
+            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse) + secretTokenRef.current).toString(CryptoJS.enc.Hex),
+            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(CryptoJS.enc.Hex),
+            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse) + secretTokenRef.current).toString(),
+            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(),
+          ];
+      
+          console.log('Attempting multiple hash generation methods:');
+          hashMethods.forEach((method, index) => {
+            const calculatedHash = method();
+            console.log(`Method ${index + 1} Hash:`, calculatedHash);
+            console.log(`Matches Received Hash: ${calculatedHash === receivedHash}`);
+          });
+      
+          // Proceed with the original hash generation
+          const successData = {
+            data: rawDataResponse,
+            hash: receivedHash,
+            secretToken: secretTokenRef.current,
+            // Include all generated hashes for server-side investigation
+            generatedHashes: hashMethods.map(method => method())
+          };
+      
+          onPaymentSuccess(successData);
         } catch (error) {
           console.error('Error parsing Helcim response:', error);
           setError('Error processing payment response');
