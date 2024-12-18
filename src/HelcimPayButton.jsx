@@ -21,7 +21,6 @@ const HelcimPayButton = ({
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
 
-  // Load Helcim Pay.js script
   useEffect(() => {
     const loadScript = () => {
       scriptRef.current = document.createElement('script');
@@ -41,7 +40,6 @@ const HelcimPayButton = ({
       document.head.appendChild(scriptRef.current);
     };
 
-    // Check if script is already loaded
     if (!document.querySelector('script[src="https://secure.helcim.app/helcim-pay/services/start.js"]')) {
       loadScript();
     } else {
@@ -56,7 +54,7 @@ const HelcimPayButton = ({
   }, [setError]);
 
   useEffect(() => {
-    const handleHelcimResponse = (event) => {
+    const handleHelcimResponse = async (event) => {
       console.log('Received message:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
@@ -66,34 +64,52 @@ const HelcimPayButton = ({
           details: event.data.eventMessage
         });
         setError('Payment was aborted: ' + event.data.eventMessage);
+        setIsProcessingOrder(false);
         return;
       }
 
       if (event.data.eventStatus === 'SUCCESS') {
-        const paymentData = event.data.eventMessage.data.data;
-    
-        // Early validation
-        if (paymentData.status !== 'APPROVED') {
-          setError('Transaction not approved');
-          return;
+        try {
+          const paymentData = event.data.eventMessage.data.data;
+          
+          // Early validation
+          if (paymentData.status !== 'APPROVED') {
+            setError('Transaction not approved');
+            setIsProcessingOrder(false);
+            return;
+          }
+
+          // Create payment success event message with required data
+          const eventMessage = {
+            data: paymentData,
+            secretToken: secretTokenRef.current,
+            hash: event.data.eventMessage.hash
+          };
+
+          // Call the parent's payment success handler
+          await onPaymentSuccess(eventMessage);
+          
+          setPaymentStatus({
+            success: true,
+            message: 'Payment Successful',
+            details: paymentData
+          });
+        } catch (error) {
+          console.error('Error processing payment success:', error);
+          setError(error.message || 'Failed to process payment');
+          setIsProcessingOrder(false);
         }
-    
-        // Proceed with payment success logic
-        onPaymentSuccess({
-          transactionId: paymentData.transactionId,
-          amount: paymentData.amount,
-          status: paymentData.status
-        });
       }
-    
     };
 
     window.addEventListener('message', handleHelcimResponse);
     return () => window.removeEventListener('message', handleHelcimResponse);
-  }, [onPaymentSuccess, setError]);
+  }, [onPaymentSuccess, setError, setIsProcessingOrder]);
 
   const handlePayment = async () => {
     setLoading(true);
+    setIsProcessingOrder(true);
+    
     try {
       if (!scriptLoaded) {
         throw new Error('Payment system is still loading. Please try again in a moment.');
@@ -118,7 +134,6 @@ const HelcimPayButton = ({
       secretTokenRef.current = response.secretToken;
       console.log('Stored secret token:', response.secretToken);
 
-      // Add a small delay to ensure the script is fully initialized
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
@@ -135,6 +150,7 @@ const HelcimPayButton = ({
         details: error.message
       });
       setError(error.message);
+      setIsProcessingOrder(false);
     } finally {
       setTimeout(() => {
         setLoading(false);
