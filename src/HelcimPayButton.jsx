@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { initializeHelcimPayCheckout } from './helcimService';
-import CryptoJS from 'crypto-js'; // Add this import for proper hashing
-
+import CryptoJS from 'crypto-js';
 
 const HelcimPayButton = ({ 
   onPaymentSuccess,
@@ -18,7 +17,40 @@ const HelcimPayButton = ({
   const [checkoutToken, setCheckoutToken] = useState(null);
   const [secretToken, setSecretToken] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
-  const [loading, setLoading] = useState(false); // Add loading state
+  const [loading, setLoading] = useState(false);
+
+  // Handle Helcim payment response
+  useEffect(() => {
+    const handleHelcimResponse = (event) => {
+      if (event.data && event.data.helcimPay) {
+        const response = event.data.helcimPay;
+        
+        if (response.status === 'success' && secretToken) {
+          // Create hash for validation
+          const dataString = JSON.stringify(response.data);
+          const hash = CryptoJS.HmacSHA256(dataString, secretToken).toString();
+
+          // Call the success callback with both data and hash
+          onPaymentSuccess({
+            data: response.data,
+            hash: hash
+          });
+        } else if (response.status === 'error') {
+          setPaymentStatus({
+            success: false,
+            message: 'Payment Failed',
+            details: response.message
+          });
+          setError('Payment failed: ' + response.message);
+        }
+      }
+    };
+
+    window.addEventListener('message', handleHelcimResponse);
+    return () => {
+      window.removeEventListener('message', handleHelcimResponse);
+    };
+  }, [onPaymentSuccess, secretToken, setError]);
 
   // Load Helcim Pay.js script
   useEffect(() => {
@@ -34,7 +66,7 @@ const HelcimPayButton = ({
 
   // Handle Payment Initialization
   const handlePayment = async () => {
-    setLoading(true); // Set loading state to true
+    setLoading(true);
     try {
       const response = await initializeHelcimPayCheckout({
         selectedCountry,
@@ -58,8 +90,8 @@ const HelcimPayButton = ({
       });
     } finally {
       setTimeout(() => {
-        setLoading(false); // Set loading state back to false after 5 seconds
-      }, 5000); // 5 seconds delay
+        setLoading(false);
+      }, 5000);
     }
   };
 
@@ -68,7 +100,7 @@ const HelcimPayButton = ({
       <button 
         onClick={handlePayment}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        disabled={disabled || isProcessing || loading} // Disable button when loading
+        disabled={disabled || isProcessing || loading}
       >
         {loading 
           ? 'Loading...' 
