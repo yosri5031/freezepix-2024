@@ -2144,8 +2144,13 @@ const cancelHelcimPayment = async (paymentId) => {
 };
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
-    // Parse the stringified eventMessage
-    const parsedEventMessage = JSON.parse(eventMessage.eventMessage);
+    // Check the structure of eventMessage
+    console.log('Full EventMessage:', eventMessage);
+
+    // Parse the stringified eventMessage if it's a string
+    const parsedEventMessage = typeof eventMessage.eventMessage === 'string' 
+      ? JSON.parse(eventMessage.eventMessage) 
+      : eventMessage.eventMessage;
     
     // Extract the nested data
     const helcimData = parsedEventMessage.data;
