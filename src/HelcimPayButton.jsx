@@ -15,8 +15,6 @@ const HelcimPayButton = ({
 }) => {
   const [checkoutToken, setCheckoutToken] = useState(null);
   const [secretToken, setSecretToken] = useState(null);
-  const [loading, setLoading] = useState(false); 
-  const [paymentStatus, setPaymentStatus] = useState(null);
 
   useEffect(() => {
     const handleHelcimResponse = (event) => {
