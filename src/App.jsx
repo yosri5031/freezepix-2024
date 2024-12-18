@@ -2142,6 +2142,12 @@ const cancelHelcimPayment = async (paymentId) => {
     }
   }
 };
+const [secretToken, setSecretToken] = useState(null);
+
+const handleSecretTokenReceived = (token) => {
+  setSecretToken(token);
+};
+
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
     // Check the structure of eventMessage
@@ -2170,8 +2176,8 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
     // Additional logging for hash generation
     const dataToHash = { ...rawDataResponse };
     const cleanedData = JSON.stringify(dataToHash);
-    const secretToken = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
     
+    // Use the secretToken from state instead of hardcoding it
     const calculatedClientHash = crypto
       .createHash('sha256')
       .update(cleanedData + secretToken)
@@ -2776,15 +2782,16 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton 
+                <HelcimPayButton
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
+  total={total}
   setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
 />
                 </div>
               </div>
@@ -2795,15 +2802,16 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <HelcimPayButton 
+                <HelcimPayButton
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
+  total={total}
   setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
 />
               </div>
             )}
