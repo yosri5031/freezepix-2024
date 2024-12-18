@@ -74,7 +74,7 @@ const HelcimPayButton = ({
           ? 'Loading...' 
           : isProcessing 
             ? 'Processing...' 
-            : `Helcim Pay ( ${selectedCountry === 'TN' ? 'TND' : selectedCountry === 'CA' ? 'CAD' : 'USD'} ${total.toFixed(2)} )`
+            : ` Pay Order )`
         }
       </button>
 
