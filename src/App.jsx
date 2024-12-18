@@ -2142,21 +2142,87 @@ const cancelHelcimPayment = async (paymentId) => {
     }
   }
 };
-const handleHelcimPaymentSuccess = async (helcimPaymentData) => {
+const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
-    await handleOrderSuccess({
-      paymentMethod: 'helcim',
-      formData,
-      selectedCountry,
-      selectedPhotos,
-      orderNote,
-      discountCode,
-      isBillingAddressSameAsShipping,
-      helcimPaymentData
+    setIsProcessingOrder(true);
+
+    // Validate the payment response
+    const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
+      rawDataResponse: eventMessage.data,
+      hash: eventMessage.hash
     });
+
+    if (!validationResponse.data.valid) {
+      throw new Error('Payment validation failed');
+    }
+
+    // If payment is valid, proceed with order submission
+    const orderData = {
+      orderNumber: currentOrderNumber,
+      customerInfo: formData,
+      orderItems: selectedPhotos.map(photo => ({
+        ...photo,
+        file: undefined, // Remove file object for order submission
+        thumbnail: photo.base64
+      })),
+      paymentDetails: {
+        method: 'helcim',
+        transactionId: eventMessage.data.transactionId,
+        amount: eventMessage.data.amount,
+        currency: eventMessage.data.currency,
+        status: eventMessage.data.status
+      }
+    };
+
+    // Submit order with optimized chunking
+    const maxRetries = 3;
+    let retryCount = 0;
+    let orderResponse;
+
+    while (retryCount < maxRetries) {
+      try {
+        orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        if (orderResponse && orderResponse.success) {
+          break;
+        }
+        throw new Error('Order submission failed');
+      } catch (error) {
+        retryCount++;
+        if (retryCount === maxRetries) {
+          throw error;
+        }
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmationEmail({
+        ...orderData,
+        paymentDetails: {
+          ...orderData.paymentDetails,
+          cardLastFour: eventMessage.data.cardNumber
+        }
+      });
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Continue with success flow even if email fails
+    }
+
+    // Update UI state
+    setOrderSuccess(true);
+    setSelectedPhotos([]);
+    setError(null);
+    setIsProcessingOrder(false);
+
+    // Clear session storage
+    clearStateStorage();
+
   } catch (error) {
-    console.error('Helcim payment processing error:', error);
-    setError(error.message);
+    console.error('Payment processing error:', error);
+    setError('Failed to process payment or submit order');
+    setOrderSuccess(false);
+    setIsProcessingOrder(false);
   }
 };
 
@@ -2740,15 +2806,14 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton
-  onPaymentSuccess={handleOrderSuccess}
-  isProcessing={isProcessingOrder}
-  disabled={!formIsValid}
-  selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
-  setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
+                <HelcimPayButton 
+  amount={total}
+  currency={selectedCountry.currency}
+  onSuccess={handleHelcimPaymentSuccess}
+  onError={(error) => {
+    setError(error.message);
+    setIsProcessingOrder(false);
+  }}
 />
                 </div>
               </div>
@@ -2759,12 +2824,14 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <HelcimPayButton
-  onPaymentSuccess={handleOrderSuccess}
-  isProcessing={isProcessingOrder}
-  disabled={!formIsValid}
-  selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
+                <HelcimPayButton 
+  amount={total}
+  currency={selectedCountry.currency}
+  onSuccess={handleHelcimPaymentSuccess}
+  onError={(error) => {
+    setError(error.message);
+    setIsProcessingOrder(false);
+  }}
 />
               </div>
             )}
