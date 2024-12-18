@@ -71,59 +71,43 @@ const HelcimPayButton = ({
 
       if (event.data && event.data.eventStatus === 'SUCCESS') {
         try {
-          console.log('FULL EVENT DATA:', JSON.stringify(event.data, null, 2));
-          
-          // Parse the eventMessage
+          // Use consistent JSON serialization with sorted keys and no extra spacing
           const parsedEventMessage = typeof event.data.eventMessage === 'string'
             ? JSON.parse(event.data.eventMessage)
             : event.data.eventMessage;
-          
-          console.log('PARSED EVENT MESSAGE:', JSON.stringify(parsedEventMessage, null, 2));
-          
-          // Extract the actual data and hash
+      
           const helcimData = parsedEventMessage.data;
           const receivedHash = helcimData.hash;
           const paymentData = helcimData.data;
-          
-          console.log('Helcim Received Hash:', receivedHash);
-          console.log('Helcim Payment Data:', JSON.stringify(paymentData, null, 2));
       
-          // Reconstruct the hash generation exactly as Helcim might do
+          // Use a deterministic object creation with sorted keys
           const rawDataResponse = {
-            transactionId: paymentData.transactionId,
             amount: paymentData.amount,
+            cardNumber: paymentData.cardNumber,
             currency: paymentData.currency,
             status: paymentData.status,
-            cardNumber: paymentData.cardNumber
+            transactionId: paymentData.transactionId
           };
       
-          // Try different hash generation methods
+          // Use consistent hash generation method
           const hashMethods = [
-            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse) + secretTokenRef.current).toString(CryptoJS.enc.Hex),
-            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(CryptoJS.enc.Hex),
-            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse) + secretTokenRef.current).toString(),
-            () => CryptoJS.SHA256(JSON.stringify(rawDataResponse)).toString(),
             () => {
-              // Try exact string concatenation method
-              const hashInput = JSON.stringify(rawDataResponse) + secretTokenRef.current;
+              // Use JSON.stringify with no extra spacing and sorted keys
+              const jsonString = JSON.stringify(rawDataResponse, Object.keys(rawDataResponse).sort());
+              const hashInput = jsonString + secretTokenRef.current;
               return CryptoJS.SHA256(hashInput).toString(CryptoJS.enc.Hex);
             }
           ];
       
-          console.log('Attempting multiple hash generation methods:');
-          hashMethods.forEach((method, index) => {
-            const calculatedHash = method();
-            console.log(`Method ${index + 1} Hash:`, calculatedHash);
-            console.log(`Matches Received Hash: ${calculatedHash === receivedHash}`);
-          });
+          const calculatedHash = hashMethods[0]();
+          console.log('Calculated Hash:', calculatedHash);
+          console.log('Received Hash:', receivedHash);
       
-          // Proceed with the original hash generation
           const successData = {
             data: rawDataResponse,
             hash: receivedHash,
             secretToken: secretTokenRef.current,
-            // Include all generated hashes for server-side investigation
-            generatedHashes: hashMethods.map(method => method())
+            calculatedHash: calculatedHash
           };
       
           onPaymentSuccess(successData);
