@@ -69,53 +69,23 @@ const HelcimPayButton = ({
         return;
       }
 
-      if (event.data && event.data.eventStatus === 'SUCCESS') {
-        try {
-          // Use consistent JSON serialization with sorted keys and no extra spacing
-          const parsedEventMessage = typeof event.data.eventMessage === 'string'
-            ? JSON.parse(event.data.eventMessage)
-            : event.data.eventMessage;
-      
-          const helcimData = parsedEventMessage.data;
-          const receivedHash = helcimData.hash;
-          const paymentData = helcimData.data;
-      
-          // Use a deterministic object creation with sorted keys
-          const rawDataResponse = {
-            amount: paymentData.amount,
-            cardNumber: paymentData.cardNumber,
-            currency: paymentData.currency,
-            status: paymentData.status,
-            transactionId: paymentData.transactionId
-          };
-      
-          // Use consistent hash generation method
-          const hashMethods = [
-            () => {
-              // Use JSON.stringify with no extra spacing and sorted keys
-              const jsonString = JSON.stringify(rawDataResponse, Object.keys(rawDataResponse).sort());
-              const hashInput = jsonString + secretTokenRef.current;
-              return CryptoJS.SHA256(hashInput).toString(CryptoJS.enc.Hex);
-            }
-          ];
-      
-          const calculatedHash = hashMethods[0]();
-          console.log('Calculated Hash:', calculatedHash);
-          console.log('Received Hash:', receivedHash);
-      
-          const successData = {
-            data: rawDataResponse,
-            hash: receivedHash,
-            secretToken: secretTokenRef.current,
-            calculatedHash: calculatedHash
-          };
-      
-          onPaymentSuccess(successData);
-        } catch (error) {
-          console.error('Error parsing Helcim response:', error);
-          setError('Error processing payment response');
+      if (event.data.eventStatus === 'SUCCESS') {
+        const paymentData = event.data.eventMessage.data.data;
+    
+        // Early validation
+        if (paymentData.status !== 'APPROVED') {
+          setError('Transaction not approved');
+          return;
         }
+    
+        // Proceed with payment success logic
+        onPaymentSuccess({
+          transactionId: paymentData.transactionId,
+          amount: paymentData.amount,
+          status: paymentData.status
+        });
       }
+    
     };
 
     window.addEventListener('message', handleHelcimResponse);
