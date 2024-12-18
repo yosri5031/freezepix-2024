@@ -2741,7 +2741,7 @@ const countryCodeMap = {
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                 <HelcimPayButton
-  onPaymentSuccess={handleHelcimPaymentSuccess}
+  onPaymentSuccess={handleOrderSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
@@ -2760,7 +2760,7 @@ const countryCodeMap = {
                   </p>
                 </div>
                 <HelcimPayButton
-  onPaymentSuccess={handleHelcimPaymentSuccess}
+  onPaymentSuccess={handleOrderSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
