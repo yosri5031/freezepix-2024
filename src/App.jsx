@@ -2157,7 +2157,7 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
     const secretToken = eventMessage.secretToken; // Get secret token from the event message
 
     console.log('Raw Data Response:', rawDataResponse);
-    console.log('Hash:', eventMessage.hash);
+    //console.log('Hash:', eventMessage.hash);
     console.log('Secret Token:', secretToken);
 
     // Create the hash using the secret token from the event
@@ -2167,17 +2167,15 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
     const calculatedClientHash = CryptoJS.SHA256(cleanedData + secretToken)
       .toString(CryptoJS.enc.Hex);
 
-    console.log('Client-side Calculated Hash:', calculatedClientHash);
-    console.log('Received Hash:', eventMessage.hash);
-    console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
+    //console.log('Client-side Calculated Hash:', calculatedClientHash);
+    //console.log('Received Hash:', eventMessage.hash);
+    //console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
 
     // Include secretToken in the validation request
     const validationResponse = await axios.post(
       'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', 
       {
         rawDataResponse,
-        hash: eventMessage.hash,
-        clientCalculatedHash: calculatedClientHash,
         secretToken: secretToken  // Add this line
       }
     );
