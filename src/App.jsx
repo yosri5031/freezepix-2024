@@ -2146,7 +2146,10 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
     setIsProcessingOrder(true);
     
-    const parsedMessage = JSON.parse(eventMessage.eventMessage);
+    // Handle both string and object eventMessage formats
+    const parsedMessage = typeof eventMessage.eventMessage === 'string' 
+      ? JSON.parse(eventMessage.eventMessage) 
+      : eventMessage.eventMessage;
     
     // Extract the relevant data
     const rawDataResponse = {
@@ -2177,10 +2180,10 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
       })),
       paymentDetails: {
         method: 'helcim',
-        transactionId: eventMessage.data.transactionId,
-        amount: eventMessage.data.amount,
-        currency: eventMessage.data.currency,
-        status: eventMessage.data.status
+        transactionId: parsedMessage.data.data.transactionId,
+        amount: parsedMessage.data.data.amount,
+        currency: parsedMessage.data.data.currency,
+        status: parsedMessage.data.data.status
       }
     };
 
@@ -2211,7 +2214,7 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
         ...orderData,
         paymentDetails: {
           ...orderData.paymentDetails,
-          cardLastFour: eventMessage.data.cardNumber
+          cardLastFour: parsedMessage.data.data.cardNumber
         }
       });
     } catch (emailError) {
