@@ -2152,37 +2152,35 @@ const handleSecretTokenReceived = (token) => {
 const handleHelcimPaymentSuccess = async (eventMessage) => {
   try {
     // Log the received data
+    
     console.log('Full EventMessage:', eventMessage);
     
-    // The data is already in the correct format, no need to parse it again
-    const rawDataResponse = {
-      transactionId: eventMessage.data.transactionId,
-      amount: eventMessage.data.amount,
-      currency: eventMessage.data.currency,
-      status: eventMessage.data.status,
-      cardNumber: eventMessage.data.cardNumber
-    };
+    const rawDataResponse = eventMessage.data;
+    const secretToken = eventMessage.secretToken; // Get secret token from the event message
 
     console.log('Raw Data Response:', rawDataResponse);
     console.log('Hash:', eventMessage.hash);
+    console.log('Secret Token:', secretToken);
 
-    // Additional logging for hash generation
+    // Create the hash using the secret token from the event
     const dataToHash = { ...rawDataResponse };
     const cleanedData = JSON.stringify(dataToHash);
     
-    // Use the secretToken from state instead of hardcoding it
     const calculatedClientHash = CryptoJS.SHA256(cleanedData + secretToken)
-    .toString(CryptoJS.enc.Hex);
+      .toString(CryptoJS.enc.Hex);
 
     console.log('Client-side Calculated Hash:', calculatedClientHash);
     console.log('Received Hash:', eventMessage.hash);
     console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
 
-    const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
-      rawDataResponse,
-      hash: eventMessage.hash,
-      clientCalculatedHash: calculatedClientHash  // Send client-side calculated hash for comparison
-    });
+    const validationResponse = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', 
+      {
+        rawDataResponse,
+        hash: eventMessage.hash,
+        clientCalculatedHash: calculatedClientHash
+      }
+    );
     
     if (!validationResponse.data.valid) {
       throw new Error(validationResponse.data.error || 'Payment validation failed');

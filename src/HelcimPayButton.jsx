@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { initializeHelcimPayCheckout } from './helcimService';
 import CryptoJS from 'crypto-js';
@@ -12,24 +12,26 @@ const HelcimPayButton = ({
   total, 
   setOrderSuccess,
   setError,
-  setIsProcessingOrder,
-  onSecretTokenReceived // New prop to pass secretToken to parent
+  setIsProcessingOrder
 }) => {
   const [checkoutToken, setCheckoutToken] = useState(null);
-  const [secretToken, setSecretToken] = useState(null);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // Effect to pass secretToken to parent whenever it changes
-  useEffect(() => {
-    if (secretToken) {
-      onSecretTokenReceived(secretToken);
-    }
-  }, [secretToken, onSecretTokenReceived]);
+  const secretTokenRef = useRef(null);
 
   useEffect(() => {
     const handleHelcimResponse = (event) => {
       console.log('Received message:', event.data);
+
+      if (event.data.eventStatus === 'ABORTED') {
+        setPaymentStatus({
+          success: false,
+          message: 'Payment Aborted',
+          details: event.data.eventMessage
+        });
+        setError('Payment was aborted: ' + event.data.eventMessage);
+        return;
+      }
 
       if (event.data && event.data.eventStatus === 'SUCCESS') {
         try {
@@ -41,15 +43,28 @@ const HelcimPayButton = ({
             console.log('Payment data:', paymentData);
 
             if (paymentData.status === 'APPROVED') {
+              // Format the data for hash validation
+              const rawDataResponse = {
+                transactionId: paymentData.transactionId,
+                amount: paymentData.amount,
+                currency: paymentData.currency,
+                status: paymentData.status,
+                cardNumber: paymentData.cardNumber
+              };
+
+              // Calculate hash using the stored secret token
+              const dataToHash = { ...rawDataResponse };
+              const cleanedData = JSON.stringify(dataToHash);
+              const calculatedHash = CryptoJS.SHA256(cleanedData + secretTokenRef.current)
+                .toString(CryptoJS.enc.Hex);
+
+              console.log('Generated hash with secret token:', calculatedHash);
+              console.log('Received hash:', parsedEventMessage.data.hash);
+
               const successData = {
-                data: {
-                  transactionId: paymentData.transactionId,
-                  amount: paymentData.amount,
-                  currency: paymentData.currency,
-                  status: paymentData.status,
-                  cardNumber: paymentData.cardNumber
-                },
-                hash: parsedEventMessage.data.hash
+                data: rawDataResponse,
+                hash: parsedEventMessage.data.hash,
+                secretToken: secretTokenRef.current  // Pass the secret token to parent
               };
 
               console.log('Calling onPaymentSuccess with:', successData);
@@ -94,7 +109,8 @@ const HelcimPayButton = ({
       });
       
       setCheckoutToken(response.checkoutToken);
-      setSecretToken(response.secretToken);
+      secretTokenRef.current = response.secretToken; // Store secret token in ref
+      console.log('Stored secret token:', response.secretToken);
 
       if (window.appendHelcimPayIframe && response.checkoutToken) {
         window.appendHelcimPayIframe(response.checkoutToken, true);
