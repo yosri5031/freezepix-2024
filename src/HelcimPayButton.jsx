@@ -89,21 +89,30 @@ const HelcimPayButton = ({
                 status: paymentData.status,
                 cardNumber: paymentData.cardNumber
               };
-
-              console.log('Using secret token for hash:', secretTokenRef.current);
-
-              const dataToHash = { ...rawDataResponse };
+              
+              const dataToHash = {
+                transactionId: rawDataResponse.transactionId,
+                amount: rawDataResponse.amount,
+                currency: rawDataResponse.currency,
+                status: rawDataResponse.status,
+                cardNumber: rawDataResponse.cardNumber
+              };
+              
               const cleanedData = JSON.stringify(dataToHash);
               const calculatedHash = CryptoJS.SHA256(cleanedData + secretTokenRef.current)
                 .toString(CryptoJS.enc.Hex);
-
-              console.log('Generated hash with secret token:', calculatedHash);
-              console.log('Received hash:', parsedEventMessage.data.hash);
-
+              
+              // Log details for debugging
+              console.log('Client-side Data for Hash:', cleanedData);
+              console.log('Client-side Secret Token:', secretTokenRef.current);
+              console.log('Client-side Calculated Hash:', calculatedHash);
+              console.log('Received Hash:', parsedEventMessage.data.hash);
+              
               const successData = {
                 data: rawDataResponse,
                 hash: parsedEventMessage.data.hash,
-                secretToken: secretTokenRef.current
+                secretToken: secretTokenRef.current,
+                clientCalculatedHash: calculatedHash  // Add this for server-side verification
               };
 
               console.log('Calling onPaymentSuccess with:', successData);
