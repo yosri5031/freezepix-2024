@@ -21,6 +21,7 @@ const HelcimPayButton = ({
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
 
+  // Load Helcim Pay.js script
   useEffect(() => {
     const loadScript = () => {
       scriptRef.current = document.createElement('script');
@@ -40,6 +41,7 @@ const HelcimPayButton = ({
       document.head.appendChild(scriptRef.current);
     };
 
+    // Check if script is already loaded
     if (!document.querySelector('script[src="https://secure.helcim.app/helcim-pay/services/start.js"]')) {
       loadScript();
     } else {
@@ -55,7 +57,7 @@ const HelcimPayButton = ({
 
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
-      console.log('Raw received message:', event.data);
+      console.log('Received Helcim response:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
         setPaymentStatus({
@@ -70,49 +72,51 @@ const HelcimPayButton = ({
 
       if (event.data.eventStatus === 'SUCCESS') {
         try {
-          // Parse the eventMessage if it's a string
+          // Parse the response data
           let parsedEventMessage;
           try {
             parsedEventMessage = typeof event.data.eventMessage === 'string' 
               ? JSON.parse(event.data.eventMessage) 
               : event.data.eventMessage;
 
-            // If data is still a string, parse it again
             if (typeof parsedEventMessage.data === 'string') {
               parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
             }
-            
-            console.log('Parsed event message:', parsedEventMessage);
           } catch (parseError) {
             console.error('Error parsing event message:', parseError);
             throw new Error('Invalid payment response format');
           }
 
-          // Extract payment data
           const paymentData = parsedEventMessage.data;
-          
-          // Early validation
-          if (!paymentData || !paymentData.data || paymentData.data.status !== 'APPROVED') {
+          console.log('Parsed payment data:', paymentData);
+
+          if (paymentData && paymentData.status === 'APPROVED') {
+            // Extract relevant payment details
+            const paymentDetails = {
+              transactionId: paymentData.transactionId || paymentData.cardToken,
+              amount: paymentData.amount,
+              currency: paymentData.currency,
+              status: paymentData.status,
+              cardNumber: paymentData.cardNumber,
+              cardHolderName: paymentData.cardHolderName,
+              approvalCode: paymentData.approvalCode,
+              invoiceNumber: paymentData.invoiceNumber,
+              dateCreated: paymentData.dateCreated
+            };
+
+            console.log('Payment approved, proceeding with success handler:', paymentDetails);
+
+            // Call the parent's success handler
+            await onPaymentSuccess(paymentDetails);
+
+            setPaymentStatus({
+              success: true,
+              message: 'Payment Successful',
+              details: paymentDetails
+            });
+          } else {
             throw new Error('Transaction not approved');
           }
-
-          // Create payment success event message with required data
-          const eventMessage = {
-            data: paymentData.data,
-            secretToken: secretTokenRef.current,
-            hash: parsedEventMessage.hash
-          };
-
-          console.log('Processed payment data:', eventMessage);
-
-          // Call the parent's payment success handler
-          await onPaymentSuccess(eventMessage);
-          
-          setPaymentStatus({
-            success: true,
-            message: 'Payment Successful',
-            details: paymentData.data
-          });
         } catch (error) {
           console.error('Error processing payment success:', error);
           setError(error.message || 'Failed to process payment');
@@ -153,6 +157,7 @@ const HelcimPayButton = ({
       secretTokenRef.current = response.secretToken;
       console.log('Stored secret token:', response.secretToken);
 
+      // Add a small delay to ensure the script is fully initialized
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);

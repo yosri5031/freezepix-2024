@@ -2149,42 +2149,14 @@ const handleSecretTokenReceived = (token) => {
   setSecretToken(token);
 };
 
-const handleHelcimPaymentSuccess = async (eventMessage) => {
+const handleHelcimPaymentSuccess = async (paymentData) => {
   try {
-    console.log('Full EventMessage:', eventMessage);
+    console.log('Payment Success Handler - Processing payment:', paymentData);
     
-    const rawDataResponse = eventMessage.data;
-    const secretToken = eventMessage.secretToken; // Get secret token from the event message
-
-    console.log('Raw Data Response:', rawDataResponse);
-    //console.log('Hash:', eventMessage.hash);
-    console.log('Secret Token:', secretToken);
-
-    // Create the hash using the secret token from the event
-    const dataToHash = { ...rawDataResponse };
-    const cleanedData = JSON.stringify(dataToHash);
+    // Set processing state
+    setIsProcessingOrder(true);
     
-    const calculatedClientHash = CryptoJS.SHA256(cleanedData + secretToken)
-      .toString(CryptoJS.enc.Hex);
-
-    //console.log('Client-side Calculated Hash:', calculatedClientHash);
-    //console.log('Received Hash:', eventMessage.hash);
-    //console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
-
-    // Include secretToken in the validation request
-    const validationResponse = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', 
-      {
-        rawDataResponse,
-        secretToken: secretToken  // Add this line
-      }
-    );
-    
-    if (!validationResponse.data.valid) {
-      throw new Error(validationResponse.data.error || 'Payment validation failed');
-    }
-
-    // If payment is valid, proceed with order submission
+    // Prepare order data
     const orderData = {
       orderNumber: currentOrderNumber,
       customerInfo: formData,
@@ -2195,27 +2167,55 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
       })),
       paymentDetails: {
         method: 'helcim',
-        transactionId: rawDataResponse.transactionId,
-        amount: rawDataResponse.amount,
-        currency: rawDataResponse.currency,
-        status: rawDataResponse.status
+        transactionId: paymentData.transactionId,
+        amount: paymentData.amount,
+        currency: paymentData.currency,
+        status: paymentData.status,
+        cardLastFour: paymentData.cardNumber?.slice(-4)
       }
     };
+
+    console.log('Submitting order with data:', orderData);
 
     // Submit order with optimized chunking
     const maxRetries = 3;
     let retryCount = 0;
-    let orderResponse;
+    let orderSubmitted = false;
 
-    // Rest of the existing code remains the same
-    while (retryCount < maxRetries) {
+    while (retryCount < maxRetries && !orderSubmitted) {
       try {
-        orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        const orderResponse = await submitOrderWithOptimizedChunking(orderData);
         if (orderResponse && orderResponse.success) {
+          orderSubmitted = true;
+          console.log('Order submitted successfully:', orderResponse);
+          
+          // Send confirmation email
+          try {
+            await sendOrderConfirmationEmail({
+              ...orderData,
+              paymentDetails: {
+                ...orderData.paymentDetails,
+                cardLastFour: paymentData.cardNumber?.slice(-4)
+              }
+            });
+            console.log('Confirmation email sent successfully');
+          } catch (emailError) {
+            console.error('Failed to send confirmation email:', emailError);
+            // Continue with success flow even if email fails
+          }
+
+          // Update UI state
+          setOrderSuccess(true);
+          setSelectedPhotos([]);
+          setError(null);
+          
+          // Clear session storage
+          clearStateStorage();
           break;
         }
         throw new Error('Order submission failed');
       } catch (error) {
+        console.error(`Order submission attempt ${retryCount + 1} failed:`, error);
         retryCount++;
         if (retryCount === maxRetries) {
           throw error;
@@ -2223,38 +2223,14 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
         await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
       }
     }
-
-    // Send confirmation email
-    try {
-      await sendOrderConfirmationEmail({
-        ...orderData,
-        paymentDetails: {
-          ...orderData.paymentDetails,
-          cardLastFour: rawDataResponse.cardNumber
-        }
-      });
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError);
-      // Continue with success flow even if email fails
-    }
-
-    // Update UI state
-    setOrderSuccess(true);
-    setSelectedPhotos([]);
-    setError(null);
-    setIsProcessingOrder(false);
-
-    // Clear session storage
-    clearStateStorage();
-
   } catch (error) {
     console.error('Payment processing error:', error);
     setError(error.response?.data?.error || 'Failed to process payment or submit order');
     setOrderSuccess(false);
+  } finally {
     setIsProcessingOrder(false);
   }
-}
-
+};
 
 const CheckoutButton = ({ 
   onCheckout, 
