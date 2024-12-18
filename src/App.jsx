@@ -19,6 +19,7 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
+import CryptoJS from 'crypto-js';
 const stripe = new Stripe('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', {
   apiVersion: 'latest' // Recommended to specify version
 });
@@ -2170,10 +2171,8 @@ const handleHelcimPaymentSuccess = async (eventMessage) => {
     const cleanedData = JSON.stringify(dataToHash);
     
     // Use the secretToken from state instead of hardcoding it
-    const calculatedClientHash = crypto
-      .createHash('sha256')
-      .update(cleanedData + secretToken)
-      .digest('hex');
+    const calculatedClientHash = CryptoJS.SHA256(cleanedData + secretToken)
+    .toString(CryptoJS.enc.Hex);
 
     console.log('Client-side Calculated Hash:', calculatedClientHash);
     console.log('Received Hash:', helcimData.hash);
