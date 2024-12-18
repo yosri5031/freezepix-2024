@@ -2142,59 +2142,50 @@ const cancelHelcimPayment = async (paymentId) => {
     }
   }
 };
-const handleHelcimPaymentSuccess = async (eventMessage) => {
+const handleHelcimPaymentSuccess = async (eventMessage, secretToken) => {
   try {
-    // Check the structure of eventMessage
-    console.log('Full EventMessage:', eventMessage);
+    console.log('Full EventMessage:', JSON.stringify(eventMessage, null, 2));
 
-    // Parse the stringified eventMessage if it's a string
-    const parsedEventMessage = typeof eventMessage.eventMessage === 'string' 
-      ? JSON.parse(eventMessage.eventMessage) 
-      : eventMessage.eventMessage;
-    
-    // Extract the nested data
-    const helcimData = parsedEventMessage.data;
-    
+    // Directly use the data from eventMessage
     const rawDataResponse = {
-      transactionId: helcimData.data.transactionId,
-      amount: helcimData.data.amount,
-      currency: helcimData.data.currency,
-      status: helcimData.data.status,
-      cardNumber: helcimData.data.cardNumber
+      transactionId: eventMessage.data.transactionId,
+      amount: eventMessage.data.amount,
+      currency: eventMessage.data.currency,
+      status: eventMessage.data.status,
+      cardNumber: eventMessage.data.cardNumber
     };
-
-    // Detailed logging
-    console.log('Raw Data Response:', rawDataResponse);
-    console.log('Hash:', helcimData.hash);
 
     // Additional logging for hash generation
     const dataToHash = { ...rawDataResponse };
     const cleanedData = JSON.stringify(dataToHash);
-    const secretToken = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
-    
+
     const calculatedClientHash = crypto
       .createHash('sha256')
       .update(cleanedData + secretToken)
       .digest('hex');
 
     console.log('Client-side Calculated Hash:', calculatedClientHash);
-    console.log('Received Hash:', helcimData.hash);
-    console.log('Hash Match:', calculatedClientHash === helcimData.hash);
+    console.log('Received Hash:', eventMessage.hash);
+    console.log('Hash Match:', calculatedClientHash === eventMessage.hash);
 
-    const validationResponse = await axios.post('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', {
-      rawDataResponse,
-      hash: helcimData.hash,
-      clientCalculatedHash: calculatedClientHash  // Send client-side calculated hash for comparison
-    });
+    const validationResponse = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-helcim-payment', 
+      {
+        rawDataResponse,
+        hash: eventMessage.hash,
+        clientCalculatedHash: calculatedClientHash
+      }
+    );
 
-    // Rest of the existing code remains the same
+    return validationResponse;
   } catch (error) {
     console.error('Full Error Object:', error);
     console.error('Detailed error:', error.response?.data || error.message);
     setError(error.response?.data?.error || 'Failed to process payment');
     setIsProcessingOrder(false);
+    throw error;
   }
-}
+};
 
 
 const CheckoutButton = ({ 
@@ -2776,15 +2767,15 @@ const countryCodeMap = {
             ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton 
-  onPaymentSuccess={handleHelcimPaymentSuccess}
+                <HelcimPayButton
+  onPaymentSuccess={(eventMessage) => handleHelcimPaymentSuccess(eventMessage, secretToken)}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
+  total={total}
   setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
 />
                 </div>
               </div>
@@ -2795,15 +2786,15 @@ const countryCodeMap = {
                     {t('canada.message_c')}
                   </p>
                 </div>
-                <HelcimPayButton 
-  onPaymentSuccess={handleHelcimPaymentSuccess}
+                <HelcimPayButton
+  onPaymentSuccess={(eventMessage) => handleHelcimPaymentSuccess(eventMessage, secretToken)}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
-  total={total}  // Make sure to pass the total
+  total={total}
   setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
 />
               </div>
             )}
