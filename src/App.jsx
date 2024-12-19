@@ -2155,6 +2155,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     return `FPX-${timestamp.slice(-6)}${random}`;
   };
+  const country = initialCountries.find(c => c.value === selectedCountry);
 
   const processPhotosWithProgress = async () => {
     try {
@@ -2180,7 +2181,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       throw new Error(t('errors.photoProcessingFailed'));
     }
   };
-  
+
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
 
