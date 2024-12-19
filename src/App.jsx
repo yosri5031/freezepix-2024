@@ -2155,6 +2155,35 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     return `FPX-${timestamp.slice(-6)}${random}`;
   };
+
+  const processPhotosWithProgress = async () => {
+    try {
+      const optimizedPhotosWithPrices = await processImagesInBatches(
+        selectedPhotos.map(photo => ({
+          ...photo,
+          price: photo.price || calculateItemPrice(photo, country)
+        })),
+        (progress) => {
+          setUploadProgress(Math.round(progress));
+          if (progress % 20 === 0) {
+            saveStateWithCleanup({
+              orderNumber,
+              progress,
+              timestamp: new Date().toISOString()
+            });
+          }
+        }
+      );
+      return optimizedPhotosWithPrices;
+    } catch (processError) {
+      console.error('Photo processing error:', processError);
+      throw new Error(t('errors.photoProcessingFailed'));
+    }
+  };
+  
+  const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
+
   Number = generateOrderNumber();
 
   try {
@@ -2170,14 +2199,15 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       phone: formData.phone,
       shippingAddress: formData.billingAddress,
       billingAddress: formData.billingAddress,
-      orderItems: selectedPhotos.map(photo => ({
-        imageId: photo.id,
-        productType: photo.productType,
-        size: photo.size,
-        crystalShape: photo.crystalShape,
+       orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
+        id: photo.id,
         quantity: photo.quantity,
+        size: photo.size,
         price: photo.price,
-        thumbnail: photo.base64?.substring(0, 100000) // Limit the base64 string length
+        productType: photo.productType
       })),
       totalAmount: paymentData.amount,
       subtotal: paymentData.amount - 20,
