@@ -2169,18 +2169,39 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       customerInfo: formData,
       email: formData.email,
       phone: formData.phone,
+      // Add both shipping and billing addresses
+      shippingAddress: {
+        firstName: formData.shippingAddress.firstName,
+        lastName: formData.shippingAddress.lastName,
+        address: formData.shippingAddress.address,
+        city: formData.shippingAddress.city,
+        state: formData.shippingAddress.state,
+        province: formData.shippingAddress.province,
+        postalCode: formData.shippingAddress.postalCode,
+        country: formData.shippingAddress.country || selectedCountry
+      },
+      billingAddress: {
+        firstName: formData.billingAddress?.firstName || formData.shippingAddress.firstName,
+        lastName: formData.billingAddress?.lastName || formData.shippingAddress.lastName,
+        address: formData.billingAddress?.address || formData.shippingAddress.address,
+        city: formData.billingAddress?.city || formData.shippingAddress.city,
+        state: formData.billingAddress?.state || formData.shippingAddress.state,
+        province: formData.billingAddress?.province || formData.shippingAddress.province,
+        postalCode: formData.billingAddress?.postalCode || formData.shippingAddress.postalCode,
+        country: formData.billingAddress?.country || formData.shippingAddress.country || selectedCountry
+      },
       orderItems: selectedPhotos.map(photo => ({
         ...photo,
         file: undefined,
         thumbnail: photo.base64
       })),
-      totalAmount : paymentData.amount,
-      currency : paymentData.currency,
+      totalAmount: paymentData.amount,
+      currency: paymentData.currency,
       customerDetails: {
         name: formData.shippingAddress.firstName,
         country: selectedCountry,
       },
-      selectedCountry, 
+      selectedCountry,
       paymentDetails: {
         method: 'helcim',
         transactionId: paymentData.transactionId,
@@ -2189,14 +2210,13 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         status: paymentData.status,
         cardLastFour: paymentData.cardNumber?.slice(-4)
       },
-      subtotal :"",
-      shippingFee : 20,
-      taxAmount :"",
-      discount :"",
+      subtotal: paymentData.amount - 20, // Adjust as needed
+      shippingFee: 20,
+      taxAmount: 0, // Add proper tax calculation if needed
+      discount: 0,
       orderNote: "",
       stripePaymentId: "",
       discountCode: ""
-
     };
 
     console.log('Submitting order with data:', orderData);
