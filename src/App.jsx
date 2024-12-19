@@ -2168,7 +2168,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       orderNumber: Number,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress: formData.shippingAddress,
+      shippingAddress: formData.billingAddress,
       billingAddress: formData.billingAddress,
       orderItems: selectedPhotos.map(photo => ({
         imageId: photo.id,
