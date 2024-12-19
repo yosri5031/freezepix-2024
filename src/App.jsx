@@ -2166,57 +2166,32 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     // Prepare order data
     const orderData = {
       orderNumber: Number,
-      customerInfo: formData,
       email: formData.email,
       phone: formData.phone,
-      // Add both shipping and billing addresses
-      shippingAddress: {
-        firstName: formData.shippingAddress.firstName,
-        lastName: formData.shippingAddress.lastName,
-        address: formData.shippingAddress.address,
-        city: formData.shippingAddress.city,
-        state: formData.shippingAddress.state,
-        province: formData.shippingAddress.province,
-        postalCode: formData.shippingAddress.postalCode,
-        country: formData.shippingAddress.country || selectedCountry
-      },
-      billingAddress: {
-        firstName: formData.billingAddress?.firstName || formData.shippingAddress.firstName,
-        lastName: formData.billingAddress?.lastName || formData.shippingAddress.lastName,
-        address: formData.billingAddress?.address || formData.shippingAddress.address,
-        city: formData.billingAddress?.city || formData.shippingAddress.city,
-        state: formData.billingAddress?.state || formData.shippingAddress.state,
-        province: formData.billingAddress?.province || formData.shippingAddress.province,
-        postalCode: formData.billingAddress?.postalCode || formData.shippingAddress.postalCode,
-        country: formData.billingAddress?.country || formData.shippingAddress.country || selectedCountry
-      },
+      shippingAddress: formData.shippingAddress,
+      billingAddress: formData.billingAddress,
       orderItems: selectedPhotos.map(photo => ({
-        ...photo,
-        file: undefined,
-        thumbnail: photo.base64
+        imageId: photo.id,
+        productType: photo.productType,
+        size: photo.size,
+        crystalShape: photo.crystalShape,
+        quantity: photo.quantity,
+        price: photo.price,
+        thumbnail: photo.base64?.substring(0, 100000) // Limit the base64 string length
       })),
       totalAmount: paymentData.amount,
-      currency: paymentData.currency,
-      customerDetails: {
-        name: formData.shippingAddress.firstName,
-        country: selectedCountry,
-      },
-      selectedCountry,
-      paymentDetails: {
-        method: 'helcim',
-        transactionId: paymentData.transactionId,
-        amount: paymentData.amount,
-        currency: paymentData.currency,
-        status: paymentData.status,
-        cardLastFour: paymentData.cardNumber?.slice(-4)
-      },
-      subtotal: paymentData.amount - 20, // Adjust as needed
+      subtotal: paymentData.amount - 20,
       shippingFee: 20,
-      taxAmount: 0, // Add proper tax calculation if needed
+      taxAmount: 0,
       discount: 0,
+      currency: paymentData.currency,
       orderNote: "",
-      stripePaymentId: "",
-      discountCode: ""
+      paymentMethod: "helcim",
+      customerDetails: {
+        name: formData.billingAddress.firstName,
+        country: selectedCountry
+      },
+      selectedCountry
     };
 
     console.log('Submitting order with data:', orderData);
@@ -2228,7 +2203,16 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
 
     while (retryCount < maxRetries && !orderSubmitted) {
       try {
-        const orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        const orderResponse = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
+          orderData,
+          {
+            timeout: 60000,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
+        );
         if (orderResponse && orderResponse.success) {
           orderSubmitted = true;
           console.log('Order submitted successfully:', orderResponse);
