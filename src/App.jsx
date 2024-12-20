@@ -2191,6 +2191,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   if (!isUnique) {
     throw new Error('Failed to generate unique order number after multiple attempts');
   }
+  setCurrentOrderNumber(orderNumber);
 
   const country = initialCountries.find(c => c.value === selectedCountry);
 
