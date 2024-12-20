@@ -3406,7 +3406,14 @@ if (showIntro) {
             <div className="mt-4">
               <p className="font-medium">Order Details:</p>
               <p> {t('order.order_number')}: {currentOrderNumber}</p>
-              <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find(c => c.value === selectedCountry)?.currency}</p>
+              <>
+    {paymentMethod !== 'helcim' && (
+      <p>
+        {t('order.total_amount')}: {calculateTotals().total.toFixed(2)}{' '}
+        {initialCountries.find((c) => c.value === selectedCountry)?.currency}
+      </p>
+    )}
+  </>
              
             </div>
             <button
