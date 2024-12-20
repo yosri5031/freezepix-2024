@@ -2269,17 +2269,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
 
     while (retryCount < maxRetries && !orderSubmitted) {
       try {
-        const orderResponse = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders',
-          orderData,
-          {
-            timeout: 60000,
-            headers: {
-              'Content-Type': 'application/json'
-            }
-          }
-        );
-        if (orderResponse && orderResponse.success) {
+        const orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        if (orderResponse ) {
           orderSubmitted = true;
           console.log('Order submitted successfully:', orderResponse);
           
