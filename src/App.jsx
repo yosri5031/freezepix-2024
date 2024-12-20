@@ -2155,6 +2155,9 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     const random = Math.floor(Math.random() * 1100).toString().padStart(3, '0');
     return `FPXH-${timestamp.slice(-6)}${random}`;
   };
+
+  // Generate order number first
+  const orderNumber = generateOrderNumber();
   const country = initialCountries.find(c => c.value === selectedCountry);
 
   const processPhotosWithProgress = async () => {
@@ -2168,7 +2171,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setUploadProgress(Math.round(progress));
           if (progress % 20 === 0) {
             saveStateWithCleanup({
-              orderNumber,
+              orderNumber,  // Now orderNumber is defined
               progress,
               timestamp: new Date().toISOString()
             });
@@ -2182,10 +2185,9 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     }
   };
 
+  // Process photos after order number is generated
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-
-  const orderNumber = generateOrderNumber(); 
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
