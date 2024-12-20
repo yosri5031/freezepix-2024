@@ -2185,7 +2185,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
 
-  Number = generateOrderNumber();
+  const orderNumber = generateOrderNumber(); 
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
@@ -2195,7 +2195,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     
     // Prepare order data
     const orderData = {
-      orderNumber: Number,
+      orderNumber,
       email: formData.email,
       phone: formData.phone,
       shippingAddress: formData.billingAddress,
