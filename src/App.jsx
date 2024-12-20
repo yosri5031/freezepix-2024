@@ -292,6 +292,23 @@ const [interacReference, setInteracReference] = useState('');
         }));
       }, [selectedCountry]);
 
+      useEffect(() => {
+        const savedPhotos = localStorage.getItem('uploadedPhotos');
+        if (savedPhotos) {
+          try {
+            const parsedPhotos = JSON.parse(savedPhotos);
+            const restoredPhotos = parsedPhotos.map(photo => ({
+              ...photo,
+              file: base64ToFile(photo.base64, photo.fileName),
+              preview: photo.base64
+            }));
+            setSelectedPhotos(restoredPhotos);
+          } catch (error) {
+            console.error('Error restoring photos:', error);
+          }
+        }
+      }, []);
+
       // Add this useEffect in your component to handle the return from Stripe
       useEffect(() => {
         const validateStripePayment = async () => {
@@ -3213,18 +3230,10 @@ const countryCodeMap = {
   };
 
   const handleCountrySelect = (country) => {
+    localStorage.removeItem('uploadedPhotos');
+  localStorage.removeItem('freezepixState');
     setSelectedCountry(country);
-    setFormData(prevData => ({
-      ...prevData,
-      shippingAddress: {
-        ...prevData.shippingAddress,
-        country: country
-      },
-      billingAddress: {
-        ...prevData.billingAddress,
-        country: country
-      }
-    }));
+    
   };
   // Add a separate handler for the Start Printing button
 const handleStartPrinting = () => {
