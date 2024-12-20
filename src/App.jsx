@@ -3393,40 +3393,38 @@ if (showIntro) {
   );
 }
 
-  if (orderSuccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-        <div className="max-w-xl w-full">
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
-            <div className="text-green-500 text-5xl">✓</div>
-            <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
-            <p className="text-gray-600">
+if (orderSuccess) {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="max-w-xl w-full">
+        <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
+          <div className="text-green-500 text-5xl">✓</div>
+          <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
+          <p className="text-gray-600">
             {t('order.success_details')} {formData.email}.
-            </p>
-            <div className="mt-4">
-              <p className="font-medium">Order Details:</p>
-              <p> {t('order.order_number')}: {currentOrderNumber}</p>
-              <>
-    {paymentMethod !== 'helcim' && (
-      <p>
-        {t('order.total_amount')}: {calculateTotals().total.toFixed(2)}{' '}
-        {initialCountries.find((c) => c.value === selectedCountry)?.currency}
-      </p>
-    )}
-  </>
-             
-            </div>
+          </p>
+          <div className="mt-4">
+            <p className="font-medium">Order Details:</p>
+            <p>{t('order.order_number')}: {currentOrderNumber}</p>
+            {paymentMethod !== 'helcim' && (
+              <p>
+                {t('order.total_amount')}: {calculateTotals().total.toFixed(2)}{' '}
+                {initialCountries.find((c) => c.value === selectedCountry)?.currency}
+              </p>
+            )}
+          </div>
+          
             <button
               onClick={() => window.location.reload()}
               className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
             >
               {t('buttons.place_new')}
             </button>
-          </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-gray-50">
