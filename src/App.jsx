@@ -2294,6 +2294,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setOrderSuccess(true);
           setSelectedPhotos([]);
           setError(null);
+          window.removeHelcimPayIframe(); // Assuming this function exists
+
           
           // Clear session storage
           clearStateStorage();
