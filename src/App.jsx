@@ -3231,10 +3231,10 @@ const countryCodeMap = {
 
   const handleCountrySelect = (country) => {
     localStorage.removeItem('uploadedPhotos');
-  localStorage.removeItem('freezepixState');
+    localStorage.removeItem('freezepixState');
+    setSelectedPhotos([]); // Clear the uploaded photos
     setSelectedCountry(country);
-    
-  };
+};
   // Add a separate handler for the Start Printing button
 const handleStartPrinting = () => {
   setShowIntro(false);
