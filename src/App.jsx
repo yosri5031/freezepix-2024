@@ -2152,14 +2152,49 @@ const handleSecretTokenReceived = (token) => {
 const handleHelcimPaymentSuccess = async (paymentData) => {
   const generateOrderNumber = () => {
     const timestamp = Date.now().toString();
-    const random = Math.floor(Math.random() * 1100).toString().padStart(3, '0');
-    return `FPXH-${timestamp.slice(-6)}${random}`;
+    const random = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
+    const prefix = Math.random().toString(36).substring(2, 5).toUpperCase();
+    return `FPX-${prefix}-${timestamp.slice(-6)}${random}`;
   };
 
-  // Generate order number first
-  const orderNumber = generateOrderNumber();
+  // Add verification before proceeding
+  const verifyOrderNumber = async (orderNum) => {
+    try {
+      const response = await axios.get(
+        `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/verify/${orderNum}`
+      );
+      return !response.data.exists;
+    } catch (error) {
+      console.error('Order number verification failed:', error);
+      return false;
+    }
+  };
+
+  // Generate and verify order number
+  let orderNumber;
+  let isUnique = false;
+  let attempts = 0;
+  const maxAttempts = 5;
+
+  while (!isUnique && attempts < maxAttempts) {
+    orderNumber = generateOrderNumber();
+    try {
+      isUnique = await verifyOrderNumber(orderNumber);
+      if (isUnique) break;
+    } catch (error) {
+      console.error('Verification attempt failed:', error);
+    }
+    attempts++;
+    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between attempts
+  }
+
+  if (!isUnique) {
+    throw new Error('Failed to generate unique order number after multiple attempts');
+  }
+
   const country = initialCountries.find(c => c.value === selectedCountry);
 
+  // Rest of your existing code...
   const processPhotosWithProgress = async () => {
     try {
       const optimizedPhotosWithPrices = await processImagesInBatches(
@@ -2171,7 +2206,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setUploadProgress(Math.round(progress));
           if (progress % 20 === 0) {
             saveStateWithCleanup({
-              orderNumber,  // Now orderNumber is defined
+              orderNumber,
               progress,
               timestamp: new Date().toISOString()
             });
@@ -2185,24 +2220,19 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     }
   };
 
-  // Process photos after order number is generated
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
-
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
-    
-    // Set processing state
     setIsProcessingOrder(true);
     
-    // Prepare order data
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       shippingAddress: formData.billingAddress,
       billingAddress: formData.billingAddress,
-       orderItems: optimizedPhotosWithPrices.map(photo => ({
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
         thumbnail: photo.thumbnail,
@@ -2226,6 +2256,9 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       },
       selectedCountry
     };
+
+    // Add timestamp to ensure uniqueness
+    orderData.createdAt = new Date().toISOString();
 
     console.log('Submitting order with data:', orderData);
 
