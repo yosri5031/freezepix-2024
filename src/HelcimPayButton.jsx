@@ -23,6 +23,7 @@ const HelcimPayButton = ({
   const scriptRef = useRef(null);
   const iframeCheckInterval = useRef(null);
   const paymentWindowRef = useRef(null);
+  const helcimWindowRef = useRef(null);
 
   const resetPaymentStates = (reason = '') => {
     console.log('Resetting payment states:', reason);
@@ -38,50 +39,43 @@ const HelcimPayButton = ({
       iframeCheckInterval.current = null;
     }
 
-    // Remove iframe if it exists
-    if (window.removeHelcimPayIframe) {
-      try {
-        window.removeHelcimPayIframe();
-      } catch (error) {
-        console.error('Error removing Helcim iframe:', error);
-      }
+    // Close Helcim window if it exists
+    if (helcimWindowRef.current && !helcimWindowRef.current.closed) {
+      helcimWindowRef.current.close();
+      helcimWindowRef.current = null;
     }
 
-    // Force cleanup of any remaining iframes
+    // Remove iframe if it exists
     const existingIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
     if (existingIframe) {
       existingIframe.remove();
     }
   };
 
-  // Enhanced iframe monitoring
+  // Enhanced window monitoring
   const startPaymentMonitoring = () => {
     if (iframeCheckInterval.current) {
       clearInterval(iframeCheckInterval.current);
     }
 
-    let previousIframeExists = false;
     iframeCheckInterval.current = setInterval(() => {
-      const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
-      const currentIframeExists = !!helcimIframe;
-
-      // Detect when iframe disappears
-      if (previousIframeExists && !currentIframeExists && localProcessing) {
-        console.log('Payment window closed - iframe disappeared');
-        resetPaymentStates('iframe-disappeared');
-      }
-
-      // Check iframe visibility
-      if (helcimIframe) {
-        const isVisible = helcimIframe.offsetParent !== null;
-        if (!isVisible && localProcessing) {
-          console.log('Payment window closed - iframe hidden');
-          resetPaymentStates('iframe-hidden');
+      // Check if Helcim window was closed
+      if (helcimWindowRef.current && helcimWindowRef.current.closed) {
+        console.log('Payment window closed by user');
+        resetPaymentStates('window-closed');
+        if (iframeCheckInterval.current) {
+          clearInterval(iframeCheckInterval.current);
+          iframeCheckInterval.current = null;
         }
       }
 
-      previousIframeExists = currentIframeExists;
-    }, 100); // More frequent checks
+      // Also check iframe as backup
+      const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
+      if (!helcimIframe && localProcessing) {
+        console.log('Payment iframe removed');
+        resetPaymentStates('iframe-removed');
+      }
+    }, 100);
   };
 
   // Cleanup on unmount
@@ -95,10 +89,8 @@ const HelcimPayButton = ({
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && localProcessing) {
-        // Short delay to allow for DOM updates
         setTimeout(() => {
-          const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
-          if (!helcimIframe) {
+          if (helcimWindowRef.current && helcimWindowRef.current.closed) {
             console.log('Payment window closed - visibility change');
             resetPaymentStates('visibility-change');
           }
@@ -109,29 +101,6 @@ const HelcimPayButton = ({
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [localProcessing]);
-
-  // Handle back button
-  useEffect(() => {
-    const handleBackButton = (event) => {
-      const isBackArrow = (element) => {
-        return element?.classList?.contains('fa-arrow-left') ||
-               element?.getAttribute('data-icon') === 'arrow-left';
-      };
-
-      let target = event.target;
-      while (target) {
-        if (isBackArrow(target)) {
-          console.log('Back arrow clicked');
-          resetPaymentStates('back-button');
-          break;
-        }
-        target = target.parentElement;
-      }
-    };
-
-    document.addEventListener('click', handleBackButton);
-    return () => document.removeEventListener('click', handleBackButton);
-  }, []);
 
   // Handle ESC key
   useEffect(() => {
@@ -266,8 +235,11 @@ const HelcimPayButton = ({
       setCheckoutToken(response.checkoutToken);
       secretTokenRef.current = response.secretToken;
 
+      // Store reference to the payment window
+      helcimWindowRef.current = window.open('', 'helcim-pay-window', 'width=500,height=600');
+      
       setTimeout(() => {
-        if (window.appendHelcimPayIframe) {
+        if (window.appendHelcimPayIframe && helcimWindowRef.current) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
           startPaymentMonitoring();
         } else {
