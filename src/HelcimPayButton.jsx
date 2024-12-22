@@ -27,7 +27,6 @@ const HelcimPayButton = ({
     setLocalProcessing(false);
     setIsProcessingOrder(false);
     setError(null);
-    setPaymentStatus(null);
     if (window.removeHelcimPayIframe) {
       try {
         window.removeHelcimPayIframe();
@@ -36,30 +35,6 @@ const HelcimPayButton = ({
       }
     }
   };
-
-  // Handle back arrow click
-  useEffect(() => {
-    const handleBackArrowClick = (event) => {
-      // Check if the clicked element or its parent is the back arrow SVG
-      const isBackArrow = (element) => {
-        return element?.classList?.contains('fa-arrow-left') ||
-               element?.getAttribute('data-icon') === 'arrow-left';
-      };
-
-      let target = event.target;
-      while (target) {
-        if (isBackArrow(target)) {
-          console.log('Back arrow clicked, resetting payment states');
-          resetPaymentStates();
-          break;
-        }
-        target = target.parentElement;
-      }
-    };
-
-    document.addEventListener('click', handleBackArrowClick);
-    return () => document.removeEventListener('click', handleBackArrowClick);
-  }, []);
 
   // Monitor Helcim iframe visibility
   const startIframeCheck = () => {
@@ -199,7 +174,6 @@ const HelcimPayButton = ({
     setLoading(true);
     setIsProcessingOrder(true);
     setError(null);
-    setPaymentStatus(null);
     
     try {
       if (!scriptLoaded) {
@@ -227,6 +201,7 @@ const HelcimPayButton = ({
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
+          // Start monitoring iframe after it's appended
           startIframeCheck();
         } else {
           throw new Error('Payment system not ready. Please try again.');
