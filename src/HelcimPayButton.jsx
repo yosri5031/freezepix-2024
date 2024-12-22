@@ -23,7 +23,6 @@ const HelcimPayButton = ({
   const scriptRef = useRef(null);
   const iframeCheckInterval = useRef(null);
   const paymentWindowRef = useRef(null);
-  const helcimWindowRef = useRef(null);
 
   const resetPaymentStates = (reason = '') => {
     console.log('Resetting payment states:', reason);
@@ -33,16 +32,9 @@ const HelcimPayButton = ({
     setPaymentStatus(null);
     setCheckoutToken(null);
     
-    // Clear any existing intervals
     if (iframeCheckInterval.current) {
       clearInterval(iframeCheckInterval.current);
       iframeCheckInterval.current = null;
-    }
-
-    // Close Helcim window if it exists
-    if (helcimWindowRef.current && !helcimWindowRef.current.closed) {
-      helcimWindowRef.current.close();
-      helcimWindowRef.current = null;
     }
 
     // Remove iframe if it exists
@@ -52,24 +44,13 @@ const HelcimPayButton = ({
     }
   };
 
-  // Enhanced window monitoring
+  // Enhanced iframe monitoring
   const startPaymentMonitoring = () => {
     if (iframeCheckInterval.current) {
       clearInterval(iframeCheckInterval.current);
     }
 
     iframeCheckInterval.current = setInterval(() => {
-      // Check if Helcim window was closed
-      if (helcimWindowRef.current && helcimWindowRef.current.closed) {
-        console.log('Payment window closed by user');
-        resetPaymentStates('window-closed');
-        if (iframeCheckInterval.current) {
-          clearInterval(iframeCheckInterval.current);
-          iframeCheckInterval.current = null;
-        }
-      }
-
-      // Also check iframe as backup
       const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
       if (!helcimIframe && localProcessing) {
         console.log('Payment iframe removed');
@@ -90,8 +71,9 @@ const HelcimPayButton = ({
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && localProcessing) {
         setTimeout(() => {
-          if (helcimWindowRef.current && helcimWindowRef.current.closed) {
-            console.log('Payment window closed - visibility change');
+          const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
+          if (!helcimIframe) {
+            console.log('Payment iframe not found - visibility change');
             resetPaymentStates('visibility-change');
           }
         }, 100);
@@ -235,12 +217,10 @@ const HelcimPayButton = ({
       setCheckoutToken(response.checkoutToken);
       secretTokenRef.current = response.secretToken;
 
-      // Store reference to the payment window
-      helcimWindowRef.current = window.open('', 'helcim-pay-window', 'width=500,height=600');
-      
+      // Directly append the iframe without opening a new window
       setTimeout(() => {
-        if (window.appendHelcimPayIframe && helcimWindowRef.current) {
-          window.appendHelcimPayIframe(response.checkoutToken, true);
+        if (window.appendHelcimPayIframe) {
+          window.appendHelcimPayIframe(response.checkoutToken, false); // Set second parameter to false
           startPaymentMonitoring();
         } else {
           throw new Error('Payment system not ready. Please try again.');
