@@ -78,12 +78,10 @@ const HelcimPayButton = ({
         setLocalProcessing(false);
         setIsProcessingOrder(false);
         
-        // Clean up the iframe and reset button state
+        // Clean up the iframe
         if (window.removeHelcimPayIframe) {
           try {
             window.removeHelcimPayIframe();
-            setCheckoutToken(null);
-            secretTokenRef.current = null;
           } catch (error) {
             console.error('Error removing Helcim iframe:', error);
           }
@@ -201,7 +199,7 @@ const HelcimPayButton = ({
   const buttonDisabled = disabled || localProcessing || loading || !scriptLoaded || isProcessing;
   const buttonText = loading 
     ? 'Loading...' 
-    : localProcessing && checkoutToken 
+    : localProcessing 
       ? 'Processing...' 
       : !scriptLoaded
         ? 'Loading Payment System...'
