@@ -22,12 +22,23 @@ const HelcimPayButton = ({
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
   const iframeCheckInterval = useRef(null);
+  const paymentWindowRef = useRef(null);
 
-  const resetPaymentStates = () => {
+  const resetPaymentStates = (reason = '') => {
+    console.log('Resetting payment states:', reason);
     setLocalProcessing(false);
     setIsProcessingOrder(false);
     setError(null);
     setPaymentStatus(null);
+    setCheckoutToken(null);
+    
+    // Clear any existing intervals
+    if (iframeCheckInterval.current) {
+      clearInterval(iframeCheckInterval.current);
+      iframeCheckInterval.current = null;
+    }
+
+    // Remove iframe if it exists
     if (window.removeHelcimPayIframe) {
       try {
         window.removeHelcimPayIframe();
@@ -35,12 +46,73 @@ const HelcimPayButton = ({
         console.error('Error removing Helcim iframe:', error);
       }
     }
+
+    // Force cleanup of any remaining iframes
+    const existingIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
+    if (existingIframe) {
+      existingIframe.remove();
+    }
   };
 
-  // Handle back arrow click
+  // Enhanced iframe monitoring
+  const startPaymentMonitoring = () => {
+    if (iframeCheckInterval.current) {
+      clearInterval(iframeCheckInterval.current);
+    }
+
+    let previousIframeExists = false;
+    iframeCheckInterval.current = setInterval(() => {
+      const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
+      const currentIframeExists = !!helcimIframe;
+
+      // Detect when iframe disappears
+      if (previousIframeExists && !currentIframeExists && localProcessing) {
+        console.log('Payment window closed - iframe disappeared');
+        resetPaymentStates('iframe-disappeared');
+      }
+
+      // Check iframe visibility
+      if (helcimIframe) {
+        const isVisible = helcimIframe.offsetParent !== null;
+        if (!isVisible && localProcessing) {
+          console.log('Payment window closed - iframe hidden');
+          resetPaymentStates('iframe-hidden');
+        }
+      }
+
+      previousIframeExists = currentIframeExists;
+    }, 100); // More frequent checks
+  };
+
+  // Cleanup on unmount
   useEffect(() => {
-    const handleBackArrowClick = (event) => {
-      // Check if the clicked element or its parent is the back arrow SVG
+    return () => {
+      resetPaymentStates('component-unmount');
+    };
+  }, []);
+
+  // Handle visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && localProcessing) {
+        // Short delay to allow for DOM updates
+        setTimeout(() => {
+          const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
+          if (!helcimIframe) {
+            console.log('Payment window closed - visibility change');
+            resetPaymentStates('visibility-change');
+          }
+        }, 100);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [localProcessing]);
+
+  // Handle back button
+  useEffect(() => {
+    const handleBackButton = (event) => {
       const isBackArrow = (element) => {
         return element?.classList?.contains('fa-arrow-left') ||
                element?.getAttribute('data-icon') === 'arrow-left';
@@ -49,45 +121,32 @@ const HelcimPayButton = ({
       let target = event.target;
       while (target) {
         if (isBackArrow(target)) {
-          console.log('Back arrow clicked, resetting payment states');
-          resetPaymentStates();
+          console.log('Back arrow clicked');
+          resetPaymentStates('back-button');
           break;
         }
         target = target.parentElement;
       }
     };
 
-    document.addEventListener('click', handleBackArrowClick);
-    return () => document.removeEventListener('click', handleBackArrowClick);
+    document.addEventListener('click', handleBackButton);
+    return () => document.removeEventListener('click', handleBackButton);
   }, []);
 
-  // Monitor Helcim iframe visibility
-  const startIframeCheck = () => {
-    if (iframeCheckInterval.current) {
-      clearInterval(iframeCheckInterval.current);
-    }
-
-    iframeCheckInterval.current = setInterval(() => {
-      const helcimIframe = document.querySelector('iframe[id^="helcim-pay-iframe"]');
-      if (!helcimIframe && localProcessing) {
-        console.log('Helcim iframe not found, resetting payment state');
-        resetPaymentStates();
-        clearInterval(iframeCheckInterval.current);
-      }
-    }, 500);
-  };
-
-  // Cleanup on unmount
+  // Handle ESC key
   useEffect(() => {
-    return () => {
-      if (iframeCheckInterval.current) {
-        clearInterval(iframeCheckInterval.current);
+    const handleEscKey = (event) => {
+      if (event.key === 'Escape' && localProcessing) {
+        console.log('ESC key pressed');
+        resetPaymentStates('esc-key');
       }
-      resetPaymentStates();
     };
-  }, []);
 
-  // Load Helcim Pay.js script
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [localProcessing]);
+
+  // Load Helcim script
   useEffect(() => {
     const loadScript = () => {
       scriptRef.current = document.createElement('script');
@@ -95,7 +154,7 @@ const HelcimPayButton = ({
       scriptRef.current.async = true;
       
       scriptRef.current.onload = () => {
-        console.log('Helcim Pay.js script loaded successfully');
+        console.log('Helcim Pay.js script loaded');
         setScriptLoaded(true);
       };
       
@@ -120,45 +179,33 @@ const HelcimPayButton = ({
     };
   }, [setError]);
 
+  // Handle Helcim messages
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
-      // Only process messages from Helcim
       if (!event.data || !event.data.eventStatus) {
         return;
       }
 
-      console.log('Received Helcim response:', event.data);
+      console.log('Helcim response:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
-        console.log('Payment aborted by user');
-        setPaymentStatus({
-          success: false,
-          message: 'Payment Cancelled',
-          details: event.data.eventMessage
-        });
-        resetPaymentStates();
+        console.log('Payment explicitly aborted');
+        resetPaymentStates('helcim-abort');
         return;
       }
 
       if (event.data.eventStatus === 'SUCCESS') {
         try {
-          let parsedEventMessage;
-          try {
-            parsedEventMessage = typeof event.data.eventMessage === 'string' 
-              ? JSON.parse(event.data.eventMessage) 
-              : event.data.eventMessage;
-      
-            if (typeof parsedEventMessage.data === 'string') {
-              parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
-            }
-          } catch (parseError) {
-            console.error('Error parsing event message:', parseError);
-            throw new Error('Invalid payment response format');
+          let parsedEventMessage = typeof event.data.eventMessage === 'string' 
+            ? JSON.parse(event.data.eventMessage) 
+            : event.data.eventMessage;
+    
+          if (typeof parsedEventMessage.data === 'string') {
+            parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
           }
-      
+    
           const paymentData = parsedEventMessage.data.data;
-          console.log('Parsed payment data:', paymentData);
-      
+          
           if (paymentData && paymentData.status === 'APPROVED') {
             const paymentDetails = {
               transactionId: paymentData.transactionId || paymentData.cardToken,
@@ -171,8 +218,7 @@ const HelcimPayButton = ({
               invoiceNumber: paymentData.invoiceNumber,
               dateCreated: paymentData.dateCreated
             };
-      
-            console.log('Payment approved, proceeding with success handler:', paymentDetails);
+    
             await onPaymentSuccess(paymentDetails);
             setPaymentStatus({
               success: true,
@@ -183,9 +229,8 @@ const HelcimPayButton = ({
             throw new Error('Transaction not approved');
           }
         } catch (error) {
-          console.error('Error processing payment success:', error);
-          setError(error.message || 'Failed to process payment');
-          resetPaymentStates();
+          console.error('Payment processing error:', error);
+          resetPaymentStates('payment-error');
         }
       }
     };
@@ -195,11 +240,10 @@ const HelcimPayButton = ({
   }, [onPaymentSuccess, setError, setIsProcessingOrder]);
 
   const handlePayment = async () => {
+    resetPaymentStates('new-payment');
     setLocalProcessing(true);
     setLoading(true);
     setIsProcessingOrder(true);
-    setError(null);
-    setPaymentStatus(null);
     
     try {
       if (!scriptLoaded) {
@@ -215,8 +259,6 @@ const HelcimPayButton = ({
         total
       });
       
-      console.log('Helcim initialization response:', response);
-      
       if (!response.checkoutToken) {
         throw new Error('Failed to get valid checkout token');
       }
@@ -227,7 +269,7 @@ const HelcimPayButton = ({
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
-          startIframeCheck();
+          startPaymentMonitoring();
         } else {
           throw new Error('Payment system not ready. Please try again.');
         }
@@ -235,46 +277,34 @@ const HelcimPayButton = ({
 
     } catch (error) {
       console.error('Payment Initialization Error:', error);
-      setPaymentStatus({
-        success: false,
-        message: 'Payment Initialization Failed',
-        details: error.message
-      });
-      setError(error.message);
-      resetPaymentStates();
+      resetPaymentStates('initialization-error');
     } finally {
       setLoading(false);
     }
   };
-
-  const buttonDisabled = disabled || localProcessing || loading || !scriptLoaded || isProcessing;
-  const buttonText = loading 
-    ? 'Loading...' 
-    : localProcessing 
-      ? 'Processing...' 
-      : !scriptLoaded
-        ? 'Loading Payment System...'
-        : 'Pay Order';
 
   return (
     <div className="helcim-pay-container">
       <button 
         onClick={handlePayment}
         className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
-        disabled={buttonDisabled}
+        disabled={disabled || localProcessing || loading || !scriptLoaded || isProcessing}
       >
-        {buttonText}
+        {loading 
+          ? 'Loading...' 
+          : localProcessing 
+            ? 'Processing...' 
+            : !scriptLoaded
+              ? 'Loading Payment System...'
+              : 'Pay Order'
+        }
       </button>
 
       {paymentStatus && (
         <div 
-          className={`
-            mt-4 p-3 rounded 
-            ${paymentStatus.success 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-red-100 text-red-800'
-            }
-          `}
+          className={`mt-4 p-3 rounded ${
+            paymentStatus.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+          }`}
         >
           <p>{paymentStatus.message}</p>
           {paymentStatus.details && (
