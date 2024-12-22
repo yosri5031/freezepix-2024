@@ -18,8 +18,17 @@ const HelcimPayButton = ({
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [loading, setLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [localProcessing, setLocalProcessing] = useState(false);
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
+
+  // Reset processing state when component unmounts or on abort
+  useEffect(() => {
+    return () => {
+      setLocalProcessing(false);
+      setIsProcessingOrder(false);
+    };
+  }, [setIsProcessingOrder]);
 
   // Load Helcim Pay.js script
   useEffect(() => {
@@ -41,7 +50,6 @@ const HelcimPayButton = ({
       document.head.appendChild(scriptRef.current);
     };
 
-    // Check if script is already loaded
     if (!document.querySelector('script[src="https://secure.helcim.app/helcim-pay/services/start.js"]')) {
       loadScript();
     } else {
@@ -60,13 +68,24 @@ const HelcimPayButton = ({
       console.log('Received Helcim response:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
+        console.log('Payment aborted by user');
         setPaymentStatus({
           success: false,
           message: 'Payment Aborted',
           details: event.data.eventMessage
         });
-        setError('Payment was aborted: ' + event.data.eventMessage);
+        setError('Payment was cancelled');
+        setLocalProcessing(false);
         setIsProcessingOrder(false);
+        
+        // Clean up the iframe
+        if (window.removeHelcimPayIframe) {
+          try {
+            window.removeHelcimPayIframe();
+          } catch (error) {
+            console.error('Error removing Helcim iframe:', error);
+          }
+        }
         return;
       }
 
@@ -103,10 +122,7 @@ const HelcimPayButton = ({
             };
       
             console.log('Payment approved, proceeding with success handler:', paymentDetails);
-      
-            // Assuming onPaymentSuccess is an asynchronous function
             await onPaymentSuccess(paymentDetails);
-      
             setPaymentStatus({
               success: true,
               message: 'Payment Successful',
@@ -118,6 +134,7 @@ const HelcimPayButton = ({
         } catch (error) {
           console.error('Error processing payment success:', error);
           setError(error.message || 'Failed to process payment');
+          setLocalProcessing(false);
           setIsProcessingOrder(false);
         }
       }
@@ -128,8 +145,10 @@ const HelcimPayButton = ({
   }, [onPaymentSuccess, setError, setIsProcessingOrder]);
 
   const handlePayment = async () => {
+    setLocalProcessing(true);
     setLoading(true);
     setIsProcessingOrder(true);
+    setError(null);
     
     try {
       if (!scriptLoaded) {
@@ -153,9 +172,7 @@ const HelcimPayButton = ({
 
       setCheckoutToken(response.checkoutToken);
       secretTokenRef.current = response.secretToken;
-      console.log('Stored secret token:', response.secretToken);
 
-      // Add a small delay to ensure the script is fully initialized
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
@@ -172,29 +189,30 @@ const HelcimPayButton = ({
         details: error.message
       });
       setError(error.message);
+      setLocalProcessing(false);
       setIsProcessingOrder(false);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 5000);
+      setLoading(false);
     }
   };
+
+  const buttonDisabled = disabled || localProcessing || loading || !scriptLoaded || isProcessing;
+  const buttonText = loading 
+    ? 'Loading...' 
+    : localProcessing 
+      ? 'Processing...' 
+      : !scriptLoaded
+        ? 'Loading Payment System...'
+        : 'Pay Order';
 
   return (
     <div className="helcim-pay-container">
       <button 
         onClick={handlePayment}
-        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        disabled={disabled || isProcessing || loading || !scriptLoaded}
+        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+        disabled={buttonDisabled}
       >
-        {loading 
-          ? 'Loading...' 
-          : isProcessing 
-            ? 'Processing...' 
-            : !scriptLoaded
-              ? 'Loading Payment System...'
-              : 'Pay Order'
-        }
+        {buttonText}
       </button>
 
       {paymentStatus && (
