@@ -30,6 +30,23 @@ const HelcimPayButton = ({
     };
   }, [setIsProcessingOrder]);
 
+  // Add click event listener for the back arrow
+  useEffect(() => {
+    const handleBackArrowClick = (event) => {
+      // Check if the clicked element is the back arrow or its parent
+      const isBackArrow = event.target.closest('.fa-arrow-left');
+      if (isBackArrow) {
+        setLocalProcessing(false);
+        setIsProcessingOrder(false);
+        setCheckoutToken(null);
+        secretTokenRef.current = null;
+      }
+    };
+
+    document.addEventListener('click', handleBackArrowClick);
+    return () => document.removeEventListener('click', handleBackArrowClick);
+  }, [setIsProcessingOrder]);
+
   // Load Helcim Pay.js script
   useEffect(() => {
     const loadScript = () => {
@@ -77,13 +94,13 @@ const HelcimPayButton = ({
         setError('Payment was cancelled');
         setLocalProcessing(false);
         setIsProcessingOrder(false);
+        setCheckoutToken(null);
+        secretTokenRef.current = null;
         
-        // Clean up the iframe and reset button state
+        // Clean up the iframe
         if (window.removeHelcimPayIframe) {
           try {
             window.removeHelcimPayIframe();
-            setCheckoutToken(null);
-            secretTokenRef.current = null;
           } catch (error) {
             console.error('Error removing Helcim iframe:', error);
           }
