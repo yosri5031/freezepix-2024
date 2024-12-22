@@ -21,6 +21,7 @@ const HelcimPayButton = ({
   const [localProcessing, setLocalProcessing] = useState(false);
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
+  const observerRef = useRef(null);
 
   // Reset processing state when component unmounts or on abort
   useEffect(() => {
@@ -30,21 +31,38 @@ const HelcimPayButton = ({
     };
   }, [setIsProcessingOrder]);
 
-  // Add click event listener for the back arrow
+  // Monitor iframe removal
   useEffect(() => {
-    const handleBackArrowClick = (event) => {
-      // Check if the clicked element is the back arrow or its parent
-      const isBackArrow = event.target.closest('.fa-arrow-left');
-      if (isBackArrow) {
-        setLocalProcessing(false);
-        setIsProcessingOrder(false);
-        setCheckoutToken(null);
-        secretTokenRef.current = null;
-      }
+    const resetStates = () => {
+      setLocalProcessing(false);
+      setIsProcessingOrder(false);
+      setCheckoutToken(null);
+      secretTokenRef.current = null;
     };
 
-    document.addEventListener('click', handleBackArrowClick);
-    return () => document.removeEventListener('click', handleBackArrowClick);
+    observerRef.current = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        mutation.removedNodes.forEach((node) => {
+          // Check if the removed node is the Helcim iframe
+          if (node.nodeName === 'IFRAME' && node.id === 'helcim-pay-frame') {
+            console.log('Helcim iframe removed');
+            resetStates();
+          }
+        });
+      });
+    });
+
+    // Start observing the document body for iframe removal
+    observerRef.current.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+      }
+    };
   }, [setIsProcessingOrder]);
 
   // Load Helcim Pay.js script
