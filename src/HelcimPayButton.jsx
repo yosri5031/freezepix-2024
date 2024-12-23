@@ -30,7 +30,7 @@ const HelcimPayButton = ({
     };
   }, [setIsProcessingOrder]);
 
-  // Load Helcim Pay.js script
+  // Load Helcim Pay.js script and handle window closure
   useEffect(() => {
     const loadScript = () => {
       scriptRef.current = document.createElement('script');
@@ -50,18 +50,32 @@ const HelcimPayButton = ({
       document.head.appendChild(scriptRef.current);
     };
 
+    // Handle Helcim window closure
+    const handleHelcimClose = () => {
+      if (window.removeHelcimPayIframe) {
+        console.log('Helcim window closed');
+        setScriptLoaded(true);
+        setLocalProcessing(false);
+        setIsProcessingOrder(false);
+        setLoading(false);
+      }
+    };
+
     if (!document.querySelector('script[src="https://secure.helcim.app/helcim-pay/services/start.js"]')) {
       loadScript();
     } else {
       setScriptLoaded(true);
     }
 
+    window.addEventListener('removeHelcimPayIframe', handleHelcimClose);
+
     return () => {
       if (scriptRef.current) {
         document.head.removeChild(scriptRef.current);
       }
+      window.removeEventListener('removeHelcimPayIframe', handleHelcimClose);
     };
-  }, [setError]);
+  }, [setError, setIsProcessingOrder]);
 
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
