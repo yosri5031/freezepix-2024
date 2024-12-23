@@ -21,16 +21,25 @@ const HelcimPayButton = ({
   const [localProcessing, setLocalProcessing] = useState(false);
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
+  const processingTimeoutRef = useRef(null);
 
-  // Reset processing state when component unmounts or on abort
+  const resetStates = () => {
+    setScriptLoaded(true);
+    setLocalProcessing(false);
+    setIsProcessingOrder(false);
+    setLoading(false);
+    if (processingTimeoutRef.current) {
+      clearTimeout(processingTimeoutRef.current);
+    }
+  };
+
+  // Reset all states on unmount
   useEffect(() => {
     return () => {
-      setLocalProcessing(false);
-      setIsProcessingOrder(false);
+      resetStates();
     };
   }, [setIsProcessingOrder]);
 
-  // Load Helcim Pay.js script and handle window closure
   useEffect(() => {
     const loadScript = () => {
       scriptRef.current = document.createElement('script');
@@ -45,6 +54,7 @@ const HelcimPayButton = ({
       scriptRef.current.onerror = () => {
         console.error('Failed to load Helcim Pay.js script');
         setError('Failed to load payment system');
+        resetStates();
       };
 
       document.head.appendChild(scriptRef.current);
@@ -52,12 +62,21 @@ const HelcimPayButton = ({
 
     // Handle Helcim window closure
     const handleHelcimClose = () => {
-      if (window.removeHelcimPayIframe) {
-        console.log('Helcim window closed');
-        setScriptLoaded(true);
-        setLocalProcessing(false);
-        setIsProcessingOrder(false);
-        setLoading(false);
+      console.log('Helcim window closed');
+      resetStates();
+    };
+
+    // Handle browser back button
+    const handlePopState = () => {
+      console.log('Browser back button pressed');
+      resetStates();
+    };
+
+    // Handle page visibility change
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        console.log('Page hidden');
+        processingTimeoutRef.current = setTimeout(resetStates, 1000);
       }
     };
 
@@ -68,12 +87,17 @@ const HelcimPayButton = ({
     }
 
     window.addEventListener('removeHelcimPayIframe', handleHelcimClose);
+    window.addEventListener('popstate', handlePopState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
       if (scriptRef.current) {
         document.head.removeChild(scriptRef.current);
       }
       window.removeEventListener('removeHelcimPayIframe', handleHelcimClose);
+      window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      resetStates();
     };
   }, [setError, setIsProcessingOrder]);
 
@@ -89,10 +113,8 @@ const HelcimPayButton = ({
           details: event.data.eventMessage
         });
         setError('Payment was cancelled');
-        setLocalProcessing(false);
-        setIsProcessingOrder(false);
+        resetStates();
         
-        // Clean up the iframe
         if (window.removeHelcimPayIframe) {
           try {
             window.removeHelcimPayIframe();
@@ -116,6 +138,7 @@ const HelcimPayButton = ({
             }
           } catch (parseError) {
             console.error('Error parsing event message:', parseError);
+            resetStates();
             throw new Error('Invalid payment response format');
           }
       
@@ -143,13 +166,13 @@ const HelcimPayButton = ({
               details: paymentDetails
             });
           } else {
+            resetStates();
             throw new Error('Transaction not approved');
           }
         } catch (error) {
           console.error('Error processing payment success:', error);
           setError(error.message || 'Failed to process payment');
-          setLocalProcessing(false);
-          setIsProcessingOrder(false);
+          resetStates();
         }
       }
     };
@@ -187,6 +210,14 @@ const HelcimPayButton = ({
       setCheckoutToken(response.checkoutToken);
       secretTokenRef.current = response.secretToken;
 
+      // Set a timeout to reset states if the iframe doesn't load
+      processingTimeoutRef.current = setTimeout(() => {
+        if (!document.querySelector('.helcim-pay-iframe')) {
+          resetStates();
+          setError('Payment window failed to open. Please try again.');
+        }
+      }, 10000);
+
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
@@ -203,10 +234,7 @@ const HelcimPayButton = ({
         details: error.message
       });
       setError(error.message);
-      setLocalProcessing(false);
-      setIsProcessingOrder(false);
-    } finally {
-      setLoading(false);
+      resetStates();
     }
   };
 
