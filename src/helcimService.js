@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_TOKEN = 'aM2T3NEpnksEOKIC#ajd%!-IE.TRXEqUIi_Ct8P.K18z1L%aV3zTl*R4PHoDco%y';
+const API_TOKEN = 'aDjyTb2SDE1wgdf!xIj5OWynKkW4%mHRurFV.UscZMSO#6muhq6OzDzM7BCdCSzT';
 const HELCIM_API_URL = 'https://api.helcim.com/v2/helcim-pay/initialize';
 
 export const initializeHelcimPayCheckout = async ({
