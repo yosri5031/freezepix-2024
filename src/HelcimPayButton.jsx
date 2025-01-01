@@ -76,7 +76,7 @@ const HelcimPayButton = ({
     const handleVisibilityChange = () => {
       if (document.hidden) {
         console.log('Page hidden');
-        processingTimeoutRef.current = setTimeout(resetStates, 1000);
+        processingTimeoutRef.current = setTimeout(resetStates, 10000);
       }
     };
 
@@ -103,6 +103,8 @@ const HelcimPayButton = ({
 
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
+      // Handle mobile-specific data structure
+  const eventData = event.data.eventStatus ? event.data : JSON.parse(event.data);
       console.log('Received Helcim response:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
@@ -125,19 +127,20 @@ const HelcimPayButton = ({
         return;
       }
 
-      if (event.data.eventStatus === 'SUCCESS') {
+      if (eventData.eventStatus === 'SUCCESS') {
         try {
           let parsedEventMessage;
           try {
-            parsedEventMessage = typeof event.data.eventMessage === 'string' 
-              ? JSON.parse(event.data.eventMessage) 
-              : event.data.eventMessage;
-      
-            if (typeof parsedEventMessage.data === 'string') {
-              parsedEventMessage.data = JSON.parse(parsedEventMessage.data);
+            parsedEventMessage = typeof eventData.eventMessage === 'string' 
+              ? JSON.parse(eventData.eventMessage) 
+              : eventData.eventMessage;
+            
+            // Additional mobile browser compatibility check
+            if (typeof parsedEventMessage === 'string') {
+              parsedEventMessage = JSON.parse(parsedEventMessage);
             }
           } catch (parseError) {
-            console.error('Error parsing event message:', parseError);
+            console.error('Parse error:', parseError);
             resetStates();
             throw new Error('Invalid payment response format');
           }
@@ -188,14 +191,15 @@ const HelcimPayButton = ({
     setError(null);
     
     try {
+      // Check for mobile browser
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
       if (!scriptLoaded) {
-        throw new Error('Payment system is still loading. Please try again in a moment.');
+        throw new Error(isMobile ? 
+          'Please wait for the payment system to load on your mobile device.' : 
+          'Payment system is still loading. Please try again in a moment.');
       }
-
-      if (!window.appendHelcimPayIframe) {
-        throw new Error('Payment system not properly initialized. Please refresh the page and try again.');
-      }
-
+  
       const response = await initializeHelcimPayCheckout({
         selectedCountry,
         total
@@ -206,26 +210,33 @@ const HelcimPayButton = ({
       if (!response.checkoutToken) {
         throw new Error('Failed to get valid checkout token');
       }
-
+  
       setCheckoutToken(response.checkoutToken);
       secretTokenRef.current = response.secretToken;
-
-      // Set a timeout to reset states if the iframe doesn't load
+  
+      // Adjust timeout for mobile devices
+      const timeoutDuration = isMobile ? 20000 : 10000;
+      
       processingTimeoutRef.current = setTimeout(() => {
         if (!document.querySelector('.helcim-pay-iframe')) {
           resetStates();
-          setError('Payment window failed to open. Please try again.');
+          setError(isMobile ? 
+            'Payment window failed to open on mobile. Please try again or use a desktop browser.' : 
+            'Payment window failed to open. Please try again.');
         }
-      }, 10000);
-
+      }, timeoutDuration);
+  
+      // Add delay for mobile browsers
+      const appendDelay = isMobile ? 1500 : 500;
+      
       setTimeout(() => {
         if (window.appendHelcimPayIframe) {
           window.appendHelcimPayIframe(response.checkoutToken, true);
         } else {
-          throw new Error('Payment system not ready. Please try again.');
+          throw new Error('Payment system not ready. Please refresh and try again.');
         }
-      }, 500);
-
+      }, appendDelay);
+  
     } catch (error) {
       console.error('Payment Initialization Error:', error);
       setPaymentStatus({
