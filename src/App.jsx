@@ -42,9 +42,9 @@ const initialCountries = [
     value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
-    size4x6: 0.01,        // Updated from 0.39
-    size5x7: 0.01,        // Updated from 1.49
-    size8x10: 0.01,       // Added new size
+    size4x6: 0.49,        // Updated from 0.39
+    size5x7: 2.99,        // Updated from 1.49
+    size8x10: 4.99,       // Added new size
     crystal3d: 140, 
     keychain: 9.99, 
     keyring_magnet: 9.99  },
