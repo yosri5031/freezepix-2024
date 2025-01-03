@@ -290,7 +290,6 @@ useEffect(() => {
       console.error('Error fetching discount codes:', error);
     }
   };
-
   fetchData();
 }, []);
 
