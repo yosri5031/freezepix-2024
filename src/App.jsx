@@ -440,9 +440,9 @@ const [interacReference, setInteracReference] = useState('');
     
       let discountValue = 0;
       if (discountRule.valueType === 'percentage') {
-        discountValue = parseFloat(discountRule.value) / 100;
+        discountValue = Math.abs(parseFloat(discountRule.value)) / 100; // Ensure positive value
       } else if (discountRule.valueType === 'fixed_amount') {
-        discountValue = parseFloat(discountRule.value);
+        discountValue = Math.abs(parseFloat(discountRule.value)); // Ensure positive value
       }
     
       console.log('Calculated Discount Value:', discountValue);
@@ -3209,15 +3209,15 @@ const countryCodeMap = {
         )}
 
        {/* Discount */}
-       {discount > 0 && (
-        <div className="flex justify-between py-2 text-green-600">
-          <span>
-            {t('order.discount')} ({getDiscountDisplay()})
-          </span>
-          <span>
-            -{discount.toFixed(2)} {country?.currency}
-          </span>
-        </div>
+{discount > 0 && (
+  <div className="flex justify-between py-2 text-green-600">
+    <span>
+      {t('order.discount')} ({getDiscountDisplay()})
+    </span>
+    <span>
+      -{Math.abs(discount).toFixed(2)} {country?.currency}
+    </span>
+  </div>
 )}
 
         {/* Final Total */}
