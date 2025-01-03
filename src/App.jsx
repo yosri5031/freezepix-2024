@@ -18,7 +18,6 @@ import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import fetchDiscountCodes from './discount';
-import { useDiscountCodes } from './discount';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
 import CryptoJS from 'crypto-js';
@@ -252,8 +251,6 @@ const FreezePIX = () => {
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [discountCodesFromAPI, setDiscountCodesFromAPI] = useState([]);
-    const discountCodes = useDiscountCodes();
-  
 
 const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
@@ -2423,7 +2420,7 @@ const CheckoutButton = ({
 
 const validateDiscountCode = (code) => {
   const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-  const validCodes = discountCodes.map(code => code.code);
+  const validCodes = discountCodesFromAPI.map(code => code.code);
   const upperCode = code.toUpperCase();
 
   if (code && !validCodes.includes(upperCode)) {
@@ -2595,19 +2592,19 @@ const validateDiscountCode = (code) => {
     }
     // Calculate discount if applicable 
       // Calculate discount if applicable
-      const discount = discountCodes.find(
-        (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
-      );
-  
-      let discountedSubtotal = subtotal;
-      if (discount) {
-        discountedSubtotal =
-          discount.valueType === 'percentage'
-            ? subtotal * (1 - discount.value / 100)
-            : discount.valueType === 'fixed_amount'
-            ? subtotal - discount.value
-            : subtotal;
-      }
+  const discount = discountCodesFromAPI.find(
+    (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
+  );
+
+  let discountedSubtotal = subtotal;
+  if (discount) {
+    discountedSubtotal =
+      discount.valueType === 'percentage'
+        ? subtotal * (1 - discount.value / 100)
+        : discount.valueType === 'fixed_amount'
+        ? subtotal - discount.value
+        : subtotal;
+  }
 
   let taxAmount = 0;
   const taxableAmount = discountedSubtotal + shippingFee; // Include shipping fee in tax calculation
