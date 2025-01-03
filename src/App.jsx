@@ -2458,7 +2458,7 @@ const getDiscountDisplay = () => {
   const discountRule = availableDiscounts.find(
     discount => discount.code.toUpperCase() === discountCode.toUpperCase()
   );
-  if (!country) return '0%'; // Add this check in getDiscountDisplay
+  
   if (!discountRule) return '0%';
   
   if (discountRule.valueType === 'percentage') {
