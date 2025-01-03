@@ -4,7 +4,7 @@ import axios from 'axios';
 const shopifyStoreUrl = 'https://freezepix.myshopify.com';
 const accessToken = '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';
 
-export const fetchDiscountCodes = async () => {
+const fetchDiscountCodes = async () => {
   try {
     const response = await axios.get(`${shopifyStoreUrl}/admin/api/2024-01/price_rules.json`, {
       headers: {
@@ -43,3 +43,4 @@ export const fetchDiscountCodes = async () => {
     return [];
   }
 };
+export default fetchDiscountCodes;
