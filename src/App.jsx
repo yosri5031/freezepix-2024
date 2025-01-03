@@ -243,6 +243,8 @@ const FreezePIX = () => {
     const [error, setError] = useState(null);
     const [discountCode, setDiscountCode] = useState('');
     const [discountError, setDiscountError] = useState('');
+    const [availableDiscounts, setAvailableDiscounts] = useState([]);
+
     const [orderNote, setOrderNote] = useState('');
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
@@ -291,6 +293,22 @@ const [interacReference, setInteracReference] = useState('');
           }
         }));
       }, [selectedCountry]);
+
+      useEffect(() => {
+        const fetchDiscountCodes = async () => {
+          setIsLoading(true);
+          try {
+            const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/discount-codes');
+            setAvailableDiscounts(response.data);
+          } catch (error) {
+            console.error('Error fetching discount codes:', error);
+          } finally {
+            setIsLoading(false);
+          }
+        };
+    
+        fetchDiscountCodes();
+      }, []);
 
       useEffect(() => {
         const savedPhotos = localStorage.getItem('uploadedPhotos');
@@ -410,6 +428,23 @@ const [interacReference, setInteracReference] = useState('');
      
         validateStripePayment();
      }, []);
+
+     const calculateDiscountValue = (code) => {
+      const discountRule = availableDiscounts.find(
+        discount => discount.code.toUpperCase() === code.toUpperCase()
+      );
+  
+      if (!discountRule) return 0;
+  
+      switch (discountRule.valueType) {
+        case 'percentage':
+          return parseFloat(discountRule.value) / 100;
+        case 'fixed_amount':
+          return parseFloat(discountRule.value);
+        default:
+          return 0;
+      }
+    };
 
       const updateFormData = (field, value) => {
         setFormData(prev => ({
@@ -2401,23 +2436,39 @@ const CheckoutButton = ({
 );
 };  
 
-      const validateDiscountCode = (code) => {
-        const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-        const validCodes = ['B2B', 'MOHAMED','MCF99','ABCC'];
-        const upperCode = code.toUpperCase();
-        
-        if (code && !validCodes.includes(upperCode)) {
-          setDiscountError('Invalid discount code');
-          return false;
-        } //else if (totalItems < 10) {
-          //setDiscountError('Minimum 10 items required for discount');
-          //return false;
-        //} 
-        else {
-          setDiscountError('');
-          return true;
-        }
-      };
+        const validateDiscountCode = (code) => {
+    const totalItems = selectedPhotos.reduce((sum, photo) => sum + (photo.quantity || 1), 0);
+    const upperCode = code.toUpperCase();
+    
+    // Check if code exists in available discounts
+    const validDiscount = availableDiscounts.find(
+      discount => discount.code.toUpperCase() === upperCode
+    );
+
+    if (code && !validDiscount) {
+      setDiscountError('Invalid discount code');
+      return false;
+    } else {
+      setDiscountError('');
+      return true;
+    }
+  };
+
+  const getDiscountDisplay = () => {
+    const discountRule = availableDiscounts.find(
+      discount => discount.code.toUpperCase() === discountCode.toUpperCase()
+    );
+
+    if (!discountRule) return '0%';
+
+    if (discountRule.valueType === 'percentage') {
+      return `${discountRule.value}%`;
+    } else {
+      return `${discountRule.value} ${country?.currency}`;
+    }
+  };
+
+
     
       const handleDiscountCode = (value) => {
         setDiscountCode(value);
@@ -2579,13 +2630,9 @@ const CheckoutButton = ({
     }
 
     // Calculate discount if applicable 
-    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
-    ? (subtotal * 0.5)
-    : (discountCode.toUpperCase() === 'MCF99') 
-        ? (subtotal  * 0.99)
-        : (discountCode.toUpperCase() === 'ABCC') 
-            ? (subtotal  * 0.1) // 10% discount for "ABCC"
-            : 0;  // Calculate tax based on location, including shipping feee 
+    const discount = discountCode ? 
+  subtotal * calculateDiscountValue(discountCode) : 0;
+  
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
@@ -3155,16 +3202,15 @@ const countryCodeMap = {
         )}
 
        {/* Discount */}
-{discount > 0 && (
-  <div className="flex justify-between py-2 text-green-600">
-    <span>{t('order.discount')} (
-      {discountCode.toUpperCase() === 'MCF99' ? '99%' : 
-      discountCode.toUpperCase() === 'MOHAMED' || discountCode.toUpperCase() === 'B2B' ? '50%' : 
-      discountCode.toUpperCase() === 'ABCC' ? '10%' : '0%'}
-    )
-    </span>
-    <span>-{discount.toFixed(2)} {country?.currency}</span>
-  </div>
+       {discount > 0 && (
+        <div className="flex justify-between py-2 text-green-600">
+          <span>
+            {t('order.discount')} ({getDiscountDisplay()})
+          </span>
+          <span>
+            -{discount.toFixed(2)} {country?.currency}
+          </span>
+        </div>
 )}
 
         {/* Final Total */}
