@@ -2555,133 +2555,133 @@ const CheckoutButton = ({
     ));
   };
 
-  const calculateTotals = () => { 
-    const country = initialCountries.find(c => c.value === selectedCountry); 
-    const quantities = { 
-        '4x6': 0, 
-        '5x7': 0, 
-        '10x15': 0, 
-        '15x22': 0, 
+  const calculateTotals = () => {
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    const quantities = {
+        '4x6': 0,
+        '5x7': 0,
+        '10x15': 0,
+        '15x22': 0,
         '8x10': 0,
-        '3d_frame': 0, 
-        'keychain': 0, 
-        'keyring_magnet': 0 
-    }; 
+        '3d_frame': 0,
+        'keychain': 0,
+        'keyring_magnet': 0
+    };
 
-    const subtotalsBySize = { 
-        '4x6': 0, 
-        '5x7': 0, 
-        '10x15': 0, 
-        '15x22': 0, 
-        '8x10' : 0,
-        '3d_frame': 0, 
-        'keychain': 0, 
-        'keyring_magnet': 0 
-    }; 
+    const subtotalsBySize = {
+        '4x6': 0,
+        '5x7': 0,
+        '10x15': 0,
+        '15x22': 0,
+        '8x10': 0,
+        '3d_frame': 0,
+        'keychain': 0,
+        'keyring_magnet': 0
+    };
 
-    // Count quantities and calculate subtotals for each size/product 
+    // Count quantities and calculate subtotals for each size/product
     selectedPhotos.forEach(photo => {
-      if (photo.productType === 'photo_print') {
-          quantities[photo.size] += photo.quantity || 1;
-          if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-              if (photo.size === '10x15') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
-              } else if (photo.size === '15x22') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-              }
-          } else {
-              if (photo.size === '4x6') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
-              } else if (photo.size === '5x7') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-              } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '8x10') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
-              }
-          }
-      } else if (photo.productType === '3d_frame') {
-          quantities['3d_frame'] += photo.quantity || 1;
-          subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
-      } else if (photo.productType === 'keychain') {
-          quantities['keychain'] += photo.quantity || 1;
-          subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
-      } else if (photo.productType === 'keyring_magnet') {
-          quantities['keyring_magnet'] += photo.quantity || 1;
-          subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
-      }
-  });
+        if (photo.productType === 'photo_print') {
+            quantities[photo.size] += photo.quantity || 1;
+            if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+                if (photo.size === '10x15') {
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
+                } else if (photo.size === '15x22') {
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
+                }
+            } else {
+                if (photo.size === '4x6') {
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+                } else if (photo.size === '5x7') {
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+                } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '8x10') {
+                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
+                }
+            }
+        } else if (photo.productType === '3d_frame') {
+            quantities['3d_frame'] += photo.quantity || 1;
+            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+        } else if (photo.productType === 'keychain') {
+            quantities['keychain'] += photo.quantity || 1;
+            subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+        } else if (photo.productType === 'keyring_magnet') {
+            quantities['keyring_magnet'] += photo.quantity || 1;
+            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+        }
+    });
 
-    // Calculate subtotal 
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
     console.log('Subtotal before discount:', subtotal);
 
-    // Calculate shipping fee based on country 
+    // Calculate shipping fee based on country
     let shippingFee = 20;
-const isOrderOverThreshold = subtotal >= 50;
-const isOrderOver70 = subtotal >= 69.99;
+    const isOrderOverThreshold = subtotal >= 50;
+    const isOrderOver70 = subtotal >= 69.99;
 
-if (isOrderOver70 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
-    shippingFee = 0;
-} else if (!isOrderOverThreshold) {
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        shippingFee = 8;
-    } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-        shippingFee = 20;
-    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-        shippingFee = 20;
-    } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-        shippingFee = 9;
-    } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-        shippingFee = 9;
+    if (isOrderOver70 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
+        shippingFee = 0;
+    } else if (!isOrderOverThreshold) {
+        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+            shippingFee = 8;
+        } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
+            shippingFee = 20;
+        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+            shippingFee = 20;
+        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
+            shippingFee = 9;
+        } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
+            shippingFee = 9;
+        }
     }
-}
 
-    // Calculate discount if applicable 
+    // Calculate discount if applicable
     const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
-    
     console.log('Calculated discount amount:', discount);
-  
-    let taxAmount = 0; 
-    const taxableAmount = subtotal - discount + shippingFee;
-    console.log('Taxable amount:', taxableAmount);
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
-        taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
-    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') { 
-        const province = formData.shippingAddress.province; 
-        const provinceTaxes = TAX_RATES['CA'][province]; 
 
-        if (provinceTaxes) { 
-            if (provinceTaxes.HST) { 
-                taxAmount = taxableAmount * (provinceTaxes.HST / 100); 
-            } else { 
-                // Calculate GST 
-                if (provinceTaxes.GST) { 
-                    taxAmount += taxableAmount * (provinceTaxes.GST /  100); 
-                } 
-                // Calculate PST or QST 
-                if (provinceTaxes.PST) { 
-                    taxAmount += taxableAmount * (provinceTaxes.PST / 100); 
-                } 
-                if (provinceTaxes.QST) { 
-                    taxAmount += taxableAmount * (provinceTaxes.QST / 100); 
-                } 
-            } 
-        } 
-    } 
+    let taxAmount = 0;
+    // Calculate tax on pre-discount amount
+    const taxableAmount = subtotal + shippingFee;
+    console.log('Taxable amount:', taxableAmount);
+
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
+    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+        const province = formData.shippingAddress.province;
+        const provinceTaxes = TAX_RATES['CA'][province];
+
+        if (provinceTaxes) {
+            if (provinceTaxes.HST) {
+                taxAmount = taxableAmount * (provinceTaxes.HST / 100);
+            } else {
+                // Calculate GST
+                if (provinceTaxes.GST) {
+                    taxAmount += taxableAmount * (provinceTaxes.GST / 100);
+                }
+                // Calculate PST or QST
+                if (provinceTaxes.PST) {
+                    taxAmount += taxableAmount * (provinceTaxes.PST / 100);
+                }
+                if (provinceTaxes.QST) {
+                    taxAmount += taxableAmount * (provinceTaxes.QST / 100);
+                }
+            }
+        }
+    }
 
     console.log('Tax amount:', taxAmount);
-    // Calculate total 
-    const total = taxableAmount + taxAmount;
+    // Calculate total (apply discount after tax)
+    const total = subtotal + shippingFee + taxAmount - discount;
     console.log('Final total:', total);
 
-    return { 
-      subtotalsBySize,
-      subtotal,
-      taxAmount,
-      shippingFee,
-      total,
-      quantities,
-      discount
-    }; 
+    return {
+        subtotalsBySize,
+        subtotal,
+        taxAmount,
+        shippingFee,
+        total,
+        quantities,
+        discount
+    };
 };
 //..
   const renderStepContent = () => {
