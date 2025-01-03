@@ -2298,8 +2298,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         productType: photo.productType
       })),
       totalAmount: paymentData.amount,
-      subtotal: paymentData.amount - 20,
-      shippingFee: 20,
+      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
+      shippingFee: paymentData.amount > 69.99 ? 0 : 20,
       taxAmount: 0,
       discount: 0,
       currency: paymentData.currency,
@@ -2616,21 +2616,24 @@ const CheckoutButton = ({
 
     // Calculate shipping fee based on country 
     let shippingFee = 20;
-    const isOrderOverThreshold = subtotal >= 50; // Base threshold value
+const isOrderOverThreshold = subtotal >= 50;
+const isOrderOver70 = subtotal >= 69.99;
 
-    if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-            shippingFee = 8; // 8 TND for Tunisia
-        } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-            shippingFee = 20; // 9$ for USA
-        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 20; // 9$ for Canada
-        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-            shippingFee = 9; // 9£ for United Kingdom
-        } else if (['DEU', 'FRA', 'ITA', 'ESP','DE','FR','IT','ES'].includes(selectedCountry)) {
-            shippingFee = 9; // 9€ for European countries
-        }
+if (isOrderOver70 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
+    shippingFee = 0;
+} else if (!isOrderOverThreshold) {
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        shippingFee = 8;
+    } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
+        shippingFee = 20;
+    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+        shippingFee = 20;
+    } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
+        shippingFee = 9;
+    } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
+        shippingFee = 9;
     }
+}
 
     // Calculate discount if applicable 
     const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
