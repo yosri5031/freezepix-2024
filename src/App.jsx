@@ -17,7 +17,6 @@ import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
-import fetchDiscountCodes from './discount';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
 import CryptoJS from 'crypto-js';
@@ -250,7 +249,6 @@ const FreezePIX = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [discountCodesFromAPI, setDiscountCodesFromAPI] = useState([]);
 
 const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
@@ -279,23 +277,7 @@ const [interacReference, setInteracReference] = useState('');
       paymentMethod: 'cod'
     });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
-//synch discount code
 
-useEffect(() => {
-  const fetchData = async () => {
-    try {
-      const discountCodes = await fetchDiscountCodes();
-      setDiscountCodesFromAPI(discountCodes);
-    } catch (error) {
-      console.error('Error fetching discount codes:', error);
-    }
-  };
-
-  fetchData();
-}, []);
-
-//end synch
-      
       useEffect(() => {
         setFormData(prev => ({
           ...prev,
@@ -2419,19 +2401,23 @@ const CheckoutButton = ({
 );
 };  
 
-const validateDiscountCode = (code) => {
-  const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
-  const validCodes = discountCodesFromAPI.map(code => code.code);
-  const upperCode = code.toUpperCase();
-
-  if (code && !validCodes.includes(upperCode)) {
-    setDiscountError('Invalid discount code');
-    return false;
-  } else {
-    setDiscountError('');
-    return true;
-  }
-};
+      const validateDiscountCode = (code) => {
+        const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
+        const validCodes = ['B2B', 'MOHAMED','MCF99','ABCC'];
+        const upperCode = code.toUpperCase();
+        
+        if (code && !validCodes.includes(upperCode)) {
+          setDiscountError('Invalid discount code');
+          return false;
+        } //else if (totalItems < 10) {
+          //setDiscountError('Minimum 10 items required for discount');
+          //return false;
+        //} 
+        else {
+          setDiscountError('');
+          return true;
+        }
+      };
     
       const handleDiscountCode = (value) => {
         setDiscountCode(value);
@@ -2593,18 +2579,13 @@ const validateDiscountCode = (code) => {
     }
 
     // Calculate discount if applicable 
-    // Calculate discount if applicable
-  const discount = discountCodesFromAPI.find(
-    (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
-  );
-
-  const discountAmount =
-    discount && discount.valueType === 'percentage'
-      ? subtotal * (discount.value / 100)
-      : discount && discount.valueType === 'fixed_amount'
-      ? discount.value
-      : 0;
-
+    const discount = (discountCode.toUpperCase() === 'B2B' || discountCode.toUpperCase() === 'MOHAMED') 
+    ? (subtotal * 0.5)
+    : (discountCode.toUpperCase() === 'MCF99') 
+        ? (subtotal  * 0.99)
+        : (discountCode.toUpperCase() === 'ABCC') 
+            ? (subtotal  * 0.1) // 10% discount for "ABCC"
+            : 0;  // Calculate tax based on location, including shipping feee 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
@@ -2633,7 +2614,7 @@ const validateDiscountCode = (code) => {
     } 
 
     // Calculate total 
-    const total = (taxableAmount + taxAmount) - discountAmount; 
+    const total = (taxableAmount + taxAmount) - discount; 
 
     return { 
         subtotalsBySize, 
@@ -2642,8 +2623,7 @@ const validateDiscountCode = (code) => {
         shippingFee, 
         total, 
         quantities, 
-        discount,
-        discountAmount 
+        discount 
     }; 
 };
 //..
@@ -3175,16 +3155,15 @@ const countryCodeMap = {
         )}
 
        {/* Discount */}
-{discountAmount > 0 && (
+{discount > 0 && (
   <div className="flex justify-between py-2 text-green-600">
-    <span>
-      {t('order.discount')} (
-      {discount.value_type === 'percentage'
-        ? `${discount.value}%`
-        : `${discount.value} ${discount.currency}`}
-      )
+    <span>{t('order.discount')} (
+      {discountCode.toUpperCase() === 'MCF99' ? '99%' : 
+      discountCode.toUpperCase() === 'MOHAMED' || discountCode.toUpperCase() === 'B2B' ? '50%' : 
+      discountCode.toUpperCase() === 'ABCC' ? '10%' : '0%'}
+    )
     </span>
-    <span>-{discountAmount.toFixed(2)}</span>
+    <span>-{discount.toFixed(2)} {country?.currency}</span>
   </div>
 )}
 
