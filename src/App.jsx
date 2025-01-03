@@ -433,19 +433,19 @@ const [interacReference, setInteracReference] = useState('');
       const discountRule = availableDiscounts.find(
         discount => discount.code.toUpperCase() === code.toUpperCase()
       );
-  
+    
       if (!discountRule) return 0;
-  
+    
       switch (discountRule.valueType) {
         case 'percentage':
           return parseFloat(discountRule.value) / 100;
         case 'fixed_amount':
-          return parseFloat(discountRule.value);
+          // For fixed amount, divide by subtotal to get the discount multiplier
+          return (parseFloat(discountRule.value) / subtotal);
         default:
           return 0;
       }
     };
-
       const updateFormData = (field, value) => {
         setFormData(prev => ({
           ...prev,
@@ -2630,11 +2630,10 @@ const CheckoutButton = ({
     }
 
     // Calculate discount if applicable 
-    const discount = discountCode ? 
-  subtotal * calculateDiscountValue(discountCode) : 0;
+    const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
   
     let taxAmount = 0; 
-    const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
+    const taxableAmount = (subtotal - discount) + shippingFee; // Include shipping fee in tax calculation 
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') { 
@@ -2661,7 +2660,7 @@ const CheckoutButton = ({
     } 
 
     // Calculate total 
-    const total = (taxableAmount + taxAmount) - discount; 
+    const total = taxableAmount + taxAmount;
 
     return { 
         subtotalsBySize, 
