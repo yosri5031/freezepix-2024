@@ -2438,6 +2438,7 @@ const CheckoutButton = ({
 
 const validateDiscountCode = (code) => {
   if (!code) {
+    setDiscountError('');
     return false;
   }
   
@@ -2451,6 +2452,7 @@ const validateDiscountCode = (code) => {
     return false;
   }
   
+  setDiscountError('');
   return true;
 };
 
