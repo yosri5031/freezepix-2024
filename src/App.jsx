@@ -2592,23 +2592,23 @@ const validateDiscountCode = (code) => {
         }
     }
     // Calculate discount if applicable 
-    // Calculate discount if applicable
-    let discountAmount = 0;
-    const discount = discountCodesFromAPI.find(
-      (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
-    );
-  
-    if (discount) {
-      discountAmount =
-        discount.valueType === 'percentage'
-          ? subtotal * (discount.value / 100)
-          : discount.valueType === 'fixed_amount'
-          ? discount.value
-          : 0;
-    }
+      // Calculate discount if applicable
+  const discount = discountCodesFromAPI.find(
+    (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
+  );
 
-    let taxAmount = 0; 
-    const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
+  let discountedSubtotal = subtotal;
+  if (discount) {
+    discountedSubtotal =
+      discount.valueType === 'percentage'
+        ? subtotal * (1 - discount.value / 100)
+        : discount.valueType === 'fixed_amount'
+        ? subtotal - discount.value
+        : subtotal;
+  }
+
+  let taxAmount = 0;
+  const taxableAmount = discountedSubtotal + shippingFee; // Include shipping fee in tax calculation
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') { 
@@ -2635,7 +2635,7 @@ const validateDiscountCode = (code) => {
     } 
 
     // Calculate total 
-    const total = (taxableAmount + taxAmount) - discountAmount; 
+    const total = taxableAmount + taxAmount;
 
     return { 
         subtotalsBySize, 
@@ -2645,7 +2645,7 @@ const validateDiscountCode = (code) => {
         total, 
         quantities, 
         discount,
-        discountAmount 
+        discountedSubtotal
     }; 
 };
 //..
