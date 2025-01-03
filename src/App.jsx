@@ -3007,21 +3007,41 @@ const countryCodeMap = {
   };
 
   const renderInvoice = () => {
-    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount,taxAmount } = calculateTotals();
+    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount, taxAmount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
     
+    const calculateOrderTax = () => {
+      let tax = 0;
+      const taxableAmount = subtotal + shippingFee - discount;
+      
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        tax = taxableAmount * 0.19;
+      } else if ((selectedCountry === 'CAN' || selectedCountry === 'CA') && formData.shippingAddress.province) {
+        const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+        if (provinceTaxes) {
+          if (provinceTaxes.HST) {
+            tax = taxableAmount * (provinceTaxes.HST / 100);
+          } else {
+            if (provinceTaxes.GST) tax += taxableAmount * (provinceTaxes.GST / 100);
+            if (provinceTaxes.PST) tax += taxableAmount * (provinceTaxes.PST / 100);
+            if (provinceTaxes.QST) tax += taxableAmount * (provinceTaxes.QST / 100);
+          }
+        }
+      }
+      return tax;
+    };
+  
+    const orderTax = calculateOrderTax();
+    const finalTotal = subtotal + shippingFee - discount + orderTax;
+  
     return (
       <div className="space-y-6">
-        
-  
-        {/* Contact Information */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
           <p className="text-gray-600">{formData.email}</p>
           <p className="text-gray-600">{formData.phone}</p>
         </div>
   
-        {/* Shipping Address */}
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
           <div className="text-gray-600">
@@ -3034,7 +3054,6 @@ const countryCodeMap = {
           </div>
         </div>
   
-        {/* Billing Address (if different from shipping) */}
         {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
           <div className="border rounded-lg p-4">
             <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
@@ -3048,186 +3067,141 @@ const countryCodeMap = {
             </div>
           </div>
         )}
-   {/* Discount Code Section */}
-   <div className="border rounded-lg p-4">
+  
+        <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('order.discount')}</h3>
           <div className="space-y-2">
             <input
-  type="text"
-  placeholder="xxxx"
-  value={discountCode}
-  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
-  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-/>
+              type="text"
+              placeholder="xxxx"
+              value={discountCode}
+              onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+            />
             {discountError && (
               <p className="text-red-500 text-sm">{discountError}</p>
             )}
           </div>
         </div>
-        
-      {/* Order Summary */}
-<div className="border rounded-lg p-4">
-  <h3 className="font-medium mb-3">{t('order.summary')}</h3>
   
-  {/* Photo Prints */}
-  {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
-    <>
-      {quantities['10x15'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {quantities['15x22'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-    </>
-  ) : (
-    <>
-      {quantities['4x6'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {quantities['5x7'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['8x10'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-    </>
-  )}
-
-  {/* 3D Frame Items */}
-  {quantities['3d_frame'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
-
-  {/* Keychain Items */}
-  {quantities['keychain'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
-
-  {/* Keyring/Magnet Items */}
-  {quantities['keyring_magnet'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
-
-  {/* Calculations and Summary */}
-{(() => {
-    // Calculate tax amount
-    let taxAmount = 0;
-    const taxableAmount = subtotal + shippingFee; // Define taxable amount once
-    
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        taxAmount = taxableAmount * 0.19;
-    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province) {
-        const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-        if (provinceTaxes) {
-            if (provinceTaxes.HST) {
-                taxAmount = taxableAmount * (provinceTaxes.HST / 100); // Fixed: Include shipping fee in HST calculation
-            } else {
-                if (provinceTaxes.GST) taxAmount += taxableAmount * (provinceTaxes.GST / 100);
-                if (provinceTaxes.PST) taxAmount += taxableAmount * (provinceTaxes.PST / 100);
-                if (provinceTaxes.QST) taxAmount += taxableAmount * (provinceTaxes.QST / 100);
-            }
-        }
-    }
-
-    // Calculate final total
-    const finalTotal = subtotal + shippingFee + taxAmount - discount;
-
-    return (
-      <>
-        {/* Subtotal */}
-        <div className="flex justify-between py-2 border-t">
-          <span>{t('produits.subtotal')}</span>
-          <span>{subtotal.toFixed(2)} {country?.currency}</span>
-        </div>
-
-        {/* Shipping Fee */}
-        <div className="flex justify-between py-2">
-          <span>{t('order.shipping_fee')}</span>
-          <span>{shippingFee.toFixed(2)} {country?.currency}</span>
-        </div>
-
-        {/* Tax for Tunisia */}
-        {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-          <div className="flex justify-between py-2">
-            <span>TVA (19%)</span>
-            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
-          </div>
-        )}
-
-        {/* Tax for Canada */}
-        {selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province && (
-          <div className="flex justify-between py-2">
-            <div className="flex flex-col">
-              <span>Tax</span>
-              <span className="text-sm text-gray-600">
-                {(() => {
-                  const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-                  if (provinceTaxes) {
-                    if (provinceTaxes.HST) {
-                      return `HST (${provinceTaxes.HST}%)`;
-                    }
-                    return [
-                      provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
-                      provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
-                      provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
-                    ].filter(Boolean).join(' + ');
-                  }
-                  return '';
-                })()}
-              </span>
+        <div className="border rounded-lg p-4">
+          <h3 className="font-medium mb-3">{t('order.summary')}</h3>
+  
+          {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
+            <>
+              {quantities['10x15'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+              {quantities['15x22'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              {quantities['4x6'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+              {quantities['5x7'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+              {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['8x10'] > 0 && (
+                <div className="flex justify-between py-2">
+                  <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+                  <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
+                </div>
+              )}
+            </>
+          )}
+  
+          {quantities['3d_frame'] > 0 && (
+            <div className="flex justify-between py-2">
+              <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
+              <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
             </div>
-            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+          )}
+  
+          {quantities['keychain'] > 0 && (
+            <div className="flex justify-between py-2">
+              <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
+              <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+  
+          {quantities['keyring_magnet'] > 0 && (
+            <div className="flex justify-between py-2">
+              <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
+              <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+  
+          <div className="flex justify-between py-2 border-t">
+            <span>{t('produits.subtotal')}</span>
+            <span>{subtotal.toFixed(2)} {country?.currency}</span>
           </div>
-        )}
-
-       {/* Discount */}
-       {discount > 0 && (
-        <div className="flex justify-between py-2 text-green-600">
-          <span>
-            {t('order.discount')} ({getDiscountDisplay()})
-          </span>
-          <span>
-            -{discount.toFixed(2)} {country?.currency}
-          </span>
+  
+          <div className="flex justify-between py-2">
+            <span>{t('order.shipping_fee')}</span>
+            <span>{shippingFee.toFixed(2)} {country?.currency}</span>
+          </div>
+  
+          {discount > 0 && (
+            <div className="flex justify-between py-2 text-green-600">
+              <span>{t('order.discount')} ({getDiscountDisplay()})</span>
+              <span>-{discount.toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+  
+          {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+            <div className="flex justify-between py-2">
+              <span>TVA (19%)</span>
+              <span>{orderTax.toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+  
+          {(selectedCountry === 'CAN' || selectedCountry === 'CA') && formData.shippingAddress.province && (
+            <div className="flex justify-between py-2">
+              <div className="flex flex-col">
+                <span>Tax</span>
+                <span className="text-sm text-gray-600">
+                  {(() => {
+                    const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
+                    if (provinceTaxes) {
+                      if (provinceTaxes.HST) {
+                        return `HST (${provinceTaxes.HST}%)`;
+                      }
+                      return [
+                        provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
+                        provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
+                        provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
+                      ].filter(Boolean).join(' + ');
+                    }
+                    return '';
+                  })()}
+                </span>
+              </div>
+              <span>{orderTax.toFixed(2)} {country?.currency}</span>
+            </div>
+          )}
+  
+          <div className="flex justify-between py-2 border-t font-bold">
+            <span>{t('produits.total')}</span>
+            <span>{finalTotal.toFixed(2)} {country?.currency}</span>
+          </div>
         </div>
-)}
-
-        {/* Final Total */}
-        <div className="flex justify-between py-2 border-t font-bold">
-          <span>{t('produits.total')}</span>
-          <span>{finalTotal.toFixed(2)} {country?.currency}</span>
-        </div>
-      </>
-    );
-  })()}
-</div>
-        
-      {/* Order Note */}
-      <div className="border rounded-lg p-4">
+  
+        <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
             placeholder="...."
