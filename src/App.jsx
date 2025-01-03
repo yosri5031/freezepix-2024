@@ -2422,6 +2422,7 @@ const CheckoutButton = ({
 };  
 
 const validateDiscountCode = (code) => {
+  const totalItems = selectedPhotos.reduce((sum, photo) => sum + photo.quantity, 0);
   const validCodes = discountCodes.map(code => code.code);
   const upperCode = code.toUpperCase();
 
