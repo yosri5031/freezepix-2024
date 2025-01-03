@@ -3176,17 +3176,17 @@ const countryCodeMap = {
           </div>
         )}
 
-       {/* Discount */}
-{discountAmount > 0 && (
+      {/* Discount */}
+{discount && (
   <div className="flex justify-between py-2 text-green-600">
     <span>
       {t('order.discount')} (
-      {discount.value_type === 'percentage'
+      {discount.valueType === 'percentage'
         ? `${discount.value}%`
         : `${discount.value} ${discount.currency}`}
       )
     </span>
-    <span>-{discountAmount.toFixed(2)}</span>
+    <span>-{(subtotal - discountedSubtotal).toFixed(2)}</span>
   </div>
 )}
 
