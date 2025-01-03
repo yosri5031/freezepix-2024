@@ -434,17 +434,19 @@ const [interacReference, setInteracReference] = useState('');
         discount => discount.code.toUpperCase() === code.toUpperCase()
       );
     
+      console.log('Discount Rule:', discountRule);
+    
       if (!discountRule) return 0;
     
-      switch (discountRule.valueType) {
-        case 'percentage':
-          return parseFloat(discountRule.value) / 100;
-        case 'fixed_amount':
-          // For fixed amount, divide by subtotal to get the discount multiplier
-          return (parseFloat(discountRule.value) / subtotal);
-        default:
-          return 0;
+      let discountValue = 0;
+      if (discountRule.valueType === 'percentage') {
+        discountValue = parseFloat(discountRule.value) / 100;
+      } else if (discountRule.valueType === 'fixed_amount') {
+        discountValue = parseFloat(discountRule.value);
       }
+    
+      console.log('Calculated Discount Value:', discountValue);
+      return discountValue;
     };
       const updateFormData = (field, value) => {
         setFormData(prev => ({
@@ -2609,7 +2611,8 @@ const CheckoutButton = ({
   });
 
     // Calculate subtotal 
-    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0); 
+    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
+    console.log('Subtotal before discount:', subtotal);
 
     // Calculate shipping fee based on country 
     let shippingFee = 20;
@@ -2631,9 +2634,12 @@ const CheckoutButton = ({
 
     // Calculate discount if applicable 
     const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
+    
+    console.log('Calculated discount amount:', discount);
   
     let taxAmount = 0; 
-    const taxableAmount = (subtotal - discount) + shippingFee; // Include shipping fee in tax calculation 
+    const taxableAmount = subtotal - discount + shippingFee;
+    console.log('Taxable amount:', taxableAmount);
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') { 
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia 
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') { 
@@ -2659,17 +2665,19 @@ const CheckoutButton = ({
         } 
     } 
 
+    console.log('Tax amount:', taxAmount);
     // Calculate total 
     const total = taxableAmount + taxAmount;
+    console.log('Final total:', total);
 
     return { 
-        subtotalsBySize, 
-        subtotal, 
-        taxAmount, 
-        shippingFee, 
-        total, 
-        quantities, 
-        discount 
+      subtotalsBySize,
+      subtotal,
+      taxAmount,
+      shippingFee,
+      total,
+      quantities,
+      discount
     }; 
 };
 //..
