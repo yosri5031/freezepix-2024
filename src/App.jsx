@@ -2591,19 +2591,21 @@ const validateDiscountCode = (code) => {
             shippingFee = 9; // 9€ for European countries
         }
     }
-
     // Calculate discount if applicable 
     // Calculate discount if applicable
-  const discount = discountCodesFromAPI.find(
-    (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
-  );
-
-  const discountAmount =
-    discount && discount.valueType === 'percentage'
-      ? subtotal * (discount.value / 100)
-      : discount && discount.valueType === 'fixed_amount'
-      ? discount.value
-      : 0;
+    let discountAmount = 0;
+    const discount = discountCodesFromAPI.find(
+      (codeData) => codeData.code.toUpperCase() === discountCode.toUpperCase()
+    );
+  
+    if (discount) {
+      discountAmount =
+        discount.valueType === 'percentage'
+          ? subtotal * (discount.value / 100)
+          : discount.valueType === 'fixed_amount'
+          ? discount.value
+          : 0;
+    }
 
     let taxAmount = 0; 
     const taxableAmount = subtotal + shippingFee; // Include shipping fee in tax calculation 
