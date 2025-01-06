@@ -2624,9 +2624,9 @@ const CheckoutButton = ({
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
             shippingFee = 8;
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-            shippingFee = 20;
+            shippingFee = 0;
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 20;
+            shippingFee = 0;
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
             shippingFee = 9;
         } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
