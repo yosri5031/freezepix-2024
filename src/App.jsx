@@ -10,7 +10,7 @@ import LanguageSelector from './components/LanguageSelector';
 import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
 import photoprint8x10 from './assets/photoprint8x10.jpg';
-import keychain from './assets/keychain.png';
+import keychain from './assets/kc2.png';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
 import Rectangle from './assets/rectangle.jpg';
