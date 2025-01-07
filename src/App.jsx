@@ -602,6 +602,7 @@ const closeProductDetails = () => {
       '5x7 Size': photoprint5x7,
       '8x10 Size': photoprint8x10,
       'Keychain': keychain,
+      'Keychain and Magnet': keychain,
       'Magnet': magnet,
       'Rectangle': Rectangle,
       'Heart' : Heart
