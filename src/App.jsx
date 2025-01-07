@@ -2748,7 +2748,7 @@ const countryCodeMap = {
                                     <option value="photo_print">{t('produits.photo_print')}</option>
                                     <option value="3d_frame">{t('produits.3d_frame')}</option>
                                     <option value="keychain">{t('produits.keychain')}</option>
-                                    <option value="keyring_magnet">{t('produits.magnet')}</option>
+                                    
                                 </select>
                             )}
 
@@ -2764,7 +2764,6 @@ const countryCodeMap = {
                                         className="w-full p-1 border rounded"
                                     >
                                         <option value="photo_print">{t('produits.photo_print')}</option>
-                                        <option value="keyring_magnet">{t('produits.magnet')}</option>
                                         <option value="keychain">{t('produits.keychain')}</option>
                                     </select>
                                 </div>
