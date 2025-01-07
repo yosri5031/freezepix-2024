@@ -36,8 +36,8 @@ const initialCountries = [
     size5x7: 2.99,        // Updated from 1.49
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
-    keychain: 9.99, 
-    keyring_magnet: 9.99 },
+    keychain: 29.99, 
+    keyring_magnet: 29.99 },
   { name: 'Canada', 
     value: 'CA', 
     currency: 'CAD', 
@@ -46,8 +46,8 @@ const initialCountries = [
     size5x7: 2.99,        // Updated from 1.49
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
-    keychain: 9.99, 
-    keyring_magnet: 9.99  },
+    keychain: 29.99, 
+    keyring_magnet: 29.99  },
   { name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
   
 ];
@@ -567,16 +567,10 @@ const closeProductDetails = () => {
     // Add remaining products
     products.push(
       {
-        category: 'Keychain',
-        product: 'Keychain',
+        category: 'Keychain and Magnet',
+        product: 'Keychain and Magnet',
         country: countryInfo.name,
         price: `${countryInfo.currency} ${countryInfo.keychain}`
-      },
-      {
-        category: 'Magnet',
-        product: 'Magnet',
-        country: countryInfo.name,
-        price: `${countryInfo.currency} ${countryInfo.keyring_magnet}`
       }
     );
 
@@ -2634,7 +2628,7 @@ const CheckoutButton = ({
         }
     }
 
-    // Calculate discount if applicable
+    // Calculate discount if applicable - must be synch from admin
     const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
     console.log('Calculated discount amount:', discount);
 

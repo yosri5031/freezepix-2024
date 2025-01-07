@@ -65,7 +65,7 @@
         "photo_print": "Photo Print",
         "magnet": "Magnet",
         "3d_frame":"3D Frame",
-        "keychain": "Keychain",
+        "keychain": "Keychain and Magnet",
         "shape" : "Shape",
         "rectangle": "Rectangle",
         "heart" : "Heart",
@@ -90,14 +90,14 @@
 
     "categories": {
       "Photo Prints": "Photo Prints",
-      "Keychain": "Keychain",
+      "Keychain": "Keychain and Magnet",
       "Magnet": "Magnet",
       "3D Frame": "3D Frame"
     },
     "products": {
       "4x6 Size": "4x6 Size",
       "5x7 Size": "5x7 Size",
-      "Keychain": "Keychain",
+      "Keychain": "Keychain and Magnet",
       "Magnet": "Magnet",
       "3D Frame": "3D Frame",
       "Rectangle 3D Frame" : "Rectangle",
