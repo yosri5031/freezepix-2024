@@ -575,7 +575,8 @@ const closeProductDetails = () => {
     );
 
     // Only add 3D Frame if the country is not Tunisia
-    if (country !== 'TN') {
+    
+    /*if (country !== 'TN') {
       products.push({
         category: '3D Frame',
         product: 'Rectangle',
@@ -590,8 +591,9 @@ const closeProductDetails = () => {
         price: countryInfo.crystal3d 
           ? `${countryInfo.currency} ${countryInfo.crystal3d}`
           : 'N/A'
-      });
-    }
+      }
+          );
+    }*/
 
     return products;
 };
@@ -2747,8 +2749,8 @@ const countryCodeMap = {
                                     className="w-full p-1 border rounded"
                                 >
                                     <option value="photo_print">{t('produits.photo_print')}</option>
-                                    <option value="3d_frame">{t('produits.3d_frame')}</option>
-                                    <option value="keychain">{t('produits.keychain')}</option>
+                                    {/*<option value="3d_frame">{t('produits.3d_frame')}</option>
+                                    <option value="keychain">{t('produits.keychain')}</option> */}
                                     
                                 </select>
                             )}
@@ -2765,7 +2767,7 @@ const countryCodeMap = {
                                         className="w-full p-1 border rounded"
                                     >
                                         <option value="photo_print">{t('produits.photo_print')}</option>
-                                        <option value="keychain">{t('produits.keychain')}</option>
+                                        {/*<option value="keychain">{t('produits.keychain')}</option> */}
                                     </select>
                                 </div>
                             )}
