@@ -565,7 +565,7 @@ const closeProductDetails = () => {
     }
 
     // Add remaining products
-    products.push(
+   /* products.push(
       {
         category: 'Keychain and Magnet',
         product: 'Keychain and Magnet',
