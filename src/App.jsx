@@ -563,7 +563,7 @@ const closeProductDetails = () => {
       products = [
         {
           category: 'Photo Prints',
-          product: 'Format 10.16 x 15.24 cm',
+          product: 'Format 10x15 cm',
           country: countryInfo.name,
           price: countryInfo.currency === 'TND' 
             ? `${countryInfo.size10x15} TND`
@@ -571,7 +571,7 @@ const closeProductDetails = () => {
         },
         {
           category: 'Photo Prints',
-          product: 'Format 12.7 x 17.78 cm',
+          product: 'Format 15x23 cm',
           country: countryInfo.name,
           price: countryInfo.currency === 'TND'
             ? `${countryInfo.size15x22} TND`
