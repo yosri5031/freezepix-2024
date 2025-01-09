@@ -2783,7 +2783,7 @@ const countryCodeMap = {
     {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
         <>
             <option value="10x15">10x15 cm</option>
-            <option value="15x22">15x22 cm</option>
+            <option value="15x22">15x23 cm</option>
         </>
     ) : selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'US' || selectedCountry === 'CA' ? (
         <>
