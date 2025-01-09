@@ -1,30 +1,30 @@
 import React, { useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useHistory } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const LanguageSelector = () => {
   const { changeLanguage, language } = useLanguage();
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const handleLanguageChange = (newLanguage) => {
     changeLanguage(newLanguage);
     
     // Redirect to the appropriate route based on the selected language
     if (newLanguage === 'fr') {
-      history.push('/fr'); // Redirect to French home
+      navigate('/fr'); // Redirect to French home
     } else {
-      history.push('/'); // Redirect to English home
+      navigate('/'); // Redirect to English home
     }
   };
 
   // Optional: If you want to update the URL when the component mounts
   useEffect(() => {
     if (language === 'fr') {
-      history.push('/fr');
+      navigate('/fr');
     } else {
-      history.push('/');
+      navigate('/');
     }
-  }, [language, history]);
+  }, [language, navigate]);
 
   return (
     <div className="language-selector">
