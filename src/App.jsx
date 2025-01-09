@@ -19,7 +19,7 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
-import { useHistory } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
 const stripe = new Stripe('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', {
   apiVersion: 'latest' // Recommended to specify version
