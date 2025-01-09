@@ -1,50 +1,37 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
 const LanguageSelector = () => {
   const { changeLanguage, language } = useLanguage();
-  const navigate = useNavigate();
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  useEffect(() => {
-    setIsLoaded(true);
-  }, []);
 
   const handleLanguageChange = (newLanguage) => {
     changeLanguage(newLanguage);
-    
-    if (newLanguage === 'fr') {
-      navigate('/fr');
-    } else {
-      navigate('/');
-    }
   };
-
-  useEffect(() => {
-    if (isLoaded && language) {
-      if (language === 'fr') {
-        navigate('/fr');
-      } else {
-        navigate('/');
-      }
-    }
-  }, [language, navigate, isLoaded]);
-
-  if (!isLoaded) {
-    return null;
-  }
 
   return (
     <div className="language-selector">
-      <select 
-        value={language || 'en'} 
-        onChange={(e) => handleLanguageChange(e.target.value)}
-        className="p-2 border rounded"
-      >
-        <option value="en">English</option>
-        <option value="fr">Français</option>
-      </select>
+      <div className="flex gap-2">
+        <NavLink 
+          to="/" 
+          className={({ isActive }) => 
+            `cursor-pointer ${isActive && language === 'en' ? 'font-bold' : ''}`
+          }
+          onClick={() => handleLanguageChange('en')}
+        >
+          English
+        </NavLink>
+        <span>|</span>
+        <NavLink 
+          to="/fr" 
+          className={({ isActive }) => 
+            `cursor-pointer ${isActive && language === 'fr' ? 'font-bold' : ''}`
+          }
+          onClick={() => handleLanguageChange('fr')}
+        >
+          Français
+        </NavLink>
+      </div>
     </div>
   );
 };
