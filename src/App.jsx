@@ -534,29 +534,32 @@ const closeProductDetails = () => {
   const getProductData = (country) => {
     const countryInfo = initialCountries.find(c => c.value === country);
     if (!countryInfo) return [];
-    if (country === 'USA' || country === 'CAN' || country === 'US' || country ==='CA' ) {
-    const products = [
-      {
-        category: 'Photo Prints',
-        product: '4x6 Size',
-        country: countryInfo.name,
-        price: countryInfo.currency === 'TND' 
-          ? `${countryInfo.size10x15} TND`
-          : `${countryInfo.currency} ${countryInfo.size4x6}`
-      },
-      {
-        category: 'Photo Prints',
-        product: '5x7 Size',
-        country: countryInfo.name,
-        price: countryInfo.currency === 'TND'
-          ? `${countryInfo.size15x22} TND`
-          : `${countryInfo.currency} ${countryInfo.size5x7}`
-      }
-    ];
+    
+    let products = []; // Define products array outside if statements
+  
+    if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
+      products = [
+        {
+          category: 'Photo Prints',
+          product: '4x6 Size',
+          country: countryInfo.name,
+          price: countryInfo.currency === 'TND' 
+            ? `${countryInfo.size10x15} TND`
+            : `${countryInfo.currency} ${countryInfo.size4x6}`
+        },
+        {
+          category: 'Photo Prints',
+          product: '5x7 Size',
+          country: countryInfo.name,
+          price: countryInfo.currency === 'TND'
+            ? `${countryInfo.size15x22} TND`
+            : `${countryInfo.currency} ${countryInfo.size5x7}`
+        }
+      ];
     } 
-
+  
     if (country === 'TN') {
-      const products = [
+      products = [
         {
           category: 'Photo Prints',
           product: 'Format 10.16 x 15.24 cm',
@@ -574,10 +577,10 @@ const closeProductDetails = () => {
             : `${countryInfo.currency} ${countryInfo.size5x7}`
         }
       ];
-      } 
-    
+    } 
+  
     // Add 8x10" size after 5x7" only for USA and Canada
-    if (country === 'USA' || country === 'CAN' || country === 'US' || country ==='CA' ) {
+    if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
       products.splice(2, 0, {
         category: 'Photo Prints',
         product: '8x10 Size',
@@ -585,40 +588,9 @@ const closeProductDetails = () => {
         price: `${countryInfo.currency} ${countryInfo.size8x10}`
       });
     }
-
-    // Add remaining products
-   /* products.push(
-      {
-        category: 'Keychain and Magnet',
-        product: 'Keychain and Magnet',
-        country: countryInfo.name,
-        price: `${countryInfo.currency} ${countryInfo.keychain}`
-      }
-    );
-
-    // Only add 3D Frame if the country is not Tunisia
-    
-    /*if (country !== 'TN') {
-      products.push({
-        category: '3D Frame',
-        product: 'Rectangle',
-        country: countryInfo.name,
-        price: countryInfo.crystal3d 
-          ? `${countryInfo.currency} ${countryInfo.crystal3d}`
-          : 'N/A'
-      },{
-        category: '3D Frame',
-        product: 'Heart',
-        country: countryInfo.name,
-        price: countryInfo.crystal3d 
-          ? `${countryInfo.currency} ${countryInfo.crystal3d}`
-          : 'N/A'
-      }
-          );
-    }*/
-
+  
     return products;
-};
+  };
 
   const getImageSrc = (product) => {
     const imageMap = {
