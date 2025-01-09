@@ -96,14 +96,14 @@
       "3D Frame": "Cadre 3D"
     },
     "products": {
-      "4x6 Size": "Format 4 x 6 in | 10.16 x 15.24 cm",
-      "5x7 Size": "Format 5 x 7 in | 12.7 x 17.78 cm",
+      "4x6 Size": "Format 4 x 6 in ",
+      "5x7 Size": "Format 5 x 7 in ",
       "Keychain": "Porte-clés et Aimant",
       "Magnet": "Aimant",
       "3D Frame": "Cadre 3D",
       "Rectangle 3D Frame" : "Rectangle",
       "Heart 3D Frame" : "Coeur",
-      "8x10 Size": "Format 8 x 10 in | 20.3 x 25.4 cm"
+      "8x10 Size": "Format 8 x 10 in "
     },
     "canada" : {
 "options": "Options de paiement pour le Canada",

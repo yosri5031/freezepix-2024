@@ -534,7 +534,7 @@ const closeProductDetails = () => {
   const getProductData = (country) => {
     const countryInfo = initialCountries.find(c => c.value === country);
     if (!countryInfo) return [];
-
+    if (country === 'USA' || country === 'CAN' || country === 'US' || country ==='CA' ) {
     const products = [
       {
         category: 'Photo Prints',
@@ -553,7 +553,29 @@ const closeProductDetails = () => {
           : `${countryInfo.currency} ${countryInfo.size5x7}`
       }
     ];
+    } 
 
+    if (country === 'TN') {
+      const products = [
+        {
+          category: 'Photo Prints',
+          product: 'Format 10.16 x 15.24 cm',
+          country: countryInfo.name,
+          price: countryInfo.currency === 'TND' 
+            ? `${countryInfo.size10x15} TND`
+            : `${countryInfo.currency} ${countryInfo.size4x6}`
+        },
+        {
+          category: 'Photo Prints',
+          product: 'Format 12.7 x 17.78 cm',
+          country: countryInfo.name,
+          price: countryInfo.currency === 'TND'
+            ? `${countryInfo.size15x22} TND`
+            : `${countryInfo.currency} ${countryInfo.size5x7}`
+        }
+      ];
+      } 
+    
     // Add 8x10" size after 5x7" only for USA and Canada
     if (country === 'USA' || country === 'CAN' || country === 'US' || country ==='CA' ) {
       products.splice(2, 0, {
@@ -601,7 +623,9 @@ const closeProductDetails = () => {
   const getImageSrc = (product) => {
     const imageMap = {
       '4x6 Size': photoprint4x6,
+      'Format 10.16 x 15.24 cm': photoprint4x6,
       '5x7 Size': photoprint5x7,
+      'Format 12.7 x 17.78 cm': photoprint5x7,
       '8x10 Size': photoprint8x10,
       'Keychain': keychain,
       'Keychain and Magnet': keychain,
