@@ -43,8 +43,8 @@ const initialCountries = [
     value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.39
-    size5x7: 2.99,        // Updated from 1.49
+    size4x6: 0.01,        // Updated from 0.49
+    size5x7: 2.99,        // Updated from 2.99
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
     keychain: 29.99, 
@@ -2270,6 +2270,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   };
 
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
+  const { taxAmount } = calculateTotals();
+
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
@@ -2294,7 +2296,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       totalAmount: paymentData.amount,
       subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
       shippingFee: paymentData.amount > 69.99 ? 0 : 20,
-      taxAmount: 0,
+      taxAmount: taxAmount,
       discount: 0,
       currency: paymentData.currency,
       orderNote: "",
@@ -2620,7 +2622,7 @@ const CheckoutButton = ({
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
             shippingFee = 20;
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 20;
+            shippingFee = 0;
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
             shippingFee = 9;
         } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
