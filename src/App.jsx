@@ -2270,7 +2270,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   };
 
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
-  const { taxAmount } = calculateTotals();
+  const { taxAmount,shippingFee } = calculateTotals();
 
 
   try {
@@ -2295,7 +2295,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       })),
       totalAmount: paymentData.amount,
       subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
-      shippingFee: paymentData.amount > 69.99 ? 0 : 20,
+      shippingFee: shippingFee, //shipping mil fatoura
       taxAmount: taxAmount,
       discount: 0,
       currency: paymentData.currency,
