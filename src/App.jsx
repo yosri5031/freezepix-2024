@@ -300,7 +300,17 @@ const [interacReference, setInteracReference] = useState('');
           setIsLoading(true);
           try {
             const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/discount-codes');
-            setAvailableDiscounts(response.data);
+            // Filter only active discounts and check dates
+            const activeDiscounts = response.data.filter(discount => {
+              const now = new Date();
+              const startDate = new Date(discount.startDate);
+              const endDate = discount.endDate ? new Date(discount.endDate) : null;
+              
+              return discount.isActive && 
+                     (!endDate || endDate > now) && 
+                     startDate <= now;
+            });
+            setAvailableDiscounts(activeDiscounts);
           } catch (error) {
             console.error('Error fetching discount codes:', error);
           } finally {
@@ -434,27 +444,18 @@ const [interacReference, setInteracReference] = useState('');
       const discountRule = availableDiscounts.find(
         discount => discount.code.toUpperCase() === code.toUpperCase()
       );
-    
-      console.log('Discount Rule:', discountRule);
-    
+  
       if (!discountRule) return 0;
-    
+  
       let discountValue = 0;
       if (discountRule.valueType === 'percentage') {
-        discountValue = Math.abs(parseFloat(discountRule.value)) / 100; // Ensure positive value
+        discountValue = Math.abs(parseFloat(discountRule.value)) / 100;
       } else if (discountRule.valueType === 'fixed_amount') {
-        discountValue = Math.abs(parseFloat(discountRule.value)); // Ensure positive value
+        discountValue = Math.abs(parseFloat(discountRule.value));
       }
-    
-      console.log('Calculated Discount Value:', discountValue);
+  
       return discountValue;
     };
-      const updateFormData = (field, value) => {
-        setFormData(prev => ({
-          ...prev,
-          [field]: value
-        }));
-      };
       
       // Add a function to handle address updates
       const updateAddress = (type, field, value) => {
@@ -2434,48 +2435,62 @@ const CheckoutButton = ({
 );
 };  
 
-        const validateDiscountCode = (code) => {
-    const totalItems = selectedPhotos.reduce((sum, photo) => sum + (photo.quantity || 1), 0);
-    const upperCode = code.toUpperCase();
+const validateDiscountCode = (code) => {
+  if (!code) return false;
+
+  const upperCode = code.toUpperCase();
+  const validDiscount = availableDiscounts.find(discount => {
+    const isMatchingCode = discount.code.toUpperCase() === upperCode;
+    const now = new Date();
+    const startDate = new Date(discount.startDate);
+    const endDate = discount.endDate ? new Date(discount.endDate) : null;
     
-    // Check if code exists in available discounts
-    const validDiscount = availableDiscounts.find(
-      discount => discount.code.toUpperCase() === upperCode
-    );
+    return isMatchingCode && 
+           discount.isActive && 
+           (!endDate || endDate > now) && 
+           startDate <= now;
+  });
 
-    if (code && !validDiscount) {
-      setDiscountError('Invalid discount code');
-      return false;
-    } else {
-      setDiscountError('');
-      return true;
-    }
-  };
+  if (!validDiscount) {
+    setDiscountError('Invalid discount code');
+    return false;
+  }
 
-  const getDiscountDisplay = () => {
-    const discountRule = availableDiscounts.find(
-      discount => discount.code.toUpperCase() === discountCode.toUpperCase()
-    );
+  setDiscountError('');
+  return true;
+};
 
-    if (!discountRule) return '0%';
+const getDiscountDisplay = () => {
+  const discountRule = availableDiscounts.find(
+    discount => discount.code.toUpperCase() === discountCode.toUpperCase()
+  );
 
-    if (discountRule.valueType === 'percentage') {
-      return `${discountRule.value}%`;
-    } else {
-      return `${discountRule.value} ${country?.currency}`;
-    }
-  };
+  if (!discountRule) return '0%';
+
+  if (discountRule.valueType === 'percentage') {
+    return `${discountRule.value}%`;
+  } else {
+    return `${discountRule.value} ${country?.currency}`;
+  }
+};
 
 
     
-      const handleDiscountCode = (value) => {
-        setDiscountCode(value);
-        if (value) {
-          validateDiscountCode(value);
-        } else {
-          setDiscountError('');
-        }
-      };
+const handleDiscountCode = (value) => {
+  const upperValue = value.toUpperCase();
+  setDiscountCode(upperValue);
+  
+  if (upperValue) {
+    const isValid = validateDiscountCode(upperValue);
+    const discountAmount = isValid ? 
+      (discountCode ? subtotal * calculateDiscountValue(upperValue) : 0) : 
+      0;
+    onDiscountChange(discountAmount);
+  } else {
+    setDiscountError('');
+    onDiscountChange(0);
+  }
+};
     
       const handleBack = () => {
         if (activeStep === 0) {
