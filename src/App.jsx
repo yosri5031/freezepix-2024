@@ -43,7 +43,7 @@ const initialCountries = [
     value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.49
+    size4x6: 0.03,        // Updated from 0.49
     size5x7: 2.99,        // Updated from 2.99
     size8x10: 4.99,       // Added new size
     crystal3d: 140, 
@@ -2622,7 +2622,7 @@ const CheckoutButton = ({
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
             shippingFee = 20;
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 20;
+            shippingFee = 0.03;
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
             shippingFee = 9;
         } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
