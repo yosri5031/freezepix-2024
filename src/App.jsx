@@ -2755,36 +2755,34 @@ const countryCodeMap = {
                             <X size={16} />
                         </button>
                         <div className="mt-2 space-y-2">
-                            {/* Product Type Selection for US/Canada */}
-                            {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR','US','CA','DE','FR','IT','ES','GB'].includes(selectedCountry)) && (
-                                <select
-                                    value={photo.productType}
-                                    onChange={(e) => updateProductType(photo.id, e.target.value)}
-                                    className="w-full p-1 border rounded"
-                                >
-                                    <option value="photo_print">{t('produits.photo_print')}</option>
-                                    {/*<option value="3d_frame">{t('produits.3d_frame')}</option>
-                                    <option value="keychain">{t('produits.keychain')}</option> */}
-                                    
-                                </select>
-                            )}
+                              {/* Product Type Selection for US/Canada */}
+  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR','US','CA','DE','FR','IT','ES','GB'].includes(selectedCountry)) && (
+    <select
+      value={photo.productType}
+      onChange={(e) => updateProductType(photo.id, e.target.value)}
+      className="w-full p-1 border rounded"
+      style={{ display: 'none' }} // Hide the select element
+    >
+      <option value="photo_print">{t('produits.photo_print')}</option>
+    </select>
+  )}
 
-                            {/* Product Type Selection for Tunisia */}
-                            {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {t('produits.product')}
-                                    </label>
-                                    <select
-                                        value={photo.productType}
-                                        onChange={(e) => updateProductType(photo.id, e.target.value)}
-                                        className="w-full p-1 border rounded"
-                                    >
-                                        <option value="photo_print">{t('produits.photo_print')}</option>
-                                        {/*<option value="keychain">{t('produits.keychain')}</option> */}
-                                    </select>
-                                </div>
-                            )}
+  {/* Product Type Selection for Tunisia */}
+  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">
+        {t('produits.product')}
+      </label>
+      <select
+        value={photo.productType}
+        onChange={(e) => updateProductType(photo.id, e.target.value)}
+        className="w-full p-1 border rounded"
+        style={{ display: 'none' }} // Hide the select element
+      >
+        <option value="photo_print">{t('produits.photo_print')}</option>
+      </select>
+    </div>
+  )}
 
                             {/* Size selection for photo prints */}
                             {photo.productType === 'photo_print' && (
