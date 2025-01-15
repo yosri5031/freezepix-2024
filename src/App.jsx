@@ -2770,7 +2770,7 @@ const countryCodeMap = {
   {/* Product Type Selection for Tunisia */}
   {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-sm font-medium text-gray-700 mb-1" style={{ display: 'none' }}>
         {t('produits.product')}
       </label>
       <select
