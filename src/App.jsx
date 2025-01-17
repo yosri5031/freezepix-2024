@@ -2627,9 +2627,9 @@ const handleDiscountCode = (value) => {
     // Calculate shipping fee based on country
     let shippingFee = 20;
     const isOrderOverThreshold = subtotal >= 50;
-    const isOrderOver70 = subtotal >= 69.99;
+    const isOrderOver999 = subtotal >= 999;
 
-    if (isOrderOver70 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
+    if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
         shippingFee = 0;
     } else if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
