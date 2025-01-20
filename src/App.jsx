@@ -2296,8 +2296,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       })),
       totalAmount: paymentData.amount,
       subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
-      shippingFee: shippingFee, //shipping mil fatoura
-      taxAmount: taxAmount,
+      shippingFee: shippingFee, //shipping Same as invoice
+      taxAmount: taxAmount, // tax same as invoice
       discount: 0,
       currency: paymentData.currency,
       orderNote: "",
