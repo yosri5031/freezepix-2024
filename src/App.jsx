@@ -37,7 +37,7 @@ const initialCountries = [
     size4x6: 0.49,        // Updated from 0.39
     size5x7: 2.99,        // Updated from 1.49
     size8x10: 4.99,
-    size4x4: 3.99,       // Added new size
+    size4x4: 3.99,
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99 },
@@ -885,7 +885,7 @@ useEffect(() => {
       case '4x6': return country.size4x6;
       case '5x7': return country.size5x7;
       case '8x10' : return country.size8x10;
-      case '4x4' : return country.size4x4;
+      case '4x4': return country.size4x4;
       case '10x15': return country.size10x15;
       case '15x22': return country.size15x22;
       default: return 0;
@@ -3137,8 +3137,8 @@ const countryCodeMap = {
       )}
       {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['4x4'] > 0 && (
         <div className="flex justify-between py-2">
-          <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
+          <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4} {country?.currency})</span>
+          <span>{subtotalsBySize['4x4']} {country?.currency}</span>
         </div>
       )}
     </>
