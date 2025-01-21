@@ -10,6 +10,7 @@ import LanguageSelector from './components/LanguageSelector';
 import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
 import photoprint8x10 from './assets/photoprint8x10.jpg';
+import photoprint4x4 from './assets/photoprint4x4.jpg';
 import keychain from './assets/kc2.png';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
@@ -35,7 +36,8 @@ const initialCountries = [
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.39
     size5x7: 2.99,        // Updated from 1.49
-    size8x10: 4.99,       // Added new size
+    size8x10: 4.99,
+    size4x4: 3.99,       // Added new size
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99 },
@@ -45,7 +47,8 @@ const initialCountries = [
     rate: 1, 
     size4x6: 0.49,        // Updated from 0.49
     size5x7: 2.99,        // Updated from 2.99
-    size8x10: 4.99,       // Added new size
+    size8x10: 4.99,
+    size4x4: 3.99,       // Added new size
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99  },
@@ -589,6 +592,12 @@ const closeProductDetails = () => {
         country: countryInfo.name,
         price: `${countryInfo.currency} ${countryInfo.size8x10}`
       });
+      products.splice(3, 0, {
+        category: 'Photo Prints',
+        product: '4x4 Size',
+        country: countryInfo.name,
+        price: `${countryInfo.currency} ${countryInfo.size4x4}`
+      });
     }
   
     return products;
@@ -601,6 +610,7 @@ const closeProductDetails = () => {
       '5x7 Size': photoprint5x7,
       'Format 12.7 x 17.78 cm': photoprint5x7,
       '8x10 Size': photoprint8x10,
+      '4x4 Size': photoprint4x4,
       'Keychain': keychain,
       'Keychain and Magnet': keychain,
       'Magnet': magnet,
@@ -875,6 +885,7 @@ useEffect(() => {
       case '4x6': return country.size4x6;
       case '5x7': return country.size5x7;
       case '8x10' : return country.size8x10;
+      case '4x4' : return country.size4x4;
       case '10x15': return country.size10x15;
       case '15x22': return country.size15x22;
       default: return 0;
@@ -2608,6 +2619,9 @@ const handleDiscountCode = (value) => {
                 } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '8x10') {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
                 }
+                else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '4x4') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
+              }
             }
         } else if (photo.productType === '3d_frame') {
             quantities['3d_frame'] += photo.quantity || 1;
@@ -3118,6 +3132,12 @@ const countryCodeMap = {
         <div className="flex justify-between py-2">
           <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+      {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['4x4'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
     </>
