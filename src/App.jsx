@@ -2819,10 +2819,11 @@ const countryCodeMap = {
         </>
     ) : selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'US' || selectedCountry === 'CA' ? (
         <>
+            <option value="4x4"> 4x4" Magnet</option>
             <option value="4x6">4x6"</option>
             <option value="5x7">5x7"</option>
             <option value="8x10">8x10"</option>
-            <option value="4x4"> 4x4" Magnet</option>
+            
         </>
     ) : (
         <>
