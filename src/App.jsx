@@ -48,7 +48,7 @@ const initialCountries = [
     size4x6: 0.49,        // Updated from 0.49
     size5x7: 2.99,        // Updated from 2.99
     size8x10: 4.99,
-    size4x4: 3.99,       // Added new size
+    size4x4: 0.39,       // Added new size
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99  },
@@ -545,6 +545,12 @@ const closeProductDetails = () => {
     if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
       products = [
         {
+        category: 'Photo Prints',
+        product: '4x4 Size',
+        country: countryInfo.name,
+        price: `${countryInfo.currency} ${countryInfo.size4x4}`
+        },
+        {
           category: 'Photo Prints',
           product: '4x6 Size',
           country: countryInfo.name,
@@ -592,12 +598,7 @@ const closeProductDetails = () => {
         country: countryInfo.name,
         price: `${countryInfo.currency} ${countryInfo.size8x10}`
       });
-      products.splice(3, 0, {
-        category: 'Photo Prints',
-        product: '4x4 Size',
-        country: countryInfo.name,
-        price: `${countryInfo.currency} ${countryInfo.size4x4}`
-      });
+     
     }
   
     return products;
