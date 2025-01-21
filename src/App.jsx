@@ -2585,6 +2585,7 @@ const handleDiscountCode = (value) => {
         '10x15': 0,
         '15x22': 0,
         '8x10': 0,
+        '4x4': 0,
         '3d_frame': 0,
         'keychain': 0,
         'keyring_magnet': 0
@@ -2596,6 +2597,7 @@ const handleDiscountCode = (value) => {
         '10x15': 0,
         '15x22': 0,
         '8x10': 0,
+        '4x4': 0,
         '3d_frame': 0,
         'keychain': 0,
         'keyring_magnet': 0
