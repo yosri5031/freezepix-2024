@@ -3137,7 +3137,7 @@ const countryCodeMap = {
       )}
       {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['4x4'] > 0 && (
         <div className="flex justify-between py-2">
-          <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
+          <span>4x4" Photo Magnets ({quantities['4x4']} × 3.99 {country?.currency})</span>
           <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
