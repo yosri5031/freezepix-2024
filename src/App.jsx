@@ -592,7 +592,7 @@ const closeProductDetails = () => {
   
     // Add 8x10" size after 5x7" only for USA and Canada
     if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
-      products.splice(2, 0, {
+      products.splice(3, 0, {
         category: 'Photo Prints',
         product: '8x10 Size',
         country: countryInfo.name,
