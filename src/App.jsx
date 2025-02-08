@@ -658,7 +658,7 @@ const closeProductDetails = () => {
         <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
           <div className="sticky top-0 bg-white p-4 border-b">
             <h2 className="text-lg font-bold">
-              {t('productDetails.title')} {initialCountries.find(c => c.value === selectedCountry)?.name}
+              {t('productDetails.title')}
             </h2>
             <button
               onClick={onClose}
