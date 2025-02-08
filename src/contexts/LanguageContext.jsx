@@ -28,24 +28,18 @@ export const LanguageProvider = ({ children }) => {
   const location = useLocation();
   const [language, setLanguage] = useState(i18n.language);
 
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-    setLanguage(lng);
-    localStorage.setItem('language', lng);
-    
-    // Handle RTL for Arabic
-    document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
-  };
-
   useEffect(() => {
     // Set Arabic language if accessing through /ar route
     if (location.pathname.startsWith('/ar')) {
-      changeLanguage('ar');
+      i18n.changeLanguage('ar');
+      setLanguage('ar');
+      localStorage.setItem('language', 'ar');
+      document.documentElement.dir = 'rtl';
     }
-  }, [location.pathname]); // changeLanguage is now in scope
+  }, [location.pathname]);
 
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage }}>
+    <LanguageContext.Provider value={{ language, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
