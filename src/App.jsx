@@ -52,7 +52,7 @@ const initialCountries = [
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99  },
-//{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
+{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
   
 ];
 
