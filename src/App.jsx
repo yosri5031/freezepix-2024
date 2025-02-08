@@ -127,7 +127,15 @@ const BookingPopup = ({ onClose }) => {
 
   // 1. Fix for country visibility in AddressForm component
   const AddressForm = ({ type, data, onChange }) => {
-    const { t } = useTranslation(); // Add this line to use translation
+    // 1. Initialize translation hook correctly
+    const { t, i18n } = useTranslation('common'); // Specify namespace
+  
+    // 2. Verify translation files are loaded
+    React.useEffect(() => {
+      console.log('Current language:', i18n.language);
+      console.log('Available namespaces:', i18n.options.ns);
+      console.log('Translation test:', t('placeholder.firstName'));
+    }, [i18n.language]);
   
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
@@ -148,80 +156,84 @@ const BookingPopup = ({ onClose }) => {
   
     return (
       <div className="grid grid-cols-2 gap-4">
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={t('placeholder.firstName')}
-        value={data.firstName || ''}
-        onChange={handleInputChange('firstName')}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={t('placeholder.lastName')}
-        value={data.lastName || ''}
-        onChange={handleInputChange('lastName')}
-        className="p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={t('placeholder.address')}
-        value={data.address || ''}
-        onChange={handleInputChange('address')}
-        className="col-span-2 p-2 border rounded"
-      />
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={t('placeholder.city')}
-        value={data.city || ''}
-        onChange={handleInputChange('city')}
-        className="p-2 border rounded"
-      />
-
-      {(data.country === 'USA' || data.country === 'US') && (
-        <select
-          value={data.state || ''}
-          onChange={handleInputChange('state')}
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.firstName', 'First Name')} // Add fallback text
+          value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
           className="p-2 border rounded"
-        >
-          <option value="">{t('form.select_state')}</option>
-          {US_STATES.map(state => (
-            <option key={state} value={state}>{state}</option>
-          ))}
-        </select>
-      )}
-
-      {(data.country === 'CAN' || data.country === 'CA') && (
-        <select
-          value={data.province || ''}
-          onChange={handleInputChange('province')}
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.lastName', 'Last Name')}
+          value={data.lastName || ''}
+          onChange={handleInputChange('lastName')}
           className="p-2 border rounded"
-        >
-          <option value="">{t('form.select_province')}</option>
-          {CANADIAN_PROVINCES.map(province => (
-            <option key={province} value={province}>{province}</option>
-          ))}
-        </select>
-      )}
-
-      <input
-        type="text"
-        inputMode="text"
-        placeholder={data.country === 'USA' ? t('placeholder.zipCode') : t('placeholder.postalCode')}
-        value={data.postalCode || ''}
-        onChange={handleInputChange('postalCode')}
-        className="p-2 border rounded"
-      />
-
-      <div className="col-span-2 p-2 border rounded bg-gray-100">
-        {initialCountries.find(c => c.value === data.country)?.name || t('form.country_not_selected')}
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.address', 'Address')}
+          value={data.address || ''}
+          onChange={handleInputChange('address')}
+          className="col-span-2 p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.city', 'City')}
+          value={data.city || ''}
+          onChange={handleInputChange('city')}
+          className="p-2 border rounded"
+        />
+  
+        {(data.country === 'USA' || data.country === 'US') && (
+          <select
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_state', 'Select State')}</option>
+            {US_STATES.map(state => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        )}
+  
+        {(data.country === 'CAN' || data.country === 'CA') && (
+          <select
+            value={data.province || ''}
+            onChange={handleInputChange('province')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_province', 'Select Province')}</option>
+            {CANADIAN_PROVINCES.map(province => (
+              <option key={province} value={province}>{province}</option>
+            ))}
+          </select>
+        )}
+  
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={data.country === 'USA' 
+            ? t('placeholder.zipCode', 'ZIP Code')
+            : t('placeholder.postalCode', 'Postal Code')}
+          value={data.postalCode || ''}
+          onChange={handleInputChange('postalCode')}
+          className="p-2 border rounded"
+        />
+  
+        <div className="col-span-2 p-2 border rounded bg-gray-100">
+          {initialCountries.find(c => c.value === data.country)?.name || 
+            t('form.country_not_selected', 'Country not selected')}
+        </div>
       </div>
-    </div>
     );
   };
+  
   
   // Add this function before the FreezePIX component
 
