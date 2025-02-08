@@ -128,14 +128,9 @@ const BookingPopup = ({ onClose }) => {
   // 1. Fix for country visibility in AddressForm component
   const AddressForm = ({ type, data, onChange }) => {
     // 1. Initialize translation hook correctly
-    const { t, i18n } = useTranslation('common'); // Specify namespace
+    const { t } = useTranslation();
   
-    // 2. Verify translation files are loaded
-    React.useEffect(() => {
-      console.log('Current language:', i18n.language);
-      console.log('Available namespaces:', i18n.options.ns);
-      console.log('Translation test:', t('placeholder.firstName'));
-    }, [i18n.language]);
+   
   
     const handleInputChange = (field) => (e) => {
       const newValue = e.target.value;
