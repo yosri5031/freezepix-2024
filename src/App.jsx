@@ -3320,6 +3320,15 @@ const countryCodeMap = {
     }
   };
 
+  useEffect(() => {
+    // Handle /ar route
+    if (location.pathname.startsWith('/ar')) {
+      changeLanguage('ar');
+      // Set Tunisia as default country
+      handleCountrySelect('TN');
+    }
+  }, [location.pathname]);
+
   const handleCountrySelect = (country) => {
     localStorage.removeItem('uploadedPhotos');
     localStorage.removeItem('freezepixState');
@@ -3424,18 +3433,22 @@ if (showIntro) {
                     </div>
                     
                     <div className="max-w-xl mx-auto space-y-4">
-                      <select 
-                        className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        value={selectedCountry}
-                        onChange={(e) => handleCountrySelect(e.target.value)}
-                      >
-                        <option value="">{t('navigation.select')}</option>
-                        {initialCountries.map(country => (
-                          <option key={country.value} value={country.value}>
-                            {country.name} ({country.currency})
-                          </option>
-                        ))}
-                      </select>
+                       <select 
+            className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+            value={selectedCountry}
+            onChange={(e) => handleCountrySelect(e.target.value)}
+          >
+            <option value="">{t('navigation.select')}</option>
+            {initialCountries.map(country => (
+              <option 
+                key={country.value} 
+                value={country.value}
+                selected={country.value === 'TN'} // Pre-select Tunisia
+              >
+                {country.name} ({country.currency})
+              </option>
+            ))}
+          </select>
       
                       <button
                         onClick={() => {
