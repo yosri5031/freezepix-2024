@@ -1100,23 +1100,25 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
   const CHUNK_SIZE = 6;
   const CONCURRENT_CHUNKS = 2;
 
-  // Split items into smaller chunks
   const chunks = [];
   for (let i = 0; i < orderItems.length; i += CHUNK_SIZE) {
     chunks.push(orderItems.slice(i, i + CHUNK_SIZE));
   }
 
-  // Process chunks with controlled concurrency
   for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
     const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
     const chunkPromises = currentChunks.map((chunk, index) => {
       return axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk', // Modified to use relative URL
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
         { ...orderData, orderItems: chunk },
         {
+          withCredentials: true, // Important for CORS with credentials
           timeout: 30000,
           retries: 2,
-          retryDelay: 1000
+          retryDelay: 1000,
+          headers: {
+            'Content-Type': 'application/json'
+          }
         }
       ).catch(async (error) => {
         let retryCount = 0;
@@ -1128,9 +1130,15 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
               setTimeout(resolve, Math.pow(2, retryCount) * 1000)
             );
             return await axios.post(
-              '/api/orders/chunk', // Modified to use relative URL
+              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
               { ...orderData, orderItems: chunk },
-              { timeout: 45000 }
+              {
+                withCredentials: true,
+                timeout: 45000,
+                headers: {
+                  'Content-Type': 'application/json'
+                }
+              }
             );
           } catch (retryError) {
             retryCount++;
