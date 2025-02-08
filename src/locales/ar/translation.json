@@ -13,6 +13,27 @@
   "location": "اختر موقعك لبدء طباعة ذكرياتك",
   "select": "اختر بلدك"
   },
+  "placeholder": {
+    "validation.contact_info": "معلومات الاتصال",
+    "form.shipping_a": "عنوان الشحن",
+    "form.billing_a": "عنوان الفاتورة",
+    "form.same_address": "عنوان الفاتورة هو نفس عنوان الشحن",
+    "Email Address": "البريد الإلكتروني",
+    "Phone Number": "رقم الهاتف",
+    "First Name": "الاسم الأول",
+    "Last Name": "اسم العائلة",
+    "Address": "العنوان",
+    "City": "المدينة",
+    "ZIP Code": "الرمز البريدي",
+    "Postal Code": "الرمز البريدي",
+    "Select State": "اختر الولاية",
+    "Select Province": "اختر المقاطعة",
+    "Country not selected": "لم يتم اختيار البلد",
+    "Contact Information": "معلومات الاتصال",
+    "Shipping Address": "عنوان الشحن",
+    "Billing Address": "عنوان الفواتير",
+    "Billing address same as shipping": "عنوان الفواتير هو نفس عنوان الشحن"
+  },
   "buttons": {
   "start_printing": "ابدأ الطباعة",
   "book_service": "احجز خدمة تصوير",

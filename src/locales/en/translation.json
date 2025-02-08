@@ -13,6 +13,27 @@
       "location" : "Choose your location to start printing your memories",
       "select" : "Select your country"
     },
+    "placeholder": {
+      "validation.contact_info": "Contact Information",
+      "form.shipping_a": "Shipping Address",
+      "form.billing_a": "Billing Address",
+      "form.same_address": "Billing address same as shipping address",
+      "Email Address": "Email Address",
+    "Phone Number": "Phone Number",
+    "First Name": "First Name",
+    "Last Name": "Last Name",
+    "Address": "Address",
+    "City": "City",
+    "ZIP Code": "ZIP Code",
+    "Postal Code": "Postal Code",
+    "Select State": "Select State",
+    "Select Province": "Select Province",
+    "Country not selected": "Country not selected",
+    "Contact Information": "Contact Information",
+    "Shipping Address": "Shipping Address",
+    "Billing Address": "Billing Address",
+    "Billing address same as shipping": "Billing address same as shipping"
+    },
     "buttons": {
       "start_printing": "Start Printing",
       "book_service": "Book a photography service",

@@ -148,81 +148,78 @@ const BookingPopup = ({ onClose }) => {
   
     return (
       <div className="grid grid-cols-2 gap-4">
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="First Name"
-          value={data.firstName || ''}
-          onChange={handleInputChange('firstName')}
+      <input
+        type="text"
+        inputMode="text"
+        placeholder={t('placeholder.firstName')}
+        value={data.firstName || ''}
+        onChange={handleInputChange('firstName')}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder={t('placeholder.lastName')}
+        value={data.lastName || ''}
+        onChange={handleInputChange('lastName')}
+        className="p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder={t('placeholder.address')}
+        value={data.address || ''}
+        onChange={handleInputChange('address')}
+        className="col-span-2 p-2 border rounded"
+      />
+      <input
+        type="text"
+        inputMode="text"
+        placeholder={t('placeholder.city')}
+        value={data.city || ''}
+        onChange={handleInputChange('city')}
+        className="p-2 border rounded"
+      />
+
+      {(data.country === 'USA' || data.country === 'US') && (
+        <select
+          value={data.state || ''}
+          onChange={handleInputChange('state')}
           className="p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="Last Name"
-          value={data.lastName || ''}
-          onChange={handleInputChange('lastName')}
+        >
+          <option value="">{t('form.select_state')}</option>
+          {US_STATES.map(state => (
+            <option key={state} value={state}>{state}</option>
+          ))}
+        </select>
+      )}
+
+      {(data.country === 'CAN' || data.country === 'CA') && (
+        <select
+          value={data.province || ''}
+          onChange={handleInputChange('province')}
           className="p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="Address"
-          value={data.address || ''}
-          onChange={handleInputChange('address')}
-          className="col-span-2 p-2 border rounded"
-        />
-        <input
-          type="text"
-          inputMode="text"
-          placeholder="City"
-          value={data.city || ''}
-          onChange={handleInputChange('city')}
-          className="p-2 border rounded"
-        />
-  
-        {/* Fix for state/province visibility */}
-        {(data.country === 'USA' || data.country === 'US') && (
-          <select
-            value={data.state || ''}
-            onChange={handleInputChange('state')}
-            className="p-2 border rounded"
-          >
-            <option value="">{t('form.select_state')}</option>
-            {US_STATES.map(state => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
-        )}
-  
-        {(data.country === 'CAN' || data.country === 'CA') && (
-          <select
-            value={data.province || ''}
-            onChange={handleInputChange('province')}
-            className="p-2 border rounded"
-          >
-            <option value="">{t('form.select_province')}</option>
-            {CANADIAN_PROVINCES.map(province => (
-              <option key={province} value={province}>{province}</option>
-            ))}
-          </select>
-        )}
-  
-        {/* Fix for postal code input */}
-        <input
-          type="text"
-          inputMode="text"
-          placeholder={data.country === 'USA' ? "ZIP Code" : "Postal Code"}
-          value={data.postalCode || ''}
-          onChange={handleInputChange('postalCode')}
-          className="p-2 border rounded"
-        />
-  
-        {/* Fix for country visibility */}
-        <div className="col-span-2 p-2 border rounded bg-gray-100">
-          {initialCountries.find(c => c.value === data.country)?.name || 'Country not selected'}
-        </div>
+        >
+          <option value="">{t('form.select_province')}</option>
+          {CANADIAN_PROVINCES.map(province => (
+            <option key={province} value={province}>{province}</option>
+          ))}
+        </select>
+      )}
+
+      <input
+        type="text"
+        inputMode="text"
+        placeholder={data.country === 'USA' ? t('placeholder.zipCode') : t('placeholder.postalCode')}
+        value={data.postalCode || ''}
+        onChange={handleInputChange('postalCode')}
+        className="p-2 border rounded"
+      />
+
+      <div className="col-span-2 p-2 border rounded bg-gray-100">
+        {initialCountries.find(c => c.value === data.country)?.name || t('form.country_not_selected')}
       </div>
+    </div>
     );
   };
   
@@ -2923,85 +2920,84 @@ const countryCodeMap = {
       case 1:
       return (
         <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium">        {t('validation.contact_info')}
-            </h2>
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">
+          {t('placeholder.validation.contact_info')}
+        </h2>
+        <input
+          type="email"
+          placeholder={t('placeholder.email')}
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="tel"
+          placeholder={t('placeholder.phone')}
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
+        <AddressForm
+          type="shipping"
+          data={{
+            ...formData.shippingAddress,
+            country: countryCodeMap[selectedCountry] || selectedCountry
+          }}
+          onChange={(newAddress) => setFormData(prevData => ({
+            ...prevData,
+            shippingAddress: {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            },
+            billingAddress: isBillingAddressSameAsShipping ? {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            } : prevData.billingAddress
+          }))}
+        />
+      </div>
+
+      {formData.paymentMethod !== 'cod' && (
+        <div className="space-y-4 hidden">
+          <div className="flex items-center gap-2 hidden">
             <input
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-2 border rounded"
+              type="checkbox"
+              checked={isBillingAddressSameAsShipping}
+              onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
+              id="sameAddress"
+              className="rounded border-gray-300"
             />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
+            <label htmlFor="sameAddress" className="text-sm">
+              {t('placeholder.form.same_address')}
+            </label>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium"> {t('form.shipping_a')}</h2>
-            <AddressForm
-    type="shipping"
-    data={{
-      ...formData.shippingAddress,
-      country: countryCodeMap[selectedCountry] || selectedCountry // Map the country code or use original if not found
-    }}
-    onChange={(newAddress) => setFormData(prevData => ({
-      ...prevData,
-      shippingAddress: {
-        ...newAddress,
-        country: countryCodeMap[newAddress.country] || newAddress.country // Map the country code in the onChange handler
-      },
-      billingAddress: isBillingAddressSameAsShipping ? {
-        ...newAddress,
-        country: countryCodeMap[newAddress.country] || newAddress.country
-      } : prevData.billingAddress
-    }))}
-  />
-          </div>
-
-          {formData.paymentMethod !== 'cod' && (
-            <div className="space-y-4 hidden">
-              <div className="flex items-center gap-2 hidden">
-                <input
-                  type="checkbox"
-                  checked={isBillingAddressSameAsShipping}
-                  onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-                  id="sameAddress"
-                  className="rounded border-gray-300"
+          {!isBillingAddressSameAsShipping && (
+            <>
+              <div className="hidden">
+                <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
+                <AddressForm
+                  type="billing"
+                  data={{
+                    ...formData.billingAddress,
+                    country: countryCodeMap[selectedCountry] || selectedCountry
+                  }}
+                  onChange={(newAddress) => setFormData(prevData => ({
+                    ...prevData,
+                    billingAddress: newAddress
+                  }))}
                 />
-                <label htmlFor="sameAddress" className="text-sm">
-                {t('form.same_address')}
-
-                </label>
               </div>
-
-              {!isBillingAddressSameAsShipping && (
-                <>
-                <div class="hidden">
-                  <h2 className="text-xl font-medium">{t('form.billing_a')}</h2>
-                  <AddressForm
-                    type="billing"
-                    data={{
-                      ...formData.billingAddress,
-                      country: countryCodeMap[selectedCountry] || selectedCountry 
-                    }}
-                    onChange={(newAddress) => setFormData(prevData => ({
-                      ...prevData,
-                      billingAddress: newAddress
-                    }))}
-
-                  />
-                  </div>
-                </>
-              )}
-            </div>
+            </>
           )}
         </div>
+      )}
+    </div>
       );
 
       case 2:

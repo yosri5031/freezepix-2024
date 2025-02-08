@@ -13,6 +13,27 @@
       "location" : "Choisissez votre emplacement pour commencer à imprimer vos souvenirs",
       "select" : "Sélectionnez votre pays"
     },
+    "placeholder": {
+      "validation.contact_info": "Informations de contact",
+      "form.shipping_a": "Adresse de livraison",
+      "form.billing_a": "Adresse de facturation",
+      "form.same_address": "L'adresse de facturation est identique à l'adresse de livraison",
+      "Email Address": "Adresse e-mail",
+    "Phone Number": "Numéro de téléphone",
+    "First Name": "Prénom",
+    "Last Name": "Nom",
+    "Address": "Adresse",
+    "City": "Ville",
+    "ZIP Code": "Code ZIP",
+    "Postal Code": "Code postal",
+    "Select State": "Sélectionnez l'état",
+    "Select Province": "Sélectionnez la province",
+    "Country not selected": "Pays non sélectionné",
+    "Contact Information": "Informations de contact",
+    "Shipping Address": "Adresse de livraison",
+    "Billing Address": "Adresse de facturation", 
+    "Billing address same as shipping": "L'adresse de facturation est identique à l'adresse de livraison"
+    },
     "buttons": {
       "start_printing": "Commencer l'impression",
       "book_service": "Réserver un service de photographie",
