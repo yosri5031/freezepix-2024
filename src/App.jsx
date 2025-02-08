@@ -3322,20 +3322,11 @@ const countryCodeMap = {
   };
 
   useEffect(() => {
-    // Handle all route changes
+    // Handle /ar route
     if (location.pathname.startsWith('/ar')) {
       i18n.changeLanguage('ar');
       document.documentElement.dir = 'rtl';
       setSelectedCountry('TN');
-    } else if (location.pathname.startsWith('/fr')) {
-      i18n.changeLanguage('fr');
-      document.documentElement.dir = 'ltr';
-      setSelectedCountry('');
-    } else {
-      // Default to English for other routes
-      i18n.changeLanguage('en');
-      document.documentElement.dir = 'ltr';
-      setSelectedCountry('');
     }
   }, [location.pathname]);
 
