@@ -28,13 +28,6 @@ export const LanguageProvider = ({ children }) => {
   const location = useLocation();
   const [language, setLanguage] = useState(i18n.language);
 
-  useEffect(() => {
-    // Set Arabic language if accessing through /ar route
-    if (location.pathname.startsWith('/ar')) {
-      changeLanguage('ar');
-    }
-  }, [location.pathname]);
-
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setLanguage(lng);
@@ -44,8 +37,15 @@ export const LanguageProvider = ({ children }) => {
     document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
   };
 
+  useEffect(() => {
+    // Set Arabic language if accessing through /ar route
+    if (location.pathname.startsWith('/ar')) {
+      changeLanguage('ar');
+    }
+  }, [location.pathname]); // changeLanguage is now in scope
+
   return (
-    <LanguageContext.Provider value={{ language, changeLanguage }}>
+    <LanguageContext.Provider value={{ language, setLanguage }}>
       {children}
     </LanguageContext.Provider>
   );
