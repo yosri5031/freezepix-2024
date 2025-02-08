@@ -445,12 +445,19 @@ const [interacReference, setInteracReference] = useState('');
 
      const location = useLocation();
      useEffect(() => {
-      // Check if the current route is '/ar'
+      // Set selected country when the component mounts or pathname changes
       if (location.pathname === '/ar') {
         setSelectedCountry('TN'); // Set Tunisia as the selected country
       }
-    }, [location.pathname]); // Run effect when the pathname changes
-    
+    }, [location.pathname]); // Runs every time the pathname changes
+  
+    // If you want to set it only on initial render for '/ar', do this:
+    useEffect(() => {
+      if (location.pathname === '/ar') {
+        setSelectedCountry('TN');
+      }
+    }, []); // Empty dependency array means this runs only once when the component mounts
+
      const calculateDiscountValue = (code) => {
       const discountRule = availableDiscounts.find(
         discount => discount.code.toUpperCase() === code.toUpperCase()
