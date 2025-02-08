@@ -6,11 +6,6 @@
       "choose_location": "Choose your location to start printing your memories",
       "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
     },
-    "countries": {
-"United States": "United States",
-"Canada": "Canada",
-"Tunisia": "Tunisia"
-},
     "navigation": {
       "choose_photos": "Choose Photos",
       "select_sizes": "Select Sizes", 

@@ -6,11 +6,6 @@
       "choose_location": "Choisissez votre pays pour commencer à imprimer vos souvenirs",
       "archive_policy": "Politique d'archivage : Toutes les photos seront archivées dans notre base de données 60 jours après l'expédition de la commande."
     },
-    "countries": {
-    "United States": "États-Unis",
-    "Canada": "Canada",
-    "Tunisia": "Tunisie"
-  },
     "navigation": {
       "choose_photos": "Choisir des Photos",
       "select_sizes": "Sélectionner les Tailles", 
