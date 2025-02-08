@@ -156,104 +156,76 @@ const BookingPopup = ({ onClose }) => {
   
     return (
       <div className="grid grid-cols-2 gap-4">
-        <label className="block">
-          {t('placeholder.firstName', 'First Name')}
-          <input
-            type="text"
-            inputMode="text"
-            value={data.firstName || ''}
-            onChange={handleInputChange('firstName')}
-            className="p-2 border rounded"
-            aria-label={t('placeholder.firstName', 'First Name')}
-          />
-        </label>
-        
-        <label className="block">
-          {t('placeholder.lastName', 'Last Name')}
-          <input
-            type="text"
-            inputMode="text"
-            value={data.lastName || ''}
-            onChange={handleInputChange('lastName')}
-            className="p-2 border rounded"
-            aria-label={t('placeholder.lastName', 'Last Name')}
-          />
-        </label>
-        
-        <label className="block col-span-2">
-          {t('placeholder.address', 'Address')}
-          <input
-            type="text"
-            inputMode="text"
-            value={data.address || ''}
-            onChange={handleInputChange('address')}
-            className="p-2 border rounded"
-            aria-label={t('placeholder.address', 'Address')}
-          />
-        </label>
-        
-        <label className="block">
-          {t('placeholder.city', 'City')}
-          <input
-            type="text"
-            inputMode="text"
-            value={data.city || ''}
-            onChange={handleInputChange('city')}
-            className="p-2 border rounded"
-            aria-label={t('placeholder.city', 'City')}
-          />
-        </label>
-        
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.firstName', 'First Name')} // Add fallback text
+          value={data.firstName || ''}
+          onChange={handleInputChange('firstName')}
+          className="p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.lastName', 'Last Name')}
+          value={data.lastName || ''}
+          onChange={handleInputChange('lastName')}
+          className="p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.address', 'Address')}
+          value={data.address || ''}
+          onChange={handleInputChange('address')}
+          className="col-span-2 p-2 border rounded"
+        />
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={t('placeholder.city', 'City')}
+          value={data.city || ''}
+          onChange={handleInputChange('city')}
+          className="p-2 border rounded"
+        />
+  
         {(data.country === 'USA' || data.country === 'US') && (
-          <label className="block">
-            {t('form.select_state', 'Select State')}
-            <select
-              value={data.state || ''}
-              onChange={handleInputChange('state')}
-              className="p-2 border rounded"
-              aria-label={t('form.select_state', 'Select State')}
-            >
-              <option value="">{t('form.select_state', 'Select State')}</option>
-              {US_STATES.map(state => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
-          </label>
+          <select
+            value={data.state || ''}
+            onChange={handleInputChange('state')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_state', 'Select State')}</option>
+            {US_STATES.map(state => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
         )}
-    
+  
         {(data.country === 'CAN' || data.country === 'CA') && (
-          <label className="block">
-            {t('form.select_province', 'Select Province')}
-            <select
-              value={data.province || ''}
-              onChange={handleInputChange('province')}
-              className="p-2 border rounded"
-              aria-label={t('form.select_province', 'Select Province')}
-            >
-              <option value="">{t('form.select_province', 'Select Province')}</option>
-              {CANADIAN_PROVINCES.map(province => (
-                <option key={province} value={province}>{province}</option>
-              ))}
-            </select>
-          </label>
+          <select
+            value={data.province || ''}
+            onChange={handleInputChange('province')}
+            className="p-2 border rounded"
+          >
+            <option value="">{t('form.select_province', 'Select Province')}</option>
+            {CANADIAN_PROVINCES.map(province => (
+              <option key={province} value={province}>{province}</option>
+            ))}
+          </select>
         )}
-    
-        <label className="block">
-          {data.country === 'USA' 
+  
+        <input
+          type="text"
+          inputMode="text"
+          placeholder={data.country === 'USA' 
             ? t('placeholder.zipCode', 'ZIP Code')
             : t('placeholder.postalCode', 'Postal Code')}
-          <input
-            type="text"
-            inputMode="text"
-            value={data.postalCode || ''}
-            onChange={handleInputChange('postalCode')}
-            className="p-2 border rounded"
-            aria-label={data.country === 'USA' 
-              ? t('placeholder.zipCode', 'ZIP Code') 
-              : t('placeholder.postalCode', 'Postal Code')}
-          />
-        </label>
-    
+          value={data.postalCode || ''}
+          onChange={handleInputChange('postalCode')}
+          className="p-2 border rounded"
+        />
+  
         <div className="col-span-2 p-2 border rounded bg-gray-100">
           {initialCountries.find(c => c.value === data.country)?.name || 
             t('form.country_not_selected', 'Country not selected')}
@@ -2958,93 +2930,87 @@ const countryCodeMap = {
         </div>
     );
       case 1:
-        return (
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">
-                {t('placeholder.validation.contact_info')}
-              </h2>
-              <label className="block">
-                {t('placeholder.email')}
-                <input
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full p-2 border rounded"
-                  aria-label={t('placeholder.email')}
-                />
-              </label>
-              <label className="block">
-                {t('placeholder.phone')}
-                <input
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full p-2 border rounded"
-                  aria-label={t('placeholder.phone')}
-                />
-              </label>
-            </div>
-        
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
-              <AddressForm
-                type="shipping"
-                data={{
-                  ...formData.shippingAddress,
-                  country: countryCodeMap[selectedCountry] || selectedCountry,
-                }}
-                onChange={(newAddress) => setFormData(prevData => ({
-                  ...prevData,
-                  shippingAddress: {
-                    ...newAddress,
-                    country: countryCodeMap[newAddress.country] || newAddress.country,
-                  },
-                  billingAddress: isBillingAddressSameAsShipping ? {
-                    ...newAddress,
-                    country: countryCodeMap[newAddress.country] || newAddress.country,
-                  } : prevData.billingAddress,
-                }))}
-              />
-            </div>
-        
-            {formData.paymentMethod !== 'cod' && (
-              <div className="space-y-4 hidden">
-                <div className="flex items-center gap-2 hidden">
-                  <input
-                    type="checkbox"
-                    checked={isBillingAddressSameAsShipping}
-                    onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-                    id="sameAddress"
-                    className="rounded border-gray-300"
-                  />
-                  <label htmlFor="sameAddress" className="text-sm">
-                    {t('placeholder.form.same_address')}
-                  </label>
-                </div>
-        
-                {!isBillingAddressSameAsShipping && (
-                  <>
-                    <div className="hidden">
-                      <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
-                      <AddressForm
-                        type="billing"
-                        data={{
-                          ...formData.billingAddress,
-                          country: countryCodeMap[selectedCountry] || selectedCountry,
-                        }}
-                        onChange={(newAddress) => setFormData(prevData => ({
-                          ...prevData,
-                          billingAddress: newAddress,
-                        }))}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            )}
+      return (
+        <div className="space-y-6">
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">
+          {t('placeholder.validation.contact_info')}
+        </h2>
+        <input
+          type="email"
+          placeholder={t('placeholder.email')}
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="tel"
+          placeholder={t('placeholder.phone')}
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
+        <AddressForm
+          type="shipping"
+          data={{
+            ...formData.shippingAddress,
+            country: countryCodeMap[selectedCountry] || selectedCountry
+          }}
+          onChange={(newAddress) => setFormData(prevData => ({
+            ...prevData,
+            shippingAddress: {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            },
+            billingAddress: isBillingAddressSameAsShipping ? {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            } : prevData.billingAddress
+          }))}
+        />
+      </div>
+
+      {formData.paymentMethod !== 'cod' && (
+        <div className="space-y-4 hidden">
+          <div className="flex items-center gap-2 hidden">
+            <input
+              type="checkbox"
+              checked={isBillingAddressSameAsShipping}
+              onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
+              id="sameAddress"
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="sameAddress" className="text-sm">
+              {t('placeholder.form.same_address')}
+            </label>
           </div>
-        );
+
+          {!isBillingAddressSameAsShipping && (
+            <>
+              <div className="hidden">
+                <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
+                <AddressForm
+                  type="billing"
+                  data={{
+                    ...formData.billingAddress,
+                    country: countryCodeMap[selectedCountry] || selectedCountry
+                  }}
+                  onChange={(newAddress) => setFormData(prevData => ({
+                    ...prevData,
+                    billingAddress: newAddress
+                  }))}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+      );
 
       case 2:
         return (
