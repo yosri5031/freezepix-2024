@@ -3407,7 +3407,7 @@ if (showIntro) {
                       <span className="text-black">freeze</span>
                       <span className="text-yellow-400">PIX</span>
                     </div>
-                    <LanguageSelector key={language} />
+                    <LanguageSelector />
                   </div>
 
                   <div className="text-sm italic text-gray-600 mb-8">
