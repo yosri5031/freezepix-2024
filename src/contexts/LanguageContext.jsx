@@ -1,10 +1,10 @@
-import React, { createContext, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import React, { createContext, useState, useContext } from 'react';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import translationEN from '../locales/en/translation.json';
 import translationFR from '../locales/fr/translation.json';
 import translationAR from '../locales/ar/translation.json';
+
 
 // Configure i18n
 i18n
@@ -13,35 +13,24 @@ i18n
     resources: {
       en: { translation: translationEN },
       fr: { translation: translationFR },
-      ar: { translation: translationAR }
+      ar: {translation: translationAR }
     },
-    lng: localStorage.getItem('language') || 'en',
+    lng: localStorage.getItem('language') || 'en', // Default to English or last selected
     fallbackLng: 'en',
     interpolation: {
-      escapeValue: false
+      escapeValue: false // React already escapes values
     }
   });
 
 const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const location = useLocation();
   const [language, setLanguage] = useState(i18n.language);
-
-  useEffect(() => {
-    // Set Arabic language if accessing through /ar route
-    if (location.pathname.startsWith('/ar')) {
-      changeLanguage('ar');
-    }
-  }, [location.pathname]);
 
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setLanguage(lng);
     localStorage.setItem('language', lng);
-    
-    // Handle RTL for Arabic
-    document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
   };
 
   return (
