@@ -1097,9 +1097,9 @@ const saveStateWithCleanup = async (state) => {
 const submitOrderWithOptimizedChunking = async (orderData) => {
   const { orderItems } = orderData;
   const results = [];
-  const CHUNK_SIZE = 6; // Reduced chunk size
-  const CONCURRENT_CHUNKS = 2; // Number of chunks to process simultaneously
-  
+  const CHUNK_SIZE = 6;
+  const CONCURRENT_CHUNKS = 2;
+
   // Split items into smaller chunks
   const chunks = [];
   for (let i = 0; i < orderItems.length; i += CHUNK_SIZE) {
@@ -1111,31 +1111,26 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
     const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
     const chunkPromises = currentChunks.map((chunk, index) => {
       return axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk', // Modified to use relative URL
         { ...orderData, orderItems: chunk },
         {
-          headers: { 'Content-Type': 'application/json' },
           timeout: 30000,
           retries: 2,
           retryDelay: 1000
         }
       ).catch(async (error) => {
-        // Implement exponential backoff for retries
         let retryCount = 0;
         const maxRetries = 2;
         
         while (retryCount < maxRetries) {
           try {
-            await new Promise(resolve => 
+            await new Promise(resolve =>
               setTimeout(resolve, Math.pow(2, retryCount) * 1000)
             );
             return await axios.post(
-              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+              '/api/orders/chunk', // Modified to use relative URL
               { ...orderData, orderItems: chunk },
-              {
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 45000
-              }
+              { timeout: 45000 }
             );
           } catch (retryError) {
             retryCount++;
@@ -1145,10 +1140,8 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
       });
     });
 
-    // Wait for current batch of chunks to complete
     const chunkResults = await Promise.allSettled(chunkPromises);
     
-    // Process results and update progress
     chunkResults.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         results.push(result.value.data);
@@ -1158,7 +1151,6 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
       }
     });
 
-    // Update progress
     const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
     if (typeof orderData.onProgress === 'function') {
       orderData.onProgress(progress);
