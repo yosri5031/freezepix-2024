@@ -30,8 +30,6 @@ const stripe = new Stripe('sk_live_51Nefi9KmwKMSxU2DNSmHypO0KXNtIrudfnpFLY5KsQNS
 
 import {HelcimPayButton } from './HelcimPayButton';
 import { initializeHelcimPayCheckout } from './helcimService';
-const { t } = useTranslation();
-
 const initialCountries = [
   {
     name: t('countries.United States'), 
