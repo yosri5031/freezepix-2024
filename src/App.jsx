@@ -31,30 +31,42 @@ const stripe = new Stripe('sk_live_51Nefi9KmwKMSxU2DNSmHypO0KXNtIrudfnpFLY5KsQNS
 import {HelcimPayButton } from './HelcimPayButton';
 import { initializeHelcimPayCheckout } from './helcimService';
 const initialCountries = [
-  {name: 'United States', 
+  {
+    name: t('countries.United States'), 
     value: 'US', 
     currency: 'USD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.39
-    size5x7: 2.99,        // Updated from 1.49
+    size4x6: 0.49,
+    size5x7: 2.99,
     size8x10: 4.99,
     size4x4: 3.99,
     crystal3d: 140, 
     keychain: 29.99, 
-    keyring_magnet: 29.99 },
-  { name: 'Canada', 
+    keyring_magnet: 29.99 
+  },
+  {
+    name: t('countries.Canada'), 
     value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.49
-    size5x7: 2.99,        // Updated from 2.99
+    size4x6: 0.49,
+    size5x7: 2.99,
     size8x10: 4.99,
-    size4x4: 0.39,       // Added new size
+    size4x4: 0.39,
     crystal3d: 140, 
     keychain: 29.99, 
-    keyring_magnet: 29.99  },
-{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
-  
+    keyring_magnet: 29.99
+  },
+  {
+    name: t('countries.Tunisia'), 
+    value: 'TN', 
+    currency: 'TND', 
+    rate: 1, 
+    size10x15: 3.00, 
+    size15x22: 5.00, 
+    keychain: 15.00, 
+    keyring_magnet: 15.00 
+  },
 ];
 
 const TAX_RATES = {

@@ -6,6 +6,11 @@
   "choose_location": "اختر موقعك لبدء طباعة ذكرياتك",
   "archive_policy": "سياسة الأرشفة: سيتم الاحتفاظ بجميع الصور في قاعدة بياناتنا لمدة 60 يوماً بعد شحن الطلب"
   },
+  "countries": {
+"United States": "الولايات المتحدة",
+"Canada": "كندا",
+"Tunisia": "تونس"
+},
   "navigation": {
   "choose_photos": "اختر الصور",
   "select_sizes": "اختر الأحجام",
