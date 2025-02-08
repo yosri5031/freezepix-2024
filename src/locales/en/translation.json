@@ -17,9 +17,10 @@
       "start_printing": "Start Printing",
       "book_service": "Book a photography service",
       "add_photos": "Add Photos",
-      "next": "Next",
-      "back": "Back",
       "home": "Home",
+      "back": "Back",
+      "next": "Next",
+      "processing": "Processing...",
       "place_order": "Place Order",
       "place_new": "Place New Order",
       "review": "Review & Payment"

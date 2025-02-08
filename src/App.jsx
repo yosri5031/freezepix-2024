@@ -612,6 +612,8 @@ const closeProductDetails = () => {
       'Format 12.7 x 17.78 cm': photoprint5x7,
       '8x10 Size': photoprint8x10,
       '4x4 Size': photoprint4x4,
+      'Format 10x15 cm':photoprint4x6,
+      'Format 15x23 cm':photoprint5x7,
       'Keychain': keychain,
       'Keychain and Magnet': keychain,
       'Magnet': magnet,
@@ -3559,35 +3561,31 @@ if (orderSuccess) {
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-8">
-  <button
-    onClick={handleBack}
-    className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-  >
-    {activeStep === 0 ? 'Home' : 'Back'}
-  </button>
-  
-  {/* Only show Next/Place Order button if:
-    1. Not on payment page (activeStep !== 2), or
-    2. On payment page AND it's either Tunisia order (COD) or Interac payment */}
-{(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
-  <button 
-    onClick={handleNext} 
-    disabled={!validateStep()} 
-    className={`px-6 py-2 rounded ${
-      validateStep() 
-        ? 'bg-yellow-400 hover:bg-yellow-500' 
-        : 'bg-gray-200 cursor-not-allowed'
-    }`} 
-  >
-    {isLoading 
-      ? 'Processing...' 
-      : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') 
-        ? 'Place Order' 
-        : 'Next')}
-  </button>
-)}
+      <button
+        onClick={handleBack}
+        className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+      >
+        {activeStep === 0 ? t('buttons.home') : t('buttons.back')}
+      </button>
 
-</div>
+      {(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
+        <button
+          onClick={handleNext}
+          disabled={!validateStep()}
+          className={`px-6 py-2 rounded ${
+            validateStep()
+              ? 'bg-yellow-400 hover:bg-yellow-500'
+              : 'bg-gray-200 cursor-not-allowed'
+          }`}
+        >
+          {isLoading
+            ? t('buttons.processing')
+            : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac')
+              ? t('buttons.place_order')
+              : t('buttons.next'))}
+        </button>
+      )}
+    </div>
 
         </div>
       </div>
