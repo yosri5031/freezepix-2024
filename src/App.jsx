@@ -1,5 +1,5 @@
 import React from 'react';
-import { memo, useState, useRef, useCallback, useEffect } from 'react';
+import { memo, useState, useRef,useContext, useCallback, useEffect } from 'react';
 import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
