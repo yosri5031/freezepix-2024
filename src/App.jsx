@@ -5,6 +5,7 @@ import './index.css';
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import i18n from './contexts/LanguageContext';
 import { useTranslation } from 'react-i18next';
 import LanguageSelector from './components/LanguageSelector';
 import photoprint4x6 from './assets/photoprint4x6.jpg';
