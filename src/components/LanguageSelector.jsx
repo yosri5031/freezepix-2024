@@ -1,7 +1,25 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Check, ChevronDown } from 'lucide-react';
+
+const metaTranslations = {
+  en: {
+    title: "Freezepix Printing App",
+    description: "Order photo prints and personalized photo gifts like keychains and 3D crystals with Freezepix. Create memorable keepsakes with our easy-to-use printing app.",
+    keywords: "Freezepix, printing app, order photo prints, photo gifts, keychain, 3D crystal, custom printing, personalized gifts"
+  },
+  fr: {
+    title: "Application d'impression Freezepix",
+    description: "Commandez des tirages photo et des cadeaux photo personnalisés comme des porte-clés et des cristaux 3D avec Freezepix. Créez des souvenirs mémorables avec notre application d'impression facile à utiliser.",
+    keywords: "Freezepix, application d'impression, commander des tirages photo, cadeaux photo, porte-clés, cristal 3D, impression personnalisée, cadeaux personnalisés"
+  },
+  ar: {
+    title: "تطبيق Freezepix للطباعة",
+    description: "اطلب مطبوعات الصور والهدايا المخصصة مثل سلاسل المفاتيح والكريستال ثلاثي الأبعاد مع Freezepix. قم بإنشاء تذكارات لا تنسى مع تطبيق الطباعة سهل الاستخدام.",
+    keywords: "Freezepix، تطبيق طباعة، طلب مطبوعات صور، هدايا صور، سلسلة مفاتيح، كريستال ثلاثي الأبعاد، طباعة مخصصة، هدايا مخصصة"
+  }
+};
 
 const LanguageSelector = () => {
   const { changeLanguage, language } = useLanguage();
@@ -13,6 +31,46 @@ const LanguageSelector = () => {
     { code: 'fr', label: 'Français', path: '/fr' },
     { code: 'ar', label: 'العربية', path: '/ar' }
   ];
+
+  useEffect(() => {
+    // Update meta tags when language changes
+    const meta = metaTranslations[language];
+    if (meta) {
+      document.title = meta.title;
+      
+      // Update meta description
+      const descriptionMeta = document.querySelector('meta[name="description"]');
+      if (descriptionMeta) {
+        descriptionMeta.setAttribute('content', meta.description);
+      }
+
+      // Update meta keywords
+      const keywordsMeta = document.querySelector('meta[name="keywords"]');
+      if (keywordsMeta) {
+        keywordsMeta.setAttribute('content', meta.keywords);
+      }
+
+      // Update OpenGraph meta tags
+      const ogTitle = document.querySelector('meta[property="og:title"]');
+      const ogDescription = document.querySelector('meta[property="og:description"]');
+      if (ogTitle) {
+        ogTitle.setAttribute('content', meta.title);
+      }
+      if (ogDescription) {
+        ogDescription.setAttribute('content', meta.description);
+      }
+
+      // Update Twitter meta tags
+      const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+      const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+      if (twitterTitle) {
+        twitterTitle.setAttribute('content', meta.title);
+      }
+      if (twitterDescription) {
+        twitterDescription.setAttribute('content', meta.description);
+      }
+    }
+  }, [language]);
 
   const handleLanguageChange = (newLanguage, path) => {
     changeLanguage(newLanguage);
