@@ -452,7 +452,7 @@ const [interacReference, setInteracReference] = useState('');
      const { changeLanguage } = useLanguage(); 
      useEffect(() => {
       // Set selected country and language when the pathname changes
-      if (location.pathname === '/ar') {
+      if (location.pathname === '/TN') {
         setSelectedCountry('TN'); // Set Tunisia as the selected country
         changeLanguage('ar'); // Set language to Arabic
       }
@@ -460,7 +460,7 @@ const [interacReference, setInteracReference] = useState('');
   
     // Alternatively, set selected country and language only on initial render if needed
     useEffect(() => {
-      if (location.pathname === '/ar') {
+      if (location.pathname === '/TN') {
         setSelectedCountry('TN');
         changeLanguage('ar');
       }

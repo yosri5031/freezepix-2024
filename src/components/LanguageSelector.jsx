@@ -29,7 +29,7 @@ const LanguageSelector = () => {
   const languages = [
     { code: 'en', label: 'English', path: '/' },
     { code: 'fr', label: 'Français', path: '/fr' },
-    { code: 'ar', label: 'العربية', path: '/ar' }
+    { code: 'ar', label: 'العربية', path: '/TN' }
   ];
 
   useEffect(() => {
