@@ -443,6 +443,14 @@ const [interacReference, setInteracReference] = useState('');
         validateStripePayment();
      }, []);
 
+     const location = useLocation();
+     useEffect(() => {
+      // Check if the current route is '/ar'
+      if (location.pathname === '/ar') {
+        setSelectedCountry('TN'); // Set Tunisia as the selected country
+      }
+    }, [location.pathname]); // Run effect when the pathname changes
+    
      const calculateDiscountValue = (code) => {
       const discountRule = availableDiscounts.find(
         discount => discount.code.toUpperCase() === code.toUpperCase()
