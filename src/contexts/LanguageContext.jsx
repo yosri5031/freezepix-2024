@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect,useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import { useLocation } from 'react-router-dom';
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
@@ -28,13 +28,6 @@ export const LanguageProvider = ({ children }) => {
   const location = useLocation();
   const [language, setLanguage] = useState(i18n.language);
 
-  useEffect(() => {
-    // Set Arabic language if accessing through /ar route
-    if (location.pathname.startsWith('/ar')) {
-      changeLanguage('ar');
-    }
-  }, [location.pathname]);
-
   const changeLanguage = (lng) => {
     i18n.changeLanguage(lng);
     setLanguage(lng);
@@ -43,6 +36,13 @@ export const LanguageProvider = ({ children }) => {
     // Handle RTL for Arabic
     document.documentElement.dir = lng === 'ar' ? 'rtl' : 'ltr';
   };
+
+  useEffect(() => {
+    // Set Arabic language if accessing through /ar route
+    if (location.pathname.startsWith('/ar')) {
+      changeLanguage('ar');
+    }
+  }, [location.pathname]); // changeLanguage is now in scope
 
   return (
     <LanguageContext.Provider value={{ language, changeLanguage }}>
