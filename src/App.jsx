@@ -22,6 +22,7 @@ import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import CryptoJS from 'crypto-js';
+import { useLanguage } from './contexts/LanguageContext'; // Adjust the import depending on your file structure
 const stripe = new Stripe('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', {
   apiVersion: 'latest' // Recommended to specify version
 });
@@ -444,21 +445,22 @@ const [interacReference, setInteracReference] = useState('');
      }, []);
 
      const location = useLocation();
+     const { changeLanguage } = useLanguage(); 
      useEffect(() => {
-      // Set selected country and language when the component mounts or pathname changes
+      // Set selected country and language when the pathname changes
       if (location.pathname === '/ar') {
         setSelectedCountry('TN'); // Set Tunisia as the selected country
-        setLanguage('ar'); // Set language to Arabic
+        changeLanguage('ar'); // Set language to Arabic
       }
-    }, [location.pathname]); // Runs every time the pathname changes
+    }, [location.pathname, changeLanguage]); // Run when pathname or changeLanguage changes
   
-    // Optionally, you can set the language only on initial render for '/ar'
+    // Alternatively, set selected country and language only on initial render if needed
     useEffect(() => {
       if (location.pathname === '/ar') {
         setSelectedCountry('TN');
-        setLanguage('ar');
+        changeLanguage('ar');
       }
-    }, []); // Empty dependency array means this runs only once when the component mounts
+    }, []); // Runs only once when the component mounts
 
      const calculateDiscountValue = (code) => {
       const discountRule = availableDiscounts.find(
