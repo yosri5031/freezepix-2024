@@ -29,7 +29,7 @@ const MetaUpdater = () => {
 
     if (path.includes('/fr')) {
       currentLang = 'fr';
-    } else if (path.includes('/ar')) {
+    } else if (path.includes('/TN')) {
       currentLang = 'ar';
     }
 
@@ -68,7 +68,7 @@ const MetaUpdater = () => {
 
       if (newPath.includes('/fr')) {
         newLang = 'fr';
-      } else if (newPath.includes('/ar')) {
+      } else if (newPath.includes('/TN')) {
         newLang = 'ar';
       }
 
