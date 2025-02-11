@@ -2954,254 +2954,141 @@ const countryCodeMap = {
         />
         </div>
     );
-    case 1:
-      // For Tunisia
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        return (
-          <div className="space-y-6">
-            {/* Delivery Method Selection for Tunisia */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">{t('delivery.method')}</h2>
-              <div className="flex flex-col gap-4">
-                <label className="flex items-center gap-2 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="deliveryMethod"
-                    value="pickup"
-                    checked={formData.paymentMethod === 'pickup'}
-                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    className="rounded border-gray-300"
-                  />
-                  <div>
-                    <h3 className="font-medium">{t('delivery.pickup')}</h3>
-                    <p className="text-sm text-gray-600">Société bouraoui group, 1 Rue Alibey, Sousse 4000</p>
-                  </div>
-                </label>
-    
-                <label className="flex items-center gap-2 p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
-                  <input
-                    type="radio"
-                    name="deliveryMethod"
-                    value="cod"
-                    checked={formData.paymentMethod === 'cod'}
-                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    className="rounded border-gray-300"
-                  />
-                  <div>
-                    <h3 className="font-medium">{t('delivery.cod')}</h3>
-                    <p className="text-sm text-gray-600">{t('delivery.cod_description')}</p>
-                  </div>
-                </label>
-              </div>
-            </div>
-    
-            {/* Contact Information */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-medium">{t('placeholder.validation.contact_info')}</h2>
-              <input
-                type="email"
-                placeholder={t('placeholder.email')}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-              <input
-                type="tel"
-                placeholder={t('placeholder.phone')}
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-    
-            {/* Address Form - Only show for COD */}
-            {formData.paymentMethod === 'cod' && (
-              <div className="space-y-4">
-                <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
+      case 1:
+      return (
+        <div className="space-y-6">
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">
+          {t('placeholder.validation.contact_info')}
+        </h2>
+        <input
+          type="email"
+          placeholder={t('placeholder.email')}
+          value={formData.email}
+          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+        <input
+          type="tel"
+          placeholder={t('placeholder.phone')}
+          value={formData.phone}
+          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+          className="w-full p-2 border rounded"
+        />
+      </div>
+
+      <div className="space-y-4">
+        <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
+        <AddressForm
+          type="shipping"
+          data={{
+            ...formData.shippingAddress,
+            country: countryCodeMap[selectedCountry] || selectedCountry
+          }}
+          onChange={(newAddress) => setFormData(prevData => ({
+            ...prevData,
+            shippingAddress: {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            },
+            billingAddress: isBillingAddressSameAsShipping ? {
+              ...newAddress,
+              country: countryCodeMap[newAddress.country] || newAddress.country
+            } : prevData.billingAddress
+          }))}
+        />
+      </div>
+
+      {formData.paymentMethod !== 'cod' && (
+        <div className="space-y-4 hidden">
+          <div className="flex items-center gap-2 hidden">
+            <input
+              type="checkbox"
+              checked={isBillingAddressSameAsShipping}
+              onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
+              id="sameAddress"
+              className="rounded border-gray-300"
+            />
+            <label htmlFor="sameAddress" className="text-sm">
+              {t('placeholder.form.same_address')}
+            </label>
+          </div>
+
+          {!isBillingAddressSameAsShipping && (
+            <>
+              <div className="hidden">
+                <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
                 <AddressForm
-                  type="shipping"
+                  type="billing"
                   data={{
-                    ...formData.shippingAddress,
-                    country: 'TN'
+                    ...formData.billingAddress,
+                    country: countryCodeMap[selectedCountry] || selectedCountry
                   }}
                   onChange={(newAddress) => setFormData(prevData => ({
                     ...prevData,
-                    shippingAddress: {
-                      ...newAddress,
-                      country: 'TN'
-                    },
-                    billingAddress: isBillingAddressSameAsShipping ? {
-                      ...newAddress,
-                      country: 'TN'
-                    } : prevData.billingAddress
+                    billingAddress: newAddress
                   }))}
                 />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+      );
+
+      case 2:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
+            {renderInvoice()}
+        
+            {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    {t('order.cod')}
+                  </p>
+                </div>
+              </div>
+            ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                <HelcimPayButton
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}
+  setOrderSuccess={setOrderSuccess}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
+/>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <p className="text-center text-gray-600">
+                    {t('canada.message_c')}
+                  </p>
+                </div>
+                <HelcimPayButton
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}
+  setOrderSuccess={setOrderSuccess}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
+/>
               </div>
             )}
           </div>
         );
-      }
-    
-      // For all other countries - Existing functionality
-      return (
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium">
-              {t('placeholder.validation.contact_info')}
-            </h2>
-            <input
-              type="email"
-              placeholder={t('placeholder.email')}
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="tel"
-              placeholder={t('placeholder.phone')}
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-    
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
-            <AddressForm
-              type="shipping"
-              data={{
-                ...formData.shippingAddress,
-                country: countryCodeMap[selectedCountry] || selectedCountry
-              }}
-              onChange={(newAddress) => setFormData(prevData => ({
-                ...prevData,
-                shippingAddress: {
-                  ...newAddress,
-                  country: countryCodeMap[newAddress.country] || newAddress.country
-                },
-                billingAddress: isBillingAddressSameAsShipping ? {
-                  ...newAddress,
-                  country: countryCodeMap[newAddress.country] || newAddress.country
-                } : prevData.billingAddress
-              }))}
-            />
-          </div>
-    
-          {formData.paymentMethod !== 'cod' && (
-            <div className="space-y-4 hidden">
-              <div className="flex items-center gap-2 hidden">
-                <input
-                  type="checkbox"
-                  checked={isBillingAddressSameAsShipping}
-                  onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-                  id="sameAddress"
-                  className="rounded border-gray-300"
-                />
-                <label htmlFor="sameAddress" className="text-sm">
-                  {t('placeholder.form.same_address')}
-                </label>
-              </div>
-    
-              {!isBillingAddressSameAsShipping && (
-                <>
-                  <div className="hidden">
-                    <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
-                    <AddressForm
-                      type="billing"
-                      data={{
-                        ...formData.billingAddress,
-                        country: countryCodeMap[selectedCountry] || selectedCountry
-                      }}
-                      onChange={(newAddress) => setFormData(prevData => ({
-                        ...prevData,
-                        billingAddress: newAddress
-                      }))}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      );
-
-      case 2:
-  return (
-    <div className="space-y-6">
-      <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
-      {renderInvoice()}
-      
-      {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            {formData.deliveryMethod === 'pickup' ? (
-              <div>
-                <h3 className="font-medium mb-2">{t('delivery.pickup_details')}</h3>
-                <p className="text-gray-600">Société bouraoui group</p>
-                <p className="text-gray-600">1 Rue Alibey, Sousse 4000</p>
-                <p className="text-gray-600 mt-2">{t('delivery.contact_info')}:</p>
-                <p className="text-gray-600">{formData.email}</p>
-                <p className="text-gray-600">{formData.phone}</p>
-              </div>
-            ) : (
-              <div>
-                <h3 className="font-medium mb-2">{t('order.cod')}</h3>
-                <p className="text-gray-600">{t('delivery.cod_info')}</p>
-                <div className="mt-2">
-                  <p className="text-gray-600">{t('delivery.shipping_to')}:</p>
-                  <p className="text-gray-600">
-                    {formData.shippingAddress.firstName} {formData.shippingAddress.lastName}
-                  </p>
-                  <p className="text-gray-600">{formData.shippingAddress.address}</p>
-                  <p className="text-gray-600">
-                    {formData.shippingAddress.city}, {formData.shippingAddress.postalCode}
-                  </p>
-                  <p className="text-gray-600 mt-2">{t('delivery.contact_info')}:</p>
-                  <p className="text-gray-600">{formData.email}</p>
-                  <p className="text-gray-600">{formData.phone}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <HelcimPayButton
-              onPaymentSuccess={handleHelcimPaymentSuccess}
-              isProcessing={isProcessingOrder}
-              disabled={!formIsValid}
-              selectedCountry={selectedCountry}
-              total={total}
-              setOrderSuccess={setOrderSuccess}
-              setError={setError}
-              setIsProcessingOrder={setIsProcessingOrder}
-              onSecretTokenReceived={handleSecretTokenReceived}
-            />
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="p-4 bg-gray-50 rounded-lg">
-            <p className="text-center text-gray-600">
-              {t('canada.message_c')}
-            </p>
-          </div>
-          <HelcimPayButton
-            onPaymentSuccess={handleHelcimPaymentSuccess}
-            isProcessing={isProcessingOrder}
-            disabled={!formIsValid}
-            selectedCountry={selectedCountry}
-            total={total}
-            setOrderSuccess={setOrderSuccess}
-            setError={setError}
-            setIsProcessingOrder={setIsProcessingOrder}
-            onSecretTokenReceived={handleSecretTokenReceived}
-          />
-        </div>
-      )}
-    </div>
-  );
     default:
       return null;
     }

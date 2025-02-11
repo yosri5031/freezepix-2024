@@ -6,13 +6,6 @@
       "choose_location": "Choose your location to start printing your memories",
       "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
     },
-    "delivery": {
-    "method": "Choose Delivery Method",
-    "pickup": "Pick up at Store",
-    "cod": "Cash on Delivery",
-    "cod_description": "Delivery to your address with payment on delivery",
-    "pickup_details": "Pickup Location"
-  },
     "navigation": {
       "choose_photos": "Choose Photos",
       "select_sizes": "Select Sizes", 

@@ -13,13 +13,6 @@
       "location" : "Choisissez votre emplacement pour commencer à imprimer vos souvenirs",
       "select" : "Sélectionnez votre pays"
     },
-    "delivery": {
-    "method": "Choisir le mode de livraison",
-    "pickup": "Récupérer en magasin",
-    "cod": "Paiement à la livraison",
-    "cod_description": "Livraison à votre adresse avec paiement à la livraison",
-    "pickup_details": "Point de retrait"
-},
     "placeholder": {
       "validation.contact_info": "Informations de contact",
       "form.shipping_a": "Adresse de livraison",
