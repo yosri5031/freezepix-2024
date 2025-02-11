@@ -2601,29 +2601,12 @@ const validateStep = () => {
 
       return basicFieldsValid && stateValid;
 
-    case 2: // Payment step
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        // For Tunisia, validate based on delivery method
-        if (formData.paymentMethod === 'pickup') {
-          // Pickup only needs contact info validation
-          return Boolean(formData.email && formData.phone);
-        } else {
-          // COD needs shipping address validation
-          const shippingAddress = formData.shippingAddress;
-          return Boolean(
-            formData.email &&
-            formData.phone &&
-            shippingAddress.firstName &&
-            shippingAddress.lastName &&
-            shippingAddress.address &&
-            shippingAddress.city &&
-            shippingAddress.postalCode
-          );
-        }
+    case 2: // Payment step (if applicable)
+      if (selectedCountry === 'TUN') {
+        return true; // COD doesn't need additional validation
       }
-      
-      // Original validation for other countries
-      return true; // Or add specific payment validation if needed
+      // Add any specific payment validation here if needed
+      return true;
 
     default:
       return false;
