@@ -2577,9 +2577,33 @@ const validateStep = () => {
   switch (activeStep) {
     case 0: // Upload Photos step
       return selectedPhotos.length > 0;
-      
+    
     case 1: // Shipping Information step
-      // Simplified validation for required fields
+      // Special validation for Tunisia
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        // Basic contact info validation is always required
+        const contactInfoValid = Boolean(
+          formData.email &&
+          formData.phone
+        );
+
+        // If COD is selected, validate shipping address
+        if (formData.paymentMethod === 'cod') {
+          const shippingAddress = formData.shippingAddress;
+          return contactInfoValid && Boolean(
+            shippingAddress.firstName &&
+            shippingAddress.lastName &&
+            shippingAddress.address &&
+            shippingAddress.city &&
+            shippingAddress.postalCode
+          );
+        }
+
+        // For pickup, only contact info is required
+        return contactInfoValid;
+      }
+
+      // Original validation for other countries
       const shippingAddress = formData.shippingAddress;
       
       // Basic field validation
@@ -2594,24 +2618,42 @@ const validateStep = () => {
       );
 
       // State/Province validation based on country
-      const stateValid = 
+      const stateValid =
         (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
         (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
+        (selectedCountry === 'CAN' && shippingAddress.province);    // Canada needs province
 
       return basicFieldsValid && stateValid;
 
-    case 2: // Payment step (if applicable)
-      if (selectedCountry === 'TUN') {
-        return true; // COD doesn't need additional validation
+    case 2: // Payment step
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        // For Tunisia, validate based on delivery method
+        if (formData.paymentMethod === 'pickup') {
+          // Pickup only needs contact info validation
+          return Boolean(formData.email && formData.phone);
+        } else {
+          // COD needs shipping address validation
+          const shippingAddress = formData.shippingAddress;
+          return Boolean(
+            formData.email &&
+            formData.phone &&
+            shippingAddress.firstName &&
+            shippingAddress.lastName &&
+            shippingAddress.address &&
+            shippingAddress.city &&
+            shippingAddress.postalCode
+          );
+        }
       }
-      // Add any specific payment validation here if needed
-      return true;
+      
+      // Original validation for other countries
+      return true; // Or add specific payment validation if needed
 
     default:
       return false;
   }
 };
+
 const { t } = useTranslation();
 
   
