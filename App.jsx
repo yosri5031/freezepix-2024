@@ -2581,11 +2581,7 @@ const validateStep = () => {
     case 1: // Shipping Information step
       // Simplified validation for required fields
       const shippingAddress = formData.shippingAddress;
-      if (selectedCountry === 'TUN') {
-        const basicFieldsValid = Boolean(
-          formData.email &&
-          formData.phone );
-      }
+      
       // Basic field validation
       const basicFieldsValid = Boolean(
         formData.email &&
