@@ -2536,7 +2536,37 @@ const handleDiscountCode = (value) => {
           setActiveStep(prev => prev - 1);
         }
       };
-    
+
+    const useBackButton = ({ activeStep, setActiveStep, setShowIntro }) => {
+  useEffect(() => {
+    // Handle the popstate event (triggered by back button)
+    const handleBackButton = (event) => {
+      // Prevent default behavior
+      event.preventDefault();
+      
+      // Replicate the same logic as the UI back button
+      if (activeStep === 0) {
+        setShowIntro(true);
+      } else {
+        setActiveStep(prev => prev - 1);
+      }
+    };
+
+    // Push a new state to history stack when component mounts
+    window.history.pushState(null, '', window.location.pathname);
+
+    // Add event listener for popstate (back button)
+    window.addEventListener('popstate', handleBackButton);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('popstate', handleBackButton);
+    };
+  }, [activeStep, setActiveStep, setShowIntro]);
+};
+
+useBackButton({ activeStep, setActiveStep, setShowIntro });
+
       const handleNext = async () => {
         // First check if the current step is valid
         if (!validateStep()) {
