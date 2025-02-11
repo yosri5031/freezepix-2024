@@ -2612,8 +2612,12 @@ const validateStep = () => {
           const shippingAddress = formData.shippingAddress;
           return Boolean(
             formData.email &&
-            formData.phone 
-            
+            formData.phone &&
+            shippingAddress.firstName &&
+            shippingAddress.lastName &&
+            shippingAddress.address &&
+            shippingAddress.city &&
+            shippingAddress.postalCode
           );
         }
       }
