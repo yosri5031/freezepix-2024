@@ -3035,26 +3035,24 @@ const countryCodeMap = {
   )}
 </div>
 <div className="space-y-4">
-  <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
   {(formData.deliveryMethod !== 'pickup' || selectedCountry !== 'TN') && (
-    <AddressForm
-      type="shipping"
-      data={{
-        ...formData.shippingAddress,
-        country: countryCodeMap[selectedCountry] || selectedCountry
-      }}
-      onChange={(newAddress) => setFormData(prevData => ({
-        ...prevData,
-        shippingAddress: {
-          ...newAddress,
-          country: countryCodeMap[newAddress.country] || newAddress.country
-        },
-        billingAddress: isBillingAddressSameAsShipping ? {
-          ...newAddress,
-          country: countryCodeMap[newAddress.country] || newAddress.country
-        } : prevData.billingAddress
-      }))}
-    />
+      <><h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2><AddressForm
+                type="shipping"
+                data={{
+                  ...formData.shippingAddress,
+                  country: countryCodeMap[selectedCountry] || selectedCountry
+                }}
+                onChange={(newAddress) => setFormData(prevData => ({
+                  ...prevData,
+                  shippingAddress: {
+                    ...newAddress,
+                    country: countryCodeMap[newAddress.country] || newAddress.country
+                  },
+                  billingAddress: isBillingAddressSameAsShipping ? {
+                    ...newAddress,
+                    country: countryCodeMap[newAddress.country] || newAddress.country
+                  } : prevData.billingAddress
+                }))} /></>
   )}
 </div>
 
