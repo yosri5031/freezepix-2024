@@ -1673,7 +1673,6 @@ const handleOrderSuccess = async ({
 
   try {
     // Validate required fields first
-    if (formData?.deliveryMethod !== 'pickup') {
     if (!formData?.email || 
       !formData?.shippingAddress?.firstName ||
       !formData?.shippingAddress?.lastName ||
@@ -1681,7 +1680,7 @@ const handleOrderSuccess = async ({
       !formData?.shippingAddress?.city ||
       !formData?.shippingAddress?.postalCode) {
     throw new Error('Missing required shipping information');
-  }}
+  }
 
   if (!formIsValid(formData)) {
     throw new Error('Please fill in all required fields correctly');
