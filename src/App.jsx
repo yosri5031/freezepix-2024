@@ -970,7 +970,6 @@ const sendOrderConfirmationEmail = async (orderData) => {
       phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
       paymentMethod: orderData.paymentMethod || 'N/A',
-      deliveryMethod: orderData.deliveryMethod || '',
       selectedPhotos: orderData.selectedPhotos || [],
       totalAmount: orderData.totalAmount || 0,
       currency: orderData.currency || 'USD'
