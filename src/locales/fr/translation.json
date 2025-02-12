@@ -177,9 +177,7 @@
     "insufficientFunds": "Fonds insuffisants sur votre compte.",
     "incorrectPostalCode": "Le code postal ne correspond pas à votre carte.",
     "credit_card": "Paiement par carte de crédit",
-    "secure_payment": "Votre paiement est traité en toute sécurité",
-    "cod": "Paiement à la livraison",
-    "pickup": "Paiement au retrait"
+    "secure_payment": "Votre paiement est traité en toute sécurité"
   }
       
   }
