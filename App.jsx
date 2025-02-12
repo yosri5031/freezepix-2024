@@ -280,7 +280,7 @@ const [formData, setFormData] = useState({
     state: ''
   },
   paymentMethod: 'cod',
-  deliveryMethod: 'pickup' // Add new field for delivery method
+  deliveryMethod: 'shipping' // Add new field for delivery method
 });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
       const updateFormData = (field, value) => {
