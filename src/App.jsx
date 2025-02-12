@@ -2577,11 +2577,11 @@ const handleNext = async () => {
 
   try {
     if (activeStep === 2) {
-      if (selectedCountry === 'TUN' && formData.paymentMethod === 'pickup') {
+      if (selectedCountry === 'TN' && formData.deliveryMethod === 'pickup') {
         // Handle pickup logic here
         setIsLoading(true);
         await handleOrderSuccess(); // Assuming this handles the order success for pickup
-      } else if (selectedCountry === 'TUN' || paymentMethod === 'interac') {
+      } else if (selectedCountry === 'TN' || paymentMethod === 'interac') {
         setIsLoading(true);
         await handleOrderSuccess();
       } else {
@@ -3131,7 +3131,7 @@ const countryCodeMap = {
 />
               </div>
             )}
-            {formData.deliveryMethodMethod === 'pickup' && selectedCountry === 'TUN' && (
+            {formData.deliveryMethod=== 'pickup' && selectedCountry === 'TN' && (
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-center text-gray-600">
               {t('pickup.address')}: Société bouraoui group, 1 Rue Alibey, Sousse 4000
