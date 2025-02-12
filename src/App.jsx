@@ -285,8 +285,8 @@ const [formData, setFormData] = useState({
     province: '',
     state: ''
   },
-  paymentMethod: 'cod', // Default payment method
-  pickupLocation: false // New property to track pickup option
+  paymentMethod: 'cod',
+  deliveryMethod: 'pickup' // Add new field for delivery method
 });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
@@ -2701,7 +2701,10 @@ const handleNext = async () => {
     if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
         shippingFee = 0;
     } else if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+      if  (selectedCountry === 'TN' && formData.deliveryMethod === 'pickup') {
+        shippingFee = 0;
+      }
+      else if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
             shippingFee = 8;
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
             shippingFee = 20;
@@ -2972,6 +2975,24 @@ const countryCodeMap = {
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           className="w-full p-2 border rounded"
         />
+
+{(formData.deliveryMethod === 'pickup' && selectedCountry === 'TN') && (
+  <><input
+                type="text"
+                inputMode="text"
+                placeholder={t('placeholder.firstName', 'First Name')} // Add fallback text
+                value={formData.firstName || ''}
+                onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                className="p-2 border rounded" />
+                
+                <input
+                  type="text"
+                  inputMode="text"
+                  placeholder={t('placeholder.lastName', 'Last Name')}
+                  value={formData.lastName || ''}
+                  onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                  className="p-2 border rounded" /></>
+)}
       </div>
 
       <div className="space-y-4">
@@ -2979,8 +3000,8 @@ const countryCodeMap = {
     <>
       <h2 className="text-xl font-medium">{t('order.payment_method')}</h2>
       <select
-        value={formData.paymentMethod}
-        onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+        value={formData.deliveryMethod}
+        onChange={(e) => setFormData({ ...formData, deliveryMethod: e.target.value })}
         className="w-full p-2 border rounded"
       >
         <option value="cod">{t('payment.cod')}</option>
@@ -2989,27 +3010,29 @@ const countryCodeMap = {
     </>
   )}
 </div>
-      <div className="space-y-4">
-        <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
-        <AddressForm
-          type="shipping"
-          data={{
-            ...formData.shippingAddress,
-            country: countryCodeMap[selectedCountry] || selectedCountry
-          }}
-          onChange={(newAddress) => setFormData(prevData => ({
-            ...prevData,
-            shippingAddress: {
-              ...newAddress,
-              country: countryCodeMap[newAddress.country] || newAddress.country
-            },
-            billingAddress: isBillingAddressSameAsShipping ? {
-              ...newAddress,
-              country: countryCodeMap[newAddress.country] || newAddress.country
-            } : prevData.billingAddress
-          }))}
-        />
-      </div>
+<div className="space-y-4">
+  <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
+  {(formData.deliveryMethod !== 'pickup' || selectedCountry !== 'TN') && (
+    <AddressForm
+      type="shipping"
+      data={{
+        ...formData.shippingAddress,
+        country: countryCodeMap[selectedCountry] || selectedCountry
+      }}
+      onChange={(newAddress) => setFormData(prevData => ({
+        ...prevData,
+        shippingAddress: {
+          ...newAddress,
+          country: countryCodeMap[newAddress.country] || newAddress.country
+        },
+        billingAddress: isBillingAddressSameAsShipping ? {
+          ...newAddress,
+          country: countryCodeMap[newAddress.country] || newAddress.country
+        } : prevData.billingAddress
+      }))}
+    />
+  )}
+</div>
 
       {formData.paymentMethod !== 'cod' && (
         <div className="space-y-4 hidden">
@@ -3099,7 +3122,7 @@ const countryCodeMap = {
 />
               </div>
             )}
-            {formData.paymentMethod === 'pickup' && selectedCountry === 'TUN' && (
+            {formData.deliveryMethodMethod === 'pickup' && selectedCountry === 'TUN' && (
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-center text-gray-600">
               {t('pickup.address')}: Société bouraoui group, 1 Rue Alibey, Sousse 4000
@@ -3421,16 +3444,16 @@ const validateStep = () => {
       );
 
       const stateValid =
-        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') ||
-        (selectedCountry === 'USA' && shippingAddress.state) ||
-        (selectedCountry === 'CAN' && shippingAddress.province);
+        (selectedCountry !== 'US' && selectedCountry !== 'CA') ||
+        (selectedCountry === 'US' && shippingAddress.state) ||
+        (selectedCountry === 'CA' && shippingAddress.province);
 
       return basicFieldsValid && stateValid;
 
     case 2: // Payment step
-      if (selectedCountry === 'TUN') {
+      if (selectedCountry === 'TN') {
         // If pickup is selected, no additional validation needed
-        return formData.paymentMethod === 'pickup' || formData.paymentMethod === 'cod';
+        return formData.deliveryMethod === 'pickup' || formData.deliveryMethod === 'cod';
       }
       return true;
 
