@@ -1810,7 +1810,6 @@ const handleOrderSuccess = async ({
         country: selectedCountry
       },
       selectedCountry,
-      deliveryMethod: formData.deliveryMethod || '',
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
