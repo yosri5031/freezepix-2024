@@ -65,10 +65,7 @@
       "select_country": "Sélectionnez votre pays",
       "same_address": "Adresse de facturation identique à l'adresse de livraison",
       "shipping_a" : "Adresse de livraison",
-       "billing_a" : "adresse de facturation",
-       "shipping_description": "Faites-vous livrer votre commande à votre adresse",
-    "pickup_description": "Retirez votre commande dans notre magasin local",
-    "pickup_instructions": "Veuillez apporter votre confirmation de commande et votre pièce d'identité lors du retrait de votre commande"
+       "billing_a" : "adresse de facturation"
     },
     "order": {
       "success_message": "Merci pour votre commande !",
@@ -79,16 +76,7 @@
       "cod": " livraison à domicile",
       "discount" : "Code de réduction",
       "summary": "Résumé de la commande",
-       "shipping_fee": "Frais de port et de manutention",
-       "delivery_info": "Informations de livraison",
-    "pickup_location": "Point de retrait",
-    "pickup_instructions": "Veuillez apporter votre confirmation de commande et votre pièce d'identité lors du retrait de votre commande",
-    "shipping_address": "Adresse de livraison",
-    "payment_pickup": "Paiement au retrait",
-    "payment_pickup_instructions": "Veuillez payer lors du retrait de votre commande",
-    "cod_instructions": "Vous paierez à la livraison de votre commande",
-    "processing": "Traitement de la commande...",
-    "place_order": "Passer la commande"
+       "shipping_fee": "Frais de port et de manutention"
     },
     "validation": {
         "contact_info": "Coordonnées",
@@ -148,9 +136,7 @@
 "send": "Envoyer le paiement à :",
 "placing": "Après avoir passé la commande, veuillez compléter le Virement Interac à l'adresse e-mail fournie.",
 "credit_c": "Paiement par carte de crédit",
-"message_c" : "Veuillez compléter votre paiement pour passer la commande",
-"interac_description": "Envoyez de l'argent directement depuis votre compte bancaire canadien",
-    "credit_description": "Payez en toute sécurité avec votre carte de crédit"
+"message_c" : "Veuillez compléter votre paiement pour passer la commande"
 },
 "checkout": {
   "cardNumber": "Numéro de carte",
@@ -175,9 +161,7 @@
     "invalidCVC": "Le code de sécurité (CVC) est incorrect.",
     "processingError": "Une erreur s'est produite lors du traitement de votre carte.",
     "insufficientFunds": "Fonds insuffisants sur votre compte.",
-    "incorrectPostalCode": "Le code postal ne correspond pas à votre carte.",
-    "credit_card": "Paiement par carte de crédit",
-    "secure_payment": "Votre paiement est traité en toute sécurité"
+    "incorrectPostalCode": "Le code postal ne correspond pas à votre carte."
   }
       
   }

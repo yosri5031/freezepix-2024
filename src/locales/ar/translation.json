@@ -65,10 +65,7 @@
   "select_country": "اختر بلدك",
   "same_address": "عنوان الفواتير نفس عنوان الشحن",
   "shipping_a": "عنوان الشحن",
-  "billing_a": "عنوان الفواتير",
-  "shipping_description": "احصل على طلبك موصلاً إلى عنوانك",
-    "pickup_description": "استلم طلبك من متجرنا المحلي",
-    "pickup_instructions": "يرجى إحضار تأكيد الطلب والهوية عند استلام طلبك"
+  "billing_a": "عنوان الفواتير"
   },
   "order": {
   "success_message": "شكراً لطلبك!",
@@ -79,16 +76,7 @@
   "cod": "سيتم معالجة طلبك كدفع عند الاستلام",
   "discount": "رمز الخصم",
   "summary": "ملخص الطلب",
-  "shipping_fee": "رسوم الشحن والمناولة",
-  "delivery_info": "معلومات التوصيل",
-    "pickup_location": "موقع الاستلام",
-    "pickup_instructions": "يرجى إحضار تأكيد الطلب والهوية عند استلام طلبك",
-    "shipping_address": "عنوان الشحن",
-    "payment_pickup": "الدفع عند الاستلام",
-    "payment_pickup_instructions": "يرجى الدفع عند استلام طلبك",
-    "cod_instructions": "ستدفع عند استلام طلبك",
-    "processing": "جاري معالجة الطلب...",
-    "place_order": "تأكيد الطلب"
+  "shipping_fee": "رسوم الشحن والمناولة"
   },
   "validation": {
   "contact_info": "معلومات الاتصال",
@@ -148,9 +136,7 @@
   "send": "أرسل الدفعة إلى:",
   "placing": "بعد تقديم الطلب، أكمل التحويل الإلكتروني Interac إلى البريد الإلكتروني المقدم",
   "credit_c": "الدفع ببطاقة الائتمان",
-  "message_c": "يرجى إكمال الدفع لتأكيد الطلب",
-  "interac_description": "أرسل الأموال مباشرة من حسابك المصرفي الكندي",
-    "credit_description": "ادفع بأمان باستخدام بطاقة الائتمان الخاصة بك"
+  "message_c": "يرجى إكمال الدفع لتأكيد الطلب"
   },
   "checkout": {
   "cardNumber": "رقم البطاقة",
@@ -175,8 +161,6 @@
   "invalidCVC": "رمز الأمان (CVC) غير صحيح",
   "processingError": "حدث خطأ في معالجة بطاقتك",
   "insufficientFunds": "رصيد غير كافٍ في حسابك",
-  "incorrectPostalCode": "الرمز البريدي لا يتطابق مع بطاقتك",
-  "credit_card": "الدفع ببطاقة الائتمان",
-    "secure_payment": "تتم معالجة دفعتك بشكل آمن"
+  "incorrectPostalCode": "الرمز البريدي لا يتطابق مع بطاقتك"
   }
   }
