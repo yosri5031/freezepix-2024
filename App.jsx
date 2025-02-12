@@ -1883,11 +1883,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN') {
             shippingFee = 8; // 8 TND for Tunisia
-                } 
-        else if (formData.deliveryMethod === 'pickup') {
-          shippingFee = 0;
-        }
-        else if (selectedCountry === 'USA') {
+        } else if (selectedCountry === 'USA') {
             shippingFee = 9; // 9$ for USA
         } else if (selectedCountry === 'CAN') {
             shippingFee = 9; // 9$ for Canada
