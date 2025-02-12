@@ -3078,16 +3078,7 @@ const countryCodeMap = {
             <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
             {renderInvoice()}
         
-            { formData.deliveryMethod ==='pickup' ? (
-              <div className="space-y-4">
-              <div className="p-4 bg-gray-50 rounded-lg">
-                <p className="text-center text-gray-600">
-                  {t('order.payment_pickup')}
-                </p>
-              </div>
-            </div>
-            )
-            :selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
+            {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
               <div className="space-y-4">
                 <div className="p-4 bg-gray-50 rounded-lg">
                   <p className="text-center text-gray-600">
