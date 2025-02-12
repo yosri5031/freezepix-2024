@@ -2570,7 +2570,6 @@ const handleDiscountCode = (value) => {
 useBackButton({ activeStep, setActiveStep, setShowIntro });
 
 const handleNext = async () => {
-  // First check if the current step is valid
   if (!validateStep()) {
     setError('Please complete all required fields before proceeding');
     return;
@@ -2578,18 +2577,40 @@ const handleNext = async () => {
 
   try {
     if (activeStep === 2) {
-      if (selectedCountry === 'TN' && formData.deliveryMethod === 'pickup') {
-        // Handle pickup logic here
+      // Handle both pickup and COD orders for Tunisia
+      if (selectedCountry === 'TN' && 
+          (formData.deliveryMethod === 'pickup' || formData.paymentMethod === 'cod')) {
         setIsLoading(true);
-        await handleOrderSuccess(); // Assuming this handles the order success for pickup
-      } else if (selectedCountry === 'TN' || paymentMethod === 'interac') {
+        const orderData = {
+          ...formData,
+          paymentMethod: formData.deliveryMethod === 'pickup' ? 'pickup' : 'cod',
+          paymentStatus: 'pending'
+        };
+        await handleOrderSuccess({
+          paymentMethod: formData.deliveryMethod === 'pickup' ? 'pickup' : 'cod',
+          formData: orderData,
+          selectedCountry,
+          selectedPhotos,
+          orderNote,
+          discountCode,
+          isBillingAddressSameAsShipping
+        });
+      } else if (paymentMethod === 'interac') {
         setIsLoading(true);
-        await handleOrderSuccess();
+        await handleOrderSuccess({
+          paymentMethod,
+          formData,
+          selectedCountry,
+          selectedPhotos,
+          orderNote,
+          discountCode,
+          isBillingAddressSameAsShipping
+        });
       } else {
         setActiveStep(prev => prev + 1);
       }
     } else {
-      setError(null); // Clear any previous errors
+      setError(null);
       setActiveStep(prev => prev + 1);
     }
   } catch (error) {
