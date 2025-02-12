@@ -1881,7 +1881,7 @@ const PaymentForm = ({ onPaymentSuccess }) => {
     const isOrderOverThreshold = subtotal >= 50; // Base threshold value
 
     if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN' && formData.deliveryMethod !== 'pickup' ) {
+        if (selectedCountry === 'TUN') {
             shippingFee = 8; // 8 TND for Tunisia
                 } 
         else if (formData.deliveryMethod === 'pickup') {
