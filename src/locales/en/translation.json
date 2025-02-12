@@ -65,7 +65,10 @@
       "select_country": "Select your country",
       "same_address": "Billing address same as shipping",
       "shipping_a" : "Shipping Address",
-      "billing_a" : "Billing Address"
+      "billing_a" : "Billing Address",
+      "shipping_description": "Get your order delivered to your address",
+      "pickup_description": "Pick up your order from our local store",
+      "pickup_instructions": "Please bring your order confirmation and ID when picking up your order."
     },
     "order": {
       "success_message": "Thank you for your order!",
@@ -75,8 +78,17 @@
       "payment_method": "Payment Method",
       "cod": " Your order will be processed as Cash on Delivery (COD)",
       "discount" : "Discount Code",
+      "shipping_fee": "Shipping and handling",
       "summary": "Order Summary",
-      "shipping_fee": "Shipping and handling"
+    "delivery_info": "Delivery Information",
+    "pickup_location": "Pickup Location",
+    "pickup_instructions": "Please bring your order confirmation and ID when picking up your order",
+    "shipping_address": "Shipping Address",
+    "payment_pickup": "Pay at Pickup",
+    "payment_pickup_instructions": "Please pay when you pick up your order",
+    "cod_instructions": "You will pay when your order is delivered",
+    "processing": "Processing Order...",
+    "place_order": "Place Order"
     },
     "validation": {
       "contact_info": "Contact Information",
@@ -163,7 +175,11 @@
     "invalidCVC": "The security code (CVC) is incorrect.",
     "processingError": "There was an error processing your card.",
     "insufficientFunds": "Insufficient funds in your account.",
-    "incorrectPostalCode": "The postal code doesn't match your card."
+    "incorrectPostalCode": "The postal code doesn't match your card.",
+    "credit_card": "Credit Card Payment",
+    "secure_payment": "Your payment is processed securely",
+    "interac_description": "Send money directly from your Canadian bank account",
+    "credit_description": "Pay securely with your credit card"
   }
   }
   

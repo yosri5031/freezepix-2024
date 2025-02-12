@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader ,MapPin, Loader2} from 'lucide-react';
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
