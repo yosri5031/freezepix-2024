@@ -256,31 +256,32 @@ const FreezePIX = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
 
 const [interacReference, setInteracReference] = useState('');
-    const [formData, setFormData] = useState({
-      email: '',
-      phone: '',
-      shippingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        province: '',
-        state: ''
-      },
-      billingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: '',
-        province: '',
-        state: ''
-      },
-      paymentMethod: 'cod'
-    });
+const [formData, setFormData] = useState({
+  email: '',
+  phone: '',
+  shippingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    province: '',
+    state: ''
+  },
+  billingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    province: '',
+    state: ''
+  },
+  paymentMethod: 'cod',
+  deliveryMethod: 'shipping' // Add new field for delivery method
+});
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
       const updateFormData = (field, value) => {
         setFormData(prev => ({
@@ -2110,172 +2111,303 @@ const PaymentForm = ({ onPaymentSuccess }) => {
         </div>
     );
       case 1:
-      return (
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium">        {t('validation.contact_info')}
-            </h2>
-            <input
-              type="email"
-              placeholder="Email Address"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-            <input
-              type="tel"
-              placeholder="Phone Number"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-xl font-medium"> {t('form.shipping_a')}</h2>
-            <AddressForm
-              type="shipping"
-              data={{
-                ...formData.shippingAddress,
-                country: selectedCountry // Ensure country is passed
-              }}
-              onChange={(newAddress) => setFormData(prevData => ({
-                ...prevData,
-                shippingAddress: newAddress,
-                billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
-              }))}
-            />
-          </div>
-
-          {formData.paymentMethod !== 'cod' && (
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={isBillingAddressSameAsShipping}
-                  onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-                  id="sameAddress"
-                  className="rounded border-gray-300"
-                />
-                <label htmlFor="sameAddress" className="text-sm">
-                {t('form.same_address')}
-
-                </label>
-              </div>
-
-              {!isBillingAddressSameAsShipping && (
-                <>
-                  <h2 className="text-xl font-medium">{t('form.billing_a')}</h2>
-                  <AddressForm
-                    type="billing"
-                    data={{
-                      ...formData.billingAddress,
-                      country: selectedCountry // Ensure country is passed
-                    }}
-                    onChange={(newAddress) => setFormData(prevData => ({
-                      ...prevData,
-                      billingAddress: newAddress
-                    }))}
-                  />
-                </>
-              )}
-            </div>
-          )}
-        </div>
-      );
-
-      case 2:
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
-            {renderInvoice()}
-      
-            {selectedCountry === 'TUN' ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-medium">{t('validation.contact_info')}</h2>
+              <input
+                type="email"
+                placeholder="Email Address"
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+              <input
+                type="tel"
+                placeholder="Phone Number"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full p-2 border rounded"
+                required
+              />
+            </div>
+  
+            {selectedCountry === 'TUN' && (
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    {t('order.cod')}
-                  </p>
-                </div>
-              </div>
-            ) : selectedCountry === 'CAN' ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
-                  
-                  {/* Sélection du mode de paiement */}
-                  <div className="mb-4">
-                    <h4 className="font-medium">{t('canada.select')}</h4>
-                    <label className="block">
-                      <input
-                        type="radio"
-                        value="interac"
-                        checked={paymentMethod === 'interac'}
-                        onChange={handlePaymentMethodChange}
-                        className="mr-2"
-                      />
-                      {t('canada.interac')}
-                    </label>
-                    <label className="block">
-                      <input
-                        type="radio"
-                        value="credit"
-                        checked={paymentMethod === 'credit'}
-                        onChange={handlePaymentMethodChange}
-                        className="mr-2"
-                      />
-                      {t('canada.credit')}
-                    </label>
-                  </div>
-      
-                  {/* Option de paiement Interac */}
-                  {paymentMethod === 'interac' && (
-                    <div className="border rounded-lg p-4 mb-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="font-medium">{t('canada.interac')}</h4>
-                          <p className="text-sm text-gray-600">{t('canada.send')}</p>
-                          <p className="font-bold">Info@freezepix.com</p>
+                <h2 className="text-xl font-medium">{t('form.delivery_method')}</h2>
+                <div className="flex flex-col gap-3">
+                  <label className="flex items-center gap-2 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="shipping"
+                      checked={formData.deliveryMethod === 'shipping'}
+                      onChange={(e) => setFormData({ ...formData, deliveryMethod: e.target.value })}
+                      className="rounded border-gray-300"
+                    />
+                    <div>
+                      <span className="font-medium">{t('form.shipping')}</span>
+                      <p className="text-sm text-gray-500">{t('form.shipping_description')}</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center gap-2 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      value="pickup"
+                      checked={formData.deliveryMethod === 'pickup'}
+                      onChange={(e) => setFormData({ ...formData, deliveryMethod: e.target.value })}
+                      className="rounded border-gray-300"
+                    />
+                    <div>
+                      <span className="font-medium">{t('form.pickup')}</span>
+                      <p className="text-sm text-gray-500">{t('form.pickup_description')}</p>
+                    </div>
+                  </label>
+                  {formData.deliveryMethod === 'pickup' && (
+                    <div className="ml-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-white rounded-full">
+                          <MapPin className="w-5 h-5 text-blue-500" />
                         </div>
-                        <img 
-                          src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTp9FibB-R9ac8XXEootfuHyEdTuaeJ9bZiQQ&s" 
-                          alt="Interac E-Transfer" 
-                          className="h-12 w-auto"
-                        />
+                        <div>
+                          <p className="font-medium text-gray-900">Pickup Location:</p>
+                          <p className="text-gray-600">Société bouraoui group</p>
+                          <p className="text-gray-600">1 Rue Alibey, Sousse 4000</p>
+                          <p className="mt-2 text-sm text-gray-500">{t('form.pickup_instructions')}</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        {t('canada.placing')}
-                      </p>
-                      {/* Bouton de commande pour Interac */}
-                      
                     </div>
                   )}
-      
-                  {/* Option de paiement par carte de crédit */}
-                  {paymentMethod === 'credit' && (
-  <Elements stripe={stripePromise}>
-    <CheckoutForm
-      onSubmit={handleOrderSuccess}
-      processing={isProcessingOrder}
-    />
-  </Elements>
-)}
                 </div>
               </div>
-            ) : (
+            )}
+  
+            {(formData.deliveryMethod === 'shipping' || selectedCountry !== 'TUN') && (
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    {t('canada.message_c')}
-                  </p>
+                <h2 className="text-xl font-medium">{t('form.shipping_a')}</h2>
+                <AddressForm
+                  type="shipping"
+                  data={{
+                    ...formData.shippingAddress,
+                    country: selectedCountry
+                  }}
+                  onChange={(newAddress) => setFormData(prevData => ({
+                    ...prevData,
+                    shippingAddress: newAddress,
+                    billingAddress: isBillingAddressSameAsShipping ? newAddress : prevData.billingAddress
+                  }))}
+                />
+              </div>
+            )}
+  
+            {formData.paymentMethod !== 'cod' && formData.deliveryMethod === 'shipping' && (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={isBillingAddressSameAsShipping}
+                    onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
+                    id="sameAddress"
+                    className="rounded border-gray-300"
+                  />
+                  <label htmlFor="sameAddress" className="text-sm">
+                    {t('form.same_address')}
+                  </label>
                 </div>
-                <Elements stripe={stripePromise}>
-                  <PaymentForm onPaymentSuccess={handleOrderSuccess} />
-                </Elements>
+  
+                {!isBillingAddressSameAsShipping && (
+                  <>
+                    <h2 className="text-xl font-medium">{t('form.billing_a')}</h2>
+                    <AddressForm
+                      type="billing"
+                      data={{
+                        ...formData.billingAddress,
+                        country: selectedCountry
+                      }}
+                      onChange={(newAddress) => setFormData(prevData => ({
+                        ...prevData,
+                        billingAddress: newAddress
+                      }))}
+                    />
+                  </>
+                )}
               </div>
             )}
           </div>
         );
+
+        case 2:
+          return (
+            <div className="space-y-6">
+              <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
+              
+              {/* Order Summary */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">{t('order.summary')}</h3>
+                {renderInvoice()}
+              </div>
+        
+              {/* Delivery Information */}
+              <div className="border rounded-lg p-4">
+                <h3 className="text-lg font-medium mb-4">{t('order.delivery_info')}</h3>
+                <div className="space-y-2">
+                  <p>
+                    <span className="font-medium">{t('form.email')}:</span> {formData.email}
+                  </p>
+                  <p>
+                    <span className="font-medium">{t('form.phone')}:</span> {formData.phone}
+                  </p>
+                  
+                  {formData.deliveryMethod === 'pickup' && selectedCountry === 'TUN' ? (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-white rounded-full">
+                          <MapPin className="w-5 h-5 text-blue-500" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{t('order.pickup_location')}</p>
+                          <p>Société bouraoui group</p>
+                          <p>1 Rue Alibey, Sousse 4000</p>
+                          <p className="mt-2 text-sm text-gray-500">{t('order.pickup_instructions')}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4">
+                      <p className="font-medium">{t('order.shipping_address')}:</p>
+                      <p>{formData.shippingAddress.firstName} {formData.shippingAddress.lastName}</p>
+                      <p>{formData.shippingAddress.address}</p>
+                      <p>
+                        {formData.shippingAddress.city}, {' '}
+                        {formData.shippingAddress.state || formData.shippingAddress.province} {' '}
+                        {formData.shippingAddress.postalCode}
+                      </p>
+                      <p>{formData.shippingAddress.country}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+        
+              {/* Payment Options */}
+              {selectedCountry === 'TUN' ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    {formData.deliveryMethod === 'pickup' ? (
+                      <div className="text-center">
+                        <h4 className="font-medium mb-2">{t('order.payment_pickup')}</h4>
+                        <p className="text-gray-600">{t('order.payment_pickup_instructions')}</p>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <h4 className="font-medium mb-2">{t('order.cod')}</h4>
+                        <p className="text-gray-600">{t('order.cod_instructions')}</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : selectedCountry === 'CAN' ? (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('canada.options')}</h3>
+                    
+                    {/* Payment Method Selection */}
+                    <div className="mb-4">
+                      <h4 className="font-medium mb-3">{t('canada.select')}</h4>
+                      <div className="space-y-2">
+                        <label className="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="radio"
+                            value="interac"
+                            checked={paymentMethod === 'interac'}
+                            onChange={handlePaymentMethodChange}
+                            className="mr-2"
+                          />
+                          <div>
+                            <span className="font-medium">{t('canada.interac')}</span>
+                            <p className="text-sm text-gray-500">{t('canada.interac_description')}</p>
+                          </div>
+                        </label>
+                        <label className="flex items-center p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                          <input
+                            type="radio"
+                            value="credit"
+                            checked={paymentMethod === 'credit'}
+                            onChange={handlePaymentMethodChange}
+                            className="mr-2"
+                          />
+                          <div>
+                            <span className="font-medium">{t('canada.credit')}</span>
+                            <p className="text-sm text-gray-500">{t('canada.credit_description')}</p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+        
+                    {/* Interac Payment Details */}
+                    {paymentMethod === 'interac' && (
+                      <div className="border rounded-lg p-4 mb-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">{t('canada.interac')}</h4>
+                            <p className="text-sm text-gray-600">{t('canada.send')}</p>
+                            <p className="font-bold">Info@freezepix.com</p>
+                          </div>
+                          <img 
+                            src="/api/placeholder/100/40"
+                            alt="Interac E-Transfer"
+                            className="h-12 w-auto"
+                          />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">{t('canada.placing')}</p>
+                      </div>
+                    )}
+        
+                    {/* Credit Card Payment Form */}
+                    {paymentMethod === 'credit' && (
+                      <div className="mt-4">
+                        <Elements stripe={stripePromise}>
+                          <CheckoutForm
+                            onSubmit={handleOrderSuccess}
+                            processing={isProcessingOrder}
+                          />
+                        </Elements>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{t('payment.credit_card')}</h3>
+                    <p className="text-center text-gray-600 mb-4">
+                      {t('payment.secure_payment')}
+                    </p>
+                    <Elements stripe={stripePromise}>
+                      <PaymentForm onPaymentSuccess={handleOrderSuccess} />
+                    </Elements>
+                  </div>
+                </div>
+              )}
+        
+              {/* Order Confirmation Button */}
+              <div className="mt-6">
+                <button
+                  onClick={handlePlaceOrder}
+                  disabled={isProcessingOrder}
+                  className="w-full py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isProcessingOrder ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {t('order.processing')}
+                    </>
+                  ) : (
+                    t('order.place_order')
+                  )}
+                </button>
+              </div>
+            </div>
+          );
     default:
       return null;
     }
@@ -2575,14 +2707,17 @@ const handleStartPrinting = () => {
 };
 const validateStep = () => {
   switch (activeStep) {
-    case 0: // Upload Photos step
+    case 0:
       return selectedPhotos.length > 0;
+    
+    case 1:
+      if (selectedCountry === 'TUN' && formData.deliveryMethod === 'pickup') {
+        // For pickup, only validate email and phone
+        return Boolean(formData.email && formData.phone);
+      }
       
-    case 1: // Shipping Information step
-      // Simplified validation for required fields
+      // Original shipping validation logic
       const shippingAddress = formData.shippingAddress;
-      
-      // Basic field validation
       const basicFieldsValid = Boolean(
         formData.email &&
         formData.phone &&
@@ -2592,26 +2727,22 @@ const validateStep = () => {
         shippingAddress.city &&
         shippingAddress.postalCode
       );
-
-      // State/Province validation based on country
-      const stateValid = 
-        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') || // Other countries don't need state
-        (selectedCountry === 'USA' && shippingAddress.state) ||     // US needs state
-        (selectedCountry === 'CAN' && shippingAddress.province);       // Canada needs province
-
+      
+      const stateValid =
+        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') ||
+        (selectedCountry === 'USA' && shippingAddress.state) ||
+        (selectedCountry === 'CAN' && shippingAddress.province);
+      
       return basicFieldsValid && stateValid;
-
-    case 2: // Payment step (if applicable)
-      if (selectedCountry === 'TUN') {
-        return true; // COD doesn't need additional validation
-      }
-      // Add any specific payment validation here if needed
+    
+    case 2:
       return true;
-
+    
     default:
       return false;
   }
 };
+
 const { t } = useTranslation();
 
   
