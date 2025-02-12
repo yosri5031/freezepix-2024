@@ -3430,25 +3430,35 @@ const validateStep = () => {
     case 0: // Upload Photos step
       return selectedPhotos.length > 0;
 
-    case 1: // Shipping Information step
-      const shippingAddress = formData.shippingAddress;
-
-      const basicFieldsValid = Boolean(
-        formData.email &&
-        formData.phone &&
-        shippingAddress.firstName &&
-        shippingAddress.lastName &&
-        shippingAddress.address &&
-        shippingAddress.city &&
-        shippingAddress.postalCode
-      );
-
-      const stateValid =
-        (selectedCountry !== 'US' && selectedCountry !== 'CA') ||
-        (selectedCountry === 'US' && shippingAddress.state) ||
-        (selectedCountry === 'CA' && shippingAddress.province);
-
-      return basicFieldsValid && stateValid;
+      case 1: { // Shipping Information step
+        const shippingAddress = formData.shippingAddress;
+        
+        let basicFieldsValid;
+        
+        if (formData.deliveryMethod === 'pickup') {
+          basicFieldsValid = Boolean(
+            formData.email &&
+            formData.phone
+          );
+        } else {
+          basicFieldsValid = Boolean(
+            formData.email &&
+            formData.phone &&
+            shippingAddress.firstName &&
+            shippingAddress.lastName &&
+            shippingAddress.address &&
+            shippingAddress.city &&
+            shippingAddress.postalCode
+          );
+        }
+      
+        const stateValid =
+          (selectedCountry !== 'US' && selectedCountry !== 'CA') ||
+          (selectedCountry === 'US' && shippingAddress.state) ||
+          (selectedCountry === 'CA' && shippingAddress.province);
+      
+        return basicFieldsValid && stateValid;
+      }
 
     case 2: // Payment step
       if (selectedCountry === 'TN') {
