@@ -2163,22 +2163,16 @@ const PaymentForm = ({ onPaymentSuccess }) => {
                       <p className="text-sm text-gray-500">{t('form.pickup_description')}</p>
                     </div>
                   </label>
-                  {formData.deliveryMethod === 'pickup' && (
-                    <div className="ml-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                      <div className="flex items-start gap-3">
-                        <div className="p-2 bg-white rounded-full">
-                          <MapPin className="w-5 h-5 text-blue-500" />
-                        </div>
-                        <div>
-                          <p className="font-medium text-gray-900">Pickup Location:</p>
-                          <p className="text-gray-600">Société bouraoui group</p>
-                          <p className="text-gray-600">1 Rue Alibey, Sousse 4000</p>
-                          <p className="mt-2 text-sm text-gray-500">{t('form.pickup_instructions')}</p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
+                  {(formData.deliveryMethod === 'pickup' || selectedCountry === 'TUN') && (
+ <div>
+ <p className="font-medium">{t('order.pickup_location')}</p>
+ <p>Société bouraoui group</p>
+ <p>1 Rue Alibey, Sousse 4000</p>
+ <p className="mt-2 text-sm text-gray-500">{t('order.pickup_instructions')}</p>
+</div>
+                  )};
                 </div>
+
               </div>
             )}
   
