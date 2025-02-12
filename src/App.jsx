@@ -262,31 +262,32 @@ const FreezePIX = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
 
 const [interacReference, setInteracReference] = useState('');
-    const [formData, setFormData] = useState({
-      email: '',
-      phone: '',
-      shippingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry, // Initialize with selectedCountry
-        province: '',
-        state: ''
-      },
-      billingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry, // Initialize with selectedCountry
-        province: '',
-        state: ''
-      },
-      paymentMethod: 'cod'
-    });
+const [formData, setFormData] = useState({
+  email: '',
+  phone: '',
+  shippingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    province: '',
+    state: ''
+  },
+  billingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    province: '',
+    state: ''
+  },
+  paymentMethod: 'cod', // Default payment method
+  pickupLocation: false // New property to track pickup option
+});
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
       useEffect(() => {
@@ -2567,40 +2568,36 @@ const handleDiscountCode = (value) => {
 
 useBackButton({ activeStep, setActiveStep, setShowIntro });
 
-      const handleNext = async () => {
-        // First check if the current step is valid
-        if (!validateStep()) {
-          setError('Please complete all required fields before proceeding');
-          return;
-        }
-      
-        try {
-          if (activeStep === 2) {
-            if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
-              setIsLoading(true);
-              await handleOrderSuccess({
-                paymentMethod: 'cod', // or whatever payment method
-                formData: formData,
-                selectedCountry: selectedCountry,
-                selectedPhotos: selectedPhotos,
-                orderNote: orderNote,
-                discountCode: discountCode,
-                isBillingAddressSameAsShipping: isBillingAddressSameAsShipping,
-              });
-            } else {
-              setActiveStep(prev => prev + 1);
-            }
-          } else {
-            setError(null); // Clear any previous errors
-            setActiveStep(prev => prev + 1);
-          }
-        } catch (error) {
-          setError('An error occurred while processing your request');
-          console.error('Error in handleNext:', error);
-        } finally {
-          setIsLoading(false);
-        }
-    };
+const handleNext = async () => {
+  // First check if the current step is valid
+  if (!validateStep()) {
+    setError('Please complete all required fields before proceeding');
+    return;
+  }
+
+  try {
+    if (activeStep === 2) {
+      if (selectedCountry === 'TUN' && formData.paymentMethod === 'pickup') {
+        // Handle pickup logic here
+        setIsLoading(true);
+        await handleOrderSuccess(); // Assuming this handles the order success for pickup
+      } else if (selectedCountry === 'TUN' || paymentMethod === 'interac') {
+        setIsLoading(true);
+        await handleOrderSuccess();
+      } else {
+        setActiveStep(prev => prev + 1);
+      }
+    } else {
+      setError(null); // Clear any previous errors
+      setActiveStep(prev => prev + 1);
+    }
+  } catch (error) {
+    setError('An error occurred while processing your request');
+    console.error('Error in handleNext:', error);
+  } finally {
+    setIsLoading(false);
+  }
+};
   
       const handleFileChange = (event) => {
         const files = Array.from(event.target.files);
@@ -2978,6 +2975,20 @@ const countryCodeMap = {
       </div>
 
       <div className="space-y-4">
+          <h2 className="text-xl font-medium">{t('placeholder.form.payment_method')}</h2>
+          <select
+            value={formData.paymentMethod}
+            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+            className="w-full p-2 border rounded"
+          >
+            <option value="cod">{t('payment.cod')}</option>
+            {selectedCountry === 'TUN' && (
+              <option value="pickup">{t('payment.pickup')}</option>
+            )}
+          </select>
+        </div>
+
+      <div className="space-y-4">
         <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
         <AddressForm
           type="shipping"
@@ -3087,6 +3098,13 @@ const countryCodeMap = {
 />
               </div>
             )}
+            {formData.paymentMethod === 'pickup' && selectedCountry === 'TUN' && (
+          <div className="p-4 bg-gray-50 rounded-lg">
+            <p className="text-center text-gray-600">
+              {t('pickup.address')}: Société bouraoui group, 1 Rue Alibey, Sousse 4000
+            </p>
+          </div>
+        )}
           </div>
         );
     default:
@@ -3387,12 +3405,10 @@ const validateStep = () => {
   switch (activeStep) {
     case 0: // Upload Photos step
       return selectedPhotos.length > 0;
-      
+
     case 1: // Shipping Information step
-      // Simplified validation for required fields
       const shippingAddress = formData.shippingAddress;
-      
-      // Basic field validation
+
       const basicFieldsValid = Boolean(
         formData.email &&
         formData.phone &&
@@ -3403,25 +3419,25 @@ const validateStep = () => {
         shippingAddress.postalCode
       );
 
-      // State/Province validation based on country
       const stateValid =
-      (selectedCountry !== 'USA' && selectedCountry !== 'US' && selectedCountry !== 'CAN' && selectedCountry !== 'CA') || // Other countries don't need state or province
-      ((selectedCountry === 'USA' || selectedCountry === 'US') && shippingAddress.state) ||    // US needs state
-      ((selectedCountry === 'CAN' || selectedCountry === 'CA') && shippingAddress.province);    // Canada needs province
+        (selectedCountry !== 'USA' && selectedCountry !== 'CAN') ||
+        (selectedCountry === 'USA' && shippingAddress.state) ||
+        (selectedCountry === 'CAN' && shippingAddress.province);
 
       return basicFieldsValid && stateValid;
 
-    case 2: // Payment step (if applicable)
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        return true; // COD doesn't need additional validation
+    case 2: // Payment step
+      if (selectedCountry === 'TUN') {
+        // If pickup is selected, no additional validation needed
+        return formData.paymentMethod === 'pickup' || formData.paymentMethod === 'cod';
       }
-      // Add any specific payment validation here if needed
       return true;
 
     default:
       return false;
   }
 };
+
 const { t } = useTranslation();
 
   
