@@ -3158,7 +3158,7 @@ const countryCodeMap = {
             {formData.deliveryMethod=== 'pickup' && selectedCountry === 'TN' && (
           <div className="p-4 bg-gray-50 rounded-lg">
             <p className="text-center text-gray-600">
-              {t('pickup.address')}: Société bouraoui group, 1 Rue Alibey, Sousse 4000
+               Société bouraoui group, 1 Rue Alibey, Sousse 4000
             </p>
           </div>
         )}
