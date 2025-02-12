@@ -179,7 +179,9 @@
     "credit_card": "Credit Card Payment",
     "secure_payment": "Your payment is processed securely",
     "interac_description": "Send money directly from your Canadian bank account",
-    "credit_description": "Pay securely with your credit card"
+    "credit_description": "Pay securely with your credit card",
+    "cod":" Cash on Delivery",
+    "pickup": "Local Pickup"
   }
   }
   

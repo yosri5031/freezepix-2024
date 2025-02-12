@@ -2975,19 +2975,20 @@ const countryCodeMap = {
       </div>
 
       <div className="space-y-4">
-          <h2 className="text-xl font-medium">{t('placeholder.form.payment_method')}</h2>
-          <select
-            value={formData.paymentMethod}
-            onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-            className="w-full p-2 border rounded"
-          >
-            <option value="cod">{t('payment.cod')}</option>
-            {selectedCountry === 'TUN' && (
-              <option value="pickup">{t('payment.pickup')}</option>
-            )}
-          </select>
-        </div>
-
+  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+    <>
+      <h2 className="text-xl font-medium">{t('order.payment_method')}</h2>
+      <select
+        value={formData.paymentMethod}
+        onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+        className="w-full p-2 border rounded"
+      >
+        <option value="cod">{t('payment.cod')}</option>
+        <option value="pickup">{t('payment.pickup')}</option>
+      </select>
+    </>
+  )}
+</div>
       <div className="space-y-4">
         <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
         <AddressForm
