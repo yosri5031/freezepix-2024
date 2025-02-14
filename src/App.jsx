@@ -11,6 +11,7 @@ import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
 import photoprint8x10 from './assets/photoprint8x10.jpg';
 import photoprint4x4 from './assets/photoprint4x4.jpg';
+import size35x45 from './assets/passport.jpg';
 import keychain from './assets/kc2.png';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
@@ -53,7 +54,7 @@ const initialCountries = [
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99  },
-{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00, keychain: 15.00, keyring_magnet: 15.00 },
+{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00,size35x45: 1.25, keychain: 15.00, keyring_magnet: 15.00 },
   
 ];
 
@@ -609,6 +610,14 @@ const closeProductDetails = () => {
           price: countryInfo.currency === 'TND'
             ? `${countryInfo.size15x22} TND`
             : `${countryInfo.currency} ${countryInfo.size5x7}`
+        },
+        {
+          category: 'Photo Prints',
+          product: 'Format 3.5 x 4.5 cm',
+          country: countryInfo.name,
+          price: countryInfo.currency === 'TND'
+            ? `${countryInfo.size35x45} TND`
+            : `${countryInfo.currency} ${countryInfo.size5x7}`
         }
       ];
     } 
@@ -635,6 +644,7 @@ const closeProductDetails = () => {
       'Format 12.7 x 17.78 cm': photoprint5x7,
       '8x10 Size': photoprint8x10,
       '4x4 Size': photoprint4x4,
+      'Format 3.5 x 4.5 cm': size35x45,
       'Format 10x15 cm':photoprint4x6,
       'Format 15x23 cm':photoprint5x7,
       'Keychain': keychain,
@@ -914,6 +924,7 @@ useEffect(() => {
       case '4x4': return country.size4x4;
       case '10x15': return country.size10x15;
       case '15x22': return country.size15x22;
+      case '3.5x4.5': return country.size35x45;
       default: return 0;
     }
   } else if (photo.productType === '3d_frame') {
@@ -2668,7 +2679,10 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
                 } else if (photo.size === '15x22') {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-                }
+                } else if (photo.size === '3.5x4.5') {
+                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
+              }
+
             } else {
                 if (photo.size === '4x6') {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
@@ -3170,6 +3184,12 @@ const countryCodeMap = {
         <div className="flex justify-between py-2">
           <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+        </div>
+      )}
+      {quantities['3.5x4.5'] > 0 && (
+        <div className="flex justify-between py-2">
+          <span>3.5x4.5 cm Photos ({quantities['3.5x4.5']} × {country?.size35x45.toFixed(2)} {country?.currency})</span>
+          <span>{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
     </>
