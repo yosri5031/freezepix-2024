@@ -2883,6 +2883,7 @@ const countryCodeMap = {
 >
     {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
         <>
+            <option value="3.5x4.5">3.5x4.5 cm</option>
             <option value="10x15">10x15 cm</option>
             <option value="15x22">15x23 cm</option>
         </>
@@ -2938,20 +2939,36 @@ const countryCodeMap = {
                             )}
 
                             {/* Quantity selection */}
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    {t('produits.quantity')}
-                                </label>
-                                <select
-                                    value={photo.quantity}
-                                    onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-                                    className="w-full p-1 border rounded"
-                                >
-                                    {[...Array(99)].map((_, i) => (
-                                        <option key={i + 1} value={i + 1}>{i + 1}</option>
-                                    ))}
-                                </select>
-                            </div>
+                           {/* Quantity selection */}
+<div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+        {t('produits.quantity')}
+    </label>
+    <select
+        value={photo.quantity}
+        onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+        className="w-full p-1 border rounded"
+    >
+        {photo.size === '3.5x4.5' ? (
+            // Generate options for multiples of 4 up to 96
+            [...Array(24)].map((_, i) => {
+                const quantity = (i + 1) * 4;
+                return (
+                    <option key={quantity} value={quantity}>
+                        {quantity}
+                    </option>
+                );
+            })
+        ) : (
+            // Regular quantity options (1-99) for other sizes
+            [...Array(99)].map((_, i) => (
+                <option key={i + 1} value={i + 1}>
+                    {i + 1}
+                </option>
+            ))
+        )}
+    </select>
+</div>
 
                             {/* Single Details button at the end */}
                             <button onClick={openProductDetails} className="text-sm text-blue-500 underline">
@@ -3379,10 +3396,15 @@ const countryCodeMap = {
     setSelectedPhotos(selectedPhotos.filter(photo => photo.id !== photoId));
   };
   const updatePhotoSize = (photoId, newSize) => {
-    setSelectedPhotos((selectedPhotos || []).map(photo =>
-      photo.id === photoId ? { ...photo, size: newSize } : photo
+    setSelectedPhotos((selectedPhotos || []).map(photo => 
+        photo.id === photoId ? {
+            ...photo,
+            size: newSize,
+            // If changing to 3.5x4.5 size, adjust quantity to nearest multiple of 4
+            quantity: newSize === '3.5x4.5' ? Math.ceil(photo.quantity / 4) * 4 : photo.quantity
+        } : photo
     ));
-  };
+};
 
   const updatePhotoQuantity = (photoId, newQuantity) => {
     if (newQuantity > 0 && newQuantity <= 99) {
