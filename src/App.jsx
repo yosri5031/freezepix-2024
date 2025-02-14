@@ -2653,6 +2653,7 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
         '15x22': 0,
         '8x10': 0,
         '4x4': 0,
+        '3.5x4.5':0,
         '3d_frame': 0,
         'keychain': 0,
         'keyring_magnet': 0
@@ -2665,6 +2666,7 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
         '15x22': 0,
         '8x10': 0,
         '4x4': 0,
+        '3.5x4.5':0,
         '3d_frame': 0,
         'keychain': 0,
         'keyring_magnet': 0
