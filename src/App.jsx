@@ -11,7 +11,7 @@ import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
 import photoprint8x10 from './assets/photoprint8x10.jpg';
 import photoprint4x4 from './assets/photoprint4x4.jpg';
-import size35x45 from './assets/passport_50.jpg';
+import size35x45 from './assets/passport.jpg';
 import keychain from './assets/kc2.png';
 import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
