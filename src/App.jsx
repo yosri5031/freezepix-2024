@@ -3546,14 +3546,14 @@ if (showIntro) {
                         {t('buttons.start_printing')}
                       </button>
       
-                      <div className="text-center">
+                     {/*  <div className="text-center">
                         <button 
                           onClick={() => setShowBookingPopup(true)} 
                           className="text-sm text-gray-600 hover:text-yellow-600 underline"
                         >
                           {t('buttons.book_service')}
                         </button>
-                      </div>
+                      </div>*/}
                     </div>
                   </div>
                 </div>
