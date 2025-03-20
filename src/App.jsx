@@ -2866,7 +2866,7 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
     console.log('Subtotal before discount:', subtotal);
 
     // Calculate shipping fee based on country
-    let shippingFee = 20;
+    let shippingFee = 0;
     const isOrderOverThreshold = subtotal >= 50;
     const isOrderOver999 = subtotal >= 999;
 
@@ -2874,15 +2874,15 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
         shippingFee = 0;
     } else if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-            shippingFee = 8;
+            shippingFee = 0;
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-            shippingFee = 20;
+            shippingFee = 0;
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 20;
+            shippingFee = 0;
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-            shippingFee = 9;
+            shippingFee = 0;
         } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-            shippingFee = 9;
+            shippingFee = 0;
         }
     }
 
