@@ -1019,16 +1019,15 @@ const closeProductDetails = () => {
      }, []);
 
      // Add cleanup for preview URLs
-useEffect(() => {
-  return () => {
-      // Cleanup preview URLs when component unmounts
-      selectedPhotos.forEach(photo => {
-          if (photo.preview && !photo.preview.startsWith('data:')) {
-              URL.revokeObjectURL(photo.preview);
+     useEffect(() => {
+      return () => {
+        selectedPhotos.forEach(photo => {
+          if (photo.preview && typeof photo.preview === 'string' && photo.preview.startsWith('blob:')) {
+            URL.revokeObjectURL(photo.preview);
           }
-      });
-  };
-}, [selectedPhotos]);
+        });
+      };
+    }, [selectedPhotos]);
 
 // Add this effect to update prices when country changes
 // Update the useEffect for country change
@@ -1303,19 +1302,31 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
     const CHUNK_SIZE = 6;
     const CONCURRENT_CHUNKS = 2;
 
-    // Process all images first
+    // Process images before chunking
     const processedItems = await Promise.all(
       orderItems.map(async (item) => {
-        const base64Image = await processImageForUpload(item);
-        return {
-          ...item,
-          file: base64Image, // Replace file with base64 string
-          productType: item.productType || 'crystal',
-          size: item.size || 'default',
-          quantity: item.quantity || 1,
-          price: item.price || 0,
-          currency: item.currency
-        };
+        try {
+          // Ensure we have either base64 or file data
+          const imageData = item.base64 || item.file;
+          if (!imageData) {
+            throw new Error('No image data found');
+          }
+
+          const processedImage = await processImageData(imageData);
+
+          return {
+            ...item,
+            file: processedImage, // Use processed image data
+            productType: item.productType || 'photo_print',
+            size: item.size || 'default',
+            quantity: item.quantity || 1,
+            price: item.price || 0,
+            currency: item.currency
+          };
+        } catch (error) {
+          console.error('Error processing item:', error);
+          throw error;
+        }
       })
     );
 
@@ -1325,14 +1336,16 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
       chunks.push(processedItems.slice(i, i + CHUNK_SIZE));
     }
 
+    // Process chunks
     for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
       const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
-      const chunkPromises = currentChunks.map((chunk, index) => {
-        return axios.post(
+      
+      const chunkPromises = currentChunks.map(async (chunk) => {
+        const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-          { 
-            ...orderData, 
-            orderItems: chunk 
+          {
+            ...orderData,
+            orderItems: chunk
           },
           {
             withCredentials: true,
@@ -1341,55 +1354,26 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
               'Content-Type': 'application/json'
             }
           }
-        ).catch(async (error) => {
-          console.error('Chunk upload error:', {
-            chunk: index,
-            error: error.response?.data || error.message
-          });
-          
-          // Retry logic
-          let retryCount = 0;
-          const maxRetries = 2;
-          
-          while (retryCount < maxRetries) {
-            try {
-              await new Promise(resolve => 
-                setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-              );
-              
-              return await axios.post(
-                'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-                { ...orderData, orderItems: chunk },
-                {
-                  withCredentials: true,
-                  timeout: 45000,
-                  headers: {
-                    'Content-Type': 'application/json'
-                  }
-                }
-              );
-            } catch (retryError) {
-              retryCount++;
-              if (retryCount === maxRetries) throw retryError;
-            }
-          }
-        });
+        );
+
+        return response.data;
       });
 
       const chunkResults = await Promise.allSettled(chunkPromises);
       
+      // Process results
       chunkResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
-          results.push(result.value.data);
+          results.push(result.value);
         } else {
-          console.error(`Failed to process chunk ${i + index}:`, result.reason);
+          console.error(`Chunk ${i + index} failed:`, result.reason);
           throw result.reason;
         }
       });
 
       // Update progress
-      const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
       if (typeof orderData.onProgress === 'function') {
+        const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
         orderData.onProgress(progress);
       }
     }
@@ -2828,46 +2812,93 @@ const handleNext = async () => {
     setIsLoading(false);
   }
 };
-  
-    const handleFileChange = async (event) => {
-      try {
-        const files = Array.from(event.target.files);
-        
-        // Validate file types
-        const validFiles = files.filter(file => 
-          file.type.startsWith('image/')
-        );
+
+const processImageData = async (imageData) => {
+  // Log for debugging
+  console.log('Processing image data:', {
+    type: typeof imageData,
+    isBlob: imageData instanceof Blob,
+    isFile: imageData instanceof File,
+    isString: typeof imageData === 'string'
+  });
+
+  try {
+    // If it's already a base64 string
+    if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
+      return imageData;
+    }
+
+    // If it's a File or Blob
+    if (imageData instanceof Blob || imageData instanceof File) {
+      const reader = new FileReader();
+      return new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(imageData);
+      });
+    }
+
+    throw new Error('Unsupported image format');
+  } catch (error) {
+    console.error('Image processing error:', error);
+    throw error;
+  }
+};
+
+const handleFileChange = async (event) => {
+  try {
+    const files = Array.from(event.target.files);
     
-        if (validFiles.length !== files.length) {
-          setError('Some files are not valid images');
-          return;
-        }
-    
-        const newPhotos = await Promise.all(
-          validFiles.map(async (file) => {
-            // Generate preview
-            const preview = URL.createObjectURL(file);
-            
-            // Create photo object
-            const photo = {
-              id: uuidv4(),
-              file,
-              preview,
-              productType: 'photo_print',
-              size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-              quantity: 1
-            };
-    
-            return photo;
-          })
-        );
-    
-        setSelectedPhotos(prev => [...prev, ...newPhotos]);
-      } catch (error) {
-        console.error('File upload error:', error);
-        setError('Failed to process uploaded files');
+    // Validate file types
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) {
+        throw new Error(`Invalid file type: ${file.type}`);
       }
+    }
+
+    const compressOptions = {
+      maxSizeMB: 1,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true
     };
+
+    const processedPhotos = await Promise.all(
+      files.map(async (file) => {
+        try {
+          // Compress image
+          const compressedFile = await imageCompression(file, compressOptions);
+          
+          // Convert to base64
+          const base64Data = await processImageData(compressedFile);
+          
+          // Create preview URL
+          const preview = URL.createObjectURL(compressedFile);
+
+          return {
+            id: uuidv4(),
+            file: compressedFile,
+            base64: base64Data,
+            preview,
+            fileName: file.name,
+            fileType: file.type,
+            productType: 'photo_print',
+            size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+            quantity: 1
+          };
+        } catch (error) {
+          console.error('Error processing file:', file.name, error);
+          throw error;
+        }
+      })
+    );
+
+    setSelectedPhotos(prev => [...prev, ...processedPhotos]);
+  } catch (error) {
+    console.error('File upload error:', error);
+    setError(error.message);
+  }
+};
+
 
   const updateProductType = (photoId, newType) => {
     setSelectedPhotos((selectedPhotos || []).map(photo =>
