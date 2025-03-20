@@ -3481,16 +3481,15 @@ if (orderSuccess) {
           {/* Step Content */}
           {renderStepContent()}
 
-          {/* Navigation Buttons */}
-          <div className="flex justify-between mt-8">
-      <button
-        onClick={handleBack}
-        className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-      >
-        {activeStep === 0 ? t('buttons.home') : t('buttons.back')}
-      </button>
+        {/* Navigation Buttons */}
+<div className="flex justify-between mt-8">
+  <button
+    onClick={handleBack}
+    className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+  >
+    {activeStep === 0 ? t('buttons.home') : t('buttons.back')}
+  </button>
 
-      {(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
   <button
     onClick={handleNext}
     disabled={!validateStep()}
@@ -3507,8 +3506,7 @@ if (orderSuccess) {
         : t('buttons.next')
     }
   </button>
-)}
-    </div>
+</div>
 
         </div>
       </div>
