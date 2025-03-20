@@ -3404,11 +3404,11 @@ const countryCodeMap = {
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
         </div>
 
-        {/* Shipping Fee */}
+        {/* Shipping Fee 
         <div className="flex justify-between py-2">
           <span>{t('order.shipping_fee')}</span>
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
-        </div>
+        </div>*/}
 
         {/* Tax for Tunisia */}
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
