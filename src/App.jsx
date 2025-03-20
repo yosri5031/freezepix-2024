@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -254,7 +254,7 @@ const FreezePIX = () => {
     const [discountCode, setDiscountCode] = useState('');
     const [discountError, setDiscountError] = useState('');
     const [availableDiscounts, setAvailableDiscounts] = useState([]);
-
+    const [selectedStudio, setSelectedStudio] = useState(null);
     const [orderNote, setOrderNote] = useState('');
     const [showPolicyPopup, setShowPolicyPopup] = useState(false);
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
@@ -495,6 +495,136 @@ const [interacReference, setInteracReference] = useState('');
         }));
       };
 
+      const StudioSelector = ({ onStudioSelect, selectedCountry, selectedStudio }) => {
+        const [studios, setStudios] = useState([]);
+        const [loading, setLoading] = useState(true);
+        const [error, setError] = useState(null);
+        const [selectedCity, setSelectedCity] = useState('');
+      
+        useEffect(() => {
+          const fetchStudios = async () => {
+            try {
+              const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+              const studiosData = Array.isArray(response.data) ? response.data : [response.data];
+              // Filter studios by selected country
+              const filteredStudios = studiosData.filter(studio => 
+                studio.country.toLowerCase() === selectedCountry?.toLowerCase()
+              );
+              setStudios(filteredStudios);
+              setLoading(false);
+            } catch (error) {
+              console.error('Error fetching studios:', error);
+              setError(error.message);
+              setLoading(false);
+            }
+          };
+      
+          fetchStudios();
+        }, [selectedCountry]);
+      
+        const uniqueCities = [...new Set(studios.map(studio => studio.city))];
+      
+        const getDayName = (day) => {
+          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+          return days[day];
+        };
+      
+        if (loading) {
+          return (
+            <div className="flex justify-center items-center min-h-[200px]">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+            </div>
+          );
+        }
+      
+        if (error) {
+          return (
+            <div className="text-red-500 text-center p-4">
+              Error loading studios: {error}
+            </div>
+          );
+        }
+      
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-medium">Select Pickup Location</h2>
+      
+            {/* City filter */}
+            <div className="mb-4">
+              <select
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">All Cities</option>
+                {uniqueCities.map(city => (
+                  <option key={city} value={city}>{city}</option>
+                ))}
+              </select>
+            </div>
+      
+            {/* Studios grid */}
+            <div className="grid gap-4 md:grid-cols-2">
+              {studios
+                .filter(studio => !selectedCity || studio.city === selectedCity)
+                .map(studio => (
+                  <div
+                    key={studio._id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      selectedStudio?._id === studio._id
+                        ? 'border-yellow-400 bg-yellow-50'
+                        : 'hover:border-gray-400'
+                    }`}
+                    onClick={() => onStudioSelect(studio)}
+                  >
+                    <h3 className="font-medium text-lg mb-2">{studio.name}</h3>
+                    
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        <span>{studio.address}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} />
+                        <span>{studio.phone}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} />
+                        <span>{studio.email}</span>
+                      </div>
+      
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock size={16} />
+                          <span className="font-medium">Operating Hours:</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          {studio.operatingHours.map(hours => (
+                            <div key={hours._id} className="flex justify-between text-xs">
+                              <span>{getDayName(hours.day)}</span>
+                              <span>
+                                {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+      
+            {studios.length === 0 && (
+              <div className="text-center text-gray-500 py-8">
+                No studios available in this location.
+              </div>
+            )}
+          </div>
+        );
+      };
+      
       const handlePhotoUpload = async (files) => {
         const newPhotos = await Promise.all(
           Array.from(files).map(async (file) => {
@@ -1784,43 +1914,33 @@ const handleOrderSuccess = async ({
 
     
     // Construct order data
-    orderData = {
+    const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress,
-      billingAddress: isBillingAddressSameAsShipping
-        ? formData.shippingAddress
-        : formData.billingAddress,
-      orderItems: optimizedPhotosWithPrices.map(photo => ({
-        ...photo,
-        file: photo.file,
-        thumbnail: photo.thumbnail,
+      pickupStudio: {
+        id: selectedStudio._id,
+        name: selectedStudio.name,
+        address: selectedStudio.address,
+        city: selectedStudio.city,
+        country: selectedStudio.country
+      },
+      orderItems: selectedPhotos.map(photo => ({
         id: photo.id,
         quantity: photo.quantity,
         size: photo.size,
         price: photo.price,
         productType: photo.productType
       })),
-      totalAmount: total,
-      subtotal,
-      shippingFee,
-      taxAmount,
-      discount,
-      currency: country.currency,
+      totalAmount: calculateTotals().total,
+      currency: initialCountries.find(c => c.value === selectedCountry)?.currency,
       orderNote: orderNote || '',
-      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : (paymentMethod === 'interac' ? 'interac' : 'helcim'),
-      stripePaymentId: stripePaymentMethod,
-      paymentIntentId: paymentIntent?.id,
-      paymentStatus: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'pending' : 'paid',
-      customerDetails: {
-        name: formData.name,
-        country: selectedCountry
-      },
-      selectedCountry,
-      discountCode: discountCode || null,
+      status: 'pending',
+      paymentStatus: 'pending',
+      paymentMethod: 'in_store',
       createdAt: new Date().toISOString()
     };
+
     const subtotalsBySize = selectedPhotos.reduce((acc, photo) => {
       const size = photo.size;
       const amount = (photo.price || 0) * (photo.quantity || 1);
@@ -2988,140 +3108,97 @@ const countryCodeMap = {
         </div>
     );
       case 1:
-      return (
-        <div className="space-y-6">
-      <div className="space-y-4">
-        <h2 className="text-xl font-medium">
-          {t('placeholder.validation.contact_info')}
-        </h2>
-        <input
-          type="email"
-          placeholder={t('placeholder.email')}
-          value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-          className="w-full p-2 border rounded"
-        />
-        <input
-          type="tel"
-          placeholder={t('placeholder.phone')}
-          value={formData.phone}
-          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-          className="w-full p-2 border rounded"
-        />
-      </div>
-
-      <div className="space-y-4">
-        <h2 className="text-xl font-medium">{t('placeholder.form.shipping_a')}</h2>
-        <AddressForm
-          type="shipping"
-          data={{
-            ...formData.shippingAddress,
-            country: countryCodeMap[selectedCountry] || selectedCountry
-          }}
-          onChange={(newAddress) => setFormData(prevData => ({
-            ...prevData,
-            shippingAddress: {
-              ...newAddress,
-              country: countryCodeMap[newAddress.country] || newAddress.country
-            },
-            billingAddress: isBillingAddressSameAsShipping ? {
-              ...newAddress,
-              country: countryCodeMap[newAddress.country] || newAddress.country
-            } : prevData.billingAddress
-          }))}
-        />
-      </div>
-
-      {formData.paymentMethod !== 'cod' && (
-        <div className="space-y-4 hidden">
-          <div className="flex items-center gap-2 hidden">
-            <input
-              type="checkbox"
-              checked={isBillingAddressSameAsShipping}
-              onChange={(e) => setIsBillingAddressSameAsShipping(e.target.checked)}
-              id="sameAddress"
-              className="rounded border-gray-300"
-            />
-            <label htmlFor="sameAddress" className="text-sm">
-              {t('placeholder.form.same_address')}
-            </label>
-          </div>
-
-          {!isBillingAddressSameAsShipping && (
-            <>
-              <div className="hidden">
-                <h2 className="text-xl font-medium">{t('placeholder.form.billing_a')}</h2>
-                <AddressForm
-                  type="billing"
-                  data={{
-                    ...formData.billingAddress,
-                    country: countryCodeMap[selectedCountry] || selectedCountry
-                  }}
-                  onChange={(newAddress) => setFormData(prevData => ({
-                    ...prevData,
-                    billingAddress: newAddress
-                  }))}
-                />
-              </div>
-            </>
-          )}
-        </div>
-      )}
-    </div>
-      );
+        return (
+          <StudioSelector
+            onStudioSelect={setSelectedStudio}
+            selectedCountry={selectedCountry}
+            selectedStudio={selectedStudio}
+          />
+        );
 
       case 2:
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
+            
+            {/* Order Items Summary */}
             {renderInvoice()}
-        
-            {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    {t('order.cod')}
+  
+            {/* Pickup Details */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
+              {selectedStudio && (
+                <div className="space-y-2">
+                  <p className="font-medium">{selectedStudio.name}</p>
+                  <p>{selectedStudio.address}</p>
+                  <p>{selectedStudio.city}, {selectedStudio.country}</p>
+                  <p className="text-sm text-gray-600">
+                    {t('pickup.contact')}: {selectedStudio.phone}
                   </p>
+                  <div className="mt-4">
+                    <p className="font-medium mb-2">{t('pickup.hours')}:</p>
+                    {selectedStudio.operatingHours.map((hours, index) => (
+                      <p key={index} className="text-sm">
+                        {getDayName(hours.day)}: {hours.isClosed ? 
+                          t('pickup.closed') : 
+                          `${hours.openTime} - ${hours.closeTime}`}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : selectedCountry === 'CAN' || selectedCountry === 'CA' ? (
+              )}
+            </div>
+  
+            {/* Contact Information */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
               <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                <HelcimPayButton
-  onPaymentSuccess={handleHelcimPaymentSuccess}
-  isProcessing={isProcessingOrder}
-  disabled={!formIsValid}
-  selectedCountry={selectedCountry}
-  total={total}
-  setOrderSuccess={setOrderSuccess}
-  setError={setError}
-  setIsProcessingOrder={setIsProcessingOrder}
-  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
-/>
-                </div>
+                <input
+                  type="email"
+                  placeholder={t('placeholder.email')}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+                <input
+                  type="tel"
+                  placeholder={t('placeholder.phone')}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
               </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-gray-50 rounded-lg">
-                  <p className="text-center text-gray-600">
-                    {t('canada.message_c')}
-                  </p>
-                </div>
-                <HelcimPayButton
-  onPaymentSuccess={handleHelcimPaymentSuccess}
-  isProcessing={isProcessingOrder}
-  disabled={!formIsValid}
-  selectedCountry={selectedCountry}
-  total={total}
-  setOrderSuccess={setOrderSuccess}
-  setError={setError}
-  setIsProcessingOrder={setIsProcessingOrder}
-  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
-/>
-              </div>
-            )}
+            </div>
+  
+            {/* Order Note */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('produits.note')}</h3>
+              <textarea
+                placeholder={t('placeholder.order_note')}
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                className="w-full p-2 border rounded"
+                rows={3}
+              />
+            </div>
+  
+            {/* Place Order Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={handlePlaceOrder}
+                disabled={!formData.email || !formData.phone}
+                className={`px-6 py-3 rounded-lg ${
+                  formData.email && formData.phone
+                    ? 'bg-yellow-400 hover:bg-yellow-500'
+                    : 'bg-gray-200 cursor-not-allowed'
+                }`}
+              >
+                {t('buttons.place_order')}
+              </button>
+            </div>
           </div>
         );
+  
     default:
       return null;
     }
@@ -3432,35 +3509,11 @@ const validateStep = () => {
     case 0: // Upload Photos step
       return selectedPhotos.length > 0;
       
-    case 1: // Shipping Information step
-      // Simplified validation for required fields
-      const shippingAddress = formData.shippingAddress;
+    case 1: // Studio Selection step
+      return selectedStudio !== null;
       
-      // Basic field validation
-      const basicFieldsValid = Boolean(
-        formData.email &&
-        formData.phone &&
-        shippingAddress.firstName &&
-        shippingAddress.lastName &&
-        shippingAddress.address &&
-        shippingAddress.city &&
-        shippingAddress.postalCode
-      );
-
-      // State/Province validation based on country
-      const stateValid =
-      (selectedCountry !== 'USA' && selectedCountry !== 'US' && selectedCountry !== 'CAN' && selectedCountry !== 'CA') || // Other countries don't need state or province
-      ((selectedCountry === 'USA' || selectedCountry === 'US') && shippingAddress.state) ||    // US needs state
-      ((selectedCountry === 'CAN' || selectedCountry === 'CA') && shippingAddress.province);    // Canada needs province
-
-      return basicFieldsValid && stateValid;
-
-    case 2: // Payment step (if applicable)
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        return true; // COD doesn't need additional validation
-      }
-      // Add any specific payment validation here if needed
-      return true;
+    case 2: // Review Order step
+      return formData.email && formData.phone;
 
     default:
       return false;
@@ -3604,25 +3657,28 @@ if (orderSuccess) {
           <div className="text-green-500 text-5xl">✓</div>
           <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
           <p className="text-gray-600">
-            {t('order.success_details')} {formData.email}.
+            {t('order.success_details')} {formData.email}
           </p>
           <div className="mt-4">
-            <p className="font-medium">Order Details:</p>
+            <p className="font-medium">{t('order.details')}:</p>
             <p>{t('order.order_number')}: {currentOrderNumber}</p>
-            {paymentMethod !== 'helcim' && (
-              <p>
-                {t('order.total_amount')}: {calculateTotals().total.toFixed(2)}{' '}
-                {initialCountries.find((c) => c.value === selectedCountry)?.currency}
-              </p>
-            )}
+            <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find((c) => c.value === selectedCountry)?.currency}</p>
+            
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="font-medium">{t('pickup.location')}:</p>
+              <p>{selectedStudio.name}</p>
+              <p>{selectedStudio.address}</p>
+              <p>{selectedStudio.city}, {selectedStudio.country}</p>
+              <p className="text-sm text-gray-600 mt-2">{t('pickup.payment_notice')}</p>
+            </div>
           </div>
           
-            <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
-            >
-              {t('buttons.place_new')}
-            </button>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+          >
+            {t('buttons.place_new')}
+          </button>
         </div>
       </div>
     </div>
@@ -3635,14 +3691,14 @@ if (orderSuccess) {
         <div className="bg-white rounded-lg shadow-lg p-6">
           {/* Stepper */}
           <div className="flex items-center justify-between mb-8">
-            {['Upload Photos', 'Shipping Details', 'Payment'].map((step, index) => (
+            {['Upload Photos', ' Studio Selection', 'Review Order'].map((step, index) => (
               <div key={step} className="flex items-center">
                 <div className={`
                   w-8 h-8 rounded-full flex items-center justify-center
                   ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
                 `}>
                   {index === 0 && <Camera size={16} />}
-                  {index === 1 && <Package size={16} />}
+                  {index === 1 && <aperture size={16} />}
                   {index === 2 && <ShoppingCart size={16} />}
                 </div>
                 {index < 2 && (
