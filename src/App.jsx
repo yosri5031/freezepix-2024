@@ -3214,20 +3214,7 @@ const countryCodeMap = {
               />
             </div>
   
-            {/* Place Order Button */}
-            <div className="flex justify-center">
-              <button
-                onClick={handleOrderSuccess}
-                disabled={!formData.email || !formData.phone}
-                className={`px-6 py-3 rounded-lg ${
-                  formData.email && formData.phone
-                    ? 'bg-yellow-400 hover:bg-yellow-500'
-                    : 'bg-gray-200 cursor-not-allowed'
-                }`}
-              >
-                {t('buttons.place_order')}
-              </button>
-            </div>
+           
           </div>
         );
   
@@ -3251,7 +3238,7 @@ const countryCodeMap = {
           <p className="text-gray-600">{formData.phone}</p>
         </div>
   
-        {/* Shipping Address */}
+        {/* Shipping Address 
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
           <div className="text-gray-600">
@@ -3264,7 +3251,7 @@ const countryCodeMap = {
           </div>
         </div>
   
-        {/* Billing Address (if different from shipping) */}
+        {/* Billing Address (if different from shipping) 
         {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
           <div className="border rounded-lg p-4">
             <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
@@ -3277,7 +3264,7 @@ const countryCodeMap = {
               <p>{country?.name}</p>
             </div>
           </div>
-        )}
+        )} */}
    {/* Discount Code Section */}
    <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('order.discount')}</h3>
