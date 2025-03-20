@@ -3464,22 +3464,23 @@ if (orderSuccess) {
       </button>
 
       {(activeStep !== 2 || selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') && (
-        <button
-          onClick={handleNext}
-          disabled={!validateStep()}
-          className={`px-6 py-2 rounded ${
-            validateStep()
-              ? 'bg-yellow-400 hover:bg-yellow-500'
-              : 'bg-gray-200 cursor-not-allowed'
-          }`}
-        >
-          {isLoading
-            ? t('buttons.processing')
-            : (activeStep === 2 && (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac')
-              ? t('buttons.place_order')
-              : t('buttons.next'))}
-        </button>
-      )}
+  <button
+    onClick={handleNext}
+    disabled={!validateStep()}
+    className={`px-6 py-2 rounded ${
+      validateStep()
+        ? 'bg-yellow-400 hover:bg-yellow-500'
+        : 'bg-gray-200 cursor-not-allowed'
+    }`}
+  >
+    {isLoading 
+      ? t('buttons.processing')
+      : activeStep === 2 
+        ? t('buttons.place_order')
+        : t('buttons.next')
+    }
+  </button>
+)}
     </div>
 
         </div>
