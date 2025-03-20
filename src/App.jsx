@@ -1951,6 +1951,7 @@ const handleOrderSuccess = async ({
       orderNumber,
       email: formData.email,
       phone: formData.phone,
+      name: formData.name,
       pickupStudio: {
         id: selectedStudio._id,
         name: selectedStudio.name,
