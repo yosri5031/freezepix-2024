@@ -3432,7 +3432,6 @@ if (orderSuccess) {
           <div className="mt-4">
             <p className="font-medium">{t('order.details')}:</p>
             <p>{t('order.order_number')}: {currentOrderNumber}</p>
-            <p>{t('order.total_amount')}: {calculateTotals().total.toFixed(2)} {initialCountries.find((c) => c.value === selectedCountry)?.currency}</p>
             
             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
               <p className="font-medium">{t('pickup.location')}:</p>
