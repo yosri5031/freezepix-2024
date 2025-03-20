@@ -1899,15 +1899,7 @@ const handleOrderSuccess = async ({
   let paymentIntent = null;
 
   try {
-    // Validate required fields first
-    if (!formData?.email || 
-      !formData?.shippingAddress?.firstName ||
-      !formData?.shippingAddress?.lastName ||
-      !formData?.shippingAddress?.address ||
-      !formData?.shippingAddress?.city ||
-      !formData?.shippingAddress?.postalCode) {
-    throw new Error('Missing required shipping information');
-  }
+    
 
   if (!formIsValid(formData)) {
     throw new Error('Please fill in all required fields correctly');
@@ -2787,40 +2779,55 @@ const handleDiscountCode = (value) => {
 
 useBackButton({ activeStep, setActiveStep, setShowIntro });
 
-      const handleNext = async () => {
-        // First check if the current step is valid
-        if (!validateStep()) {
-          setError('Please complete all required fields before proceeding');
-          return;
+const handleNext = async () => {
+  try {
+    switch (activeStep) {
+      case 0:
+        // Validate photos
+        if (!selectedPhotos || selectedPhotos.length === 0) {
+          throw new Error('Please select at least one photo');
         }
-      
-        try {
-          if (activeStep === 2) {
-            if (selectedCountry === 'TUN' || selectedCountry === 'TN' || paymentMethod === 'interac') {
-              setIsLoading(true);
-              await handleOrderSuccess({
-                paymentMethod: 'cod', // or whatever payment method
-                formData: formData,
-                selectedCountry: selectedCountry,
-                selectedPhotos: selectedPhotos,
-                orderNote: orderNote,
-                discountCode: discountCode,
-                isBillingAddressSameAsShipping: isBillingAddressSameAsShipping,
-              });
-            } else {
-              setActiveStep(prev => prev + 1);
-            }
-          } else {
-            setError(null); // Clear any previous errors
-            setActiveStep(prev => prev + 1);
-          }
-        } catch (error) {
-          setError('An error occurred while processing your request');
-          console.error('Error in handleNext:', error);
-        } finally {
-          setIsLoading(false);
+        setActiveStep(prev => prev + 1);
+        break;
+
+      case 1:
+        // Validate studio selection
+        if (!selectedStudio) {
+          throw new Error('Please select a pickup location');
         }
-    };
+        setActiveStep(prev => prev + 1);
+        break;
+
+      case 2:
+        // Validate contact information and process order
+        if (!formData.email || !formData.phone || !formData.name) {
+          throw new Error('Please provide all required contact information');
+        }
+
+        setIsLoading(true);
+        await handleOrderSuccess({
+          paymentMethod: 'in_store', // or whatever payment method
+          formData,
+          selectedCountry,
+          selectedPhotos,
+          orderNote,
+          discountCode,
+          selectedStudio
+        });
+        break;
+
+      default:
+        setActiveStep(prev => prev + 1);
+        break;
+    }
+    setError(null);
+  } catch (error) {
+    console.error('Error in handleNext:', error);
+    setError(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
   
     const handleFileChange = async (event) => {
       try {
