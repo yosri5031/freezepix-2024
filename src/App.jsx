@@ -1359,11 +1359,23 @@ const processImageForUpload = async (photo) => {
 };
 
 // Optimized order submission with better chunking and progress tracking
+
 const submitOrderWithOptimizedChunking = async (orderData) => {
   try {
     const { orderItems } = orderData;
     
-    // Ensure all items have valid base64 data
+    // Prepare the base order data with required fields
+    const baseOrderData = {
+      ...orderData,
+      shippingFee: 0, // Set to 0 for local pickup
+      shippingMethod: 'local_pickup',
+      deliveryMethod: 'pickup',
+      status: 'Waiting for CSR approval',
+      paymentMethod: 'in_store',
+      paymentStatus: 'pending'
+    };
+
+    // Process items
     const processedItems = await Promise.all(orderItems.map(async (item) => {
       let imageData;
       try {
@@ -1377,7 +1389,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
 
         return {
           ...item,
-          file: imageData, // Send base64 data as 'file'
+          file: imageData,
           productType: item.productType || 'photo_print',
           size: item.size || 'default',
           quantity: item.quantity || 1,
@@ -1389,7 +1401,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
       }
     }));
 
-    // Split into chunks and process
+    // Split into chunks
     const CHUNK_SIZE = 6;
     const chunks = [];
     for (let i = 0; i < processedItems.length; i += CHUNK_SIZE) {
@@ -1401,7 +1413,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
           {
-            ...orderData,
+            ...baseOrderData,
             orderItems: chunk
           },
           {
@@ -1425,6 +1437,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
     throw error;
   }
 };
+
 
 
 
@@ -1919,7 +1932,6 @@ const handleOrderSuccess = async ({
   selectedStudio
 }) => {
   try {
-    // Validate required fields
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please provide all required contact information');
     }
@@ -1928,14 +1940,11 @@ const handleOrderSuccess = async ({
       throw new Error('Please select a pickup location');
     }
 
-    // Generate order number
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
-
-    // Calculate totals
-    const { total, currency, subtotal, taxAmount, discount } = calculateTotals();
     
-    // Prepare order data
+    const { total, currency, subtotal, taxAmount, discount } = calculateTotals();
+
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -1950,30 +1959,35 @@ const handleOrderSuccess = async ({
       },
       orderItems: selectedPhotos.map(photo => ({
         id: photo.id,
-        file: photo.file, // This should be base64 string
+        file: photo.base64 || photo.file,
         quantity: photo.quantity,
         size: photo.size,
         price: photo.price,
         productType: photo.productType
       })),
       totalAmount: total,
-      currency: initialCountries.find(c => c.value === selectedCountry)?.currency,
+      currency: initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD',
       orderNote: orderNote || '',
-      paymentMethod: paymentMethod,
-      status: 'pending',
+      paymentMethod: 'in_store',
+      status: 'Waiting for CSR approval',
       paymentStatus: 'pending',
+      shippingFee: 0,
+      shippingMethod: 'local_pickup',
+      deliveryMethod: 'pickup',
       taxAmount,
       discount,
       subtotal,
       customerDetails: {
         name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
         country: selectedCountry
       },
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
 
-    // Submit order
+    setIsProcessingOrder(true);
     const response = await submitOrderWithOptimizedChunking(orderData);
     
     if (response) {
