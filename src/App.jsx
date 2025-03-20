@@ -925,26 +925,61 @@ const closeProductDetails = () => {
   );
 };
      // Add these helper functions at the beginning of your component
-     const convertImageToBase64 = (file) => {
-         return new Promise((resolve, reject) => {
-             const reader = new FileReader();
-             reader.onload = () => resolve(reader.result);
-             reader.onerror = reject;
-             reader.readAsDataURL(file);
-         });
-     };
+     const convertImageToBase64 = async (file) => {
+      // If already a base64 string, return it
+      if (typeof file === 'string' && file.startsWith('data:image/')) {
+        return file;
+      }
+    
+      // If not a valid File/Blob, throw error
+      if (!(file instanceof Blob || file instanceof File)) {
+        throw new Error('Invalid file format');
+      }
+    
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64String = reader.result;
+          // Validate base64 format
+          if (typeof base64String === 'string' && base64String.startsWith('data:image/')) {
+            resolve(base64String);
+          } else {
+            reject(new Error('Invalid base64 format'));
+          }
+        };
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+    };
+    
      
-     const base64ToFile = (base64String, fileName) => {
-         const arr = base64String.split(',');
-         const mime = arr[0].match(/:(.*?);/)[1];
-         const bstr = atob(arr[1]);
-         let n = bstr.length;
-         const u8arr = new Uint8Array(n);
-         while (n--) {
-             u8arr[n] = bstr.charCodeAt(n);
-         }
-         return new File([u8arr], fileName, { type: mime });
-     };
+    const base64ToFile = (base64String, fileName) => {
+      try {
+        // Validate base64 string
+        if (!base64String || typeof base64String !== 'string') {
+          throw new Error('Invalid base64 string');
+        }
+    
+        if (!base64String.startsWith('data:image/')) {
+          throw new Error('Invalid image format');
+        }
+    
+        const arr = base64String.split(',');
+        const mime = arr[0].match(/:(.*?);/)[1];
+        const bstr = atob(arr[1]);
+        let n = bstr.length;
+        const u8arr = new Uint8Array(n);
+        
+        while (n--) {
+          u8arr[n] = bstr.charCodeAt(n);
+        }
+        
+        return new File([u8arr], fileName, { type: mime });
+      } catch (error) {
+        console.error('Error converting base64 to file:', error);
+        throw error;
+      }
+    };
      
      // Modify the save state useEffect to handle image conversion
      useEffect(() => {
@@ -981,6 +1016,35 @@ const closeProductDetails = () => {
      
          saveState();
      }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+
+     useEffect(() => {
+      const restorePhotos = async () => {
+        const savedPhotos = localStorage.getItem('uploadedPhotos');
+        if (savedPhotos) {
+          try {
+            const parsedPhotos = JSON.parse(savedPhotos);
+            const restoredPhotos = parsedPhotos.map(photo => {
+              // Validate base64 data
+              if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+                throw new Error('Invalid saved image data');
+              }
+    
+              return {
+                ...photo,
+                file: base64ToFile(photo.base64, photo.fileName),
+                preview: photo.base64 // Use base64 as preview
+              };
+            });
+            setSelectedPhotos(restoredPhotos);
+          } catch (error) {
+            console.error('Error restoring photos:', error);
+            localStorage.removeItem('uploadedPhotos'); // Clear invalid data
+          }
+        }
+      };
+    
+      restorePhotos();
+    }, []);
      
      // Modify the load state useEffect to handle image reconstruction
      useEffect(() => {
@@ -1298,76 +1362,62 @@ const processImageForUpload = async (photo) => {
 const submitOrderWithOptimizedChunking = async (orderData) => {
   try {
     const { orderItems } = orderData;
-    const results = [];
-    const CHUNK_SIZE = 6;
-    const CONCURRENT_CHUNKS = 2;
+    
+    // Ensure all items have valid base64 data
+    const processedItems = await Promise.all(orderItems.map(async (item) => {
+      let imageData;
+      try {
+        if (item.base64) {
+          imageData = item.base64;
+        } else if (item.file) {
+          imageData = await convertImageToBase64(item.file);
+        } else {
+          throw new Error('No valid image data found');
+        }
 
-    // Prepare items ensuring we use base64Data
-    const preparedItems = orderItems.map(item => ({
-      ...item,
-      file: item.base64Data || item.file, // Use base64Data if available
-      productType: item.productType || 'photo_print',
-      size: item.size || 'default',
-      quantity: item.quantity || 1,
-      price: item.price || 0,
-      currency: item.currency
+        return {
+          ...item,
+          file: imageData, // Send base64 data as 'file'
+          productType: item.productType || 'photo_print',
+          size: item.size || 'default',
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        };
+      } catch (error) {
+        console.error(`Error processing item ${item.id}:`, error);
+        throw error;
+      }
     }));
 
-    // Split into chunks
+    // Split into chunks and process
+    const CHUNK_SIZE = 6;
     const chunks = [];
-    for (let i = 0; i < preparedItems.length; i += CHUNK_SIZE) {
-      chunks.push(preparedItems.slice(i, i + CHUNK_SIZE));
+    for (let i = 0; i < processedItems.length; i += CHUNK_SIZE) {
+      chunks.push(processedItems.slice(i, i + CHUNK_SIZE));
     }
 
-    for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
-      const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
-      
-      const chunkPromises = currentChunks.map(async (chunk, index) => {
-        const retryOperation = async (retries = 3) => {
-          try {
-            const response = await axios.post(
-              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-              {
-                ...orderData,
-                orderItems: chunk
-              },
-              {
-                withCredentials: true,
-                timeout: 45000,
-                headers: {
-                  'Content-Type': 'application/json'
-                }
-              }
-            );
-            return response.data;
-          } catch (error) {
-            if (retries > 0) {
-              await new Promise(resolve => setTimeout(resolve, 1000));
-              return retryOperation(retries - 1);
+    const results = await Promise.all(chunks.map(async (chunk) => {
+      try {
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          {
+            ...orderData,
+            orderItems: chunk
+          },
+          {
+            withCredentials: true,
+            timeout: 45000,
+            headers: {
+              'Content-Type': 'application/json'
             }
-            throw error;
           }
-        };
-
-        return retryOperation();
-      });
-
-      const chunkResults = await Promise.allSettled(chunkPromises);
-      
-      chunkResults.forEach((result, index) => {
-        if (result.status === 'fulfilled') {
-          results.push(result.value);
-        } else {
-          console.error(`Failed to process chunk ${i + index}:`, result.reason);
-          throw result.reason;
-        }
-      });
-
-      if (typeof orderData.onProgress === 'function') {
-        const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
-        orderData.onProgress(progress);
+        );
+        return response.data;
+      } catch (error) {
+        console.error('Chunk upload error:', error.response?.data || error);
+        throw error;
       }
-    }
+    }));
 
     return results;
   } catch (error) {
@@ -2388,47 +2438,39 @@ const handleFileChange = async (event) => {
     const files = Array.from(event.target.files);
     
     const newPhotos = await Promise.all(files.map(async (file) => {
-      // Validate file type
       if (!file.type.startsWith('image/')) {
         throw new Error(`Invalid file type: ${file.type}`);
       }
 
-      try {
-        // Convert to base64
-        const base64String = await convertToBase64(file);
-        
-        return {
-          id: uuidv4(),
-          originalFile: file,
-          base64Data: base64String,
-          preview: URL.createObjectURL(file),
-          fileName: file.name,
-          fileType: file.type,
-          productType: 'photo_print',
-          size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-          quantity: 1
-        };
-      } catch (error) {
-        console.error('Error processing file:', file.name, error);
-        throw error;
-      }
+      const base64Data = await convertImageToBase64(file);
+      
+      return {
+        id: uuidv4(),
+        file: file,
+        base64: base64Data,
+        fileName: file.name,
+        fileType: file.type,
+        preview: URL.createObjectURL(file),
+        productType: 'photo_print',
+        size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+        quantity: 1
+      };
     }));
 
     setSelectedPhotos(prev => [...prev, ...newPhotos]);
 
-    // Save to localStorage with only necessary data
-    const photosForStorage = newPhotos.map(photo => ({
-      id: photo.id,
-      base64Data: photo.base64Data,
-      fileName: photo.fileName,
-      fileType: photo.fileType,
-      productType: photo.productType,
-      size: photo.size,
-      quantity: photo.quantity
+    // Save to localStorage
+    const storageSafePhotos = newPhotos.map(({ id, base64, fileName, fileType, productType, size, quantity }) => ({
+      id,
+      base64,
+      fileName,
+      fileType,
+      productType,
+      size,
+      quantity
     }));
-
-    localStorage.setItem('uploadedPhotos', JSON.stringify(photosForStorage));
-
+    
+    localStorage.setItem('uploadedPhotos', JSON.stringify(storageSafePhotos));
   } catch (error) {
     console.error('File upload error:', error);
     setError(error.message);
