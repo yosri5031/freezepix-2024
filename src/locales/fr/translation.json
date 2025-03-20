@@ -13,6 +13,17 @@
       "location" : "Choisissez votre emplacement pour commencer à imprimer vos souvenirs",
       "select" : "Sélectionnez votre pays"
     },
+    "pickup": {
+  "details": "Détails du retrait",
+  "location": "Point de retrait",
+  "contact": "Contact",
+  "hours": "Heures d'ouverture",
+  "closed": "Fermé",
+  "payment_notice": "Veuillez effectuer le paiement au point de retrait",
+  "select_location": "Sélectionner un point de retrait",
+  "no_locations": "Aucun point de retrait disponible dans votre région",
+  "confirm_location": "Confirmer le point de retrait"
+},
     "placeholder": {
       "name": "Nom",
       "validation.contact_info": "Informations de contact",
