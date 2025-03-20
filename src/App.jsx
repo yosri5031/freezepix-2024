@@ -498,7 +498,7 @@ const [interacReference, setInteracReference] = useState('');
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[day];
       };
-      
+
       const StudioSelector = ({ onStudioSelect, selectedCountry, selectedStudio }) => {
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
@@ -3217,7 +3217,7 @@ const countryCodeMap = {
             {/* Place Order Button */}
             <div className="flex justify-center">
               <button
-                onClick={handlePlaceOrder}
+                onClick={handleOrderSuccess}
                 disabled={!formData.email || !formData.phone}
                 className={`px-6 py-3 rounded-lg ${
                   formData.email && formData.phone
