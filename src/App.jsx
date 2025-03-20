@@ -499,17 +499,18 @@ const [interacReference, setInteracReference] = useState('');
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
-        const [selectedCity, setSelectedCity] = useState('');
       
         useEffect(() => {
           const fetchStudios = async () => {
             try {
               const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
               const studiosData = Array.isArray(response.data) ? response.data : [response.data];
+              
               // Filter studios by selected country
               const filteredStudios = studiosData.filter(studio => 
                 studio.country.toLowerCase() === selectedCountry?.toLowerCase()
               );
+              
               setStudios(filteredStudios);
               setLoading(false);
             } catch (error) {
@@ -519,10 +520,10 @@ const [interacReference, setInteracReference] = useState('');
             }
           };
       
-          fetchStudios();
+          if (selectedCountry) {
+            fetchStudios();
+          }
         }, [selectedCountry]);
-      
-        const uniqueCities = [...new Set(studios.map(studio => studio.city))];
       
         const getDayName = (day) => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -545,82 +546,71 @@ const [interacReference, setInteracReference] = useState('');
           );
         }
       
+        if (studios.length === 0) {
+          return (
+            <div className="text-center text-gray-500 py-8">
+              No studios available in {selectedCountry}.
+            </div>
+          );
+        }
+      
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-medium">Select Pickup Location</h2>
       
-            {/* City filter */}
-            <div className="mb-4">
-              <select
-                value={selectedCity}
-                onChange={(e) => setSelectedCity(e.target.value)}
-                className="w-full p-2 border rounded"
-              >
-                <option value="">All Cities</option>
-                {uniqueCities.map(city => (
-                  <option key={city} value={city}>{city}</option>
-                ))}
-              </select>
-            </div>
-      
-            {/* Studios grid */}
             <div className="grid gap-4 md:grid-cols-2">
-              {studios
-                .filter(studio => !selectedCity || studio.city === selectedCity)
-                .map(studio => (
-                  <div
-                    key={studio._id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                      selectedStudio?._id === studio._id
-                        ? 'border-yellow-400 bg-yellow-50'
-                        : 'hover:border-gray-400'
-                    }`}
-                    onClick={() => onStudioSelect(studio)}
-                  >
-                    <h3 className="font-medium text-lg mb-2">{studio.name}</h3>
+              {studios.map(studio => (
+                <div
+                  key={studio._id}
+                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    selectedStudio?._id === studio._id
+                      ? 'border-yellow-400 bg-yellow-50'
+                      : 'hover:border-gray-400'
+                  }`}
+                  onClick={() => onStudioSelect(studio)}
+                >
+                  <h3 className="font-medium text-lg mb-2">
+                    {studio.translations?.[selectedCountry === 'TN' ? 'ar' : 'fr']?.name || studio.name}
+                  </h3>
+                  
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <MapPin size={16} />
+                      <span>
+                        {studio.translations?.[selectedCountry === 'TN' ? 'ar' : 'fr']?.address || studio.address}
+                      </span>
+                    </div>
                     
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        <span>{studio.address}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Phone size={16} />
-                        <span>{studio.phone}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} />
-                        <span>{studio.email}</span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <Phone size={16} />
+                      <span>{studio.phone}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Mail size={16} />
+                      <span>{studio.email}</span>
+                    </div>
       
-                      <div className="border-t pt-2 mt-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock size={16} />
-                          <span className="font-medium">Operating Hours:</span>
-                        </div>
-                        <div className="grid grid-cols-1 gap-1">
-                          {studio.operatingHours.map(hours => (
-                            <div key={hours._id} className="flex justify-between text-xs">
-                              <span>{getDayName(hours.day)}</span>
-                              <span>
-                                {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
+                    <div className="border-t pt-2 mt-2">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock size={16} />
+                        <span className="font-medium">Operating Hours:</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {studio.operatingHours.map(hours => (
+                          <div key={hours._id} className="flex justify-between text-xs">
+                            <span>{getDayName(hours.day)}</span>
+                            <span>
+                              {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   </div>
-                ))}
+                </div>
+              ))}
             </div>
-      
-            {studios.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                No studios available in this location.
-              </div>
-            )}
           </div>
         );
       };
@@ -3693,7 +3683,7 @@ if (orderSuccess) {
                   ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
                 `}>
                   {index === 0 && <Camera size={16} />}
-                  {index === 1 && <aperture size={16} />}
+                  {index === 1 && <Package size={16} />}
                   {index === 2 && <ShoppingCart size={16} />}
                 </div>
                 {index < 2 && (
