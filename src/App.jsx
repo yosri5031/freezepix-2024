@@ -1271,79 +1271,134 @@ const saveStateWithCleanup = async (state) => {
   }
 };
 
+const processImageForUpload = async (photo) => {
+  try {
+    // If the image is already a base64 string, validate and return it
+    if (typeof photo.file === 'string' && photo.file.startsWith('data:image/')) {
+      return photo.file;
+    }
+
+    // If we have a File object, convert it to base64
+    if (photo.file instanceof File || photo.file instanceof Blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(photo.file);
+      });
+    }
+
+    throw new Error('Invalid image format');
+  } catch (error) {
+    console.error('Image processing error:', error);
+    throw error;
+  }
+};
+
 // Optimized order submission with better chunking and progress tracking
 const submitOrderWithOptimizedChunking = async (orderData) => {
-  const { orderItems } = orderData;
-  const results = [];
-  const CHUNK_SIZE = 6;
-  const CONCURRENT_CHUNKS = 2;
+  try {
+    const { orderItems } = orderData;
+    const results = [];
+    const CHUNK_SIZE = 6;
+    const CONCURRENT_CHUNKS = 2;
 
-  const chunks = [];
-  for (let i = 0; i < orderItems.length; i += CHUNK_SIZE) {
-    chunks.push(orderItems.slice(i, i + CHUNK_SIZE));
-  }
+    // Process all images first
+    const processedItems = await Promise.all(
+      orderItems.map(async (item) => {
+        const base64Image = await processImageForUpload(item);
+        return {
+          ...item,
+          file: base64Image, // Replace file with base64 string
+          productType: item.productType || 'crystal',
+          size: item.size || 'default',
+          quantity: item.quantity || 1,
+          price: item.price || 0,
+          currency: item.currency
+        };
+      })
+    );
 
-  for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
-    const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
-    const chunkPromises = currentChunks.map((chunk, index) => {
-      return axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-        { ...orderData, orderItems: chunk },
-        {
-          withCredentials: true, // Important for CORS with credentials
-          timeout: 30000,
-          retries: 2,
-          retryDelay: 1000,
-          headers: {
-            'Content-Type': 'application/json'
+    // Split into chunks
+    const chunks = [];
+    for (let i = 0; i < processedItems.length; i += CHUNK_SIZE) {
+      chunks.push(processedItems.slice(i, i + CHUNK_SIZE));
+    }
+
+    for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
+      const currentChunks = chunks.slice(i, i + CONCURRENT_CHUNKS);
+      const chunkPromises = currentChunks.map((chunk, index) => {
+        return axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          { 
+            ...orderData, 
+            orderItems: chunk 
+          },
+          {
+            withCredentials: true,
+            timeout: 45000,
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
-        }
-      ).catch(async (error) => {
-        let retryCount = 0;
-        const maxRetries = 2;
-        
-        while (retryCount < maxRetries) {
-          try {
-            await new Promise(resolve =>
-              setTimeout(resolve, Math.pow(2, retryCount) * 1000)
-            );
-            return await axios.post(
-              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-              { ...orderData, orderItems: chunk },
-              {
-                withCredentials: true,
-                timeout: 45000,
-                headers: {
-                  'Content-Type': 'application/json'
+        ).catch(async (error) => {
+          console.error('Chunk upload error:', {
+            chunk: index,
+            error: error.response?.data || error.message
+          });
+          
+          // Retry logic
+          let retryCount = 0;
+          const maxRetries = 2;
+          
+          while (retryCount < maxRetries) {
+            try {
+              await new Promise(resolve => 
+                setTimeout(resolve, Math.pow(2, retryCount) * 1000)
+              );
+              
+              return await axios.post(
+                'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+                { ...orderData, orderItems: chunk },
+                {
+                  withCredentials: true,
+                  timeout: 45000,
+                  headers: {
+                    'Content-Type': 'application/json'
+                  }
                 }
-              }
-            );
-          } catch (retryError) {
-            retryCount++;
-            if (retryCount === maxRetries) throw retryError;
+              );
+            } catch (retryError) {
+              retryCount++;
+              if (retryCount === maxRetries) throw retryError;
+            }
           }
+        });
+      });
+
+      const chunkResults = await Promise.allSettled(chunkPromises);
+      
+      chunkResults.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          results.push(result.value.data);
+        } else {
+          console.error(`Failed to process chunk ${i + index}:`, result.reason);
+          throw result.reason;
         }
       });
-    });
 
-    const chunkResults = await Promise.allSettled(chunkPromises);
-    
-    chunkResults.forEach((result, index) => {
-      if (result.status === 'fulfilled') {
-        results.push(result.value.data);
-      } else {
-        console.error(`Failed to process chunk ${i + index}:`, result.reason);
-        throw result.reason;
+      // Update progress
+      const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
+      if (typeof orderData.onProgress === 'function') {
+        orderData.onProgress(progress);
       }
-    });
-
-    const progress = Math.round(((i + currentChunks.length) / chunks.length) * 100);
-    if (typeof orderData.onProgress === 'function') {
-      orderData.onProgress(progress);
     }
-  }
 
-  return results;
+    return results;
+  } catch (error) {
+    console.error('Order submission error:', error);
+    throw error;
+  }
 };
 
 
@@ -2767,19 +2822,45 @@ useBackButton({ activeStep, setActiveStep, setShowIntro });
         }
     };
   
-      const handleFileChange = (event) => {
+    const handleFileChange = async (event) => {
+      try {
         const files = Array.from(event.target.files);
-        const newPhotos = files.map(file => ({
-          id: Math.random().toString(36).substr(2, 9),
-          file,
-          preview: URL.createObjectURL(file),
-          productType: 'photo_print',
-          size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-          crystalShape: null,
-          quantity: 1
-        }));
-        setSelectedPhotos(prevPhotos => [...(prevPhotos || []), ...newPhotos]);
-      };
+        
+        // Validate file types
+        const validFiles = files.filter(file => 
+          file.type.startsWith('image/')
+        );
+    
+        if (validFiles.length !== files.length) {
+          setError('Some files are not valid images');
+          return;
+        }
+    
+        const newPhotos = await Promise.all(
+          validFiles.map(async (file) => {
+            // Generate preview
+            const preview = URL.createObjectURL(file);
+            
+            // Create photo object
+            const photo = {
+              id: uuidv4(),
+              file,
+              preview,
+              productType: 'photo_print',
+              size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+              quantity: 1
+            };
+    
+            return photo;
+          })
+        );
+    
+        setSelectedPhotos(prev => [...prev, ...newPhotos]);
+      } catch (error) {
+        console.error('File upload error:', error);
+        setError('Failed to process uploaded files');
+      }
+    };
 
   const updateProductType = (photoId, newType) => {
     setSelectedPhotos((selectedPhotos || []).map(photo =>
