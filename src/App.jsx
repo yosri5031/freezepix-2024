@@ -494,7 +494,11 @@ const [interacReference, setInteracReference] = useState('');
           }
         }));
       };
-
+      const getDayName = (day) => {
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        return days[day];
+      };
+      
       const StudioSelector = ({ onStudioSelect, selectedCountry, selectedStudio }) => {
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
