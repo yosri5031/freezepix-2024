@@ -1094,29 +1094,24 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     // Create order summary with detailed product information
     const emailOrderData = {
-          // Initialize with empty array if photos are missing
       orderNumber: orderData.orderNumber || 'N/A',
       email: orderData.email || 'N/A',
-      shippingAddress: {
-        firstName: orderData?.shippingAddress?.firstName || orderData?.billingAddress?.firstName || '',
-        lastName: orderData?.shippingAddress?.lastName || orderData?.billingAddress?.lastName || '',
-        address: orderData?.shippingAddress?.address || orderData?.billingAddress?.address || '',
-        city: orderData?.shippingAddress?.city || '',
-        state: orderData?.shippingAddress?.state || '',
-        province: orderData?.shippingAddress?.province || '',
-        postalCode: orderData?.shippingAddress?.postalCode || orderData?.billingAddress?.postalCode || '',
-        country: orderData?.shippingAddress?.country || ''
+      pickupStudio: {
+        name: orderData?.pickupStudio?.name || '',
+        address: orderData?.pickupStudio?.address || '',
+        city: orderData?.pickupStudio?.city || '',
+        country: orderData?.pickupStudio?.country || ''
       },
       phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
-      paymentMethod: orderData.paymentMethod || 'N/A',
+      paymentMethod: 'in_store',
       selectedPhotos: orderData.selectedPhotos || [],
       totalAmount: orderData.totalAmount || 0,
       currency: orderData.currency || 'USD'
     };
 
     console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
-//.
+
     const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
       method: 'POST',
       headers: {
