@@ -266,6 +266,7 @@ const [interacReference, setInteracReference] = useState('');
     const [formData, setFormData] = useState({
       email: '',
       phone: '',
+      name:'',
       shippingAddress: {
         firstName: '',
         lastName: '',
@@ -3153,6 +3154,35 @@ const countryCodeMap = {
           <div className="space-y-6">
             <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
             
+              {/* Contact Information */}
+              <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
+              <div className="space-y-4">
+              <input
+                  type="text"
+                  placeholder={t('placeholder.name')}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+
+                <input
+                  type="email"
+                  placeholder={t('placeholder.email')}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+                <input
+                  type="tel"
+                  placeholder={t('placeholder.phone')}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+            </div>
+
             {/* Order Items Summary */}
             {renderInvoice()}
   
@@ -3181,26 +3211,7 @@ const countryCodeMap = {
               )}
             </div>
   
-            {/* Contact Information */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
-              <div className="space-y-4">
-                <input
-                  type="email"
-                  placeholder={t('placeholder.email')}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full p-2 border rounded"
-                />
-                <input
-                  type="tel"
-                  placeholder={t('placeholder.phone')}
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
+          
   
             {/* Order Note */}
             <div className="border rounded-lg p-4">
@@ -3231,12 +3242,12 @@ const countryCodeMap = {
       <div className="space-y-6">
         
   
-        {/* Contact Information */}
+        {/* Contact Information 
         <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
           <p className="text-gray-600">{formData.email}</p>
           <p className="text-gray-600">{formData.phone}</p>
-        </div>
+        </div>*/}
   
         {/* Shipping Address 
         <div className="border rounded-lg p-4">

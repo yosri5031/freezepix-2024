@@ -14,6 +14,7 @@
       "select" : "Sélectionnez votre pays"
     },
     "placeholder": {
+      "name": "Nom",
       "validation.contact_info": "Informations de contact",
       "form.shipping_a": "Adresse de livraison",
       "form.billing_a": "Adresse de facturation",

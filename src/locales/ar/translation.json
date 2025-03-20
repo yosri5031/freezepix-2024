@@ -14,6 +14,7 @@
   "select": "اختر بلدك"
   },
   "placeholder": {
+    "name": "الاسم",
     "validation.contact_info": "معلومات الاتصال",
     "form.shipping_a": "عنوان الشحن",
     "form.billing_a": "عنوان الفاتورة",
