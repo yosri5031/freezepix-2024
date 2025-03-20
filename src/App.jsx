@@ -1988,9 +1988,36 @@ const handleOrderSuccess = async ({
     };
 
     setIsProcessingOrder(true);
+
+    // Submit order first
     const response = await submitOrderWithOptimizedChunking(orderData);
     
     if (response) {
+      // Prepare email data
+      const emailOrderData = {
+        orderNumber: orderData.orderNumber,
+        email: orderData.email,
+        pickupStudio: orderData.pickupStudio,
+        phone: orderData.phone,
+        orderNote: orderData.orderNote,
+        paymentMethod: orderData.paymentMethod,
+        selectedPhotos: orderData.orderItems,
+        totalAmount: orderData.totalAmount,
+        currency: orderData.currency
+      };
+
+      try {
+        // Send confirmation email
+        await sendOrderConfirmationEmail(emailOrderData);
+        console.log('Order confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('Failed to send order confirmation email:', emailError);
+        // Don't throw here - we still want to complete the order process
+        // but maybe notify the user about email issues
+        setError('Order placed successfully but confirmation email could not be sent. Please save your order number.');
+      }
+
+      // Complete the order process
       setOrderSuccess(true);
       setSelectedPhotos([]);
       setError(null);
