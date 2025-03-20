@@ -500,17 +500,43 @@ const [interacReference, setInteracReference] = useState('');
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
       
+        // Country code mapping object
+        const countryVariations = {
+          'TN': ['TN', 'TUN', 'TUNISIA', 'TUNISIE'],
+          'US': ['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'],
+          'CA': ['CA', 'CAN', 'CANADA']
+        };
+      
+        // Function to get all possible country variations
+        const getCountryVariations = (countryCode) => {
+          const normalizedCountryCode = countryCode?.toUpperCase();
+          // Find the key that contains this country code in its variations
+          const matchingKey = Object.keys(countryVariations).find(key => 
+            countryVariations[key].includes(normalizedCountryCode) || key === normalizedCountryCode
+          );
+          return matchingKey ? countryVariations[matchingKey] : [normalizedCountryCode];
+        };
+      
         useEffect(() => {
           const fetchStudios = async () => {
             try {
               const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
               const studiosData = Array.isArray(response.data) ? response.data : [response.data];
               
-              // Filter studios by selected country
-              const filteredStudios = studiosData.filter(studio => 
-                studio.country.toLowerCase() === selectedCountry?.toLowerCase()
-              );
+              // Get all possible variations of the selected country
+              const countryVariants = getCountryVariations(selectedCountry);
+              console.log('Searching for country variants:', countryVariants);
+      
+              // Filter studios by any matching country variant
+              const filteredStudios = studiosData.filter(studio => {
+                const studioCountry = studio.country.toUpperCase();
+                return countryVariants.some(variant => 
+                  studioCountry === variant || 
+                  studioCountry.includes(variant)
+                );
+              });
               
+              console.log('Found studios:', filteredStudios);
               setStudios(filteredStudios);
               setLoading(false);
             } catch (error) {
@@ -528,6 +554,14 @@ const [interacReference, setInteracReference] = useState('');
         const getDayName = (day) => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           return days[day];
+        };
+      
+        // Get the appropriate language for translations
+        const getLanguageCode = (countryCode) => {
+          const normalizedCountryCode = countryCode?.toUpperCase();
+          if (countryVariations['TN'].includes(normalizedCountryCode)) return 'ar';
+          if (countryVariations['CA'].includes(normalizedCountryCode)) return 'fr';
+          return 'fr'; // default to French
         };
       
         if (loading) {
@@ -549,10 +583,12 @@ const [interacReference, setInteracReference] = useState('');
         if (studios.length === 0) {
           return (
             <div className="text-center text-gray-500 py-8">
-              No studios available in {selectedCountry}.
+              No studios available in your region.
             </div>
           );
         }
+      
+        const languageCode = getLanguageCode(selectedCountry);
       
         return (
           <div className="space-y-6">
@@ -570,20 +606,20 @@ const [interacReference, setInteracReference] = useState('');
                   onClick={() => onStudioSelect(studio)}
                 >
                   <h3 className="font-medium text-lg mb-2">
-                    {studio.translations?.[selectedCountry === 'TN' ? 'ar' : 'fr']?.name || studio.name}
+                    {studio.translations?.[languageCode]?.name || studio.name}
                   </h3>
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
                       <MapPin size={16} />
                       <span>
-                        {studio.translations?.[selectedCountry === 'TN' ? 'ar' : 'fr']?.address || studio.address}
+                        {studio.translations?.[languageCode]?.address || studio.address}
                       </span>
                     </div>
                     
                     <div className="flex items-center gap-2">
                       <Phone size={16} />
-                      <span>{studio.phone}</span>
+                      <span dir="ltr">{studio.phone}</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
@@ -597,15 +633,21 @@ const [interacReference, setInteracReference] = useState('');
                         <span className="font-medium">Operating Hours:</span>
                       </div>
                       <div className="grid grid-cols-1 gap-1">
-                        {studio.operatingHours.map(hours => (
+                        {studio.operatingHours
+                          .sort((a, b) => a.day - b.day) // Sort by day
+                          .map(hours => (
                           <div key={hours._id} className="flex justify-between text-xs">
                             <span>{getDayName(hours.day)}</span>
-                            <span>
+                            <span dir="ltr">
                               {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
                             </span>
                           </div>
                         ))}
                       </div>
+                    </div>
+      
+                    <div className="text-xs text-gray-500 mt-2">
+                      {studio.translations?.[languageCode]?.description || studio.description}
                     </div>
                   </div>
                 </div>
@@ -614,6 +656,7 @@ const [interacReference, setInteracReference] = useState('');
           </div>
         );
       };
+
       
       const handlePhotoUpload = async (files) => {
         const newPhotos = await Promise.all(
