@@ -3185,11 +3185,11 @@ const countryCodeMap = {
 
     return (
       <>
-        {/* Subtotal */}
+        {/* Subtotal 
         <div className="flex justify-between py-2 border-t">
           <span>{t('produits.subtotal')}</span>
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
-        </div>
+        </div>*/}
 
         {/* Shipping Fee 
         <div className="flex justify-between py-2">
