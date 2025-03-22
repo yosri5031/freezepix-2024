@@ -500,17 +500,11 @@ const [interacReference, setInteracReference] = useState('');
         return days[day];
       };
 
-      const StudioSelector = ({ onStudioSelect, selectedCountry, selectedStudio }) => {
+      const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [userLocation, setUserLocation] = useState(null);
-      
-        const countryVariations = {
-          'TN': ['TN', 'TUN', 'TUNISIA', 'TUNISIE'],
-          'US': ['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'],
-          'CA': ['CA', 'CAN', 'CANADA']
-        };
       
         // Calculate distance between two points using Haversine formula
         const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -537,38 +531,26 @@ const [interacReference, setInteracReference] = useState('');
               },
               (error) => {
                 console.error('Error getting location:', error);
+                setError('Please enable location services to find nearby studios');
               }
             );
+          } else {
+            setError('Geolocation is not supported by your browser');
           }
         }, []);
-      
-        const getCountryVariations = (countryCode) => {
-          const normalizedCountryCode = countryCode?.toUpperCase();
-          const matchingKey = Object.keys(countryVariations).find(key => 
-            countryVariations[key].includes(normalizedCountryCode) || key === normalizedCountryCode
-          );
-          return matchingKey ? countryVariations[matchingKey] : [normalizedCountryCode];
-        };
       
         useEffect(() => {
           const fetchStudios = async () => {
             try {
               const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-              const studiosData = Array.isArray(response.data) ? response.data : [response.data];
+              let studiosData = Array.isArray(response.data) ? response.data : [response.data];
               
-              const countryVariants = getCountryVariations(selectedCountry);
-              
-              let filteredStudios = studiosData.filter(studio => {
-                const studioCountry = studio.country.toUpperCase();
-                return countryVariants.some(variant => 
-                  studioCountry === variant || 
-                  studioCountry.includes(variant)
-                );
-              });
+              // Filter only active studios
+              studiosData = studiosData.filter(studio => studio.isActive);
       
               // Add distance to each studio if user location is available
               if (userLocation) {
-                filteredStudios = filteredStudios.map(studio => ({
+                studiosData = studiosData.map(studio => ({
                   ...studio,
                   distance: calculateDistance(
                     userLocation.latitude,
@@ -579,33 +561,32 @@ const [interacReference, setInteracReference] = useState('');
                 }));
       
                 // Sort studios by distance
-                filteredStudios.sort((a, b) => a.distance - b.distance);
+                studiosData.sort((a, b) => a.distance - b.distance);
               }
               
-              setStudios(filteredStudios);
+              setStudios(studiosData);
               setLoading(false);
             } catch (error) {
               console.error('Error fetching studios:', error);
-              setError(error.message);
+              setError('Failed to fetch studios');
               setLoading(false);
             }
           };
       
-          if (selectedCountry) {
-            fetchStudios();
-          }
-        }, [selectedCountry, userLocation]);
+          fetchStudios();
+        }, [userLocation]);
       
         const getDayName = (day) => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           return days[day];
         };
       
-        const getLanguageCode = (countryCode) => {
-          const normalizedCountryCode = countryCode?.toUpperCase();
-          if (countryVariations['TN'].includes(normalizedCountryCode)) return 'ar';
-          if (countryVariations['CA'].includes(normalizedCountryCode)) return 'fr';
-          return 'fr';
+        // Determine language based on browser or user preference
+        const getLanguagePreference = () => {
+          const userLang = navigator.language || navigator.userLanguage;
+          if (userLang.startsWith('fr')) return 'fr';
+          if (userLang.startsWith('ar')) return 'ar';
+          return 'en'; // default to English
         };
       
         if (loading) {
@@ -619,7 +600,7 @@ const [interacReference, setInteracReference] = useState('');
         if (error) {
           return (
             <div className="text-red-500 text-center p-4">
-              Error loading studios: {error}
+              {error}
             </div>
           );
         }
@@ -632,11 +613,11 @@ const [interacReference, setInteracReference] = useState('');
           );
         }
       
-        const languageCode = getLanguageCode(selectedCountry);
+        const languageCode = getLanguagePreference();
       
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-medium">Select Pickup Location</h2>
+            <h2 className="text-xl font-medium">Nearest Pickup Locations</h2>
       
             <div className="grid gap-4 md:grid-cols-2">
               {studios.map(studio => (
@@ -708,7 +689,7 @@ const [interacReference, setInteracReference] = useState('');
           </div>
         );
       };
-
+      
       
       const handlePhotoUpload = async (files) => {
         const newPhotos = await Promise.all(
