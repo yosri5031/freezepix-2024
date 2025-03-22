@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation  } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation,  ChevronDown, ChevronUp  } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -505,10 +505,13 @@ const [interacReference, setInteracReference] = useState('');
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [userLocation, setUserLocation] = useState(null);
+        const [showAll, setShowAll] = useState(false);
       
-        // Calculate distance between two points using Haversine formula
+        // Number of studios to show initially
+        const INITIAL_DISPLAY_COUNT = 4;
+      
         const calculateDistance = (lat1, lon1, lat2, lon2) => {
-          const R = 6371; // Earth's radius in kilometers
+          const R = 6371;
           const dLat = (lat2 - lat1) * Math.PI / 180;
           const dLon = (lon2 - lon1) * Math.PI / 180;
           const a = 
@@ -516,10 +519,9 @@ const [interacReference, setInteracReference] = useState('');
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
             Math.sin(dLon/2) * Math.sin(dLon/2);
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          return R * c; // Distance in kilometers
+          return R * c;
         };
       
-        // Get user's current location
         useEffect(() => {
           if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
@@ -545,10 +547,8 @@ const [interacReference, setInteracReference] = useState('');
               const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
               let studiosData = Array.isArray(response.data) ? response.data : [response.data];
               
-              // Filter only active studios
               studiosData = studiosData.filter(studio => studio.isActive);
       
-              // Add distance to each studio if user location is available
               if (userLocation) {
                 studiosData = studiosData.map(studio => ({
                   ...studio,
@@ -560,7 +560,6 @@ const [interacReference, setInteracReference] = useState('');
                   )
                 }));
       
-                // Sort studios by distance
                 studiosData.sort((a, b) => a.distance - b.distance);
               }
               
@@ -581,12 +580,11 @@ const [interacReference, setInteracReference] = useState('');
           return days[day];
         };
       
-        // Determine language based on browser or user preference
         const getLanguagePreference = () => {
           const userLang = navigator.language || navigator.userLanguage;
           if (userLang.startsWith('fr')) return 'fr';
           if (userLang.startsWith('ar')) return 'ar';
-          return 'en'; // default to English
+          return 'en';
         };
       
         if (loading) {
@@ -614,13 +612,15 @@ const [interacReference, setInteracReference] = useState('');
         }
       
         const languageCode = getLanguagePreference();
+        const displayedStudios = showAll ? studios : studios.slice(0, INITIAL_DISPLAY_COUNT);
+        const hasMoreStudios = studios.length > INITIAL_DISPLAY_COUNT;
       
         return (
           <div className="space-y-6">
             <h2 className="text-xl font-medium">Nearest Pickup Locations</h2>
       
             <div className="grid gap-4 md:grid-cols-2">
-              {studios.map(studio => (
+              {displayedStudios.map(studio => (
                 <div
                   key={studio._id}
                   className={`border rounded-lg p-4 cursor-pointer transition-colors ${
@@ -686,6 +686,27 @@ const [interacReference, setInteracReference] = useState('');
                 </div>
               ))}
             </div>
+      
+            {hasMoreStudios && (
+              <div className="flex justify-center mt-4">
+                <button
+                  onClick={() => setShowAll(!showAll)}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+                >
+                  {showAll ? (
+                    <>
+                      Show Less
+                      <ChevronUp size={20} />
+                    </>
+                  ) : (
+                    <>
+                      Show More Locations
+                      <ChevronDown size={20} />
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         );
       };
