@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,Clock, Navigation  } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -504,18 +504,46 @@ const [interacReference, setInteracReference] = useState('');
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
+        const [userLocation, setUserLocation] = useState(null);
       
-        // Country code mapping object
         const countryVariations = {
           'TN': ['TN', 'TUN', 'TUNISIA', 'TUNISIE'],
           'US': ['US', 'USA', 'UNITED STATES', 'UNITED STATES OF AMERICA'],
           'CA': ['CA', 'CAN', 'CANADA']
         };
       
-        // Function to get all possible country variations
+        // Calculate distance between two points using Haversine formula
+        const calculateDistance = (lat1, lon1, lat2, lon2) => {
+          const R = 6371; // Earth's radius in kilometers
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLon = (lon2 - lon1) * Math.PI / 180;
+          const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+          return R * c; // Distance in kilometers
+        };
+      
+        // Get user's current location
+        useEffect(() => {
+          if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                setUserLocation({
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+                });
+              },
+              (error) => {
+                console.error('Error getting location:', error);
+              }
+            );
+          }
+        }, []);
+      
         const getCountryVariations = (countryCode) => {
           const normalizedCountryCode = countryCode?.toUpperCase();
-          // Find the key that contains this country code in its variations
           const matchingKey = Object.keys(countryVariations).find(key => 
             countryVariations[key].includes(normalizedCountryCode) || key === normalizedCountryCode
           );
@@ -528,20 +556,32 @@ const [interacReference, setInteracReference] = useState('');
               const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
               const studiosData = Array.isArray(response.data) ? response.data : [response.data];
               
-              // Get all possible variations of the selected country
               const countryVariants = getCountryVariations(selectedCountry);
-              console.log('Searching for country variants:', countryVariants);
-      
-              // Filter studios by any matching country variant
-              const filteredStudios = studiosData.filter(studio => {
+              
+              let filteredStudios = studiosData.filter(studio => {
                 const studioCountry = studio.country.toUpperCase();
                 return countryVariants.some(variant => 
                   studioCountry === variant || 
                   studioCountry.includes(variant)
                 );
               });
+      
+              // Add distance to each studio if user location is available
+              if (userLocation) {
+                filteredStudios = filteredStudios.map(studio => ({
+                  ...studio,
+                  distance: calculateDistance(
+                    userLocation.latitude,
+                    userLocation.longitude,
+                    studio.coordinates.latitude,
+                    studio.coordinates.longitude
+                  )
+                }));
+      
+                // Sort studios by distance
+                filteredStudios.sort((a, b) => a.distance - b.distance);
+              }
               
-              console.log('Found studios:', filteredStudios);
               setStudios(filteredStudios);
               setLoading(false);
             } catch (error) {
@@ -554,19 +594,18 @@ const [interacReference, setInteracReference] = useState('');
           if (selectedCountry) {
             fetchStudios();
           }
-        }, [selectedCountry]);
+        }, [selectedCountry, userLocation]);
       
         const getDayName = (day) => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
           return days[day];
         };
       
-        // Get the appropriate language for translations
         const getLanguageCode = (countryCode) => {
           const normalizedCountryCode = countryCode?.toUpperCase();
           if (countryVariations['TN'].includes(normalizedCountryCode)) return 'ar';
           if (countryVariations['CA'].includes(normalizedCountryCode)) return 'fr';
-          return 'fr'; // default to French
+          return 'fr';
         };
       
         if (loading) {
@@ -610,9 +649,17 @@ const [interacReference, setInteracReference] = useState('');
                   }`}
                   onClick={() => onStudioSelect(studio)}
                 >
-                  <h3 className="font-medium text-lg mb-2">
-                    {studio.translations?.[languageCode]?.name || studio.name}
-                  </h3>
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-medium text-lg mb-2">
+                      {studio.translations?.[languageCode]?.name || studio.name}
+                    </h3>
+                    {studio.distance !== undefined && (
+                      <div className="flex items-center text-sm text-gray-600">
+                        <Navigation size={16} className="mr-1" />
+                        {studio.distance.toFixed(1)} km
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
@@ -639,9 +686,9 @@ const [interacReference, setInteracReference] = useState('');
                       </div>
                       <div className="grid grid-cols-1 gap-1">
                         {studio.operatingHours
-                          .sort((a, b) => a.day - b.day) // Sort by day
+                          .sort((a, b) => a.day - b.day)
                           .map(hours => (
-                          <div key={hours._id} className="flex justify-between text-xs">
+                          <div key={hours.day} className="flex justify-between text-xs">
                             <span>{getDayName(hours.day)}</span>
                             <span dir="ltr">
                               {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
