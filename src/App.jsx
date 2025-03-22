@@ -2682,7 +2682,7 @@ const handleFileChange = async (event) => {
     const taxableAmount = subtotal + shippingFee;
     console.log('Taxable amount:', taxableAmount);
 
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+   /* if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
         const province = formData.shippingAddress.province;
@@ -2705,7 +2705,7 @@ const handleFileChange = async (event) => {
                 }
             }
         }
-    }
+    }*/
 
     console.log('Tax amount:', taxAmount);
     // Calculate total (apply discount after tax)
@@ -3164,7 +3164,7 @@ const countryCodeMap = {
     // Calculate tax amount
     let taxAmount = 0;
     const taxableAmount = subtotal + shippingFee; // Define taxable amount once
-    
+    /*
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         taxAmount = taxableAmount * 0.19;
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province) {
@@ -3179,7 +3179,7 @@ const countryCodeMap = {
             }
         }
     }
-
+*/
     // Calculate final total
     const finalTotal = subtotal + shippingFee + taxAmount - discount;
 
@@ -3197,7 +3197,7 @@ const countryCodeMap = {
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
         </div>*/}
 
-        {/* Tax for Tunisia */}
+        {/* Tax for Tunisia 
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
@@ -3205,7 +3205,7 @@ const countryCodeMap = {
           </div>
         )}
 
-        {/* Tax for Canada */}
+        {/* Tax for Canada 
         {selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
@@ -3229,7 +3229,7 @@ const countryCodeMap = {
             </div>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
           </div>
-        )}
+        )}*/}
 
        {/* Discount */}
 {discount > 0 && (
