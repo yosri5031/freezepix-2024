@@ -3741,34 +3741,39 @@ if (showIntro) {
               </div>
 
               {/* Fixed bottom bar for country and language selection */}
-              <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg">
-                <div className="max-w-7xl mx-auto p-4">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <select 
-                        className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
-                        value={selectedCountry}
-                        onChange={(e) => handleCountrySelect(e.target.value)}
-                      >
-                        <option value="">{t('navigation.select')}</option>
-                        {initialCountries.map(country => (
-                          <option key={country.value} value={country.value}>
-                            {country.name} ({country.currency})
-                          </option>
-                        ))}
-                      </select>
-                      <LanguageSelector />
-                    </div>
-                  </div>
-                </div>
-              </div>
+<div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50"> {/* Added z-50 */}
+  <div className="max-w-7xl mx-auto p-4">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div className="flex items-center gap-4 w-full sm:w-auto">
+        <select 
+          className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 z-50" // Added z-50
+          value={selectedCountry}
+          onChange={(e) => handleCountrySelect(e.target.value)}
+        >
+          <option value="">{t('navigation.select')}</option>
+          {initialCountries.map(country => (
+            <option key={country.value} value={country.value}>
+              {country.name} ({country.currency})
+            </option>
+          ))}
+        </select>
+        <div className="relative z-50"> {/* Added wrapper with z-50 */}
+          <LanguageSelector />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
-              {/* Archive Policy */}
-              <div className="text-center py-4 mb-20">
-                <p className="text-xs text-gray-500 px-4">
-                  {t('intro.archive_policy')}
-                </p>
-              </div>
+{/* Add margin bottom to main content to prevent overlap */}
+<div className="mb-24"> {/* Added margin bottom */}
+  {/* Archive Policy */}
+  <div className="text-center py-4">
+    <p className="text-xs text-gray-500 px-4">
+      {t('intro.archive_policy')}
+    </p>
+  </div>
+</div>
             </div>
           </div>
         </div>
