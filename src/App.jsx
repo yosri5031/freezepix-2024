@@ -573,21 +573,39 @@ const [interacReference, setInteracReference] = useState('');
       };
 
       // Add this useEffect in your FreezePIX component
-useEffect(() => {
-  const setInitialCountryAndLanguage = async () => {
-    const location = await detectUserLocation();
-    if (location) {
-      const mappedCountry = mapCountryCode(location.country);
-      if (!selectedCountry && initialCountries.some(c => c.value === mappedCountry)) {
-        setSelectedCountry(mappedCountry);
-        changeLanguage(location.language);
-      }
-    }
-  };
-
-  setInitialCountryAndLanguage();
-}, []);
-
+      useEffect(() => {
+        const setInitialCountryAndLanguage = async () => {
+          try {
+            const location = await detectUserLocation();
+            if (location) {
+              const mappedCountry = mapCountryCode(location.country);
+              
+              // Set the country if it's in our list of supported countries
+              if (initialCountries.some(c => c.value === mappedCountry)) {
+                setSelectedCountry(mappedCountry);
+                
+                // Set language based on country, but don't override user's active selection
+                if (!language) { // Only change if language isn't already set
+                  // Map country to language preference
+                  let languageToUse = 'en'; // Default
+                  
+                  if (mappedCountry === 'TN') {
+                    languageToUse = 'ar';
+                  } else if (location.language === 'fr') {
+                    languageToUse = 'fr';
+                  }
+                  
+                  changeLanguage(languageToUse);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error detecting location:', error);
+          }
+        };
+      
+        setInitialCountryAndLanguage();
+      }, [])
       useEffect(() => {
         setFormData(prev => ({
           ...prev,

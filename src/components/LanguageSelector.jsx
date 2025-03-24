@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { NavLink, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Check, ChevronDown } from 'lucide-react';
 
 const metaTranslations = {
@@ -24,7 +24,8 @@ const metaTranslations = {
 const LanguageSelector = () => {
   const { changeLanguage, language } = useLanguage();
   const [isOpen, setIsOpen] = React.useState(false);
-  const location = useLocation();
+  const navigate = useNavigate();
+  const dropdownRef = useRef(null);
 
   const languages = [
     { code: 'en', label: 'English', path: '/' },
@@ -32,8 +33,22 @@ const LanguageSelector = () => {
     { code: 'ar', label: 'العربية', path: '/TN' }
   ];
 
+  // Handle click outside to close dropdown
   useEffect(() => {
-    // Update meta tags when language changes
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Update meta tags when language changes
+  useEffect(() => {
     const meta = metaTranslations[language];
     if (meta) {
       document.title = meta.title;
@@ -73,40 +88,44 @@ const LanguageSelector = () => {
   }, [language]);
 
   const handleLanguageChange = (newLanguage, path) => {
+    // First change the language
     changeLanguage(newLanguage);
+    
+    // Then navigate to the appropriate path
+    navigate(path);
+    
+    // Close the dropdown
     setIsOpen(false);
   };
 
   return (
-    <div className="relative">
+    <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
       >
         <span className="text-sm font-medium">
-          {languages.find(l => l.code === language)?.label}
+          {languages.find(l => l.code === language)?.label || 'Select Language'}
         </span>
         <ChevronDown className="w-4 h-4 text-gray-500" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5">
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
           <ul className="py-1">
             {languages.map((lang) => (
-              <NavLink
+              <li
                 key={lang.code}
-                to={lang.path}
-                onClick={() => handleLanguageChange(lang.code)}
-                className={({ isActive }) =>
-                  `flex items-center justify-between px-4 py-2 text-sm cursor-pointer hover:bg-gray-100
-                   ${isActive && language === lang.code ? 'bg-gray-50' : ''}`
-                }
+                className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${language === lang.code ? 'bg-gray-50' : ''}`}
+                onClick={() => handleLanguageChange(lang.code, lang.path)}
               >
                 <span>{lang.label}</span>
                 {language === lang.code && (
                   <Check className="w-4 h-4 text-blue-500" />
                 )}
-              </NavLink>
+              </li>
             ))}
           </ul>
         </div>
