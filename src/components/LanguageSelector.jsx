@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -23,7 +23,7 @@ const metaTranslations = {
 
 const LanguageSelector = () => {
   const { changeLanguage, language } = useLanguage();
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
@@ -36,20 +36,16 @@ const LanguageSelector = () => {
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
 
-    // Only add the listener when the dropdown is open
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    
+    document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen]);
+  }, []);
 
   // Update meta tags when language changes
   useEffect(() => {
@@ -91,20 +87,13 @@ const LanguageSelector = () => {
     }
   }, [language]);
 
-  // Toggle dropdown function
-  const toggleDropdown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+  // Toggle dropdown function - simplified to just toggle the state
+  const toggleDropdown = () => {
     console.log("Toggle dropdown called, current state:", isOpen);
-    setIsOpen(prevState => !prevState);
+    setIsOpen(!isOpen);
   };
 
-  const handleLanguageChange = (newLanguage, path, e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    
+  const handleLanguageChange = (newLanguage, path) => {
     console.log(`Language change: ${newLanguage}, path: ${path}`);
     // First change the language
     changeLanguage(newLanguage);
@@ -112,10 +101,8 @@ const LanguageSelector = () => {
     // Then navigate to the appropriate path
     navigate(path);
     
-    // Close the dropdown after a small delay
-    setTimeout(() => {
-      setIsOpen(false);
-    }, 100);
+    // Close the dropdown
+    setIsOpen(false);
   };
 
   // Add a current language debug message
@@ -123,13 +110,12 @@ const LanguageSelector = () => {
   console.log("Is dropdown open:", isOpen);
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <div className="relative inline-block text-left z-50" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors"
+        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         aria-expanded={isOpen}
         aria-haspopup="true"
-        type="button"
       >
         <span className="text-sm font-medium">
           {languages.find(l => l.code === language)?.label || 'Select Language'}
@@ -138,21 +124,31 @@ const LanguageSelector = () => {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-          <ul className="py-1">
+        <div 
+          className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+          style={{ 
+            pointerEvents: 'auto',
+            visibility: 'visible',
+            opacity: 1
+          }}
+        >
+          <div className="py-1">
             {languages.map((lang) => (
-              <li
+              <button
                 key={lang.code}
-                className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${language === lang.code ? 'bg-gray-50' : ''}`}
-                onClick={(e) => handleLanguageChange(lang.code, lang.path, e)}
+                className={`${
+                  language === lang.code ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
+                } group flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900`}
+                role="menuitem"
+                onClick={() => handleLanguageChange(lang.code, lang.path)}
               >
                 <span>{lang.label}</span>
                 {language === lang.code && (
                   <Check className="w-4 h-4 text-blue-500" />
                 )}
-              </li>
+              </button>
             ))}
-          </ul>
+          </div>
         </div>
       )}
     </div>
