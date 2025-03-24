@@ -36,16 +36,20 @@ const LanguageSelector = () => {
   // Handle click outside to close dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (isOpen && dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    // Only add the listener when the dropdown is open
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, []);
+  }, [isOpen]);
 
   // Update meta tags when language changes
   useEffect(() => {
@@ -87,13 +91,20 @@ const LanguageSelector = () => {
     }
   }, [language]);
 
-  // Debug function to check if dropdown click handler works
-  const toggleDropdown = () => {
+  // Toggle dropdown function
+  const toggleDropdown = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     console.log("Toggle dropdown called, current state:", isOpen);
-    setIsOpen(!isOpen);
+    setIsOpen(prevState => !prevState);
   };
 
-  const handleLanguageChange = (newLanguage, path) => {
+  const handleLanguageChange = (newLanguage, path, e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
     console.log(`Language change: ${newLanguage}, path: ${path}`);
     // First change the language
     changeLanguage(newLanguage);
@@ -101,8 +112,10 @@ const LanguageSelector = () => {
     // Then navigate to the appropriate path
     navigate(path);
     
-    // Close the dropdown
-    setIsOpen(false);
+    // Close the dropdown after a small delay
+    setTimeout(() => {
+      setIsOpen(false);
+    }, 100);
   };
 
   // Add a current language debug message
@@ -113,9 +126,10 @@ const LanguageSelector = () => {
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer transition-colors"
         aria-expanded={isOpen}
         aria-haspopup="true"
+        type="button"
       >
         <span className="text-sm font-medium">
           {languages.find(l => l.code === language)?.label || 'Select Language'}
@@ -130,7 +144,7 @@ const LanguageSelector = () => {
               <li
                 key={lang.code}
                 className={`flex items-center justify-between px-4 py-2 text-sm cursor-pointer hover:bg-gray-100 ${language === lang.code ? 'bg-gray-50' : ''}`}
-                onClick={() => handleLanguageChange(lang.code, lang.path)}
+                onClick={(e) => handleLanguageChange(lang.code, lang.path, e)}
               >
                 <span>{lang.label}</span>
                 {language === lang.code && (
