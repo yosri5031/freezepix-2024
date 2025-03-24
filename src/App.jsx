@@ -3642,6 +3642,7 @@ if (showIntro) {
     switch (service) {
       case 'passport':
         setShowPhotoOptions(true);
+        break;
       case 'booking':
         window.location.href = 'https://booking.freezepix.com';
         break;
