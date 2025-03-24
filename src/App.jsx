@@ -3679,15 +3679,7 @@ if (showIntro) {
             {/* Main Content */}
             <div className="space-y-6 sm:space-y-8">
               {/* Hero Section */}
-              <div className="text-center px-4">
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
-                  {t('intro.title')}
-                </h1>
-                <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-                  {t('intro.subtitle')}
-                </p>
-              </div>
-
+           
               {/* Services Grid */}
               <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
                
