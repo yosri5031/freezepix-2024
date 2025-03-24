@@ -291,6 +291,49 @@ const [interacReference, setInteracReference] = useState('');
     });
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
+      const detectUserLocation = async () => {
+        try {
+          const response = await fetch('https://ipapi.co/json/');
+          const data = await response.json();
+          return {
+            country: data.country_code,
+            language: data.languages?.split(',')[0] || 'en'
+          };
+        } catch (error) {
+          console.error('Error detecting location:', error);
+          return null;
+        }
+      };
+      
+      const mapCountryCode = (code) => {
+        const countryMap = {
+          'USA': 'US',
+          'CAN': 'CA',
+          'TUN': 'TN',
+          'CA':'CA',
+          'US':'US',
+          'TN':'TN'
+          // Add more mappings as needed
+        };
+        return countryMap[code] || code;
+      };
+
+      // Add this useEffect in your FreezePIX component
+useEffect(() => {
+  const setInitialCountryAndLanguage = async () => {
+    const location = await detectUserLocation();
+    if (location) {
+      const mappedCountry = mapCountryCode(location.country);
+      if (!selectedCountry && initialCountries.some(c => c.value === mappedCountry)) {
+        setSelectedCountry(mappedCountry);
+        changeLanguage(location.language);
+      }
+    }
+  };
+
+  setInitialCountryAndLanguage();
+}, []);
+
       useEffect(() => {
         setFormData(prev => ({
           ...prev,
@@ -3360,6 +3403,7 @@ if (showIntro) {
     }
   };
 
+
   return (
     <Routes>
       <Route path="/*" element={
@@ -3372,13 +3416,12 @@ if (showIntro) {
                   <span className="text-black">freeze</span>
                   <span className="text-yellow-400">PIX</span>
                 </div>
-                <LanguageSelector />
               </div>
             </div>
 
             {/* Main Content */}
             <div className="space-y-6 sm:space-y-8">
-              {/* Hero Section - Compact on mobile */}
+              {/* Hero Section */}
               <div className="text-center px-4">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
                   {t('intro.title')}
@@ -3388,41 +3431,8 @@ if (showIntro) {
                 </p>
               </div>
 
-              {/* Services Grid - Single column on mobile */}
+              {/* Services Grid */}
               <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-                {/* Print Pictures - Most important, full width on mobile */}
-                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
-
-                  {/* Country Selection - Full width input */}
-                  <div className="space-y-3">
-                    <select 
-                      className="w-full p-3 sm:p-2 text-base sm:text-sm border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                      value={selectedCountry}
-                      onChange={(e) => handleCountrySelect(e.target.value)}
-                    >
-                      <option value="">{t('navigation.select')}</option>
-                      {initialCountries.map(country => (
-                        <option key={country.value} value={country.value}>
-                          {country.name} ({country.currency})
-                        </option>
-                      ))}
-                    </select>
-
-                    <button
-                      onClick={() => handleServiceNavigation('print')}
-                      disabled={!selectedCountry}
-                      className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {t('buttons.start_printing')}
-                    </button>
-                  </div>
-                </div>
-
                 {/* Studio Photography */}
                 <div className="bg-white rounded-xl shadow-sm p-6 sm:order-1">
                   <div className="flex items-center space-x-4 mb-4">
@@ -3435,6 +3445,22 @@ if (showIntro) {
                     className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
                   >
                     {t('buttons.book_now')}
+                  </button>
+                </div>
+
+                {/* Print Pictures */}
+                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
+                  <button
+                    onClick={() => handleServiceNavigation('print')}
+                    disabled={!selectedCountry}
+                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t('buttons.start_printing')}
                   </button>
                 </div>
 
@@ -3454,28 +3480,31 @@ if (showIntro) {
                 </div>
               </div>
 
-              {/* Features Section - 2 columns on mobile, 4 on desktop */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 sm:py-8">
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">1HR</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('features.quick')}</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">100%</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('features.satisfaction')}</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">24/7</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('features.online')}</div>
-                </div>
-                <div className="bg-white rounded-xl p-4 text-center">
-                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">HD</div>
-                  <div className="text-xs sm:text-sm text-gray-600">{t('features.quality')}</div>
+              {/* Fixed bottom bar for country and language selection */}
+              <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg">
+                <div className="max-w-7xl mx-auto p-4">
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <select 
+                        className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                        value={selectedCountry}
+                        onChange={(e) => handleCountrySelect(e.target.value)}
+                      >
+                        <option value="">{t('navigation.select')}</option>
+                        {initialCountries.map(country => (
+                          <option key={country.value} value={country.value}>
+                            {country.name} ({country.currency})
+                          </option>
+                        ))}
+                      </select>
+                      <LanguageSelector />
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Archive Policy - Always at bottom */}
-              <div className="text-center py-4">
+              {/* Archive Policy */}
+              <div className="text-center py-4 mb-20">
                 <p className="text-xs text-gray-500 px-4">
                   {t('intro.archive_policy')}
                 </p>
