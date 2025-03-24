@@ -1102,7 +1102,7 @@ const closeProductDetails = () => {
          };
      
          saveState();
-     }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+     }, [showIntro, selectedCountry, selectedPhotos,selectedStudio, activeStep, formData]);
 
      useEffect(() => {
       const restorePhotos = async () => {
@@ -3389,14 +3389,18 @@ if (showIntro) {
         window.location.href = 'https://booking.freezepix.com';
         break;
       case 'print':
-        if (selectedCountry) {
-          handleCountrySelect(selectedCountry);
-          handleStartPrinting();
-        }
+        // Simply call handleStartPrinting to move to the next step
+        handleStartPrinting();
         break;
       default:
         break;
     }
+  };
+
+  // Make sure handleStartPrinting is defined correctly
+  const handleStartPrinting = () => {
+    setShowIntro(false);
+    setActiveStep(0);
   };
 
   return (
