@@ -500,13 +500,12 @@ const [interacReference, setInteracReference] = useState('');
         return days[day];
       };
 
-      const StudioSelector = ({ onStudioSelect, selectedStudio, setSelectedCountry }) => {
+      const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [userLocation, setUserLocation] = useState(null);
         const [showAll, setShowAll] = useState(false);
-        const { t } = useTranslation();
       
         // Number of studios to show initially
         const INITIAL_DISPLAY_COUNT = 4;
@@ -534,13 +533,13 @@ const [interacReference, setInteracReference] = useState('');
               },
               (error) => {
                 console.error('Error getting location:', error);
-                setError(t('errors.location_services'));
+                setError('Please enable location services to find nearby studios');
               }
             );
           } else {
-            setError(t('errors.geolocation_not_supported'));
+            setError('Geolocation is not supported by your browser');
           }
-        }, [t]);
+        }, []);
       
         useEffect(() => {
           const fetchStudios = async () => {
@@ -568,38 +567,17 @@ const [interacReference, setInteracReference] = useState('');
               setLoading(false);
             } catch (error) {
               console.error('Error fetching studios:', error);
-              setError(t('errors.fetch_studios_failed'));
+              setError('Failed to fetch studios');
               setLoading(false);
             }
           };
       
           fetchStudios();
-        }, [userLocation, t]);
-      
-        const handleStudioSelect = (studio) => {
-          // Map studio country to country code
-          const countryCodeMap = {
-            'Tunisia': 'TN',
-            'United States': 'US',
-            'Canada': 'CA',
-            'CA': 'CA',
-            'USA': 'US',
-            'US': 'US',
-            'Germany': 'DE',
-            'France': 'FR',
-            'Italy': 'IT',
-            'Spain': 'ES',
-            'United Kingdom': 'GB'
-          };
-      
-          const countryCode = countryCodeMap[studio.country] || studio.country;
-          setSelectedCountry(countryCode); // Set the country based on studio selection
-          onStudioSelect(studio); // Call the original onStudioSelect
-        };
+        }, [userLocation]);
       
         const getDayName = (day) => {
           const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          return t(`days.${days[day].toLowerCase()}`);
+          return days[day];
         };
       
         const getLanguagePreference = () => {
@@ -628,7 +606,7 @@ const [interacReference, setInteracReference] = useState('');
         if (studios.length === 0) {
           return (
             <div className="text-center text-gray-500 py-8">
-              {t('studio.no_studios_available')}
+              No studios available in your region.
             </div>
           );
         }
@@ -639,7 +617,7 @@ const [interacReference, setInteracReference] = useState('');
       
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-medium">{t('studio.nearest_locations')}</h2>
+            <h2 className="text-xl font-medium">Nearest Pickup Locations</h2>
       
             <div className="grid gap-4 md:grid-cols-2">
               {displayedStudios.map(studio => (
@@ -650,7 +628,7 @@ const [interacReference, setInteracReference] = useState('');
                       ? 'border-yellow-400 bg-yellow-50'
                       : 'hover:border-gray-400'
                   }`}
-                  onClick={() => handleStudioSelect(studio)}
+                  onClick={() => onStudioSelect(studio)}
                 >
                   <div className="flex justify-between items-start">
                     <h3 className="font-medium text-lg mb-2">
@@ -685,7 +663,7 @@ const [interacReference, setInteracReference] = useState('');
                     <div className="border-t pt-2 mt-2">
                       <div className="flex items-center gap-2 mb-1">
                         <Clock size={16} />
-                        <span className="font-medium">{t('studio.operating_hours')}:</span>
+                        <span className="font-medium">Operating Hours:</span>
                       </div>
                       <div className="grid grid-cols-1 gap-1">
                         {studio.operatingHours
@@ -694,7 +672,7 @@ const [interacReference, setInteracReference] = useState('');
                           <div key={hours.day} className="flex justify-between text-xs">
                             <span>{getDayName(hours.day)}</span>
                             <span dir="ltr">
-                              {hours.isClosed ? t('studio.closed') : `${hours.openTime} - ${hours.closeTime}`}
+                              {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
                             </span>
                           </div>
                         ))}
@@ -717,12 +695,12 @@ const [interacReference, setInteracReference] = useState('');
                 >
                   {showAll ? (
                     <>
-                      {t('buttons.show_less')}
+                      Show Less
                       <ChevronUp size={20} />
                     </>
                   ) : (
                     <>
-                      {t('buttons.show_more')}
+                      Show More Locations
                       <ChevronDown size={20} />
                     </>
                   )}
@@ -3385,113 +3363,128 @@ if (showIntro) {
 
   return (
     <Routes>
-      <Route 
-        path="/*" 
-        element={
-          <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-            <div className="mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-7xl">
-              {/* Header - Sticky on mobile */}
-              <div className="sticky top-0 z-50 bg-white rounded-xl shadow-sm mb-4 sm:mb-6">
-                <div className="flex justify-between items-center p-4 sm:p-6">
-                  <div className="text-3xl sm:text-4xl font-bold tracking-tight">
-                    <span className="text-black">freeze</span>
-                    <span className="text-yellow-400">PIX</span>
-                  </div>
-                  <LanguageSelector />
+      <Route path="/*" element={
+        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+          <div className="mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-7xl">
+            {/* Header - Sticky on mobile */}
+            <div className="sticky top-0 z-50 bg-white rounded-xl shadow-sm mb-4 sm:mb-6">
+              <div className="flex justify-between items-center p-4 sm:p-6">
+                <div className="text-3xl sm:text-4xl font-bold tracking-tight">
+                  <span className="text-black">freeze</span>
+                  <span className="text-yellow-400">PIX</span>
                 </div>
+                <LanguageSelector />
               </div>
-  
-              {/* Main Content */}
-              <div className="space-y-6 sm:space-y-8">
-                {/* Hero Section */}
-                <div className="text-center px-4">
-                  <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
-                    {t('intro.title')}
-                  </h1>
-                  <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
-                    {t('intro.subtitle')}
-                  </p>
-                </div>
-  
-                {/* Services Grid */}
-                <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-                  {/* Print Pictures */}
-                  <div className="bg-white rounded-xl shadow-sm p-6 sm:order-1">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                      <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
+            </div>
+
+            {/* Main Content */}
+            <div className="space-y-6 sm:space-y-8">
+              {/* Hero Section - Compact on mobile */}
+              <div className="text-center px-4">
+                <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">
+                  {t('intro.title')}
+                </h1>
+                <p className="text-sm sm:text-base text-gray-600 max-w-2xl mx-auto">
+                  {t('intro.subtitle')}
+                </p>
+              </div>
+
+              {/* Services Grid - Single column on mobile */}
+              <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+                {/* Print Pictures - Most important, full width on mobile */}
+                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
+
+                  {/* Country Selection - Full width input */}
+                  <div className="space-y-3">
+                    <select 
+                      className="w-full p-3 sm:p-2 text-base sm:text-sm border rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                      value={selectedCountry}
+                      onChange={(e) => handleCountrySelect(e.target.value)}
+                    >
+                      <option value="">{t('navigation.select')}</option>
+                      {initialCountries.map(country => (
+                        <option key={country.value} value={country.value}>
+                          {country.name} ({country.currency})
+                        </option>
+                      ))}
+                    </select>
+
                     <button
                       onClick={() => handleServiceNavigation('print')}
-                      className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
+                      disabled={!selectedCountry}
+                      className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {t('buttons.start_printing')}
                     </button>
                   </div>
-  
-                  {/* Studio Photography */}
-                  <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                      <h3 className="text-lg sm:text-xl font-semibold">{t('services.studio')}</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{t('services.studio_desc')}</p>
-                    <button
-                      onClick={() => handleServiceNavigation('booking')}
-                      className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
-                    >
-                      {t('buttons.book_now')}
-                    </button>
-                  </div>
-  
-                  {/* Passport Photos */}
-                  <div className="bg-white rounded-xl shadow-sm p-6 sm:order-3">
-                    <div className="flex items-center space-x-4 mb-4">
-                      <Camera className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                      <h3 className="text-lg sm:text-xl font-semibold">{t('services.passport')}</h3>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-4">{t('services.passport_desc')}</p>
-                    <button
-                      onClick={() => handleServiceNavigation('passport')}
-                      className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
-                    >
-                      {t('buttons.take_photo')}
-                    </button>
-                  </div>
                 </div>
-  
-                {/* Features Section */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 sm:py-8">
-                  <div className="bg-white rounded-xl p-4 text-center">
-                    <div className="font-bold text-xl sm:text-2xl text-yellow-400">1HR</div>
-                    <div className="text-xs sm:text-sm text-gray-600">{t('features.quick')}</div>
+
+                {/* Studio Photography */}
+                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-1">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.studio')}</h3>
                   </div>
-                  <div className="bg-white rounded-xl p-4 text-center">
-                    <div className="font-bold text-xl sm:text-2xl text-yellow-400">100%</div>
-                    <div className="text-xs sm:text-sm text-gray-600">{t('features.satisfaction')}</div>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center">
-                    <div className="font-bold text-xl sm:text-2xl text-yellow-400">24/7</div>
-                    <div className="text-xs sm:text-sm text-gray-600">{t('features.online')}</div>
-                  </div>
-                  <div className="bg-white rounded-xl p-4 text-center">
-                    <div className="font-bold text-xl sm:text-2xl text-yellow-400">HD</div>
-                    <div className="text-xs sm:text-sm text-gray-600">{t('features.quality')}</div>
-                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('services.studio_desc')}</p>
+                  <button
+                    onClick={() => handleServiceNavigation('booking')}
+                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
+                  >
+                    {t('buttons.book_now')}
+                  </button>
                 </div>
-  
-                {/* Archive Policy */}
-                <div className="text-center py-4">
-                  <p className="text-xs text-gray-500 px-4">
-                    {t('intro.archive_policy')}
-                  </p>
+
+                {/* Passport Photos */}
+                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-3">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Camera className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.passport')}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('services.passport_desc')}</p>
+                  <button
+                    onClick={() => handleServiceNavigation('passport')}
+                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
+                  >
+                    {t('buttons.take_photo')}
+                  </button>
                 </div>
+              </div>
+
+              {/* Features Section - 2 columns on mobile, 4 on desktop */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 py-6 sm:py-8">
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">1HR</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{t('features.quick')}</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">100%</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{t('features.satisfaction')}</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">24/7</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{t('features.online')}</div>
+                </div>
+                <div className="bg-white rounded-xl p-4 text-center">
+                  <div className="font-bold text-xl sm:text-2xl text-yellow-400">HD</div>
+                  <div className="text-xs sm:text-sm text-gray-600">{t('features.quality')}</div>
+                </div>
+              </div>
+
+              {/* Archive Policy - Always at bottom */}
+              <div className="text-center py-4">
+                <p className="text-xs text-gray-500 px-4">
+                  {t('intro.archive_policy')}
+                </p>
               </div>
             </div>
           </div>
-        } 
-      />
+        </div>
+      } />
     </Routes>
   );
 }
