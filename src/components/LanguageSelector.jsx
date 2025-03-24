@@ -87,7 +87,14 @@ const LanguageSelector = () => {
     }
   }, [language]);
 
+  // Debug function to check if dropdown click handler works
+  const toggleDropdown = () => {
+    console.log("Toggle dropdown called, current state:", isOpen);
+    setIsOpen(!isOpen);
+  };
+
   const handleLanguageChange = (newLanguage, path) => {
+    console.log(`Language change: ${newLanguage}, path: ${path}`);
     // First change the language
     changeLanguage(newLanguage);
     
@@ -98,10 +105,14 @@ const LanguageSelector = () => {
     setIsOpen(false);
   };
 
+  // Add a current language debug message
+  console.log("Current language:", language);
+  console.log("Is dropdown open:", isOpen);
+
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={toggleDropdown}
         className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
         aria-expanded={isOpen}
         aria-haspopup="true"

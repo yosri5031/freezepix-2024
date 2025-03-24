@@ -576,6 +576,9 @@ const [interacReference, setInteracReference] = useState('');
       useEffect(() => {
         const setInitialCountryAndLanguage = async () => {
           try {
+            // Get current language using the context hook
+            const currentLanguage = language || 'en'; // Access from context or use default
+            
             const location = await detectUserLocation();
             if (location) {
               const mappedCountry = mapCountryCode(location.country);
@@ -585,7 +588,8 @@ const [interacReference, setInteracReference] = useState('');
                 setSelectedCountry(mappedCountry);
                 
                 // Set language based on country, but don't override user's active selection
-                if (!language) { // Only change if language isn't already set
+                // Only if the changeLanguage function is available
+                if (changeLanguage && !currentLanguage) { 
                   // Map country to language preference
                   let languageToUse = 'en'; // Default
                   
@@ -605,7 +609,8 @@ const [interacReference, setInteracReference] = useState('');
         };
       
         setInitialCountryAndLanguage();
-      }, [])
+      }, []);
+      
       useEffect(() => {
         setFormData(prev => ({
           ...prev,
@@ -766,7 +771,7 @@ const [interacReference, setInteracReference] = useState('');
      }, []);
 
      const location = useLocation();
-     const { changeLanguage } = useLanguage(); 
+     const { language ,changeLanguage } = useLanguage(); 
      useEffect(() => {
       // Set selected country and language when the pathname changes
       if (location.pathname === '/TN') {
