@@ -70,7 +70,9 @@
   "processing": "جاري المعالجة...",
   "place_order": "تأكيد الطلب",
   "place_new": "طلب جديد",
-  "review": "المراجعة والدفع"
+  "review": "المراجعة والدفع",
+   "book_now": "احجز الآن",
+    "take_photo": "التقط صورة"
   },
   "steps": {
   "upload_photos": "رفع الصور",

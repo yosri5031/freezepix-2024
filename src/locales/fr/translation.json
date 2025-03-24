@@ -70,7 +70,9 @@
     "processing": "En cours...",
     "place_order": "Passer la commande",
       "place_new": "Passer une nouvelle commande",
-      "review": "Révision et paiement"
+      "review": "Révision et paiement",
+      "book_now": "Réserver",
+      "take_photo": "Prendre Photo"
     },
     "steps": {
       "upload_photos": "Télécharger des Photos",
