@@ -87,7 +87,7 @@ const LanguageSelector = () => {
     }
   }, [language]);
 
-  // Toggle dropdown function - simplified to just toggle the state
+  // Toggle dropdown function
   const toggleDropdown = () => {
     console.log("Toggle dropdown called, current state:", isOpen);
     setIsOpen(!isOpen);
@@ -125,7 +125,7 @@ const LanguageSelector = () => {
 
       {isOpen && (
         <div 
-          className="origin-top-right absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+          className="origin-bottom-right absolute bottom-full right-0 mb-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
           style={{ 
             pointerEvents: 'auto',
             visibility: 'visible',
