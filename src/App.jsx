@@ -464,7 +464,7 @@ const BookingPopup = ({ onClose }) => {
               <div className="flex items-center">
                 <Store className="w-8 h-8 text-yellow-400 mr-4" />
                 <div>
-                  <h2 className="text-xl font-semibold">Visit Our Studio</h2>
+                  <h2 className="text-xl font-semibold">Visit Our Studios</h2>
                   <p className="text-gray-600">Professional photo session</p>
                 </div>
               </div>
