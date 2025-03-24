@@ -293,15 +293,29 @@ const [interacReference, setInteracReference] = useState('');
 
       const detectUserLocation = async () => {
         try {
-          const response = await fetch('https://ipapi.co/json/');
+          const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/geo-location', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
           const data = await response.json();
           return {
             country: data.country_code,
             language: data.languages?.split(',')[0] || 'en'
           };
         } catch (error) {
-          console.error('Error detecting location:', error);
-          return null;
+          console.warn('Location detection failed:', error);
+          return {
+            country: 'USA',
+            language: navigator.language?.split('-')[0] || 'en'
+          };
         }
       };
       
