@@ -3433,6 +3433,24 @@ if (showIntro) {
 
               {/* Services Grid */}
               <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
+               
+                 {/* Print Pictures */}
+                 <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
+                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
+                  <button
+                    onClick={() => handleServiceNavigation('print')}
+                    disabled={!selectedCountry}
+                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {t('buttons.start_printing')}
+                  </button>
+                </div>
+
+               
                 {/* Studio Photography */}
                 <div className="bg-white rounded-xl shadow-sm p-6 sm:order-1">
                   <div className="flex items-center space-x-4 mb-4">
@@ -3448,22 +3466,7 @@ if (showIntro) {
                   </button>
                 </div>
 
-                {/* Print Pictures */}
-                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
-                  <button
-                    onClick={() => handleServiceNavigation('print')}
-                    disabled={!selectedCountry}
-                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {t('buttons.start_printing')}
-                  </button>
-                </div>
-
+              
                 {/* Passport Photos */}
                 <div className="bg-white rounded-xl shadow-sm p-6 sm:order-3">
                   <div className="flex items-center space-x-4 mb-4">
