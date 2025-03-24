@@ -233,18 +233,258 @@ const BookingPopup = ({ onClose }) => {
   
   // Add this function before the FreezePIX component
 
+  const PhotoOptions = () => {
+    const [showBookingForm, setShowBookingForm] = useState(false);
+    const [showStudioList, setShowStudioList] = useState(false);
+    const [studios, setStudios] = useState([]);
+    const [selectedStudio, setSelectedStudio] = useState(null);
+    const [formData, setFormData] = useState({
+      name: '',
+      phone: '',
+      email: '',
+      dateTime: '',
+      studioId: ''
+    });
+  
+    useEffect(() => {
+      if (showStudioList) {
+        fetchStudios();
+      }
+    }, [showStudioList]);
+  
+    const fetchStudios = async () => {
+      try {
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+        if (!response.ok) throw new Error('Failed to fetch studios');
+        const data = await response.json();
+        setStudios(data);
+      } catch (error) {
+        console.error('Error fetching studios:', error);
+      }
+    };
+  
+    const handlePassportPhoto = () => {
+      window.location.href = 'https://photo-passport-958d6e9780c3.herokuapp.com/';
+    };
+  
+    const handleStudioSelect = (studio) => {
+      setSelectedStudio(studio);
+      setFormData(prev => ({ ...prev, studioId: studio._id }));
+      setShowBookingForm(true);
+    };
+  
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      // Here you would send the booking data including studioId
+      console.log('Booking submitted:', formData);
+      alert('Booking received! We will contact you shortly.');
+      setShowBookingForm(false);
+      setShowStudioList(false);
+      setSelectedStudio(null);
+    };
+  
+    const handleBack = () => {
+      if (showBookingForm) {
+        setShowBookingForm(false);
+        setShowStudioList(true);
+      } else if (showStudioList) {
+        setShowStudioList(false);
+      } else {
+        onBack();
+      }
+    };
+  
+    // Common header with back button
+    const Header = () => (
+      <div className="sticky top-0 z-50 bg-white rounded-xl shadow-sm mb-4">
+        <div className="flex items-center p-4">
+          <button 
+            onClick={handleBack}
+            className="flex items-center text-gray-600"
+          >
+            <ChevronLeft className="w-5 h-5 mr-1" />
+            Back
+          </button>
+        </div>
+      </div>
+    );
+
+    if (showStudioList) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-4">
+          <Header />
+
+          <div className="max-w-md mx-auto">
+            <button 
+              onClick={() => setShowStudioList(false)}
+              className="flex items-center text-gray-600 mb-4"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </button>
+            
+            <h2 className="text-2xl font-bold mb-6">Select a Studio</h2>
+            
+            <div className="space-y-4">
+              {studios.map((studio) => (
+                <div 
+                  key={studio._id}
+                  onClick={() => handleStudioSelect(studio)}
+                  className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-semibold">{studio.name}</h3>
+                      <div className="flex items-center text-gray-600 mt-2">
+                        <MapPin className="w-4 h-4 mr-2" />
+                        <p>{studio.address}</p>
+                      </div>
+                      <p className="text-gray-600 mt-1">{studio.city}, {studio.country}</p>
+                    </div>
+                    <ChevronLeft className="w-6 h-6 text-gray-400 transform rotate-180" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+    }
+  
+    if (showBookingForm) {
+      return (
+        <div className="min-h-screen bg-gray-50 p-4">
+          <div className="max-w-md mx-auto bg-white rounded-xl shadow-lg p-6">
+            <button 
+              onClick={() => {
+                setShowBookingForm(false);
+                setShowStudioList(true);
+              }}
+              className="flex items-center text-gray-600 mb-4"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </button>
+            
+            <h2 className="text-2xl font-bold mb-6">Studio Booking</h2>
+            
+            {selectedStudio && (
+              <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+                <h3 className="font-semibold">{selectedStudio.name}</h3>
+                <p className="text-gray-600">{selectedStudio.address}</p>
+              </div>
+            )}
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <input
+                  type="text"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-400 focus:ring focus:ring-yellow-200"
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <input
+                  type="tel"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-400 focus:ring focus:ring-yellow-200"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <input
+                  type="email"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-400 focus:ring focus:ring-yellow-200"
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Date & Time</label>
+                <input
+                  type="datetime-local"
+                  required
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-yellow-400 focus:ring focus:ring-yellow-200"
+                  value={formData.dateTime}
+                  onChange={(e) => setFormData({...formData, dateTime: e.target.value})}
+                />
+              </div>
+              
+              <button
+                type="submit"
+                className="w-full bg-yellow-400 text-white py-2 px-4 rounded-md hover:bg-yellow-500 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:ring-offset-2"
+              >
+                Book Appointment
+              </button>
+            </form>
+          </div>
+        </div>
+      );
+    }
+  
+    return (
+      <div className="min-h-screen bg-gray-50 p-4">
+        <div className="max-w-md mx-auto space-y-4">
+          <h1 className="text-3xl font-bold text-center mb-8">Choose Your Option</h1>
+          
+          <div 
+            onClick={handlePassportPhoto}
+            className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Camera className="w-8 h-8 text-yellow-400 mr-4" />
+                <div>
+                  <h2 className="text-xl font-semibold">Take a Picture Now</h2>
+                  <p className="text-gray-600">Instant passport photos</p>
+                  <span className="inline-block mt-2 bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded">
+                    50% OFF
+                  </span>
+                </div>
+              </div>
+              <ChevronLeft className="w-6 h-6 text-gray-400 transform rotate-180" />
+            </div>
+          </div>
+          
+          <div 
+            onClick={() => setShowStudioList(true)}
+            className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Store className="w-8 h-8 text-yellow-400 mr-4" />
+                <div>
+                  <h2 className="text-xl font-semibold">Visit Our Studio</h2>
+                  <p className="text-gray-600">Professional photo session</p>
+                </div>
+              </div>
+              <ChevronLeft className="w-6 h-6 text-gray-400 transform rotate-180" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
 
 const FreezePIX = () => {
  
-
-
 
     const [showIntro, setShowIntro] = useState(true);
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
     const [paymentMethod, setPaymentMethod] = useState('helcim'); // Default payment method
-
+    const [showPhotoOptions, setShowPhotoOptions] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
     const [isProcessingOrder, setIsProcessingOrder] = useState(false);
@@ -3401,8 +3641,7 @@ if (showIntro) {
   const handleServiceNavigation = (service) => {
     switch (service) {
       case 'passport':
-        window.location.href = 'https://photo-passport-958d6e9780c3.herokuapp.com/';
-        break;
+        setShowPhotoOptions(true);
       case 'booking':
         window.location.href = 'https://booking.freezepix.com';
         break;
@@ -3416,9 +3655,12 @@ if (showIntro) {
         break;
     }
   };
-
+  if (showPhotoOptions) {
+    return <PhotoOptions onBack={() => setShowPhotoOptions(false)} />;
+  }
 
   return (
+    
     <Routes>
       <Route path="/*" element={
         <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
