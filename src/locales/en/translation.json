@@ -6,6 +6,20 @@
       "choose_location": "Choose your location to start printing your memories",
       "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
     },
+    "services": {
+      "studio": "Photography Studio",
+      "studio_desc": "Professional studio sessions with expert photographers",
+      "print": "Print Pictures",
+      "print_desc": "High-quality prints delivered to your doorstep",
+      "passport": "Passport Photos",
+      "passport_desc": "Instant passport photos that meet official requirements"
+    },
+    "features": {
+      "quick": "Quick Service",
+      "satisfaction": "Satisfaction",
+      "online": "Online Orders",
+      "quality": "Quality Prints"
+    },
     "pickup": {
   "details": "Pickup Details",
   "location": "Pickup Location",

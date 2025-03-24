@@ -3342,107 +3342,153 @@ const { t } = useTranslation();
 
   
 if (showIntro) {
+  const handleOpenApp = (url) => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      if (url.includes('photo-passport')) {
+        const deepLink = 'freezepixapp://passport-photo';
+        const iosAppStore = 'https://apps.apple.com/app/freezepix/id123456789';
+        const androidPlayStore = 'https://play.google.com/store/apps/details?id=com.freezepix';
+        
+        window.location.href = deepLink;
+        setTimeout(() => {
+          if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+            window.location.href = iosAppStore;
+          } else {
+            window.location.href = androidPlayStore;
+          }
+        }, 1000);
+      } else {
+        window.location.href = url;
+      }
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <Routes>
       <Route path="/*" element={
-        <div className="app-container bg-gray-50">
-          <div className="main-content flex items-center justify-center">
-            <div className="grid-container">
-              <div className="bg-white rounded-lg shadow-lg overflow-hidden max-w-6xl w-full mx-auto">
-                <div className="text-center p-8 space-y-6">
-                  {/* Logo Section */}
-                  <div className="flex justify-between items-center px-4">
-                    <div className="text-4xl font-bold tracking-tight">
-                      <span className="text-black">freeze</span>
-                      <span className="text-yellow-400">PIX</span>
-                    </div>
-                    <LanguageSelector />
+        <div className="app-container min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+          <div className="main-content py-8">
+            <div className="max-w-6xl mx-auto px-4">
+              <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                {/* Header */}
+                <div className="flex justify-between items-center p-6 border-b">
+                  <div className="text-4xl font-bold tracking-tight">
+                    <span className="text-black">freeze</span>
+                    <span className="text-yellow-400">PIX</span>
                   </div>
+                  <LanguageSelector />
+                </div>
 
-                  <div className="text-sm italic text-gray-600 mb-8">
-                    {t('intro.welcome')}
-                  </div>
-                  
-                  <div className="space-y-6 max-w-3xl mx-auto">
-                    <h2 className="text-2xl font-semibold text-gray-800">
+                <div className="p-8 space-y-8">
+                  {/* Hero Section */}
+                  <div className="text-center max-w-3xl mx-auto">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-4">
                       {t('intro.title')}
-                    </h2>
-                    
-                    <p className="text-gray-600">
+                    </h1>
+                    <p className="text-gray-600 text-lg">
                       {t('intro.subtitle')}
                     </p>
-          
-                    <div className="grid grid-cols-3 gap-8 py-4">
-                      <div className="text-center">
-                        <Camera className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
-                        <div className="text-sm text-gray-600">{t('navigation.choose_photos')}</div>
-                      </div>
-                      <div className="text-center">
-                        <Package className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
-                        <div className="text-sm text-gray-600">{t('navigation.select_sizes')}</div>
-                      </div>
-                      <div className="text-center">
-                        <ShoppingCart className="w-12 h-12 mx-auto mb-2 text-yellow-400" />
-                        <div className="text-sm text-gray-600">{t('navigation.quick_checkout')}</div>
-                      </div>
+                  </div>
+
+                  {/* Services Grid */}
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* Studio Photography */}
+                    <div 
+                      onClick={() => handleOpenApp('https://booking.freezepix.com')}
+                      className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+                    >
+                      <Calendar className="w-12 h-12 text-yellow-400 mb-4" />
+                      <h3 className="font-semibold mb-2">{t('services.studio')}</h3>
+                      <p className="text-sm text-gray-600">{t('services.studio_desc')}</p>
                     </div>
-                    
-                    <div className="text-center">
-                      <p className="text-gray-600 mt-2">{t('navigation.location')}</p>
-                    </div>
-                    
-                    <div className="max-w-xl mx-auto space-y-4">
-                      <select 
-                        className="w-full p-4 text-left border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
-                        value={selectedCountry}
-                        onChange={(e) => handleCountrySelect(e.target.value)}
-                      >
-                        <option value="">{t('navigation.select')}</option>
-                        {initialCountries.map(country => (
-                          <option key={country.value} value={country.value}>
-                            {country.name} ({country.currency})
-                          </option>
-                        ))}
-                      </select>
-      
-                      <button
-                        onClick={() => {
-                          if (selectedCountry) {
-                            handleCountrySelect(selectedCountry);
-                            handleStartPrinting();
-                          }
-                        }}
-                        disabled={!selectedCountry}
-                        className="w-full px-6 py-3 bg-yellow-400 text-black font-semibold rounded-lg shadow-md hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {t('buttons.start_printing')}
-                      </button>
-      
-                     {/*  <div className="text-center">
-                        <button 
-                          onClick={() => setShowBookingPopup(true)} 
-                          className="text-sm text-gray-600 hover:text-yellow-600 underline"
+
+                    {/* Print Pictures */}
+                    <div 
+                      className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+                    >
+                      <Package className="w-12 h-12 text-yellow-400 mb-4" />
+                      <h3 className="font-semibold mb-2">{t('services.print')}</h3>
+                      <p className="text-sm text-gray-600">{t('services.print_desc')}</p>
+
+                      {/* Country Selection */}
+                      <div className="mt-4">
+                        <select 
+                          className="w-full p-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-yellow-400"
+                          value={selectedCountry}
+                          onChange={(e) => handleCountrySelect(e.target.value)}
                         >
-                          {t('buttons.book_service')}
+                          <option value="">{t('navigation.select')}</option>
+                          {initialCountries.map(country => (
+                            <option key={country.value} value={country.value}>
+                              {country.name} ({country.currency})
+                            </option>
+                          ))}
+                        </select>
+
+                        <button
+                          onClick={() => {
+                            if (selectedCountry) {
+                              handleCountrySelect(selectedCountry);
+                              handleStartPrinting();
+                            }
+                          }}
+                          disabled={!selectedCountry}
+                          className="w-full mt-2 px-4 py-2 bg-yellow-400 text-black text-sm font-semibold rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {t('buttons.start_printing')}
                         </button>
-                      </div>*/}
+                      </div>
+                    </div>
+
+                    {/* Passport Photos */}
+                    <div 
+                      onClick={() => handleOpenApp('https://photo-passport-958d6e9780c3.herokuapp.com/')}
+                      className="bg-white rounded-lg p-6 shadow-md hover:shadow-lg transition-shadow cursor-pointer border border-gray-100"
+                    >
+                      <Camera className="w-12 h-12 text-yellow-400 mb-4" />
+                      <h3 className="font-semibold mb-2">{t('services.passport')}</h3>
+                      <p className="text-sm text-gray-600">{t('services.passport_desc')}</p>
                     </div>
                   </div>
-                </div>
-                
-                {/* Archive Policy */}
-                <div className="border-t text-center py-3">
-                  <p className="text-xs text-gray-500">
-                    {t('intro.archive_policy')}
-                  </p>
+
+                  {/* Features Section */}
+                  <div className="grid grid-cols-4 gap-4 py-8 border-t border-b">
+                    <div className="text-center">
+                      <div className="font-bold text-2xl text-yellow-400">1HR</div>
+                      <div className="text-sm text-gray-600">{t('features.quick')}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-2xl text-yellow-400">100%</div>
+                      <div className="text-sm text-gray-600">{t('features.satisfaction')}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-2xl text-yellow-400">24/7</div>
+                      <div className="text-sm text-gray-600">{t('features.online')}</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-bold text-2xl text-yellow-400">HD</div>
+                      <div className="text-sm text-gray-600">{t('features.quality')}</div>
+                    </div>
+                  </div>
+
+                  {/* Archive Policy */}
+                  <div className="text-center">
+                    <p className="text-xs text-gray-500">
+                      {t('intro.archive_policy')}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Booking Popup */}
+            {/* Booking Popup 
             {showBookingPopup && (
-              <div className="modal-container">
-                <div className="modal-content relative max-w-4xl h-[90vh] max-h-[600px]">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div className="relative bg-white rounded-lg w-full max-w-4xl h-[90vh] max-h-[600px]">
                   <button 
                     onClick={() => setShowBookingPopup(false)}
                     className="absolute top-2 right-2 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
@@ -3455,11 +3501,10 @@ if (showIntro) {
                     src="https://freezepix.setmore.com/"
                     title="Book Photography Service"
                     className="w-full h-full rounded-lg"
-                    style={{ maxWidth: '100%', maxHeight: '100%' }}
                   />
                 </div>
               </div>
-            )}
+            )}*/}
           </div>
         </div>
       } />

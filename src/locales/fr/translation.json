@@ -6,6 +6,20 @@
       "choose_location": "Choisissez votre pays pour commencer à imprimer vos souvenirs",
       "archive_policy": "Politique d'archivage : Toutes les photos seront archivées dans notre base de données 60 jours après l'expédition de la commande."
     },
+    "services": {
+      "studio": "Studio Photo",
+      "studio_desc": "Séances professionnelles avec photographes experts",
+      "print": "Impression Photos",
+      "print_desc": "Impressions de haute qualité livrées chez vous",
+      "passport": "Photos d'Identité",
+      "passport_desc": "Photos d'identité instantanées aux normes officielles"
+    },
+    "features": {
+      "quick": "Service Rapide",
+      "satisfaction": "Satisfaction",
+      "online": "Commandes En Ligne",
+      "quality": "Qualité HD"
+    },
     "navigation": {
       "choose_photos": "Choisir des Photos",
       "select_sizes": "Sélectionner les Tailles", 
