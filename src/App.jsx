@@ -3006,7 +3006,6 @@ const countryCodeMap = {
             <div className="border rounded-lg p-4">
               <h3 className="font-medium mb-3">{t('produits.note')}</h3>
               <textarea
-                placeholder={t('placeholder.order_note')}
                 value={orderNote}
                 onChange={(e) => setOrderNote(e.target.value)}
                 className="w-full p-2 border rounded"
