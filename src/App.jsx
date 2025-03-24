@@ -292,18 +292,34 @@ const [interacReference, setInteracReference] = useState('');
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
       useEffect(() => {
-        setFormData(prev => ({
-          ...prev,
-          shippingAddress: {
-            ...prev.shippingAddress,
-            country: selectedCountry
-          },
-          billingAddress: {
-            ...prev.billingAddress,
-            country: selectedCountry
-          }
-        }));
-      }, [selectedCountry]);
+        // Update form data when studio is selected
+        if (selectedStudio) {
+          const countryCodeMap = {
+            'Tunisia': 'TN',
+            'United States': 'US',
+            'Canada': 'CA',
+            'USA': 'US',
+            'TUN':'TN',
+            'CA':'CA',
+            'US':'US'
+            // Add more mappings as needed
+          };
+    
+          const countryCode = countryCodeMap[selectedStudio.country] || selectedStudio.country;
+          
+          setFormData(prev => ({
+            ...prev,
+            shippingAddress: {
+              ...prev.shippingAddress,
+              country: countryCode
+            },
+            billingAddress: {
+              ...prev.billingAddress,
+              country: countryCode
+            }
+          }));
+        }
+      }, [selectedStudio]);
 
       useEffect(() => {
         const fetchDiscountCodes = async () => {
