@@ -3660,14 +3660,14 @@ return (
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Header with country and language selector */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <div className="text-2xl font-bold">
             <span className="text-black">freeze</span>
             <span className="text-yellow-400">PIX</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
             <select 
-              className="p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+              className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
               value={selectedCountry}
               onChange={(e) => setSelectedCountry(e.target.value)}
             >
@@ -3678,7 +3678,9 @@ return (
                 </option>
               ))}
             </select>
-            <LanguageSelector />
+            <div className="w-full sm:w-auto">
+              <LanguageSelector />
+            </div>
           </div>
         </div>
 
