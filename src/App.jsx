@@ -474,7 +474,7 @@ const BookingPopup = ({ onClose }) => {
 const FreezePIX = () => {
  
 
-    const [showIntro, setShowIntro] = useState(true);
+    const [showIntro, setShowIntro] = useState(false);
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
