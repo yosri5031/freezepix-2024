@@ -3655,235 +3655,138 @@ const validateStep = () => {
 const { t } = useTranslation();
 
   
-if (showIntro) {
-  const handleServiceNavigation = (service) => {
-    switch (service) {
-      case 'passport':
-        setShowPhotoOptions(true);
-        break;
-      case 'booking':
-        window.location.href = 'https://booking.freezepix.com';
-        break;
-      case 'print':
-        if (selectedCountry) {
-          handleCountrySelect(selectedCountry);
-          handleStartPrinting();
-        }
-        break;
-      default:
-        break;
-    }
-  };
-  if (showPhotoOptions) {
-    return <PhotoOptions onBack={() => setShowPhotoOptions(false)} />;
-  }
+return (
+  <div className="min-h-screen bg-gray-50">
+    <div className="max-w-4xl mx-auto p-4">
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        {/* Header with country and language selector */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-2xl font-bold">
+            <span className="text-black">freeze</span>
+            <span className="text-yellow-400">PIX</span>
+          </div>
+          <div className="flex items-center gap-4">
+            <select 
+              className="p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+            >
+              <option value="">{t('navigation.select')}</option>
+              {initialCountries.map(country => (
+                <option key={country.value} value={country.value}>
+                  {country.name} ({country.currency})
+                </option>
+              ))}
+            </select>
+            <LanguageSelector />
+          </div>
+        </div>
 
-  return (
-    
-    <Routes>
-      <Route path="/*" element={
-        <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-          <div className="mx-auto px-4 py-4 sm:py-6 md:py-8 max-w-7xl">
-            {/* Header - Sticky on mobile */}
-            <div className="sticky top-0 z-50 bg-white rounded-xl shadow-sm mb-4 sm:mb-6">
-              <div className="flex justify-between items-center p-4 sm:p-6">
-                <div className="text-3xl sm:text-4xl font-bold tracking-tight">
-                  <span className="text-black">freeze</span>
-                  <span className="text-yellow-400">PIX</span>
-                </div>
+        {/* Stepper */}
+        <div className="flex items-center justify-between mb-8">
+          {['Upload Photos', 'Studio Selection', 'Review Order'].map((step, index) => (
+            <div key={step} className="flex items-center">
+              <div className={`
+                w-8 h-8 rounded-full flex items-center justify-center
+                ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
+              `}>
+                {index === 0 && <Camera size={16} />}
+                {index === 1 && <Package size={16} />}
+                {index === 2 && <ShoppingCart size={16} />}
               </div>
+              {index < 2 && (
+                <div className={`h-1 w-full ${activeStep > index ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+              )}
             </div>
+          ))}
+        </div>
 
-            {/* Main Content */}
-            <div className="space-y-6 sm:space-y-8">
-              {/* Hero Section */}
-           
-              {/* Services Grid */}
-              <div className="space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 lg:grid-cols-3 sm:gap-6">
-               
-                 {/* Print Pictures */}
-                 <div className="bg-white rounded-xl shadow-sm p-6 sm:order-2">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <Package className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.print')}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('services.print_desc')}</p>
-                  <button
-                    onClick={() => handleServiceNavigation('print')}
-                    disabled={!selectedCountry}
-                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {t('buttons.start_printing')}
-                  </button>
-                </div>
-
-               
-                {/* Studio Photography */}
-                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-1">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <Calendar className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.studio')}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('services.studio_desc')}</p>
-                  <button
-                    onClick={() => handleServiceNavigation('booking')}
-                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
-                  >
-                    {t('buttons.book_now')}
-                  </button>
-                </div>
-
+        {/* Step Content */}
+        {orderSuccess ? (
+          // Order Success UI
+          <div className="text-center space-y-6">
+            <div className="text-green-500 text-5xl">✓</div>
+            <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
+            <p className="text-gray-600">
+              {t('order.success_details')} {formData.email}
+            </p>
+            <div className="mt-4">
+              <p className="font-medium">{t('order.details')}:</p>
+              <p>{t('order.order_number')}: {currentOrderNumber}</p>
               
-                {/* Passport Photos */}
-                <div className="bg-white rounded-xl shadow-sm p-6 sm:order-3">
-                  <div className="flex items-center space-x-4 mb-4">
-                    <Camera className="w-8 h-8 sm:w-12 sm:h-12 text-yellow-400 flex-shrink-0" />
-                    <h3 className="text-lg sm:text-xl font-semibold">{t('services.passport')}</h3>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">{t('services.passport_desc')}</p>
-                  <button
-                    onClick={() => handleServiceNavigation('passport')}
-                    className="w-full p-3 sm:p-2 bg-yellow-400 text-black text-base sm:text-sm font-semibold rounded-xl hover:bg-yellow-500 transition-colors"
-                  >
-                    {t('buttons.take_photo')}
-                  </button>
-                </div>
-              </div>
-
-              {/* Fixed bottom bar for country and language selection */}
-              <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg">
-                <div className="max-w-7xl mx-auto p-4">
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 w-full sm:w-auto">
-                      <select 
-                        className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
-                        value={selectedCountry}
-                        onChange={(e) => handleCountrySelect(e.target.value)}
-                      >
-                        <option value="">{t('navigation.select')}</option>
-                        {initialCountries.map(country => (
-                          <option key={country.value} value={country.value}>
-                            {country.name} ({country.currency})
-                          </option>
-                        ))}
-                      </select>
-                      <LanguageSelector />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Archive Policy */}
-              <div className="text-center py-4 mb-20">
-                <p className="text-xs text-gray-500 px-4">
-                  {t('intro.archive_policy')}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      } />
-    </Routes>
-  );
-}
-
-
-if (orderSuccess) {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-xl w-full">
-        <div className="bg-white rounded-lg shadow-lg p-8 text-center space-y-6">
-          <div className="text-green-500 text-5xl">✓</div>
-          <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
-          <p className="text-gray-600">
-            {t('order.success_details')} {formData.email}
-          </p>
-          <div className="mt-4">
-            <p className="font-medium">{t('order.details')}:</p>
-            <p>{t('order.order_number')}: {currentOrderNumber}</p>
-            
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-              <p className="font-medium">{t('pickup.location')}:</p>
-              <p>{selectedStudio.name}</p>
-              <p>{selectedStudio.address}</p>
-              <p>{selectedStudio.city}, {selectedStudio.country}</p>
-              <p className="text-sm text-gray-600 mt-2">{t('pickup.payment_notice')}</p>
-            </div>
-          </div>
-          
-          <button
-            onClick={() => window.location.reload()}
-            className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
-          >
-            {t('buttons.place_new')}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          {/* Stepper */}
-          <div className="flex items-center justify-between mb-8">
-            {['Upload Photos', ' Studio Selection', 'Review Order'].map((step, index) => (
-              <div key={step} className="flex items-center">
-                <div className={`
-                  w-8 h-8 rounded-full flex items-center justify-center
-                  ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
-                `}>
-                  {index === 0 && <Camera size={16} />}
-                  {index === 1 && <Package size={16} />}
-                  {index === 2 && <ShoppingCart size={16} />}
-                </div>
-                {index < 2 && (
-                  <div className={`h-1 w-full ${activeStep > index ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                <p className="font-medium">{t('pickup.location')}:</p>
+                {selectedStudio && (
+                  <>
+                    <p>{selectedStudio.name}</p>
+                    <p>{selectedStudio.address}</p>
+                    <p>{selectedStudio.city}, {selectedStudio.country}</p>
+                  </>
                 )}
+                <p className="text-sm text-gray-600 mt-2">{t('pickup.payment_notice')}</p>
               </div>
-            ))}
+            </div>
+            
+            <button
+              onClick={() => window.location.reload()}
+              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+            >
+              {t('buttons.place_new')}
+            </button>
           </div>
-
-          {/* Step Content */}
-          {renderStepContent()}
+        ) : (
+          // Render current step
+          renderStepContent()
+        )}
 
         {/* Navigation Buttons */}
-<div className="flex justify-between mt-8">
-  <button
-    onClick={handleBack}
-    className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-  >
-    {activeStep === 0 ? t('buttons.home') : t('buttons.back')}
-  </button>
+        {!orderSuccess && (
+          <div className="flex justify-between mt-8">
+            {activeStep > 0 ? (
+              <button
+                onClick={() => setActiveStep(prev => prev - 1)}
+                className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+              >
+                {t('buttons.back')}
+              </button>
+            ) : (
+              <div></div> // Empty div for layout consistency
+            )}
 
-  <button
-    onClick={handleNext}
-    disabled={!validateStep()}
-    className={`px-6 py-2 rounded ${
-      validateStep()
-        ? 'bg-yellow-400 hover:bg-yellow-500'
-        : 'bg-gray-200 cursor-not-allowed'
-    }`}
-  >
-    {isLoading 
-      ? t('buttons.processing')
-      : activeStep === 2 
-        ? t('buttons.place_order')
-        : t('buttons.next')
-    }
-  </button>
-</div>
-
-        </div>
+            <button
+              onClick={handleNext}
+              disabled={!validateStep()}
+              className={`px-6 py-2 rounded ${
+                validateStep()
+                  ? 'bg-yellow-400 hover:bg-yellow-500'
+                  : 'bg-gray-200 cursor-not-allowed'
+              }`}
+            >
+              {isLoading 
+                ? t('buttons.processing')
+                : activeStep === 2 
+                  ? t('buttons.place_order')
+                  : t('buttons.next')
+              }
+            </button>
+          </div>
+        )}
       </div>
-      {showBookingPopup && (
-        <BookingPopup onClose={() => setShowBookingPopup(false)} />
-      )}
     </div>
     
-  );
+    {/* Product Details Popup */}
+    <ProductDetailsPopup 
+      isOpen={isProductDetailsOpen} 
+      onClose={() => setIsProductDetailsOpen(false)} 
+      selectedCountry={selectedCountry} 
+    />
+    
+    {/* Booking Popup */}
+    {showBookingPopup && (
+      <BookingPopup onClose={() => setShowBookingPopup(false)} />
+    )}
+  </div>
+);
 };
 
 export default FreezePIX;
