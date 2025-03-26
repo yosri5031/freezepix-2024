@@ -3656,31 +3656,15 @@ const { t } = useTranslation();
 
   
 return (
-  <div className="min-h-screen bg-gray-50">
+  <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* Header with country and language selector */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
+        {/* Title only in header */}
+        <div className="flex justify-center mb-6">
           <div className="text-2xl font-bold">
             <span className="text-black">freeze</span>
             <span className="text-yellow-400">PIX</span>
-          </div>
-          <div className="flex flex-wrap items-center gap-2 sm:gap-4 w-full sm:w-auto">
-            <select 
-              className="w-full sm:w-auto p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-            >
-              <option value="">{t('navigation.select')}</option>
-              {initialCountries.map(country => (
-                <option key={country.value} value={country.value}>
-                  {country.name} ({country.currency})
-                </option>
-              ))}
-            </select>
-            <div className="w-full sm:w-auto">
-              <LanguageSelector />
-            </div>
           </div>
         </div>
 
@@ -3773,6 +3757,29 @@ return (
             </button>
           </div>
         )}
+      </div>
+    </div>
+    
+    {/* Fixed bottom bar for country and language selection */}
+    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="w-full">
+            <select 
+              className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+            >
+              <option value="">{t('navigation.select')}</option>
+              {initialCountries.map(country => (
+                <option key={country.value} value={country.value}>
+                  {country.name} ({country.currency})
+                </option>
+              ))}
+            </select>
+          </div>
+          <LanguageSelector />
+        </div>
       </div>
     </div>
     
