@@ -153,6 +153,31 @@ const initialCountries = [
     crystal3d: 175, 
     keychain: 36.99, 
     keyring_magnet: 36.99 },
+    // Add Russia
+{ name: 'Russia', 
+  value: 'RU', 
+  currency: 'RUB', 
+  rate: 92.5, // Exchange rate to USD (approx.)
+  size4x6: 45,
+  size5x7: 275,
+  size8x10: 460,
+  size4x4: 370,
+  crystal3d: 12950, 
+  keychain: 2775, 
+  keyring_magnet: 2775 },
+
+// Add China
+{ name: 'China', 
+  value: 'CN', 
+  currency: 'CNY', 
+  rate: 7.2, // Exchange rate to USD (approx.)
+  size4x6: 3.5,
+  size5x7: 21.5,
+  size8x10: 36,
+  size4x4: 29,
+  crystal3d: 1000, 
+  keychain: 215, 
+  keyring_magnet: 215 },
   // Added Middle East countries
   { name: 'United Arab Emirates', 
     value: 'AE', 
@@ -240,6 +265,12 @@ const TAX_RATES = {
   'JP': { // Japan
     default: 10.0 // 10% Consumption Tax
   },
+  'RU': { // Russia
+  default: 20.0 // 20% VAT
+},
+'CN': { // China
+  default: 13.0 // 13% VAT
+},
   'SG': { // Singapore
     default: 9.0 // 9% GST (recently raised)
   },
@@ -740,7 +771,11 @@ const [interacReference, setInteracReference] = useState('');
           'TUN': 'TN',
           'CA':'CA',
           'US':'US',
-          'TN':'TN'
+          'TN':'TN',
+          'RUS': 'RU', // Add Russia
+          'RU': 'RU',
+          'CHN': 'CN', // Add China
+          'CN': 'CN'
           // Add more mappings as needed
         };
         return countryMap[code] || code;
@@ -1277,7 +1312,7 @@ const closeProductDetails = () => {
     
     let products = []; // Define products array outside if statements
   
-    if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
+    if (country !== 'TUN' || country !== 'TN') {
       products = [
         {
         category: 'Photo Prints',
@@ -1334,7 +1369,7 @@ const closeProductDetails = () => {
     } 
   
     // Add 8x10" size after 5x7" only for USA and Canada
-    if (country === 'USA' || country === 'CAN' || country === 'US' || country === 'CA') {
+    if (country !== 'TUN' || country !== 'TN' ) {
       products.splice(3, 0, {
         category: 'Photo Prints',
         product: '8x10 Size',
@@ -2372,8 +2407,11 @@ const createStripeCheckoutSession = async (orderData) => {
       'France': 'FR',
       'Italy': 'IT',
       'Spain': 'ES',
-      'United Kingdom': 'GB'
-      // Add more mappings if needed
+      'United Kingdom': 'GB',
+      'Russia': 'RU',     // Add Russia
+      'RUS': 'RU',
+      'China': 'CN',      // Add China
+      'CHN': 'CN'
     };
 
     return {
@@ -3126,10 +3164,10 @@ const handleFileChange = async (event) => {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
                 } else if (photo.size === '5x7') {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-                } else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '8x10') {
+                } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
                     subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
                 }
-                else if ((selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && photo.size === '4x4') {
+                else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
                   subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
               }
             }
@@ -3280,7 +3318,7 @@ const countryCodeMap = {
                         </button>
                         <div className="mt-2 space-y-2">
                               {/* Product Type Selection for US/Canada */}
-  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR','US','CA','DE','FR','IT','ES','GB'].includes(selectedCountry)) && (
+  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR', 'US', 'CA', 'DE', 'FR', 'IT', 'ES', 'GB', 'RU', 'CN'].includes(selectedCountry)) && (
     <select
       value={photo.productType}
       onChange={(e) => updateProductType(photo.id, e.target.value)}
@@ -3325,7 +3363,7 @@ const countryCodeMap = {
             <option value="10x15">10x15 cm</option>
             <option value="15x22">15x23 cm</option>
         </>
-    ) : selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'US' || selectedCountry === 'CA' ? (
+    ) : selectedCountry !== 'TUN' || selectedCountry !== 'TN' ? (
         <>
             <option value="4x4"> 4x4"</option>
             <option value="4x6">4x6"</option>
@@ -3615,13 +3653,13 @@ const countryCodeMap = {
           <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
-      {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['8x10'] > 0 && (
+      {(selectedCountry !== 'TN' || selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
         <div className="flex justify-between py-2">
           <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
         </div>
       )}
-      {(selectedCountry === 'USA' || selectedCountry === 'CAN' || selectedCountry === 'CA' || selectedCountry === 'US') && quantities['4x4'] > 0 && (
+      {(selectedCountry !== 'TN' || selectedCountry !== 'TUN')  && quantities['4x4'] > 0 && (
         <div className="flex justify-between py-2">
           <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
           <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
