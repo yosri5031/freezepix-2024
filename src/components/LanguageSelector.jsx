@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useNavigate } from 'react-router-dom';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, Globe } from 'lucide-react';
 
 const metaTranslations = {
   en: {
@@ -18,6 +18,42 @@ const metaTranslations = {
     title: "تطبيق Freezepix للطباعة",
     description: "اطلب مطبوعات الصور والهدايا المخصصة مثل سلاسل المفاتيح والكريستال ثلاثي الأبعاد مع Freezepix. قم بإنشاء تذكارات لا تنسى مع تطبيق الطباعة سهل الاستخدام.",
     keywords: "Freezepix، تطبيق طباعة، طلب مطبوعات صور، هدايا صور، سلسلة مفاتيح، كريستال ثلاثي الأبعاد، طباعة مخصصة، هدايا مخصصة"
+  },
+  // New language translations
+  es: {
+    title: "Aplicación de impresión Freezepix",
+    description: "Pide impresiones de fotos y regalos personalizados como llaveros y cristales 3D con Freezepix. Crea recuerdos memorables con nuestra aplicación de impresión fácil de usar.",
+    keywords: "Freezepix, aplicación de impresión, pedir impresiones de fotos, regalos fotográficos, llavero, cristal 3D, impresión personalizada, regalos personalizados"
+  },
+  de: {
+    title: "Freezepix Druck-App",
+    description: "Bestellen Sie Fotoabzüge und personalisierte Fotogeschenke wie Schlüsselanhänger und 3D-Kristalle mit Freezepix. Erstellen Sie unvergessliche Erinnerungsstücke mit unserer benutzerfreundlichen Druck-App.",
+    keywords: "Freezepix, Druck-App, Fotoabzüge bestellen, Fotogeschenke, Schlüsselanhänger, 3D-Kristall, individueller Druck, personalisierte Geschenke"
+  },
+  it: {
+    title: "App di stampa Freezepix",
+    description: "Ordina stampe fotografiche e regali personalizzati come portachiavi e cristalli 3D con Freezepix. Crea ricordi indimenticabili con la nostra app di stampa facile da usare.",
+    keywords: "Freezepix, app di stampa, ordina stampe fotografiche, regali fotografici, portachiavi, cristallo 3D, stampa personalizzata, regali personalizzati"
+  },
+  ja: {
+    title: "Freezepix 印刷アプリ",
+    description: "Freezepixで写真プリントやキーホルダー、3Dクリスタルなどのパーソナライズされた写真ギフトを注文しましょう。使いやすい印刷アプリで思い出に残るキープセイクを作成できます。",
+    keywords: "Freezepix、印刷アプリ、写真プリント注文、フォトギフト、キーホルダー、3Dクリスタル、カスタム印刷、パーソナライズギフト"
+  },
+  zh: {
+    title: "Freezepix 打印应用",
+    description: "使用 Freezepix 订购照片打印和个性化照片礼品，如钥匙扣和 3D 水晶。使用我们易于使用的打印应用创建难忘的纪念品。",
+    keywords: "Freezepix，打印应用，订购照片打印，照片礼品，钥匙扣，3D水晶，定制打印，个性化礼品"
+  },
+  pt: {
+    title: "Aplicativo de impressão Freezepix",
+    description: "Encomende impressões de fotos e presentes personalizados como chaveiros e cristais 3D com Freezepix. Crie lembranças memoráveis com nosso aplicativo de impressão fácil de usar.",
+    keywords: "Freezepix, aplicativo de impressão, encomendar impressões de fotos, presentes com fotos, chaveiro, cristal 3D, impressão personalizada, presentes personalizados"
+  },
+  ru: {
+    title: "Приложение для печати Freezepix",
+    description: "Заказывайте фотопечать и персонализированные фотоподарки, такие как брелоки и 3D-кристаллы с Freezepix. Создавайте запоминающиеся сувениры с помощью нашего простого в использовании приложения для печати.",
+    keywords: "Freezepix, приложение для печати, заказ фотопечати, фотоподарки, брелок, 3D-кристалл, индивидуальная печать, персонализированные подарки"
   }
 };
 
@@ -27,10 +63,19 @@ const LanguageSelector = () => {
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
 
+  // Expanded languages array with more options
   const languages = [
     { code: 'en', label: 'English', path: '/' },
     { code: 'fr', label: 'Français', path: '/fr' },
-    { code: 'ar', label: 'العربية', path: '/TN' }
+    { code: 'ar', label: 'العربية', path: '/TN' },
+    // Added languages
+    { code: 'es', label: 'Español', path: '/es' },
+    { code: 'de', label: 'Deutsch', path: '/de' },
+    { code: 'it', label: 'Italiano', path: '/it' },
+    { code: 'ja', label: '日本語', path: '/ja' },
+    { code: 'zh', label: '中文', path: '/zh' },
+    { code: 'pt', label: 'Português', path: '/pt' },
+    { code: 'ru', label: 'Русский', path: '/ru' }
   ];
 
   // Handle click outside to close dropdown
@@ -89,12 +134,10 @@ const LanguageSelector = () => {
 
   // Toggle dropdown function
   const toggleDropdown = () => {
-    console.log("Toggle dropdown called, current state:", isOpen);
     setIsOpen(!isOpen);
   };
 
   const handleLanguageChange = (newLanguage, path) => {
-    console.log(`Language change: ${newLanguage}, path: ${path}`);
     // First change the language
     changeLanguage(newLanguage);
     
@@ -105,10 +148,6 @@ const LanguageSelector = () => {
     setIsOpen(false);
   };
 
-  // Add a current language debug message
-  console.log("Current language:", language);
-  console.log("Is dropdown open:", isOpen);
-
   return (
     <div className="relative inline-block text-left z-50" ref={dropdownRef}>
       <button
@@ -117,6 +156,7 @@ const LanguageSelector = () => {
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
+        <Globe className="w-4 h-4 text-gray-500" />
         <span className="text-sm font-medium">
           {languages.find(l => l.code === language)?.label || 'Select Language'}
         </span>
@@ -125,7 +165,7 @@ const LanguageSelector = () => {
 
       {isOpen && (
         <div 
-          className="origin-bottom-right absolute bottom-full right-0 mb-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50"
+          className="origin-bottom-right absolute bottom-full right-0 mb-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 max-h-80 overflow-y-auto"
           style={{ 
             pointerEvents: 'auto',
             visibility: 'visible',

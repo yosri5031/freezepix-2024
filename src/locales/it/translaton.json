@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "la compagnia di fotografia",
+      "title": "Trasforma i tuoi ricordi digitali in bellissime stampe",
+      "subtitle": "Ricevi stampe di alta qualità consegnate direttamente a casa tua. Ordini facili, consegna rapida e risultati straordinari.",
+      "choose_location": "Scegli la tua posizione per iniziare a stampare i tuoi ricordi",
+      "archive_policy": "Politica di archiviazione: Tutte le immagini saranno archiviate nel nostro database per 60 giorni dopo la spedizione dell'ordine."
+    },
+    "services": {
+      "studio": "Studio Fotografico",
+      "studio_desc": "Sessioni professionali in studio con fotografi esperti",
+      "print": "Stampa Foto",
+      "print_desc": "Stampe di alta qualità consegnate a domicilio",
+      "passport": "Foto Passaporto",
+      "passport_desc": "Foto passaporto istantanee che soddisfano i requisiti ufficiali"
+    },
+    "features": {
+      "quick": "Servizio Rapido",
+      "satisfaction": "Soddisfazione",
+      "online": "Ordini Online",
+      "quality": "Stampe di Qualità"
+    },
+    "pickup": {
+      "details": "Dettagli Ritiro",
+      "location": "Luogo di Ritiro",
+      "contact": "Contatto",
+      "hours": "Orari di Apertura",
+      "closed": "Chiuso",
+      "payment_notice": "Si prega di completare il pagamento al momento del ritiro",
+      "select_location": "Seleziona Luogo di Ritiro",
+      "no_locations": "Nessun punto di ritiro disponibile nella tua regione",
+      "confirm_location": "Conferma Luogo di Ritiro"
+    },
+    "navigation": {
+      "choose_photos": "Scegli Foto",
+      "select_sizes": "Seleziona Dimensioni", 
+      "quick_checkout": "Checkout Rapido",
+      "location": "Scegli la tua posizione per iniziare a stampare i tuoi ricordi",
+      "select": "Seleziona il tuo paese"
+    },
+    "placeholder": {
+      "name": "Nome",
+      "validation.contact_info": "Informazioni di Contatto",
+      "form.shipping_a": "Indirizzo di Spedizione",
+      "form.billing_a": "Indirizzo di Fatturazione",
+      "form.same_address": "L'indirizzo di fatturazione è lo stesso dell'indirizzo di spedizione",
+      "email": "Indirizzo Email",
+      "phone": "Numero di Telefono",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "address": "Indirizzo",
+      "city": "Città",
+      "zipCode": "CAP",
+      "postalCode": "Codice Postale",
+      "Select State": "Seleziona Stato",
+      "Select Province": "Seleziona Provincia",
+      "Country not selected": "Paese non selezionato",
+      "Contact Information": "Informazioni di Contatto",
+      "Shipping Address": "Indirizzo di Spedizione",
+      "Billing Address": "Indirizzo di Fatturazione",
+      "Billing address same as shipping": "Indirizzo di fatturazione uguale a quello di spedizione"
+    },
+    "buttons": {
+      "start_printing": "Inizia a Stampare",
+      "book_service": "Prenota un servizio fotografico",
+      "add_photos": "Aggiungi Foto",
+      "home": "Home",
+      "back": "Indietro",
+      "next": "Avanti",
+      "processing": "Elaborazione...",
+      "place_order": "Effettua Ordine",
+      "place_new": "Effettua Nuovo Ordine",
+      "review": "Revisione e Pagamento",
+      "book_now": "Prenota Studio",
+      "take_photo": "Scatta Foto"
+    },
+    "steps": {
+      "upload_photos": "Carica Foto",
+      "shipping_details": "Dettagli di Spedizione",
+      "payment": "Pagamento"
+    },
+    "form": {
+      "select_photo": "Seleziona Foto",
+      "select_state": "Seleziona Stato",
+      "select_province": "Seleziona Provincia",
+      "email": "Indirizzo Email",
+      "phone": "Numero di Telefono",
+      "first_name": "Nome",
+      "last_name": "Cognome",
+      "address": "Indirizzo",
+      "city": "Città",
+      "postal_code": "Codice Postale",
+      "select_country": "Seleziona il tuo paese",
+      "same_address": "Indirizzo di fatturazione uguale a quello di spedizione",
+      "shipping_a": "Indirizzo di Spedizione",
+      "billing_a": "Indirizzo di Fatturazione"
+    },
+    "order": {
+      "success_message": "Grazie per il tuo ordine!",
+      "success_details": "Il tuo ordine è stato effettuato con successo e sarà elaborato entro 48 ore. Un'email di conferma è stata inviata a",
+      "order_number": "Numero d'Ordine",
+      "total_amount": "Importo Totale",
+      "payment_method": "Metodo di Pagamento",
+      "cod": "Il tuo ordine sarà elaborato come Contrassegno (COD)",
+      "discount": "Codice Sconto",
+      "summary": "Riepilogo Ordine",
+      "shipping_fee": "Spese di spedizione e gestione"
+    },
+    "validation": {
+      "contact_info": "Informazioni di Contatto",
+      "complete_fields": "Completa tutti i campi obbligatori prima di procedere",
+      "select_photos": "Seleziona almeno una foto"
+    },
+    "produits": {
+      "photo_print": "Stampa Fotografica",
+      "magnet": "Magnete",
+      "3d_frame": "Cornice 3D",
+      "keychain": "Portachiavi e Magnete",
+      "shape": "Forma",
+      "rectangle": "Rettangolo",
+      "heart": "Cuore",
+      "quantity": "Quantità",
+      "size": "Dimensione",
+      "product": "Prodotto",
+      "note": "Nota dell'Ordine",
+      "note1": "Aggiungi istruzioni speciali (opzionale)",
+      "subtotal": "Subtotale",
+      "total": "Totale",
+      "discountmessage": "Inserisci codice sconto",
+      "details": "Dettagli Prodotto"
+    },
+    "productDetails": {
+      "title": "Dettagli Prodotti",
+      "category": "Categoria",
+      "product": "Prodotto",
+      "price": "Prezzo",
+      "image": "Immagine",
+      "imagePreview": "Anteprima immagine"
+    },
+    "categories": {
+      "Photo Prints": "Stampe Fotografiche",
+      "Keychain": "Portachiavi e Magnete",
+      "Magnet": "Magnete",
+      "3D Frame": "Cornice 3D"
+    },
+    "products": {
+      "4x6 Size": "Formato 4 x 6 pollici",
+      "5x7 Size": "Formato 5 x 7 pollici",
+      "4x4 Size": "Formato 4 x 4 pollici",
+      "Format 10x15 cm": "Formato 10x15 cm",
+      "Format 15x23 cm": "Formato 15x23 cm",
+      "Keychain": "Portachiavi e Magnete",
+      "Magnet": "Magnete",
+      "3D Frame": "Cornice 3D",
+      "Rectangle 3D Frame": "Rettangolo",
+      "Heart 3D Frame": "Cuore",
+      "8x10 Size": "Formato 8 x 10 pollici"
+    },
+    "canada": {
+      "options": "Opzioni di Pagamento per il Canada",
+      "select": "Seleziona Metodo di Pagamento:",
+      "interac": "Interac E-Transfer",
+      "credit": "Pagamento con Carta di Credito",
+      "send": "Invia pagamento a:",
+      "placing": "Dopo aver effettuato l'ordine, completa l'Interac E-Transfer all'email fornita.",
+      "credit_c": "Pagamento con Carta di Credito",
+      "message_c": "Completa il pagamento per effettuare l'ordine"
+    },
+    "checkout": {
+      "cardNumber": "Numero Carta",
+      "expiryDate": "Data di Scadenza", 
+      "cvc": "CVC",
+      "zipCode": "CAP",
+      "postalCode": "Codice Postale",
+      "postalCodeRequired": "Il codice postale è obbligatorio",
+      "invalidPostalCode": "Codice postale non valido per il paese selezionato",
+      "serverError": "Si è verificato un errore sul nostro server. Riprova.",
+      "networkError": "Errore di rete. Controlla la tua connessione.",
+      "paymentProcessingError": "Impossibile elaborare il pagamento. Riprova.",
+      "processing": "Elaborazione...",
+      "payNow": "Paga Ora",
+      "tryAgain": "Riprova"
+    },
+    "payment": {
+      "serverError": "Il server dei pagamenti è temporaneamente non disponibile. Riprova più tardi.",
+      "genericError": "Si è verificato un problema durante l'elaborazione del pagamento. Riprova.",
+      "cardDeclined": "La tua carta è stata rifiutata. Prova un'altra carta.",
+      "cardExpired": "La tua carta è scaduta. Usa una carta diversa.",
+      "invalidCVC": "Il codice di sicurezza (CVC) non è corretto.",
+      "processingError": "Si è verificato un errore durante l'elaborazione della carta.",
+      "insufficientFunds": "Fondi insufficienti sul tuo conto.",
+      "incorrectPostalCode": "Il codice postale non corrisponde alla tua carta."
+    }
+}

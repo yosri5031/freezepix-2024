@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation,  ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -36,8 +36,8 @@ const initialCountries = [
     value: 'US', 
     currency: 'USD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.39
-    size5x7: 2.99,        // Updated from 1.49
+    size4x6: 0.49,
+    size5x7: 2.99,
     size8x10: 4.99,
     size4x4: 3.99,
     crystal3d: 140, 
@@ -47,15 +47,158 @@ const initialCountries = [
     value: 'CA', 
     currency: 'CAD', 
     rate: 1, 
-    size4x6: 0.49,        // Updated from 0.49
-    size5x7: 2.99,        // Updated from 2.99
+    size4x6: 0.49,
+    size5x7: 2.99,
     size8x10: 4.99,
-    size4x4: 0.39,       // Added new size
+    size4x4: 0.39,
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99  },
-{ name: 'Tunisia', value: 'TN', currency: 'TND', rate: 1, size10x15: 3.00, size15x22: 5.00,size35x45: 1.25, keychain: 15.00, keyring_magnet: 15.00 },
-  
+  { name: 'Tunisia', 
+    value: 'TN', 
+    currency: 'TND', 
+    rate: 1, 
+    size10x15: 3.00, 
+    size15x22: 5.00,
+    size35x45: 1.25, 
+    keychain: 15.00, 
+    keyring_magnet: 15.00 },
+  // Added European countries
+  { name: 'United Kingdom', 
+    value: 'GB', 
+    currency: 'GBP', 
+    rate: 0.78, 
+    size4x6: 0.39,
+    size5x7: 2.49,
+    size8x10: 3.99,
+    size4x4: 3.29,
+    crystal3d: 110, 
+    keychain: 24.99, 
+    keyring_magnet: 24.99 },
+  { name: 'Germany', 
+    value: 'DE', 
+    currency: 'EUR', 
+    rate: 0.91, 
+    size4x6: 0.45,
+    size5x7: 2.79,
+    size8x10: 4.59,
+    size4x4: 3.59,
+    crystal3d: 129, 
+    keychain: 27.99, 
+    keyring_magnet: 27.99 },
+  { name: 'France', 
+    value: 'FR', 
+    currency: 'EUR', 
+    rate: 0.91, 
+    size4x6: 0.45,
+    size5x7: 2.79,
+    size8x10: 4.59,
+    size4x4: 3.59,
+    crystal3d: 129, 
+    keychain: 27.99, 
+    keyring_magnet: 27.99 },
+  { name: 'Italy', 
+    value: 'IT', 
+    currency: 'EUR', 
+    rate: 0.91, 
+    size4x6: 0.45,
+    size5x7: 2.79,
+    size8x10: 4.59,
+    size4x4: 3.59,
+    crystal3d: 129, 
+    keychain: 27.99, 
+    keyring_magnet: 27.99 },
+  { name: 'Spain', 
+    value: 'ES', 
+    currency: 'EUR', 
+    rate: 0.91, 
+    size4x6: 0.45,
+    size5x7: 2.79,
+    size8x10: 4.59,
+    size4x4: 3.59,
+    crystal3d: 129, 
+    keychain: 27.99, 
+    keyring_magnet: 27.99 },
+  // Added APAC countries
+  { name: 'Australia', 
+    value: 'AU', 
+    currency: 'AUD', 
+    rate: 1.5, 
+    size4x6: 0.69,
+    size5x7: 3.99,
+    size8x10: 6.99,
+    size4x4: 5.49,
+    crystal3d: 190, 
+    keychain: 39.99, 
+    keyring_magnet: 39.99 },
+  { name: 'Japan', 
+    value: 'JP', 
+    currency: 'JPY', 
+    rate: 149, 
+    size4x6: 60,
+    size5x7: 350,
+    size8x10: 670,
+    size4x4: 520,
+    crystal3d: 18000, 
+    keychain: 3800, 
+    keyring_magnet: 3800 },
+  { name: 'Singapore', 
+    value: 'SG', 
+    currency: 'SGD', 
+    rate: 1.34, 
+    size4x6: 0.65,
+    size5x7: 3.79,
+    size8x10: 6.29,
+    size4x4: 4.99,
+    crystal3d: 175, 
+    keychain: 36.99, 
+    keyring_magnet: 36.99 },
+  // Added Middle East countries
+  { name: 'United Arab Emirates', 
+    value: 'AE', 
+    currency: 'AED', 
+    rate: 3.67, 
+    size4x6: 1.79,
+    size5x7: 10.99,
+    size8x10: 17.99,
+    size4x4: 14.59,
+    crystal3d: 499, 
+    keychain: 109.99, 
+    keyring_magnet: 109.99 },
+  { name: 'Saudi Arabia', 
+    value: 'SA', 
+    currency: 'SAR', 
+    rate: 3.75, 
+    size4x6: 1.85,
+    size5x7: 11.25,
+    size8x10: 18.75,
+    size4x4: 14.99,
+    crystal3d: 525, 
+    keychain: 112.99, 
+    keyring_magnet: 112.99 },
+  // Added South American countries
+  { name: 'Brazil', 
+    value: 'BR', 
+    currency: 'BRL', 
+    rate: 5.26, 
+    size4x6: 2.59,
+    size5x7: 15.79,
+    size8x10: 26.29,
+    size4x4: 20.99,
+    crystal3d: 735, 
+    keychain: 157.99, 
+    keyring_magnet: 157.99 },
+  { name: 'Mexico', 
+    value: 'MX', 
+    currency: 'MXN', 
+    rate: 18.3, 
+    size4x6: 8.99,
+    size5x7: 54.99,
+    size8x10: 89.99,
+    size4x4: 72.99,
+    crystal3d: 2550, 
+    keychain: 549.99, 
+    keyring_magnet: 549.99 },
 ];
 
 const TAX_RATES = {
@@ -75,6 +218,42 @@ const TAX_RATES = {
     'Saskatchewan': { GST: 5.0, PST: 6.0 },
     'Yukon': { GST: 5.0 },
     'Ontario': { HST: 13.0 }
+  },
+  'GB': { // United Kingdom
+    default: 20.0 // 20% VAT
+  },
+  'DE': { // Germany
+    default: 19.0 // 19% VAT
+  },
+  'FR': { // France
+    default: 20.0 // 20% VAT
+  },
+  'IT': { // Italy
+    default: 22.0 // 22% VAT
+  },
+  'ES': { // Spain
+    default: 21.0 // 21% VAT
+  },
+  'AU': { // Australia
+    default: 10.0 // 10% GST
+  },
+  'JP': { // Japan
+    default: 10.0 // 10% Consumption Tax
+  },
+  'SG': { // Singapore
+    default: 9.0 // 9% GST (recently raised)
+  },
+  'AE': { // UAE
+    default: 5.0 // 5% VAT
+  },
+  'SA': { // Saudi Arabia
+    default: 15.0 // 15% VAT
+  },
+  'BR': { // Brazil
+    default: 17.0 // Simplified approximation for ICMS
+  },
+  'MX': { // Mexico
+    default: 16.0 // 16% IVA
   }
 };
 

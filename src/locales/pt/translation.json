@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "a empresa de fotografia",
+      "title": "Transforme suas memórias digitais em belas impressões",
+      "subtitle": "Receba impressões de alta qualidade entregues diretamente em sua porta. Pedidos fáceis, entrega rápida e resultados impressionantes.",
+      "choose_location": "Escolha sua localização para começar a imprimir suas memórias",
+      "archive_policy": "Política de arquivo: Todas as imagens serão arquivadas em nosso banco de dados por 60 dias após o envio do pedido."
+    },
+    "services": {
+      "studio": "Estúdio Fotográfico",
+      "studio_desc": "Sessões profissionais em estúdio com fotógrafos experientes",
+      "print": "Imprimir Fotos",
+      "print_desc": "Impressões de alta qualidade entregues em sua casa",
+      "passport": "Fotos para Passaporte",
+      "passport_desc": "Fotos instantâneas para passaporte que atendem aos requisitos oficiais"
+    },
+    "features": {
+      "quick": "Serviço Rápido",
+      "satisfaction": "Satisfação",
+      "online": "Pedidos Online",
+      "quality": "Impressões de Qualidade"
+    },
+    "pickup": {
+      "details": "Detalhes da Retirada",
+      "location": "Local de Retirada",
+      "contact": "Contato",
+      "hours": "Horário de Funcionamento",
+      "closed": "Fechado",
+      "payment_notice": "Por favor, complete o pagamento no local de retirada",
+      "select_location": "Selecionar Local de Retirada",
+      "no_locations": "Nenhum local de retirada disponível em sua região",
+      "confirm_location": "Confirmar Local de Retirada"
+    },
+    "navigation": {
+      "choose_photos": "Escolher Fotos",
+      "select_sizes": "Selecionar Tamanhos", 
+      "quick_checkout": "Checkout Rápido",
+      "location": "Escolha sua localização para começar a imprimir suas memórias",
+      "select": "Selecione seu país"
+    },
+    "placeholder": {
+      "name": "Nome",
+      "validation.contact_info": "Informações de Contato",
+      "form.shipping_a": "Endereço de Envio",
+      "form.billing_a": "Endereço de Cobrança",
+      "form.same_address": "Endereço de cobrança igual ao endereço de envio",
+      "email": "Endereço de Email",
+      "phone": "Número de Telefone",
+      "firstName": "Nome",
+      "lastName": "Sobrenome",
+      "address": "Endereço",
+      "city": "Cidade",
+      "zipCode": "CEP",
+      "postalCode": "Código Postal",
+      "Select State": "Selecionar Estado",
+      "Select Province": "Selecionar Província",
+      "Country not selected": "País não selecionado",
+      "Contact Information": "Informações de Contato",
+      "Shipping Address": "Endereço de Envio",
+      "Billing Address": "Endereço de Cobrança",
+      "Billing address same as shipping": "Endereço de cobrança igual ao endereço de envio"
+    },
+    "buttons": {
+      "start_printing": "Começar a Imprimir",
+      "book_service": "Reservar um serviço de fotografia",
+      "add_photos": "Adicionar Fotos",
+      "home": "Início",
+      "back": "Voltar",
+      "next": "Próximo",
+      "processing": "Processando...",
+      "place_order": "Fazer Pedido",
+      "place_new": "Fazer Novo Pedido",
+      "review": "Revisão e Pagamento",
+      "book_now": "Reservar Estúdio",
+      "take_photo": "Tirar Foto"
+    },
+    "steps": {
+      "upload_photos": "Enviar Fotos",
+      "shipping_details": "Detalhes de Envio",
+      "payment": "Pagamento"
+    },
+    "form": {
+      "select_photo": "Selecionar Fotos",
+      "select_state": "Selecionar Estado",
+      "select_province": "Selecionar Província",
+      "email": "Email",
+      "phone": "Telefone",
+      "first_name": "Nome",
+      "last_name": "Sobrenome",
+      "address": "Endereço",
+      "city": "Cidade",
+      "postal_code": "Código Postal",
+      "select_country": "Selecione seu país",
+      "same_address": "Endereço de cobrança igual ao endereço de envio",
+      "shipping_a": "Endereço de Envio",
+      "billing_a": "Endereço de Cobrança"
+    },
+    "order": {
+      "success_message": "Obrigado pelo seu pedido!",
+      "success_details": "Seu pedido foi feito com sucesso e será processado em 48 horas. Um email de confirmação foi enviado para",
+      "order_number": "Número do Pedido",
+      "total_amount": "Valor Total",
+      "payment_method": "Método de Pagamento",
+      "cod": "Seu pedido será processado como Pagamento na Entrega (COD)",
+      "discount": "Código de Desconto",
+      "summary": "Resumo do Pedido",
+      "shipping_fee": "Frete e manuseio"
+    },
+    "validation": {
+      "contact_info": "Informações de Contato",
+      "complete_fields": "Por favor, preencha todos os campos obrigatórios antes de continuar",
+      "select_photos": "Por favor, selecione pelo menos uma foto"
+    },
+    "produits": {
+      "photo_print": "Impressão de Foto",
+      "magnet": "Ímã",
+      "3d_frame": "Moldura 3D",
+      "keychain": "Chaveiro e Ímã",
+      "shape": "Forma",
+      "rectangle": "Retângulo",
+      "heart": "Coração",
+      "quantity": "Quantidade",
+      "size": "Tamanho",
+      "product": "Produto",
+      "note": "Observação do Pedido",
+      "note1": "Adicionar instruções especiais (opcional)",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "discountmessage": "Digite o código de desconto",
+      "details": "Detalhes do Produto"
+    },
+    "productDetails": {
+      "title": "Detalhes dos Produtos",
+      "category": "Categoria",
+      "product": "Produto",
+      "price": "Preço",
+      "image": "Imagem",
+      "imagePreview": "Pré-visualização da imagem"
+    },
+    "categories": {
+      "Photo Prints": "Impressões Fotográficas",
+      "Keychain": "Chaveiro e Ímã",
+      "Magnet": "Ímã",
+      "3D Frame": "Moldura 3D"
+    },
+    "products": {
+      "4x6 Size": "Formato 4 x 6 polegadas",
+      "5x7 Size": "Formato 5 x 7 polegadas",
+      "4x4 Size": "Formato 4 x 4 polegadas",
+      "Format 10x15 cm": "Formato 10x15 cm",
+      "Format 15x23 cm": "Formato 15x23 cm",
+      "Keychain": "Chaveiro e Ímã",
+      "Magnet": "Ímã",
+      "3D Frame": "Moldura 3D",
+      "Rectangle 3D Frame": "Retângulo",
+      "Heart 3D Frame": "Coração",
+      "8x10 Size": "Formato 8 x 10 polegadas"
+    },
+    "canada": {
+      "options": "Opções de Pagamento para Canadá",
+      "select": "Selecione o Método de Pagamento:",
+      "interac": "Transferência Interac",
+      "credit": "Pagamento com Cartão de Crédito",
+      "send": "Enviar pagamento para:",
+      "placing": "Após fazer o pedido, complete a transferência Interac para o email fornecido.",
+      "credit_c": "Pagamento com Cartão de Crédito",
+      "message_c": "Por favor, complete seu pagamento para fazer o pedido"
+    },
+    "checkout": {
+      "cardNumber": "Número do Cartão",
+      "expiryDate": "Data de Validade", 
+      "cvc": "CVC",
+      "zipCode": "CEP",
+      "postalCode": "Código Postal",
+      "postalCodeRequired": "Código Postal é obrigatório",
+      "invalidPostalCode": "Código Postal inválido para o país selecionado",
+      "serverError": "Ocorreu um erro em nosso servidor. Por favor, tente novamente.",
+      "networkError": "Erro de rede. Por favor, verifique sua conexão.",
+      "paymentProcessingError": "Não foi possível processar o pagamento. Por favor, tente novamente.",
+      "processing": "Processando...",
+      "payNow": "Pagar Agora",
+      "tryAgain": "Tentar Novamente"
+    },
+    "payment": {
+      "serverError": "O servidor de pagamento está temporariamente indisponível. Por favor, tente novamente mais tarde.",
+      "genericError": "Houve um problema ao processar seu pagamento. Por favor, tente novamente.",
+      "cardDeclined": "Seu cartão foi recusado. Por favor, tente outro cartão.",
+      "cardExpired": "Seu cartão expirou. Por favor, use um cartão diferente.",
+      "invalidCVC": "O código de segurança (CVC) está incorreto.",
+      "processingError": "Houve um erro ao processar seu cartão.",
+      "insufficientFunds": "Fundos insuficientes em sua conta.",
+      "incorrectPostalCode": "O código postal não corresponde ao seu cartão."
+    }
+}

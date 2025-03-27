@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "das Fotografie-Unternehmen",
+      "title": "Verwandeln Sie Ihre digitalen Erinnerungen in wunderschöne Abzüge",
+      "subtitle": "Erhalten Sie hochwertige Abzüge direkt an Ihre Haustür geliefert. Einfache Bestellung, schnelle Lieferung und beeindruckende Ergebnisse.",
+      "choose_location": "Wählen Sie Ihren Standort, um mit dem Drucken Ihrer Erinnerungen zu beginnen",
+      "archive_policy": "Archivierungsrichtlinie: Alle Bilder werden 60 Tage nach dem Versand der Bestellung in unserer Datenbank archiviert."
+    },
+    "services": {
+      "studio": "Fotostudio",
+      "studio_desc": "Professionelle Studioaufnahmen mit erfahrenen Fotografen",
+      "print": "Bilder drucken",
+      "print_desc": "Hochwertige Abzüge direkt an Ihre Haustür geliefert",
+      "passport": "Passfotos",
+      "passport_desc": "Sofortige Passfotos, die den offiziellen Anforderungen entsprechen"
+    },
+    "features": {
+      "quick": "Schneller Service",
+      "satisfaction": "Zufriedenheit",
+      "online": "Online-Bestellungen",
+      "quality": "Qualitätsdrucke"
+    },
+    "pickup": {
+      "details": "Abholdetails",
+      "location": "Abholort",
+      "contact": "Kontakt",
+      "hours": "Öffnungszeiten",
+      "closed": "Geschlossen",
+      "payment_notice": "Bitte bezahlen Sie bei der Abholung",
+      "select_location": "Abholort auswählen",
+      "no_locations": "Keine Abholorte in Ihrer Region verfügbar",
+      "confirm_location": "Abholort bestätigen"
+    },
+    "navigation": {
+      "choose_photos": "Fotos auswählen",
+      "select_sizes": "Größen auswählen", 
+      "quick_checkout": "Schnell zur Kasse",
+      "location": "Wählen Sie Ihren Standort, um mit dem Drucken Ihrer Erinnerungen zu beginnen",
+      "select": "Wählen Sie Ihr Land"
+    },
+    "placeholder": {
+      "name": "Name",
+      "validation.contact_info": "Kontaktinformationen",
+      "form.shipping_a": "Lieferadresse",
+      "form.billing_a": "Rechnungsadresse",
+      "form.same_address": "Rechnungsadresse ist identisch mit Lieferadresse",
+      "email": "E-Mail-Adresse",
+      "phone": "Telefonnummer",
+      "firstName": "Vorname",
+      "lastName": "Nachname",
+      "address": "Adresse",
+      "city": "Stadt",
+      "zipCode": "Postleitzahl",
+      "postalCode": "Postleitzahl",
+      "Select State": "Bundesland auswählen",
+      "Select Province": "Provinz auswählen",
+      "Country not selected": "Land nicht ausgewählt",
+      "Contact Information": "Kontaktinformationen",
+      "Shipping Address": "Lieferadresse",
+      "Billing Address": "Rechnungsadresse",
+      "Billing address same as shipping": "Rechnungsadresse ist identisch mit Lieferadresse"
+    },
+    "buttons": {
+      "start_printing": "Mit Drucken beginnen",
+      "book_service": "Fotoshooting buchen",
+      "add_photos": "Fotos hinzufügen",
+      "home": "Startseite",
+      "back": "Zurück",
+      "next": "Weiter",
+      "processing": "Verarbeitung...",
+      "place_order": "Bestellung aufgeben",
+      "place_new": "Neue Bestellung aufgeben",
+      "review": "Überprüfung & Zahlung",
+      "book_now": "Studio buchen",
+      "take_photo": "Foto aufnehmen"
+    },
+    "steps": {
+      "upload_photos": "Fotos hochladen",
+      "shipping_details": "Versanddetails",
+      "payment": "Zahlung"
+    },
+    "form": {
+      "select_photo": "Fotos auswählen",
+      "select_state": "Bundesland auswählen",
+      "select_province": "Provinz auswählen",
+      "email": "E-Mail-Adresse",
+      "phone": "Telefonnummer",
+      "first_name": "Vorname",
+      "last_name": "Nachname",
+      "address": "Adresse",
+      "city": "Stadt",
+      "postal_code": "Postleitzahl",
+      "select_country": "Wählen Sie Ihr Land",
+      "same_address": "Rechnungsadresse ist identisch mit Lieferadresse",
+      "shipping_a": "Lieferadresse",
+      "billing_a": "Rechnungsadresse"
+    },
+    "order": {
+      "success_message": "Vielen Dank für Ihre Bestellung!",
+      "success_details": "Ihre Bestellung wurde erfolgreich aufgegeben und wird innerhalb von 48 Stunden bearbeitet. Eine Bestätigungs-E-Mail wurde gesendet an",
+      "order_number": "Bestellnummer",
+      "total_amount": "Gesamtbetrag",
+      "payment_method": "Zahlungsmethode",
+      "cod": "Ihre Bestellung wird als Nachnahme (COD) bearbeitet",
+      "discount": "Rabattcode",
+      "summary": "Bestellübersicht",
+      "shipping_fee": "Versand und Bearbeitung"
+    },
+    "validation": {
+      "contact_info": "Kontaktinformationen",
+      "complete_fields": "Bitte füllen Sie alle erforderlichen Felder aus, bevor Sie fortfahren",
+      "select_photos": "Bitte wählen Sie mindestens ein Foto aus"
+    },
+    "produits": {
+      "photo_print": "Fotoabzug",
+      "magnet": "Magnet",
+      "3d_frame": "3D-Rahmen",
+      "keychain": "Schlüsselanhänger und Magnet",
+      "shape": "Form",
+      "rectangle": "Rechteck",
+      "heart": "Herz",
+      "quantity": "Menge",
+      "size": "Größe",
+      "product": "Produkt",
+      "note": "Bestellhinweis",
+      "note1": "Besondere Anweisungen hinzufügen (optional)",
+      "subtotal": "Zwischensumme",
+      "total": "Gesamtsumme",
+      "discountmessage": "Rabattcode eingeben",
+      "details": "Produktdetails"
+    },
+    "productDetails": {
+      "title": "Produktdetails",
+      "category": "Kategorie",
+      "product": "Produkt",
+      "price": "Preis",
+      "image": "Bild",
+      "imagePreview": "Bildvorschau"
+    },
+    "categories": {
+      "Photo Prints": "Fotoabzüge",
+      "Keychain": "Schlüsselanhänger und Magnet",
+      "Magnet": "Magnet",
+      "3D Frame": "3D-Rahmen"
+    },
+    "products": {
+      "4x6 Size": "Format 4 x 6 Zoll",
+      "5x7 Size": "Format 5 x 7 Zoll",
+      "4x4 Size": "Format 4 x 4 Zoll",
+      "Format 10x15 cm": "Format 10x15 cm",
+      "Format 15x23 cm": "Format 15x23 cm",
+      "Keychain": "Schlüsselanhänger und Magnet",
+      "Magnet": "Magnet",
+      "3D Frame": "3D-Rahmen",
+      "Rectangle 3D Frame": "Rechteck",
+      "Heart 3D Frame": "Herz",
+      "8x10 Size": "Format 8 x 10 Zoll"
+    },
+    "canada": {
+      "options": "Zahlungsoptionen für Kanada",
+      "select": "Zahlungsmethode auswählen:",
+      "interac": "Interac E-Transfer",
+      "credit": "Kreditkartenzahlung",
+      "send": "Zahlung senden an:",
+      "placing": "Nach der Bestellung führen Sie bitte den Interac E-Transfer an die angegebene E-Mail-Adresse durch.",
+      "credit_c": "Kreditkartenzahlung",
+      "message_c": "Bitte schließen Sie Ihre Zahlung ab, um die Bestellung aufzugeben"
+    },
+    "checkout": {
+      "cardNumber": "Kartennummer",
+      "expiryDate": "Ablaufdatum", 
+      "cvc": "CVC",
+      "zipCode": "Postleitzahl",
+      "postalCode": "Postleitzahl",
+      "postalCodeRequired": "Postleitzahl ist erforderlich",
+      "invalidPostalCode": "Ungültige Postleitzahl für das ausgewählte Land",
+      "serverError": "Es ist ein Fehler auf unserem Server aufgetreten. Bitte versuchen Sie es erneut.",
+      "networkError": "Netzwerkfehler. Bitte überprüfen Sie Ihre Verbindung.",
+      "paymentProcessingError": "Zahlung konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut.",
+      "processing": "Verarbeitung...",
+      "payNow": "Jetzt bezahlen",
+      "tryAgain": "Erneut versuchen"
+    },
+    "payment": {
+      "serverError": "Der Zahlungsserver ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
+      "genericError": "Bei der Verarbeitung Ihrer Zahlung ist ein Problem aufgetreten. Bitte versuchen Sie es erneut.",
+      "cardDeclined": "Ihre Karte wurde abgelehnt. Bitte versuchen Sie eine andere Karte.",
+      "cardExpired": "Ihre Karte ist abgelaufen. Bitte verwenden Sie eine andere Karte.",
+      "invalidCVC": "Der Sicherheitscode (CVC) ist falsch.",
+      "processingError": "Bei der Verarbeitung Ihrer Karte ist ein Fehler aufgetreten.",
+      "insufficientFunds": "Unzureichendes Guthaben auf Ihrem Konto.",
+      "incorrectPostalCode": "Die Postleitzahl stimmt nicht mit Ihrer Karte überein."
+    }
+  }

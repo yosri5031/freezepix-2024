@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "la compañía de fotografía",
+      "title": "Transforma tus recuerdos digitales en hermosas impresiones",
+      "subtitle": "Obtén impresiones de alta calidad entregadas directamente a tu puerta. Pedidos fáciles, entrega rápida y resultados impresionantes.",
+      "choose_location": "Elige tu ubicación para comenzar a imprimir tus recuerdos",
+      "archive_policy": "Política de archivo: Todas las imágenes se guardarán en nuestra base de datos durante 60 días después de que se envíe el pedido."
+    },
+    "services": {
+      "studio": "Estudio Fotográfico",
+      "studio_desc": "Sesiones profesionales en estudio con fotógrafos expertos",
+      "print": "Imprimir Fotos",
+      "print_desc": "Impresiones de alta calidad entregadas a tu domicilio",
+      "passport": "Fotos de Pasaporte",
+      "passport_desc": "Fotos de pasaporte instantáneas que cumplen con los requisitos oficiales"
+    },
+    "features": {
+      "quick": "Servicio Rápido",
+      "satisfaction": "Satisfacción",
+      "online": "Pedidos Online",
+      "quality": "Impresiones de Calidad"
+    },
+    "pickup": {
+      "details": "Detalles de Recogida",
+      "location": "Ubicación de Recogida",
+      "contact": "Contacto",
+      "hours": "Horario de Atención",
+      "closed": "Cerrado",
+      "payment_notice": "Por favor complete el pago en el lugar de recogida",
+      "select_location": "Seleccionar Ubicación de Recogida",
+      "no_locations": "No hay ubicaciones de recogida disponibles en tu región",
+      "confirm_location": "Confirmar Ubicación de Recogida"
+    },
+    "navigation": {
+      "choose_photos": "Elegir Fotos",
+      "select_sizes": "Seleccionar Tamaños", 
+      "quick_checkout": "Pago Rápido",
+      "location": "Elige tu ubicación para comenzar a imprimir tus recuerdos",
+      "select": "Selecciona tu país"
+    },
+    "placeholder": {
+      "name": "Nombre",
+      "validation.contact_info": "Información de Contacto",
+      "form.shipping_a": "Dirección de Envío",
+      "form.billing_a": "Dirección de Facturación",
+      "form.same_address": "La dirección de facturación es la misma que la de envío",
+      "email": "Correo Electrónico",
+      "phone": "Número de Teléfono",
+      "firstName": "Nombre",
+      "lastName": "Apellido",
+      "address": "Dirección",
+      "city": "Ciudad",
+      "zipCode": "Código Postal",
+      "postalCode": "Código Postal",
+      "Select State": "Seleccionar Estado",
+      "Select Province": "Seleccionar Provincia",
+      "Country not selected": "País no seleccionado",
+      "Contact Information": "Información de Contacto",
+      "Shipping Address": "Dirección de Envío",
+      "Billing Address": "Dirección de Facturación",
+      "Billing address same as shipping": "Dirección de facturación igual a la de envío"
+    },
+    "buttons": {
+      "start_printing": "Comenzar a Imprimir",
+      "book_service": "Reservar un servicio de fotografía",
+      "add_photos": "Añadir Fotos",
+      "home": "Inicio",
+      "back": "Atrás",
+      "next": "Siguiente",
+      "processing": "Procesando...",
+      "place_order": "Realizar Pedido",
+      "place_new": "Hacer Nuevo Pedido",
+      "review": "Revisar y Pago",
+      "book_now": "Reservar Estudio",
+      "take_photo": "Tomar Foto"
+    },
+    "steps": {
+      "upload_photos": "Subir Fotos",
+      "shipping_details": "Detalles de Envío",
+      "payment": "Pago"
+    },
+    "form": {
+      "select_photo": "Seleccionar Fotos",
+      "select_state": "Seleccionar Estado",
+      "select_province": "Seleccionar Provincia",
+      "email": "Correo Electrónico",
+      "phone": "Número de Teléfono",
+      "first_name": "Nombre",
+      "last_name": "Apellido",
+      "address": "Dirección",
+      "city": "Ciudad",
+      "postal_code": "Código Postal",
+      "select_country": "Selecciona tu país",
+      "same_address": "Dirección de facturación igual a la de envío",
+      "shipping_a": "Dirección de Envío",
+      "billing_a": "Dirección de Facturación"
+    },
+    "order": {
+      "success_message": "¡Gracias por tu pedido!",
+      "success_details": "Tu pedido ha sido realizado con éxito y será procesado dentro de las próximas 48 horas. Se ha enviado un correo de confirmación a",
+      "order_number": "Número de Pedido",
+      "total_amount": "Importe Total",
+      "payment_method": "Método de Pago",
+      "cod": "Tu pedido será procesado como Pago contra Entrega (COD)",
+      "discount": "Código de Descuento",
+      "summary": "Resumen del Pedido",
+      "shipping_fee": "Gastos de envío y manipulación"
+    },
+    "validation": {
+      "contact_info": "Información de Contacto",
+      "complete_fields": "Por favor complete todos los campos requeridos antes de continuar",
+      "select_photos": "Por favor seleccione al menos una foto"
+    },
+    "produits": {
+      "photo_print": "Impresión de Foto",
+      "magnet": "Imán",
+      "3d_frame": "Marco 3D",
+      "keychain": "Llavero y Imán",
+      "shape": "Forma",
+      "rectangle": "Rectángulo",
+      "heart": "Corazón",
+      "quantity": "Cantidad",
+      "size": "Tamaño",
+      "product": "Producto",
+      "note": "Nota del Pedido",
+      "note1": "Añadir instrucciones especiales (opcional)",
+      "subtotal": "Subtotal",
+      "total": "Total",
+      "discountmessage": "Introducir código de descuento",
+      "details": "Detalles del Producto"
+    },
+    "productDetails": {
+      "title": "Detalles de Productos",
+      "category": "Categoría",
+      "product": "Producto",
+      "price": "Precio",
+      "image": "Imagen",
+      "imagePreview": "Vista previa de imagen"
+    },
+    "categories": {
+      "Photo Prints": "Impresiones Fotográficas",
+      "Keychain": "Llavero y Imán",
+      "Magnet": "Imán",
+      "3D Frame": "Marco 3D"
+    },
+    "products": {
+      "4x6 Size": "Formato 4 x 6 pulg",
+      "5x7 Size": "Formato 5 x 7 pulg",
+      "4x4 Size": "Formato 4 x 4 pulg",
+      "Format 10x15 cm": "Formato 10x15 cm",
+      "Format 15x23 cm": "Formato 15x23 cm",
+      "Keychain": "Llavero y Imán",
+      "Magnet": "Imán",
+      "3D Frame": "Marco 3D",
+      "Rectangle 3D Frame": "Rectángulo",
+      "Heart 3D Frame": "Corazón",
+      "8x10 Size": "Formato 8 x 10 pulg"
+    },
+    "canada": {
+      "options": "Opciones de Pago para Canadá",
+      "select": "Seleccionar Método de Pago:",
+      "interac": "Transferencia Interac",
+      "credit": "Pago con Tarjeta de Crédito",
+      "send": "Enviar pago a:",
+      "placing": "Después de realizar el pedido, complete la transferencia Interac al correo proporcionado.",
+      "credit_c": "Pago con Tarjeta de Crédito",
+      "message_c": "Por favor complete su pago para realizar el pedido"
+    },
+    "checkout": {
+      "cardNumber": "Número de Tarjeta",
+      "expiryDate": "Fecha de Vencimiento", 
+      "cvc": "CVC",
+      "zipCode": "Código Postal",
+      "postalCode": "Código Postal",
+      "postalCodeRequired": "El código postal es obligatorio",
+      "invalidPostalCode": "Código postal inválido para el país seleccionado",
+      "serverError": "Ocurrió un error en nuestro servidor. Por favor intente de nuevo.",
+      "networkError": "Error de red. Por favor verifique su conexión.",
+      "paymentProcessingError": "No se pudo procesar el pago. Por favor intente de nuevo.",
+      "processing": "Procesando...",
+      "payNow": "Pagar Ahora",
+      "tryAgain": "Intentar de Nuevo"
+    },
+    "payment": {
+      "serverError": "El servidor de pagos está temporalmente no disponible. Por favor intente más tarde.",
+      "genericError": "Hubo un problema al procesar su pago. Por favor intente de nuevo.",
+      "cardDeclined": "Su tarjeta fue rechazada. Por favor intente con otra tarjeta.",
+      "cardExpired": "Su tarjeta ha expirado. Por favor use una tarjeta diferente.",
+      "invalidCVC": "El código de seguridad (CVC) es incorrecto.",
+      "processingError": "Hubo un error al procesar su tarjeta.",
+      "insufficientFunds": "Fondos insuficientes en su cuenta.",
+      "incorrectPostalCode": "El código postal no coincide con su tarjeta."
+    }
+  }

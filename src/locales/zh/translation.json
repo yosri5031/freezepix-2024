@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "摄影公司",
+      "title": "将数字记忆变成精美的照片打印",
+      "subtitle": "获得高质量的照片打印，直接送到您家门口。简单订购，快速配送，令人惊艳的效果。",
+      "choose_location": "选择您的位置，开始打印您的记忆",
+      "archive_policy": "存档政策：所有照片将在订单发货后的60天内存档在我们的数据库中。"
+    },
+    "services": {
+      "studio": "摄影工作室",
+      "studio_desc": "专业摄影师提供的专业工作室拍摄",
+      "print": "打印照片",
+      "print_desc": "高质量打印直接送到您家门口",
+      "passport": "护照照片",
+      "passport_desc": "即时护照照片，符合官方要求"
+    },
+    "features": {
+      "quick": "快速服务",
+      "satisfaction": "满意度",
+      "online": "在线订购",
+      "quality": "高质量打印"
+    },
+    "pickup": {
+      "details": "取货详情",
+      "location": "取货地点",
+      "contact": "联系方式",
+      "hours": "营业时间",
+      "closed": "休息",
+      "payment_notice": "请在取货地点完成付款",
+      "select_location": "选择取货地点",
+      "no_locations": "您所在区域没有可用的取货地点",
+      "confirm_location": "确认取货地点"
+    },
+    "navigation": {
+      "choose_photos": "选择照片",
+      "select_sizes": "选择尺寸", 
+      "quick_checkout": "快速结账",
+      "location": "选择您的位置，开始打印您的记忆",
+      "select": "选择您的国家"
+    },
+    "placeholder": {
+      "name": "姓名",
+      "validation.contact_info": "联系信息",
+      "form.shipping_a": "送货地址",
+      "form.billing_a": "账单地址",
+      "form.same_address": "账单地址与送货地址相同",
+      "email": "电子邮件地址",
+      "phone": "电话号码",
+      "firstName": "名字",
+      "lastName": "姓氏",
+      "address": "地址",
+      "city": "城市",
+      "zipCode": "邮政编码",
+      "postalCode": "邮政编码",
+      "Select State": "选择州",
+      "Select Province": "选择省份",
+      "Country not selected": "未选择国家",
+      "Contact Information": "联系信息",
+      "Shipping Address": "送货地址",
+      "Billing Address": "账单地址",
+      "Billing address same as shipping": "账单地址与送货地址相同"
+    },
+    "buttons": {
+      "start_printing": "开始打印",
+      "book_service": "预约摄影服务",
+      "add_photos": "添加照片",
+      "home": "首页",
+      "back": "返回",
+      "next": "下一步",
+      "processing": "处理中...",
+      "place_order": "下订单",
+      "place_new": "下新订单",
+      "review": "审核与付款",
+      "book_now": "预约工作室",
+      "take_photo": "拍照"
+    },
+    "steps": {
+      "upload_photos": "上传照片",
+      "shipping_details": "配送详情",
+      "payment": "付款"
+    },
+    "form": {
+      "select_photo": "选择照片",
+      "select_state": "选择州",
+      "select_province": "选择省份",
+      "email": "电子邮件地址",
+      "phone": "电话号码",
+      "first_name": "名字",
+      "last_name": "姓氏",
+      "address": "地址",
+      "city": "城市",
+      "postal_code": "邮政编码",
+      "select_country": "选择您的国家",
+      "same_address": "账单地址与送货地址相同",
+      "shipping_a": "送货地址",
+      "billing_a": "账单地址"
+    },
+    "order": {
+      "success_message": "感谢您的订购！",
+      "success_details": "您的订单已成功下单，将在48小时内处理。确认邮件已发送至",
+      "order_number": "订单号",
+      "total_amount": "总金额",
+      "payment_method": "支付方式",
+      "cod": "您的订单将以货到付款（COD）方式处理",
+      "discount": "优惠码",
+      "summary": "订单摘要",
+      "shipping_fee": "运费和处理费"
+    },
+    "validation": {
+      "contact_info": "联系信息",
+      "complete_fields": "请在继续前完成所有必填字段",
+      "select_photos": "请至少选择一张照片"
+    },
+    "produits": {
+      "photo_print": "照片打印",
+      "magnet": "磁贴",
+      "3d_frame": "3D相框",
+      "keychain": "钥匙扣和磁贴",
+      "shape": "形状",
+      "rectangle": "长方形",
+      "heart": "心形",
+      "quantity": "数量",
+      "size": "尺寸",
+      "product": "产品",
+      "note": "订单备注",
+      "note1": "添加特殊说明（可选）",
+      "subtotal": "小计",
+      "total": "总计",
+      "discountmessage": "输入优惠码",
+      "details": "产品详情"
+    },
+    "productDetails": {
+      "title": "产品详情",
+      "category": "类别",
+      "product": "产品",
+      "price": "价格",
+      "image": "图片",
+      "imagePreview": "图片预览"
+    },
+    "categories": {
+      "Photo Prints": "照片打印",
+      "Keychain": "钥匙扣和磁贴",
+      "Magnet": "磁贴",
+      "3D Frame": "3D相框"
+    },
+    "products": {
+      "4x6 Size": "4 x 6英寸尺寸",
+      "5x7 Size": "5 x 7英寸尺寸",
+      "4x4 Size": "4 x 4英寸尺寸",
+      "Format 10x15 cm": "10x15厘米尺寸",
+      "Format 15x23 cm": "15x23厘米尺寸",
+      "Keychain": "钥匙扣和磁贴",
+      "Magnet": "磁贴",
+      "3D Frame": "3D相框",
+      "Rectangle 3D Frame": "长方形",
+      "Heart 3D Frame": "心形",
+      "8x10 Size": "8 x 10英寸尺寸"
+    },
+    "canada": {
+      "options": "加拿大付款选项",
+      "select": "选择付款方式：",
+      "interac": "Interac电子转账",
+      "credit": "信用卡支付",
+      "send": "付款至：",
+      "placing": "下订单后，请完成Interac电子转账至提供的电子邮件。",
+      "credit_c": "信用卡支付",
+      "message_c": "请完成付款以下订单"
+    },
+    "checkout": {
+      "cardNumber": "卡号",
+      "expiryDate": "到期日", 
+      "cvc": "安全码",
+      "zipCode": "邮编",
+      "postalCode": "邮政编码",
+      "postalCodeRequired": "需要邮政编码",
+      "invalidPostalCode": "所选国家的邮政编码无效",
+      "serverError": "我们的服务器发生错误。请重试。",
+      "networkError": "网络错误。请检查您的连接。",
+      "paymentProcessingError": "无法处理付款。请重试。",
+      "processing": "处理中...",
+      "payNow": "立即付款",
+      "tryAgain": "重试"
+    },
+    "payment": {
+      "serverError": "支付服务器暂时不可用。请稍后再试。",
+      "genericError": "处理您的付款时出现问题。请重试。",
+      "cardDeclined": "您的卡被拒绝。请尝试另一张卡。",
+      "cardExpired": "您的卡已过期。请使用其他卡。",
+      "invalidCVC": "安全码（CVC）不正确。",
+      "processingError": "处理您的卡时发生错误。",
+      "insufficientFunds": "您的账户资金不足。",
+      "incorrectPostalCode": "邮政编码与您的卡不匹配。"
+    }
+  }

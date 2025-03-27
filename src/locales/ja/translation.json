@@ -1,0 +1,194 @@
+{
+    "intro": {
+      "welcome": "写真会社",
+      "title": "デジタルの思い出を美しいプリントに変える",
+      "subtitle": "高品質のプリントをご自宅にお届けします。簡単な注文、迅速な配送、素晴らしい仕上がり。",
+      "choose_location": "思い出のプリントを始めるには場所を選択してください",
+      "archive_policy": "アーカイブポリシーすべての写真は注文発送後60日間、当社のデータベースに保存されます。"
+    },
+    "services": {
+      "studio": "写真スタジオ",
+      "studio_desc": "専門の写真家による専門的なスタジオセッション",
+      "print": "写真プリント",
+      "print_desc": "高品質のプリントをご自宅にお届け",
+      "passport": "パスポート写真",
+      "passport_desc": "公式要件を満たすインスタントパスポート写真"
+    },
+    "features": {
+      "quick": "迅速なサービス",
+      "satisfaction": "満足度",
+      "online": "オンライン注文",
+      "quality": "高品質プリント"
+    },
+    "pickup": {
+      "details": "受け取り詳細",
+      "location": "受け取り場所",
+      "contact": "連絡先",
+      "hours": "営業時間",
+      "closed": "休業",
+      "payment_notice": "受け取り場所でお支払いを完了してください",
+      "select_location": "受け取り場所を選択",
+      "no_locations": "お住まいの地域に受け取り場所はありません",
+      "confirm_location": "受け取り場所を確認"
+    },
+    "navigation": {
+      "choose_photos": "写真を選択",
+      "select_sizes": "サイズを選択", 
+      "quick_checkout": "クイック決済",
+      "location": "思い出のプリントを始めるには場所を選択してください",
+      "select": "国を選択"
+    },
+    "placeholder": {
+      "name": "名前",
+      "validation.contact_info": "連絡先情報",
+      "form.shipping_a": "配送先住所",
+      "form.billing_a": "請求先住所",
+      "form.same_address": "請求先住所は配送先住所と同じ",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "firstName": "名",
+      "lastName": "姓",
+      "address": "住所",
+      "city": "市区町村",
+      "zipCode": "郵便番号",
+      "postalCode": "郵便番号",
+      "Select State": "都道府県を選択",
+      "Select Province": "地域を選択",
+      "Country not selected": "国が選択されていません",
+      "Contact Information": "連絡先情報",
+      "Shipping Address": "配送先住所",
+      "Billing Address": "請求先住所",
+      "Billing address same as shipping": "請求先住所は配送先住所と同じ"
+    },
+    "buttons": {
+      "start_printing": "プリント開始",
+      "book_service": "写真サービスを予約",
+      "add_photos": "写真を追加",
+      "home": "ホーム",
+      "back": "戻る",
+      "next": "次へ",
+      "processing": "処理中...",
+      "place_order": "注文する",
+      "place_new": "新規注文",
+      "review": "確認と支払い",
+      "book_now": "スタジオ予約",
+      "take_photo": "写真を撮る"
+    },
+    "steps": {
+      "upload_photos": "写真をアップロード",
+      "shipping_details": "配送詳細",
+      "payment": "支払い"
+    },
+    "form": {
+      "select_photo": "写真を選択",
+      "select_state": "都道府県を選択",
+      "select_province": "地域を選択",
+      "email": "メールアドレス",
+      "phone": "電話番号",
+      "first_name": "名",
+      "last_name": "姓",
+      "address": "住所",
+      "city": "市区町村",
+      "postal_code": "郵便番号",
+      "select_country": "国を選択",
+      "same_address": "請求先住所は配送先住所と同じ",
+      "shipping_a": "配送先住所",
+      "billing_a": "請求先住所"
+    },
+    "order": {
+      "success_message": "ご注文ありがとうございます！",
+      "success_details": "ご注文は正常に受け付けられ、48時間以内に処理されます。確認メールが次のアドレスに送信されました：",
+      "order_number": "注文番号",
+      "total_amount": "合計金額",
+      "payment_method": "支払い方法",
+      "cod": "ご注文は代金引換（COD）で処理されます",
+      "discount": "割引コード",
+      "summary": "注文概要",
+      "shipping_fee": "配送料と取扱手数料"
+    },
+    "validation": {
+      "contact_info": "連絡先情報",
+      "complete_fields": "続行する前に必須項目をすべて入力してください",
+      "select_photos": "少なくとも1枚の写真を選択してください"
+    },
+    "produits": {
+      "photo_print": "写真プリント",
+      "magnet": "マグネット",
+      "3d_frame": "3Dフレーム",
+      "keychain": "キーホルダーとマグネット",
+      "shape": "形状",
+      "rectangle": "長方形",
+      "heart": "ハート",
+      "quantity": "数量",
+      "size": "サイズ",
+      "product": "商品",
+      "note": "注文メモ",
+      "note1": "特別な指示を追加（任意）",
+      "subtotal": "小計",
+      "total": "合計",
+      "discountmessage": "割引コードを入力",
+      "details": "商品詳細"
+    },
+    "productDetails": {
+      "title": "商品詳細",
+      "category": "カテゴリー",
+      "product": "商品",
+      "price": "価格",
+      "image": "画像",
+      "imagePreview": "画像プレビュー"
+    },
+    "categories": {
+      "Photo Prints": "写真プリント",
+      "Keychain": "キーホルダーとマグネット",
+      "Magnet": "マグネット",
+      "3D Frame": "3Dフレーム"
+    },
+    "products": {
+      "4x6 Size": "4 x 6インチサイズ",
+      "5x7 Size": "5 x 7インチサイズ",
+      "4x4 Size": "4 x 4インチサイズ",
+      "Format 10x15 cm": "10x15 cmサイズ",
+      "Format 15x23 cm": "15x23 cmサイズ",
+      "Keychain": "キーホルダーとマグネット",
+      "Magnet": "マグネット",
+      "3D Frame": "3Dフレーム",
+      "Rectangle 3D Frame": "長方形",
+      "Heart 3D Frame": "ハート",
+      "8x10 Size": "8 x 10インチサイズ"
+    },
+    "canada": {
+      "options": "カナダの支払いオプション",
+      "select": "支払い方法を選択：",
+      "interac": "Interac Eトランスファー",
+      "credit": "クレジットカード決済",
+      "send": "支払い先：",
+      "placing": "注文後、提供されたメールアドレスにInterac Eトランスファーを完了してください。",
+      "credit_c": "クレジットカード決済",
+      "message_c": "注文するには支払いを完了してください"
+    },
+    "checkout": {
+      "cardNumber": "カード番号",
+      "expiryDate": "有効期限", 
+      "cvc": "セキュリティコード",
+      "zipCode": "郵便番号",
+      "postalCode": "郵便番号",
+      "postalCodeRequired": "郵便番号は必須です",
+      "invalidPostalCode": "選択した国の郵便番号が無効です",
+      "serverError": "サーバーでエラーが発生しました。もう一度お試しください。",
+      "networkError": "ネットワークエラー。接続を確認してください。",
+      "paymentProcessingError": "支払いを処理できません。もう一度お試しください。",
+      "processing": "処理中...",
+      "payNow": "今すぐ支払う",
+      "tryAgain": "再試行"
+    },
+    "payment": {
+      "serverError": "決済サーバーが一時的に利用できません。後でもう一度お試しください。",
+      "genericError": "支払い処理中に問題が発生しました。もう一度お試しください。",
+      "cardDeclined": "カードが拒否されました。別のカードをお試しください。",
+      "cardExpired": "カードの有効期限が切れています。別のカードをご使用ください。",
+      "invalidCVC": "セキュリティコード（CVC）が正しくありません。",
+      "processingError": "カードの処理中にエラーが発生しました。",
+      "insufficientFunds": "口座の残高が不足しています。",
+      "incorrectPostalCode": "郵便番号がカードと一致しません。"
+    }
+  }
