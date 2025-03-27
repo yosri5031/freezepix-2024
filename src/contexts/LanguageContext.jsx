@@ -6,7 +6,7 @@ import translationFR from '../locales/fr/translation.json';
 import translationAR from '../locales/ar/translation.json';
 import translationES from '../locales/es/translation.json';
 import translationDE from '../locales/de/translation.json';
-import translationIT from '../locales/it/translation.json';
+import translationIT from '../locales/it/translaton.json';
 import translationJA from '../locales/ja/translation.json';
 import translationZH from '../locales/zh/translation.json';
 import translationPT from '../locales/pt/translation.json';
