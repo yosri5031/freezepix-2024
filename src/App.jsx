@@ -1599,15 +1599,25 @@ const closeProductDetails = () => {
             const restoredPhotos = parsedPhotos.map(photo => {
               // Validate base64 data
               if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                throw new Error('Invalid saved image data');
+                return null; // Skip invalid entries
+              }
+    
+              // Try to create a File object from base64
+              let fileObj = null;
+              try {
+                fileObj = base64ToFile(photo.base64, photo.fileName);
+              } catch (e) {
+                console.warn('Could not convert base64 to file:', e);
+                // Continue without file object
               }
     
               return {
                 ...photo,
-                file: base64ToFile(photo.base64, photo.fileName),
-                preview: photo.base64 // Use base64 as preview
+                file: fileObj,
+                preview: photo.base64 // Use base64 as preview if no file object
               };
-            });
+            }).filter(Boolean); // Remove any null entries
+            
             setSelectedPhotos(restoredPhotos);
           } catch (error) {
             console.error('Error restoring photos:', error);
@@ -1657,14 +1667,19 @@ const closeProductDetails = () => {
 
      // Add cleanup for preview URLs
      useEffect(() => {
+      // Save ObjectURLs to clean up later
+      const objectURLs = selectedPhotos
+        .filter(photo => photo.preview && typeof photo.preview === 'string' && photo.preview.startsWith('blob:'))
+        .map(photo => photo.preview);
+      
+      // Return cleanup function
       return () => {
-        selectedPhotos.forEach(photo => {
-          if (photo.preview && !photo.preview.startsWith('data:')) {
-            URL.revokeObjectURL(photo.preview);
-          }
+        objectURLs.forEach(url => {
+          URL.revokeObjectURL(url);
         });
       };
     }, [selectedPhotos]);
+    
 
 // Add this effect to update prices when country changes
 // Update the useEffect for country change
@@ -3059,7 +3074,16 @@ const handleFileChange = async (event) => {
         throw new Error(`Invalid file type: ${file.type}`);
       }
 
-      const base64Data = await convertImageToBase64(file);
+      // Create a reliable preview URL
+      const preview = URL.createObjectURL(file);
+      
+      // Generate base64 in background for storage
+      const base64Promise = convertImageToBase64(file).catch(err => {
+        console.error('Error converting to base64:', err);
+        return null; // Continue even if base64 conversion fails
+      });
+      
+      const base64Data = await base64Promise;
       
       return {
         id: uuidv4(),
@@ -3067,7 +3091,7 @@ const handleFileChange = async (event) => {
         base64: base64Data,
         fileName: file.name,
         fileType: file.type,
-        preview: URL.createObjectURL(file),
+        preview: preview,
         productType: 'photo_print',
         size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
         quantity: 1
@@ -3076,23 +3100,29 @@ const handleFileChange = async (event) => {
 
     setSelectedPhotos(prev => [...prev, ...newPhotos]);
 
-    // Save to localStorage
-    const storageSafePhotos = newPhotos.map(({ id, base64, fileName, fileType, productType, size, quantity }) => ({
-      id,
-      base64,
-      fileName,
-      fileType,
-      productType,
-      size,
-      quantity
-    }));
-    
-    localStorage.setItem('uploadedPhotos', JSON.stringify(storageSafePhotos));
+    // Persist both preview URLs and base64 data
+    try {
+      const storageSafePhotos = newPhotos.map(({ id, base64, fileName, fileType, productType, size, quantity }) => ({
+        id,
+        base64,
+        fileName,
+        fileType,
+        productType,
+        size,
+        quantity
+      }));
+      
+      localStorage.setItem('uploadedPhotos', JSON.stringify(storageSafePhotos));
+    } catch (storageError) {
+      console.error('Error saving to localStorage:', storageError);
+      // Continue even if storage fails
+    }
   } catch (error) {
     console.error('File upload error:', error);
     setError(error.message);
   }
 };
+
 
 
 
