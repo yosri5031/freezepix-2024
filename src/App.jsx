@@ -1473,12 +1473,7 @@ const closeProductDetails = () => {
             </div>
             
             <div>
-              <div className="text-xs font-medium text-gray-500 uppercase">
-                {t('productDetails.price')}
-              </div>
-              <div className="text-sm">
-                {product.price}
-              </div>
+              
             </div>
           </div>
           
