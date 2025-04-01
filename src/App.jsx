@@ -1801,7 +1801,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
 
     console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
 
-    const response = await fetch('https://freezepix-email-service-80156ac7d026.herokuapp.com/send-order-confirmation', {
+    const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/send-order-confirmation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
