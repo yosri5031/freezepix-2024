@@ -868,42 +868,91 @@ const [interacReference, setInteracReference] = useState('');
       }, []);
 
       useEffect(() => {
-        const restorePhotos = async () => {
-          const savedPhotos = localStorage.getItem('uploadedPhotos');
-          if (savedPhotos) {
-            try {
-              const parsedPhotos = JSON.parse(savedPhotos);
+        // Check if we should restore from uploadedPhotos or freezepixState
+        const uploadedPhotos = localStorage.getItem('uploadedPhotos');
+        const savedState = localStorage.getItem('freezepixState');
+        
+        // First try to restore from uploadedPhotos
+        if (uploadedPhotos) {
+          try {
+            const parsedPhotos = JSON.parse(uploadedPhotos);
+            if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+              console.log('Restoring photos from previous session:', parsedPhotos.length);
               const restoredPhotos = parsedPhotos.map(photo => {
-                // Validate base64 data
+                // Skip invalid entries
                 if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                  return null; // Skip invalid entries
+                  return null;
                 }
-      
-                // Try to create a File object from base64
+                
+                // Try to reconstruct file
                 let fileObj = null;
                 try {
-                  fileObj = base64ToFile(photo.base64, photo.fileName);
+                  if (photo.fileName && photo.base64) {
+                    fileObj = base64ToFile(photo.base64, photo.fileName);
+                  }
                 } catch (e) {
                   console.warn('Could not convert base64 to file:', e);
-                  // Continue without file object
                 }
-      
+                
                 return {
                   ...photo,
                   file: fileObj,
-                  preview: photo.base64 // Use base64 as preview if no file object
+                  preview: photo.base64
                 };
-              }).filter(Boolean); // Remove any null entries
+              }).filter(Boolean);
               
-              setSelectedPhotos(restoredPhotos);
-            } catch (error) {
-              console.error('Error restoring photos:', error);
-              localStorage.removeItem('uploadedPhotos'); // Clear invalid data
+              if (restoredPhotos.length > 0) {
+                setSelectedPhotos(restoredPhotos);
+              }
             }
+          } catch (error) {
+            console.error('Error restoring uploaded photos:', error);
           }
-        };
-      
-        restorePhotos();
+        }
+        // Then try freezepixState as fallback
+        else if (savedState) {
+          try {
+            const parsedState = JSON.parse(savedState);
+            if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
+              console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
+              
+              // Process photos from freezepixState
+              const restoredPhotos = parsedState.selectedPhotos.map(photo => {
+                // Skip invalid entries
+                if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+                  return null;
+                }
+                
+                // Try to reconstruct file
+                let fileObj = null;
+                try {
+                  if (photo.fileName && photo.base64) {
+                    fileObj = base64ToFile(photo.base64, photo.fileName);
+                  }
+                } catch (e) {
+                  console.warn('Could not convert base64 to file:', e);
+                }
+                
+                return {
+                  ...photo,
+                  file: fileObj,
+                  preview: photo.base64
+                };
+              }).filter(Boolean);
+              
+              if (restoredPhotos.length > 0) {
+                setSelectedPhotos(restoredPhotos);
+                
+                // Also restore other state if needed
+                if (parsedState.selectedCountry) {
+                  setSelectedCountry(parsedState.selectedCountry);
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error restoring from freezepixState:', error);
+          }
+        }
       }, []);
 
       // Add this useEffect in your component to handle the return from Stripe
@@ -2601,10 +2650,41 @@ const handleOrderSuccess = async ({
 
       // Complete the order process
       setOrderSuccess(true);
-      setSelectedPhotos([]);
       setError(null);
-      clearPhotoStorage();
-      clearStateStorage();
+      try {
+        // Save the current photos before clearing other state
+        const photosToKeep = selectedPhotos.map(photo => ({
+          id: photo.id,
+          base64: photo.base64,
+          fileName: photo.fileName || photo.file?.name,
+          fileType: photo.fileType || photo.file?.type,
+          productType: photo.productType,
+          size: photo.size,
+          quantity: photo.quantity
+        }));
+        
+        // Store just the photos in uploadedPhotos
+        localStorage.setItem('uploadedPhotos', JSON.stringify(photosToKeep));
+        
+        // Clear other state data but preserve photos reference
+        const minimalState = {
+          showIntro: false,
+          selectedCountry,
+          selectedPhotos: photosToKeep,
+          activeStep: 0,
+          formData: {
+            email: '',
+            phone: '',
+            name: '',
+            shippingAddress: { country: selectedCountry },
+            billingAddress: { country: selectedCountry }
+          }
+        };
+        
+        localStorage.setItem('freezepixState', JSON.stringify(minimalState));
+      } catch (error) {
+        console.error('Error preserving photos after order:', error);
+      }
     }
 
   } catch (error) {
@@ -3938,12 +4018,14 @@ return (
             
             <button
   onClick={() => {
-    // Clear any previous order data
-    setSelectedPhotos([]);
-    localStorage.removeItem('uploadedPhotos');
-    localStorage.removeItem('freezepixState');
+    // Reset order-related state but preserve the photos
+    setOrderSuccess(false);
+    setError(null);
+    setCurrentOrderNumber(null);
+    setOrderNote('');
+    setSelectedStudio(null);
     
-    // Reset all form data
+    // Reset form data but keep any photos
     setFormData({
       email: '',
       phone: '',
@@ -3971,12 +4053,32 @@ return (
       paymentMethod: 'cod'
     });
     
-    // Reset order state
-    setOrderSuccess(false);
-    setError(null);
-    setCurrentOrderNumber(null);
-    setOrderNote('');
-    setSelectedStudio(null);
+    // Clear freezepixState EXCEPT for photos
+    try {
+      const currentState = JSON.parse(localStorage.getItem('freezepixState') || '{}');
+      const photosToKeep = currentState.selectedPhotos || [];
+      
+      // Save only the photos part
+      localStorage.setItem('freezepixState', JSON.stringify({
+        showIntro: false,
+        selectedCountry,
+        selectedPhotos: photosToKeep,
+        activeStep: 0,
+        formData: {
+          email: '',
+          phone: '',
+          name: '',
+          shippingAddress: {
+            country: selectedCountry
+          },
+          billingAddress: {
+            country: selectedCountry
+          }
+        }
+      }));
+    } catch (error) {
+      console.error('Error preserving photos:', error);
+    }
     
     // Go back to the first step (upload images)
     setActiveStep(0);
@@ -3985,6 +4087,7 @@ return (
 >
   {t('buttons.place_new')}
 </button>
+
           </div>
         ) : (
           // Render current step
