@@ -22,6 +22,13 @@ import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
+import { 
+  convertImageToBase64, 
+  base64ToFile, 
+  savePhotosToStorage, 
+  loadPhotosFromStorage,
+  clearPhotoStorage 
+} from './imageHandlingUtils';
 import CryptoJS from 'crypto-js';
 import { useLanguage } from './contexts/LanguageContext'; // Adjust the import depending on your file structure
 const stripe = new Stripe('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', {
@@ -861,20 +868,42 @@ const [interacReference, setInteracReference] = useState('');
       }, []);
 
       useEffect(() => {
-        const savedPhotos = localStorage.getItem('uploadedPhotos');
-        if (savedPhotos) {
-          try {
-            const parsedPhotos = JSON.parse(savedPhotos);
-            const restoredPhotos = parsedPhotos.map(photo => ({
-              ...photo,
-              file: base64ToFile(photo.base64, photo.fileName),
-              preview: photo.base64
-            }));
-            setSelectedPhotos(restoredPhotos);
-          } catch (error) {
-            console.error('Error restoring photos:', error);
+        const restorePhotos = async () => {
+          const savedPhotos = localStorage.getItem('uploadedPhotos');
+          if (savedPhotos) {
+            try {
+              const parsedPhotos = JSON.parse(savedPhotos);
+              const restoredPhotos = parsedPhotos.map(photo => {
+                // Validate base64 data
+                if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+                  return null; // Skip invalid entries
+                }
+      
+                // Try to create a File object from base64
+                let fileObj = null;
+                try {
+                  fileObj = base64ToFile(photo.base64, photo.fileName);
+                } catch (e) {
+                  console.warn('Could not convert base64 to file:', e);
+                  // Continue without file object
+                }
+      
+                return {
+                  ...photo,
+                  file: fileObj,
+                  preview: photo.base64 // Use base64 as preview if no file object
+                };
+              }).filter(Boolean); // Remove any null entries
+              
+              setSelectedPhotos(restoredPhotos);
+            } catch (error) {
+              console.error('Error restoring photos:', error);
+              localStorage.removeItem('uploadedPhotos'); // Clear invalid data
+            }
           }
-        }
+        };
+      
+        restorePhotos();
       }, []);
 
       // Add this useEffect in your component to handle the return from Stripe
@@ -1590,45 +1619,7 @@ const closeProductDetails = () => {
          saveState();
      }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
 
-     useEffect(() => {
-      const restorePhotos = async () => {
-        const savedPhotos = localStorage.getItem('uploadedPhotos');
-        if (savedPhotos) {
-          try {
-            const parsedPhotos = JSON.parse(savedPhotos);
-            const restoredPhotos = parsedPhotos.map(photo => {
-              // Validate base64 data
-              if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                return null; // Skip invalid entries
-              }
-    
-              // Try to create a File object from base64
-              let fileObj = null;
-              try {
-                fileObj = base64ToFile(photo.base64, photo.fileName);
-              } catch (e) {
-                console.warn('Could not convert base64 to file:', e);
-                // Continue without file object
-              }
-    
-              return {
-                ...photo,
-                file: fileObj,
-                preview: photo.base64 // Use base64 as preview if no file object
-              };
-            }).filter(Boolean); // Remove any null entries
-            
-            setSelectedPhotos(restoredPhotos);
-          } catch (error) {
-            console.error('Error restoring photos:', error);
-            localStorage.removeItem('uploadedPhotos'); // Clear invalid data
-          }
-        }
-      };
-    
-      restorePhotos();
-    }, []);
-     
+   
      // Modify the load state useEffect to handle image reconstruction
      useEffect(() => {
          const loadState = async () => {
@@ -2612,6 +2603,7 @@ const handleOrderSuccess = async ({
       setOrderSuccess(true);
       setSelectedPhotos([]);
       setError(null);
+      clearPhotoStorage();
       clearStateStorage();
     }
 
@@ -3074,54 +3066,43 @@ const handleFileChange = async (event) => {
         throw new Error(`Invalid file type: ${file.type}`);
       }
 
-      // Create a reliable preview URL
-      const preview = URL.createObjectURL(file);
+      // Generate unique ID
+      const photoId = uuidv4();
       
-      // Generate base64 in background for storage
-      const base64Promise = convertImageToBase64(file).catch(err => {
-        console.error('Error converting to base64:', err);
-        return null; // Continue even if base64 conversion fails
-      });
-      
-      const base64Data = await base64Promise;
+      // Create both preview URL and base64 in parallel
+      const [preview, base64] = await Promise.all([
+        // Create object URL for immediate display
+        Promise.resolve(URL.createObjectURL(file)),
+        // Generate base64 for storage
+        convertImageToBase64(file)
+      ]);
       
       return {
-        id: uuidv4(),
+        id: photoId,
         file: file,
-        base64: base64Data,
+        base64: base64, // Store base64 for persistence
         fileName: file.name,
         fileType: file.type,
-        preview: preview,
+        preview: preview, // Use object URL for display
         productType: 'photo_print',
         size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
         quantity: 1
       };
     }));
 
+    // Add new photos to existing ones
     setSelectedPhotos(prev => [...prev, ...newPhotos]);
-
-    // Persist both preview URLs and base64 data
-    try {
-      const storageSafePhotos = newPhotos.map(({ id, base64, fileName, fileType, productType, size, quantity }) => ({
-        id,
-        base64,
-        fileName,
-        fileType,
-        productType,
-        size,
-        quantity
-      }));
-      
-      localStorage.setItem('uploadedPhotos', JSON.stringify(storageSafePhotos));
-    } catch (storageError) {
-      console.error('Error saving to localStorage:', storageError);
-      // Continue even if storage fails
+    
+    // Reset the file input to allow selecting the same files again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   } catch (error) {
     console.error('File upload error:', error);
     setError(error.message);
   }
 };
+
 
 
 
