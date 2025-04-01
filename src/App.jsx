@@ -3937,11 +3937,54 @@ return (
             </div>
             
             <button
-              onClick={() => window.location.reload()}
-              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
-            >
-              {t('buttons.place_new')}
-            </button>
+  onClick={() => {
+    // Clear any previous order data
+    setSelectedPhotos([]);
+    localStorage.removeItem('uploadedPhotos');
+    localStorage.removeItem('freezepixState');
+    
+    // Reset all form data
+    setFormData({
+      email: '',
+      phone: '',
+      name: '',
+      shippingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: selectedCountry,
+        province: '',
+        state: ''
+      },
+      billingAddress: {
+        firstName: '',
+        lastName: '',
+        address: '',
+        city: '',
+        postalCode: '',
+        country: selectedCountry,
+        province: '',
+        state: ''
+      },
+      paymentMethod: 'cod'
+    });
+    
+    // Reset order state
+    setOrderSuccess(false);
+    setError(null);
+    setCurrentOrderNumber(null);
+    setOrderNote('');
+    setSelectedStudio(null);
+    
+    // Go back to the first step (upload images)
+    setActiveStep(0);
+  }}
+  className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+>
+  {t('buttons.place_new')}
+</button>
           </div>
         ) : (
           // Render current step
