@@ -20,7 +20,7 @@ import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
-import {StudioUrlShare} from './StudioUrlShare';
+import {ShareUrl} from './StudioUrlShare';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
@@ -1545,7 +1545,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
               
               {/* Add URL sharing for selected studio */}
               {selectedStudio?._id === studio._id && (
-                <StudioUrlShare studio={studio} />
+                <ShareUrl studio={studio} />
               )}
             </div>
           ))}
