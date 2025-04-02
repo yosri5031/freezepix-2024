@@ -20,6 +20,7 @@ import Heart from './assets/heart.jpg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
+import {StudioUrlShare} from './StudioUrlShare';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
@@ -508,9 +509,17 @@ const BookingPopup = ({ onClose }) => {
     };
   
     const handleBack = (e) => {
-      // Prevent default form submission behavior
       e.preventDefault();
       
+      const isPreselected = localStorage.getItem('isPreselectedFromUrl') === 'true';
+      
+      // Special handling if we're at step 2 with a preselected studio
+      if (activeStep === 2 && isPreselected) {
+        setActiveStep(0); // Go back to upload photos
+        return;
+      }
+      
+      // Normal back button behavior
       if (activeStep === 0) {
         setShowIntro(true);
       } else {
@@ -835,7 +844,7 @@ const [interacReference, setInteracReference] = useState('');
           if (!studioSlug) return;
           
           setIsLoading(true);
-          setStudioError(null);
+          setError(null);
           
           try {
             // First try exact match on slug field
@@ -859,7 +868,7 @@ const [interacReference, setInteracReference] = useState('');
               
               // Skip intro and go directly to upload photos step
               setShowIntro(false);
-              setActiveStep(0);
+              setActiveStep(0); // Set to upload photos step
               
               // Mark this studio as preselected
               localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
@@ -891,17 +900,17 @@ const [interacReference, setInteracReference] = useState('');
                 
                 // Skip intro and go directly to upload photos step
                 setShowIntro(false);
-                setActiveStep(0);
+                setActiveStep(0); // Ensure we land on the upload photos step
                 
                 // Mark this studio as preselected
                 localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
                 localStorage.setItem('isPreselectedFromUrl', 'true');
               } else {
-                setStudioError('Studio not found');
+                setError('Studio not found');
               }
             } catch (searchError) {
               console.error('Failed to find studio by search:', searchError);
-              setStudioError('Studio not found');
+              setError('Studio not found');
             }
           } finally {
             setIsLoading(false);
@@ -909,7 +918,7 @@ const [interacReference, setInteracReference] = useState('');
         };
         
         handleStudioPreselection();
-      }, []);  // Run once on component mount 
+      }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
@@ -1229,11 +1238,11 @@ const [interacReference, setInteracReference] = useState('');
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[day];
       };
-// Enhanced StudioSelector with support for preselected studios
+// Enhanced StudioSelector with better handling of preselected studios
 const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setStudioError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const [distanceFilter, setDistanceFilter] = useState(() => {
@@ -1295,7 +1304,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
         },
         (error) => {
           console.error('Error getting location:', error);
-          setError('Please enable location services to find nearby studios');
+          setStudioError('Please enable location services to find nearby studios');
         }
       );
     }
@@ -1361,27 +1370,13 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
         setLoading(false);
       } catch (error) {
         console.error('Error fetching studios:', error);
-        setError('Failed to fetch studios');
+        setStudioError('Failed to fetch studios');
         setLoading(false);
       }
     };
 
     fetchStudios();
   }, [userLocation, selectedStudio, isPreselectedFromUrl]);
-
-  // Get day name from day number
-  const getDayName = (day) => {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    return days[day];
-  };
-
-  // Get user's language preference
-  const getLanguagePreference = () => {
-    const userLang = navigator.language || navigator.userLanguage;
-    if (userLang.startsWith('fr')) return 'fr';
-    if (userLang.startsWith('ar')) return 'ar';
-    return 'en';
-  };
 
   // Filter studios based on distance (unless preselected)
   const filteredStudios = isPreselectedFromUrl 
@@ -1394,25 +1389,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   const hasMoreStudios = filteredStudios.length > INITIAL_DISPLAY_COUNT;
   const totalAvailableStudios = studios.length;
   const totalFilteredStudios = filteredStudios.length;
-  const languageCode = getLanguagePreference();
-
-  // Function to copy studio URL to clipboard
-  const copyStudioUrl = (e, studio) => {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const slug = studio.slug || generateStudioSlug(studio.name);
-    const studioUrl = `${window.location.origin}/${slug}`;
-    
-    navigator.clipboard.writeText(studioUrl)
-      .then(() => {
-        // Show toast or notification
-        alert(t('pickup.url_copied'));
-      })
-      .catch(err => {
-        console.error('Failed to copy URL:', err);
-      });
-  };
+  const languageCode = navigator.language?.split('-')[0] || 'en';
 
   if (loading) {
     return (
@@ -3349,7 +3326,13 @@ const handleNext = async (e) => {
         if (!selectedPhotos || selectedPhotos.length === 0) {
           throw new Error('Please select at least one photo');
         }
-        setActiveStep(prev => prev + 1);
+        
+        // If studio is preselected from URL, we can skip to step 2
+        if (localStorage.getItem('isPreselectedFromUrl') === 'true' && selectedStudio) {
+          setActiveStep(2);
+        } else {
+          setActiveStep(1); // Go to studio selection step
+        }
         break;
 
       case 1:
@@ -3358,7 +3341,7 @@ const handleNext = async (e) => {
           throw new Error('Please select a pickup location');
         }
         // If studio is selected, proceed to next step
-        setActiveStep(prev => prev + 1);
+        setActiveStep(2);
         break;
 
       case 2:
