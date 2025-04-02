@@ -484,12 +484,19 @@ const BookingPopup = ({ onClose }) => {
       window.location.href = 'https://photo-passport-958d6e9780c3.herokuapp.com/';
     };
   
-    const handleStudioSelect = (studio) => {
-      setSelectedStudio(studio);
-      setFormData(prev => ({ ...prev, studioId: studio._id }));
-      setShowBookingForm(true);
-      setShowStudioList(false); // Make sure we hide the studio list when showing the booking form
+    const handleStudioSelect = (e, studio) => {
+      // Prevent the default behavior which causes page refresh
+      e.preventDefault(); 
+      e.stopPropagation();
+      
+      // Save selected studio to localStorage for persistence
+      localStorage.setItem('selectedStudio', JSON.stringify(studio));
+      
+      // Call the parent's onStudioSelect function with the selected studio
+      onStudioSelect(studio);
     };
+    
+    
     const handleSubmit = (e) => {
       e.preventDefault();
       // Here you would send the booking data including studioId
@@ -500,15 +507,14 @@ const BookingPopup = ({ onClose }) => {
       setSelectedStudio(null);
     };
   
-    const handleBack = () => {
-      if (showBookingForm) {
-        setShowBookingForm(false);
-        setShowStudioList(true);
-      } else if (showStudioList) {
-        setShowStudioList(false);
+    const handleBack = (e) => {
+      // Prevent default form submission behavior
+      e.preventDefault();
+      
+      if (activeStep === 0) {
+        setShowIntro(true);
       } else {
-        // Go back to the main screen/parent component
-        onBack();
+        setActiveStep(prev => prev - 1);
       }
     };
   
@@ -1107,278 +1113,305 @@ const [interacReference, setInteracReference] = useState('');
         return days[day];
       };
 
-      const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
-        const [studios, setStudios] = useState([]);
-        const [loading, setLoading] = useState(true);
-        const [error, setError] = useState(null);
-        const [userLocation, setUserLocation] = useState(null);
-        const [showAll, setShowAll] = useState(false);
-        const [distanceFilter, setDistanceFilter] = useState(20); // Default to 20km
-        const { t } = useTranslation();
+      // Updated StudioSelector component
+const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
+  const [studios, setStudios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [showAll, setShowAll] = useState(false);
+  // Get the distanceFilter from localStorage if available, or use default value
+  const [distanceFilter, setDistanceFilter] = useState(() => {
+    const savedDistance = localStorage.getItem('studioDistanceFilter');
+    return savedDistance ? parseInt(savedDistance) : 20; // Default to 20km
+  });
+  const { t } = useTranslation();
+  
+  // Number of studios to show initially
+  const INITIAL_DISPLAY_COUNT = 4;
+  
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    const R = 6371; // Radius of the earth in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+      Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+      Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c; // Distance in km
+  };
+
+  // Save distance filter to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('studioDistanceFilter', distanceFilter.toString());
+  }, [distanceFilter]);
+
+  useEffect(() => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          setError('Please enable location services to find nearby studios');
+        }
+      );
+    } else {
+      setError('Geolocation is not supported by your browser');
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchStudios = async () => {
+      try {
+        const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+        let studiosData = Array.isArray(response.data) ? response.data : [response.data];
         
-        // Number of studios to show initially
-        const INITIAL_DISPLAY_COUNT = 4;
+        studiosData = studiosData.filter(studio => studio.isActive);
+
+        if (userLocation) {
+          studiosData = studiosData.map(studio => ({
+            ...studio,
+            distance: calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              studio.coordinates.latitude,
+              studio.coordinates.longitude
+            )
+          }));
+
+          studiosData.sort((a, b) => a.distance - b.distance);
+        }
         
-        const calculateDistance = (lat1, lon1, lat2, lon2) => {
-          const R = 6371; // Radius of the earth in km
-          const dLat = (lat2 - lat1) * Math.PI / 180;
-          const dLon = (lon2 - lon1) * Math.PI / 180;
-          const a = 
-            Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-            Math.sin(dLon/2) * Math.sin(dLon/2);
-          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          return R * c; // Distance in km
-        };
+        setStudios(studiosData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching studios:', error);
+        setError('Failed to fetch studios');
+        setLoading(false);
+      }
+    };
+
+    fetchStudios();
+  }, [userLocation]);
+
+  const getDayName = (day) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[day];
+  };
+
+  const getLanguagePreference = () => {
+    const userLang = navigator.language || navigator.userLanguage;
+    if (userLang.startsWith('fr')) return 'fr';
+    if (userLang.startsWith('ar')) return 'ar';
+    return 'en';
+  };
+
+  // Filter studios based on distance
+  const filteredStudios = userLocation 
+    ? studios.filter(studio => studio.distance <= distanceFilter)
+    : studios;
+
+  const displayedStudios = showAll ? filteredStudios : filteredStudios.slice(0, INITIAL_DISPLAY_COUNT);
+  const hasMoreStudios = filteredStudios.length > INITIAL_DISPLAY_COUNT;
+  const totalAvailableStudios = studios.length;
+  const totalFilteredStudios = filteredStudios.length;
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[200px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-red-500 text-center p-4">
+        {error}
+      </div>
+    );
+  }
+
+  if (studios.length === 0) {
+    return (
+      <div className="text-center text-gray-500 py-8">
+        No studios available in your region.
+      </div>
+    );
+  }
+
+  const languageCode = getLanguagePreference();
+
+  // Fixed handleStudioSelect function to prevent default behavior
+  const handleStudioSelect = (e, studio) => {
+    // Prevent the default behavior which causes page refresh
+    e.preventDefault(); 
+    e.stopPropagation();
+    
+    // Call the parent's onStudioSelect function with the selected studio
+    onStudioSelect(studio);
+  };
+
+  // Handle distance filter change
+  const handleDistanceChange = (e) => {
+    const newDistance = Number(e.target.value);
+    setDistanceFilter(newDistance);
+  };
+
+  return (
+    <div className="space-y-6">
       
-        useEffect(() => {
-          if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                setUserLocation({
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude
-                });
-              },
-              (error) => {
-                console.error('Error getting location:', error);
-                setError('Please enable location services to find nearby studios');
-              }
-            );
-          } else {
-            setError('Geolocation is not supported by your browser');
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-medium">{t('pickup.nearest_locations')}</h2>
+        
+        {/* Distance filter */}
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
+          <select 
+            value={distanceFilter} 
+            onChange={handleDistanceChange}
+            className="p-2 border rounded text-sm"
+          >
+            <option value={20}>20 km</option>
+            <option value={50}>50 km</option>
+            <option value={100}>100 km</option>
+            <option value={500}>500 km</option>
+            <option value={1000000}>{t('pickup.show_all')}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Filter status message */}
+      {userLocation && (
+        <div className="text-sm text-gray-600">
+          {totalFilteredStudios === 0 
+            ? t('pickup.no_locations_within', { distance: distanceFilter })
+            : t('pickup.showing_locations', { 
+                count: totalFilteredStudios,
+                total: totalAvailableStudios,
+                distance: distanceFilter < 1000000 ? `${distanceFilter} km` : t('pickup.any_distance')
+              })
           }
-        }, []);
-      
-        useEffect(() => {
-          const fetchStudios = async () => {
-            try {
-              const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-              let studiosData = Array.isArray(response.data) ? response.data : [response.data];
-              
-              studiosData = studiosData.filter(studio => studio.isActive);
-      
-              if (userLocation) {
-                studiosData = studiosData.map(studio => ({
-                  ...studio,
-                  distance: calculateDistance(
-                    userLocation.latitude,
-                    userLocation.longitude,
-                    studio.coordinates.latitude,
-                    studio.coordinates.longitude
-                  )
-                }));
-      
-                studiosData.sort((a, b) => a.distance - b.distance);
-              }
-              
-              setStudios(studiosData);
-              setLoading(false);
-            } catch (error) {
-              console.error('Error fetching studios:', error);
-              setError('Failed to fetch studios');
-              setLoading(false);
-            }
-          };
-      
-          fetchStudios();
-        }, [userLocation]);
-      
-        const getDayName = (day) => {
-          const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-          return days[day];
-        };
-      
-        const getLanguagePreference = () => {
-          const userLang = navigator.language || navigator.userLanguage;
-          if (userLang.startsWith('fr')) return 'fr';
-          if (userLang.startsWith('ar')) return 'ar';
-          return 'en';
-        };
-      
-        // Filter studios based on distance
-        const filteredStudios = userLocation 
-          ? studios.filter(studio => studio.distance <= distanceFilter)
-          : studios;
-      
-        const displayedStudios = showAll ? filteredStudios : filteredStudios.slice(0, INITIAL_DISPLAY_COUNT);
-        const hasMoreStudios = filteredStudios.length > INITIAL_DISPLAY_COUNT;
-        const totalAvailableStudios = studios.length;
-        const totalFilteredStudios = filteredStudios.length;
-      
-        if (loading) {
-          return (
-            <div className="flex justify-center items-center min-h-[200px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400"></div>
-            </div>
-          );
-        }
-      
-        if (error) {
-          return (
-            <div className="text-red-500 text-center p-4">
-              {error}
-            </div>
-          );
-        }
-      
-        if (studios.length === 0) {
-          return (
-            <div className="text-center text-gray-500 py-8">
-              No studios available in your region.
-            </div>
-          );
-        }
-      
-        const languageCode = getLanguagePreference();
-      
-        // Fixed handleStudioSelect function to prevent default behavior
-        const handleStudioSelect = (e, studio) => {
-          // Prevent the default behavior which causes page refresh
-          e.preventDefault(); 
-          e.stopPropagation();
-          
-          // Call the parent's onStudioSelect function with the selected studio
-          onStudioSelect(studio);
-        };
-      
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-medium">{t('pickup.nearest_locations')}</h2>
-              
-              {/* Distance filter */}
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
-                <select 
-                  value={distanceFilter} 
-                  onChange={(e) => setDistanceFilter(Number(e.target.value))}
-                  className="p-2 border rounded text-sm"
-                >
-                  <option value={20}>20 km</option>
-                  <option value={50}>50 km</option>
-                  <option value={100}>100 km</option>
-                  <option value={500}>500 km</option>
-                  <option value={1000000}>{t('pickup.show_all')}</option>
-                </select>
+        </div>
+      )}
+
+      {filteredStudios.length === 0 ? (
+        <div className="p-6 text-center border rounded-lg bg-gray-50">
+          <p className="mb-2 text-gray-700">{t('pickup.no_nearby_studios')}</p>
+          <p className="text-sm text-gray-500">{t('pickup.try_increasing')}</p>
+        </div>
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {displayedStudios.map(studio => (
+           <div
+           key={studio._id}
+           className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+             selectedStudio?._id === studio._id
+               ? 'border-yellow-400 bg-yellow-50'
+               : 'hover:border-gray-400'
+           }`}
+           onClick={(e) => handleStudioSelect(e, studio)}
+           onSubmit={(e) => e.preventDefault()} // Add this to prevent form submission
+           role="button" // Add accessibility role
+           tabIndex={0} // Make it focusable
+           // Add keyboard accessibility
+           onKeyDown={(e) => {
+             if (e.key === 'Enter' || e.key === ' ') {
+               e.preventDefault();
+               handleStudioSelect(e, studio);
+             }
+           }}
+         >
+              <div className="flex justify-between items-start">
+                <h3 className="font-medium text-lg mb-2">
+                  {studio.translations?.[languageCode]?.name || studio.name}
+                </h3>
+                {studio.distance !== undefined && (
+                  <div className="flex items-center text-sm text-gray-600">
+                    <Navigation size={16} className="mr-1" />
+                    {studio.distance.toFixed(1)} km
+                  </div>
+                )}
               </div>
-            </div>
-      
-            {/* Filter status message */}
-            {userLocation && (
-              <div className="text-sm text-gray-600">
-                {totalFilteredStudios === 0 
-                  ? t('pickup.no_locations_within', { distance: distanceFilter })
-                  : t('pickup.showing_locations', { 
-                      count: totalFilteredStudios,
-                      total: totalAvailableStudios,
-                      distance: distanceFilter < 1000000 ? `${distanceFilter} km` : t('pickup.any_distance')
-                    })
-                }
-              </div>
-            )}
-      
-            {filteredStudios.length === 0 ? (
-              <div className="p-6 text-center border rounded-lg bg-gray-50">
-                <p className="mb-2 text-gray-700">{t('pickup.no_nearby_studios')}</p>
-                <p className="text-sm text-gray-500">{t('pickup.try_increasing')}</p>
-              </div>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {displayedStudios.map(studio => (
-                  <div
-                    key={studio._id}
-                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                      selectedStudio?._id === studio._id
-                        ? 'border-yellow-400 bg-yellow-50'
-                        : 'hover:border-gray-400'
-                    }`}
-                    onClick={(e) => handleStudioSelect(e, studio)} // Using the improved handler
-                  >
-                    <div className="flex justify-between items-start">
-                      <h3 className="font-medium text-lg mb-2">
-                        {studio.translations?.[languageCode]?.name || studio.name}
-                      </h3>
-                      {studio.distance !== undefined && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Navigation size={16} className="mr-1" />
-                          {studio.distance.toFixed(1)} km
-                        </div>
-                      )}
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        <span>
-                          {studio.translations?.[languageCode]?.address || studio.address}
+              
+              <div className="space-y-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2">
+                  <MapPin size={16} />
+                  <span>
+                    {studio.translations?.[languageCode]?.address || studio.address}
+                  </span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Phone size={16} />
+                  <span dir="ltr">{studio.phone}</span>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <Mail size={16} />
+                  <span>{studio.email}</span>
+                </div>
+
+                <div className="border-t pt-2 mt-2">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Clock size={16} />
+                    <span className="font-medium">{t('pickup.hours')}:</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-1">
+                    {studio.operatingHours
+                      .sort((a, b) => a.day - b.day)
+                      .map(hours => (
+                      <div key={hours.day} className="flex justify-between text-xs">
+                        <span>{getDayName(hours.day)}</span>
+                        <span dir="ltr">
+                          {hours.isClosed ? t('pickup.closed') : `${hours.openTime} - ${hours.closeTime}`}
                         </span>
                       </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Phone size={16} />
-                        <span dir="ltr">{studio.phone}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} />
-                        <span>{studio.email}</span>
-                      </div>
-      
-                      <div className="border-t pt-2 mt-2">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock size={16} />
-                          <span className="font-medium">{t('pickup.hours')}:</span>
-                        </div>
-                        <div className="grid grid-cols-1 gap-1">
-                          {studio.operatingHours
-                            .sort((a, b) => a.day - b.day)
-                            .map(hours => (
-                            <div key={hours.day} className="flex justify-between text-xs">
-                              <span>{getDayName(hours.day)}</span>
-                              <span dir="ltr">
-                                {hours.isClosed ? t('pickup.closed') : `${hours.openTime} - ${hours.closeTime}`}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-      
-                      <div className="text-xs text-gray-500 mt-2">
-                        {studio.translations?.[languageCode]?.description || studio.description}
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+
+                <div className="text-xs text-gray-500 mt-2">
+                  {studio.translations?.[languageCode]?.description || studio.description}
+                </div>
               </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {hasMoreStudios && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={(e) => {
+              e.preventDefault(); // Prevent default here too
+              setShowAll(!showAll);
+            }}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
+          >
+            {showAll ? (
+              <>
+                {t('pickup.show_less')}
+                <ChevronUp size={20} />
+              </>
+            ) : (
+              <>
+                {t('pickup.show_more')}
+                <ChevronDown size={20} />
+              </>
             )}
-      
-            {hasMoreStudios && (
-              <div className="flex justify-center mt-4">
-                <button
-                  onClick={(e) => {
-                    e.preventDefault(); // Prevent default here too
-                    setShowAll(!showAll);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
-                >
-                  {showAll ? (
-                    <>
-                      {t('pickup.show_less')}
-                      <ChevronUp size={20} />
-                    </>
-                  ) : (
-                    <>
-                      {t('pickup.show_more')}
-                      <ChevronDown size={20} />
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        );
-      };
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
       
       
       const handlePhotoUpload = async (files) => {
@@ -3066,37 +3099,60 @@ const handleDiscountCode = (value) => {
         }
       };
 
-    const useBackButton = ({ activeStep, setActiveStep, setShowIntro }) => {
-  useEffect(() => {
-    // Handle the popstate event (triggered by back button)
-    const handleBackButton = (event) => {
-      // Prevent default behavior
-      event.preventDefault();
+      const useBackButton = ({ activeStep, setActiveStep, setShowIntro }) => {
+        useEffect(() => {
+          // Store current state in history state object to preserve it
+          const saveCurrentState = () => {
+            const state = {
+              activeStep,
+              selectedStudio: localStorage.getItem('selectedStudio'),
+              distanceFilter: localStorage.getItem('studioDistanceFilter')
+            };
+            window.history.replaceState(state, '', window.location.pathname);
+          };
+          
+          saveCurrentState();
+          
+          // Handle the popstate event (triggered by back button)
+          const handleBackButton = (event) => {
+            // Prevent default behavior
+            event.preventDefault();
+            
+            // Get saved state if available
+            const savedState = event.state;
+            
+            // Restore distance filter if available
+            if (savedState?.distanceFilter) {
+              localStorage.setItem('studioDistanceFilter', savedState.distanceFilter);
+            }
+            
+            // Replicate the same logic as the UI back button
+            if (activeStep === 0) {
+              setShowIntro(true);
+            } else {
+              setActiveStep(prev => prev - 1);
+            }
+          };
       
-      // Replicate the same logic as the UI back button
-      if (activeStep === 0) {
-        setShowIntro(true);
-      } else {
-        setActiveStep(prev => prev - 1);
-      }
-    };
-
-    // Push a new state to history stack when component mounts
-    window.history.pushState(null, '', window.location.pathname);
-
-    // Add event listener for popstate (back button)
-    window.addEventListener('popstate', handleBackButton);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('popstate', handleBackButton);
-    };
-  }, [activeStep, setActiveStep, setShowIntro]);
-};
+          // Push a new state to history stack when component mounts or changes step
+          window.history.pushState({ activeStep }, '', window.location.pathname);
+      
+          // Add event listener for popstate (back button)
+          window.addEventListener('popstate', handleBackButton);
+      
+          // Cleanup
+          return () => {
+            window.removeEventListener('popstate', handleBackButton);
+          };
+        }, [activeStep, setActiveStep, setShowIntro]);
+      };
 
 useBackButton({ activeStep, setActiveStep, setShowIntro });
 
-const handleNext = async () => {
+const handleNext = async (e) => {
+  // Prevent default form submission behavior
+  e.preventDefault();
+  
   try {
     switch (activeStep) {
       case 0:
@@ -3146,6 +3202,7 @@ const handleNext = async () => {
     setIsLoading(false);
   }
 };
+
 
 const processImageData = async (imageData) => {
   // Log for debugging
@@ -4159,36 +4216,38 @@ return (
 
         {/* Navigation Buttons */}
         {!orderSuccess && (
-          <div className="flex justify-between mt-8">
-            {activeStep > 0 ? (
-              <button
-                onClick={() => setActiveStep(prev => prev - 1)}
-                className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-              >
-                {t('buttons.back')}
-              </button>
-            ) : (
-              <div></div> // Empty div for layout consistency
-            )}
+  <div className="flex justify-between mt-8">
+    {activeStep > 0 ? (
+      <button
+        onClick={handleBack}
+        className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+        type="button" 
+      >
+        {t('buttons.back')}
+      </button>
+    ) : (
+      <div></div> // Empty div for layout consistency
+    )}
 
-            <button
-              onClick={handleNext}
-              disabled={!validateStep()}
-              className={`px-6 py-2 rounded ${
-                validateStep()
-                  ? 'bg-yellow-400 hover:bg-yellow-500'
-                  : 'bg-gray-200 cursor-not-allowed'
-              }`}
-            >
-              {isLoading 
-                ? t('buttons.processing')
-                : activeStep === 2 
-                  ? t('buttons.place_order')
-                  : t('buttons.next')
-              }
-            </button>
-          </div>
-        )}
+    <button
+      onClick={handleNext}
+      disabled={!validateStep()}
+      className={`px-6 py-2 rounded ${
+        validateStep()
+          ? 'bg-yellow-400 hover:bg-yellow-500'
+          : 'bg-gray-200 cursor-not-allowed'
+      }`}
+      type="button" 
+    >
+      {isLoading 
+        ? t('buttons.processing')
+        : activeStep === 2 
+          ? t('buttons.place_order')
+          : t('buttons.next')
+      }
+    </button>
+  </div>
+)}
       </div>
     </div>
     
