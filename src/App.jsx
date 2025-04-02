@@ -21,7 +21,6 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import Stripe from 'stripe';
-const [selectedStudioDistance, setSelectedStudioDistance] = useState(20);
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
   convertImageToBase64, 
@@ -1108,14 +1107,13 @@ const [interacReference, setInteracReference] = useState('');
         return days[day];
       };
 
-      const StudioSelector = ({ onStudioSelect, selectedStudio, selectedDistance, onDistanceChange }) => {
+      const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
         const [studios, setStudios] = useState([]);
         const [loading, setLoading] = useState(true);
         const [error, setError] = useState(null);
         const [userLocation, setUserLocation] = useState(null);
         const [showAll, setShowAll] = useState(false);
-        // Use the selectedDistance prop if available, otherwise use default
-        const [distanceFilter, setDistanceFilter] = useState(selectedDistance || 20);
+        const [distanceFilter, setDistanceFilter] = useState(20); // Default to 20km
         const { t } = useTranslation();
         
         // Number of studios to show initially
@@ -1132,13 +1130,6 @@ const [interacReference, setInteracReference] = useState('');
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
           return R * c; // Distance in km
         };
-      
-        // Initialize with selectedDistance when component mounts
-        useEffect(() => {
-          if (selectedDistance) {
-            setDistanceFilter(selectedDistance);
-          }
-        }, [selectedDistance]);
       
         useEffect(() => {
           if (navigator.geolocation) {
@@ -1205,16 +1196,6 @@ const [interacReference, setInteracReference] = useState('');
           return 'en';
         };
       
-        // Handler for distance filter change
-        const handleDistanceFilterChange = (newDistance) => {
-          const distanceValue = Number(newDistance);
-          setDistanceFilter(distanceValue);
-          // Notify parent component about the distance change
-          if (onDistanceChange) {
-            onDistanceChange(distanceValue);
-          }
-        };
-      
         // Filter studios based on distance
         const filteredStudios = userLocation 
           ? studios.filter(studio => studio.distance <= distanceFilter)
@@ -1271,7 +1252,7 @@ const [interacReference, setInteracReference] = useState('');
                 <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
                 <select 
                   value={distanceFilter} 
-                  onChange={(e) => handleDistanceFilterChange(e.target.value)}
+                  onChange={(e) => setDistanceFilter(Number(e.target.value))}
                   className="p-2 border rounded text-sm"
                 >
                   <option value={20}>20 km</option>
@@ -1715,82 +1696,76 @@ const closeProductDetails = () => {
      
      // Modify the save state useEffect to handle image conversion
      useEffect(() => {
-      const saveState = async () => {
-        try {
-          const photosWithBase64 = await Promise.all(
-            selectedPhotos.map(async (photo) => {
-              if (photo.file && !photo.base64) {
-                const base64 = await convertImageToBase64(photo.file);
-                return {
-                  ...photo,
-                  base64,
-                  // Store original file properties we need
-                  fileName: photo.file.name,
-                  fileType: photo.file.type,
-                };
-              }
-              return photo;
-            })
-          );
-    
-          const stateToSave = {
-            showIntro,
-            selectedCountry,
-            selectedPhotos: photosWithBase64,
-            activeStep,
-            formData,
-            selectedStudioDistance // Save the studio distance filter
-          };
-          localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
-        } catch (error) {
-          console.error('Error saving state:', error);
-        }
-      };
-    
-      saveState();
-    }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData, selectedStudioDistance]);
+         const saveState = async () => {
+             try {
+                 const photosWithBase64 = await Promise.all(
+                     selectedPhotos.map(async (photo) => {
+                         if (photo.file && !photo.base64) {
+                             const base64 = await convertImageToBase64(photo.file);
+                             return {
+                                 ...photo,
+                                 base64,
+                                 // Store original file properties we need
+                                 fileName: photo.file.name,
+                                 fileType: photo.file.type,
+                             };
+                         }
+                         return photo;
+                     })
+                 );
+     
+                 const stateToSave = {
+                     showIntro,
+                     selectedCountry,
+                     selectedPhotos: photosWithBase64,
+                     activeStep,
+                     formData
+                 };
+                 localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
+             } catch (error) {
+                 console.error('Error saving state:', error);
+             }
+         };
+     
+         saveState();
+     }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
 
    
      // Modify the load state useEffect to handle image reconstruction
      useEffect(() => {
-      const loadState = async () => {
-        const savedState = localStorage.getItem('freezepixState');
-        if (savedState) {
-          try {
-            const parsedState = JSON.parse(savedState);
-            
-            // Reconstruct files from base64
-            const photosWithFiles = parsedState.selectedPhotos.map(photo => {
-              if (photo.base64) {
-                const file = base64ToFile(photo.base64, photo.fileName);
-                return {
-                  ...photo,
-                  file,
-                  preview: photo.base64, // Use base64 as preview URL
-                };
-              }
-              return photo;
-            });
-    
-            setShowIntro(parsedState.showIntro);
-            setSelectedCountry(parsedState.selectedCountry);
-            setSelectedPhotos(photosWithFiles);
-            setActiveStep(parsedState.activeStep);
-            setFormData(parsedState.formData);
-            
-            // Restore the studio distance filter if it exists
-            if (parsedState.selectedStudioDistance) {
-              setSelectedStudioDistance(parsedState.selectedStudioDistance);
-            }
-          } catch (error) {
-            console.error('Error loading saved state:', error);
-            localStorage.removeItem('freezepixState');
-          }
-        }
-      };
-    
-      loadState();
-    }, []);
+         const loadState = async () => {
+             const savedState = localStorage.getItem('freezepixState');
+             if (savedState) {
+                 try {
+                     const parsedState = JSON.parse(savedState);
+                     
+                     // Reconstruct files from base64
+                     const photosWithFiles = parsedState.selectedPhotos.map(photo => {
+                         if (photo.base64) {
+                             const file = base64ToFile(photo.base64, photo.fileName);
+                             return {
+                                 ...photo,
+                                 file,
+                                 preview: photo.base64, // Use base64 as preview URL
+                             };
+                         }
+                         return photo;
+                     });
+     
+                     setShowIntro(parsedState.showIntro);
+                     setSelectedCountry(parsedState.selectedCountry);
+                     setSelectedPhotos(photosWithFiles);
+                     setActiveStep(parsedState.activeStep);
+                     setFormData(parsedState.formData);
+                 } catch (error) {
+                     console.error('Error loading saved state:', error);
+                     localStorage.removeItem('freezepixState');
+                 }
+             }
+         };
+     
+         loadState();
+     }, []);
 
      // Add cleanup for preview URLs
      useEffect(() => {
@@ -3638,12 +3613,10 @@ const countryCodeMap = {
       case 1:
         return (
           <StudioSelector
-          onStudioSelect={setSelectedStudio}
-          selectedCountry={selectedCountry}
-          selectedStudio={selectedStudio}
-          selectedDistance={selectedStudioDistance}
-          onDistanceChange={setSelectedStudioDistance}
-        />
+            onStudioSelect={setSelectedStudio}
+            selectedCountry={selectedCountry}
+            selectedStudio={selectedStudio}
+          />
         );
 
       case 2:
