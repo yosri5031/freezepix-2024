@@ -21,15 +21,25 @@
       "quality": "Stampe di Qualità"
     },
     "pickup": {
-      "details": "Dettagli Ritiro",
-      "location": "Luogo di Ritiro",
+      "details": "Dettagli del ritiro",
+      "location": "Luogo di ritiro",
       "contact": "Contatto",
-      "hours": "Orari di Apertura",
+      "hours": "Orari di apertura",
       "closed": "Chiuso",
-      "payment_notice": "Si prega di completare il pagamento al momento del ritiro",
-      "select_location": "Seleziona Luogo di Ritiro",
-      "no_locations": "Nessun punto di ritiro disponibile nella tua regione",
-      "confirm_location": "Conferma Luogo di Ritiro"
+      "payment_notice": "Si prega di completare il pagamento al luogo di ritiro",
+      "select_location": "Seleziona luogo di ritiro",
+      "no_locations": "Nessun luogo di ritiro disponibile nella tua regione",
+      "confirm_location": "Conferma luogo di ritiro",
+      "nearest_locations": "Luoghi di ritiro più vicini",
+      "distance_filter": "Distanza",
+      "show_all": "Mostra tutti",
+      "no_locations_within": "Nessun luogo entro {{distance}} km",
+      "showing_locations": "Mostrando {{count}} di {{total}} luoghi entro {{distance}}",
+      "any_distance": "qualsiasi distanza",
+      "no_nearby_studios": "Nessuno studio trovato nella tua zona",
+      "try_increasing": "Prova ad aumentare la distanza o seleziona 'Mostra tutti'",
+      "show_less": "Mostra meno",
+      "show_more": "Mostra più luoghi"
     },
     "navigation": {
       "choose_photos": "Scegli Foto",

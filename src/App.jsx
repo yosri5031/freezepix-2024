@@ -1113,12 +1113,14 @@ const [interacReference, setInteracReference] = useState('');
         const [error, setError] = useState(null);
         const [userLocation, setUserLocation] = useState(null);
         const [showAll, setShowAll] = useState(false);
-      
+        const [distanceFilter, setDistanceFilter] = useState(20); // Default to 20km
+        const { t } = useTranslation();
+        
         // Number of studios to show initially
         const INITIAL_DISPLAY_COUNT = 4;
-      
+        
         const calculateDistance = (lat1, lon1, lat2, lon2) => {
-          const R = 6371;
+          const R = 6371; // Radius of the earth in km
           const dLat = (lat2 - lat1) * Math.PI / 180;
           const dLon = (lon2 - lon1) * Math.PI / 180;
           const a = 
@@ -1126,7 +1128,7 @@ const [interacReference, setInteracReference] = useState('');
             Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
             Math.sin(dLon/2) * Math.sin(dLon/2);
           const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-          return R * c;
+          return R * c; // Distance in km
         };
       
         useEffect(() => {
@@ -1194,6 +1196,16 @@ const [interacReference, setInteracReference] = useState('');
           return 'en';
         };
       
+        // Filter studios based on distance
+        const filteredStudios = userLocation 
+          ? studios.filter(studio => studio.distance <= distanceFilter)
+          : studios;
+      
+        const displayedStudios = showAll ? filteredStudios : filteredStudios.slice(0, INITIAL_DISPLAY_COUNT);
+        const hasMoreStudios = filteredStudios.length > INITIAL_DISPLAY_COUNT;
+        const totalAvailableStudios = studios.length;
+        const totalFilteredStudios = filteredStudios.length;
+      
         if (loading) {
           return (
             <div className="flex justify-center items-center min-h-[200px]">
@@ -1219,80 +1231,117 @@ const [interacReference, setInteracReference] = useState('');
         }
       
         const languageCode = getLanguagePreference();
-        const displayedStudios = showAll ? studios : studios.slice(0, INITIAL_DISPLAY_COUNT);
-        const hasMoreStudios = studios.length > INITIAL_DISPLAY_COUNT;
       
         return (
           <div className="space-y-6">
-            <h2 className="text-xl font-medium">Nearest Pickup Locations</h2>
-      
-            <div className="grid gap-4 md:grid-cols-2">
-              {displayedStudios.map(studio => (
-                <div
-                  key={studio._id}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    selectedStudio?._id === studio._id
-                      ? 'border-yellow-400 bg-yellow-50'
-                      : 'hover:border-gray-400'
-                  }`}
-                  onClick={() => onStudioSelect(studio)}
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-medium">{t('pickup.nearest_locations')}</h2>
+              
+              {/* Distance filter */}
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
+                <select 
+                  value={distanceFilter} 
+                  onChange={(e) => setDistanceFilter(Number(e.target.value))}
+                  className="p-2 border rounded text-sm"
                 >
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-medium text-lg mb-2">
-                      {studio.translations?.[languageCode]?.name || studio.name}
-                    </h3>
-                    {studio.distance !== undefined && (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Navigation size={16} className="mr-1" />
-                        {studio.distance.toFixed(1)} km
-                      </div>
-                    )}
-                  </div>
-                  
-                  <div className="space-y-2 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
-                      <MapPin size={16} />
-                      <span>
-                        {studio.translations?.[languageCode]?.address || studio.address}
-                      </span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Phone size={16} />
-                      <span dir="ltr">{studio.phone}</span>
-                    </div>
-                    
-                    <div className="flex items-center gap-2">
-                      <Mail size={16} />
-                      <span>{studio.email}</span>
-                    </div>
-      
-                    <div className="border-t pt-2 mt-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Clock size={16} />
-                        <span className="font-medium">Operating Hours:</span>
-                      </div>
-                      <div className="grid grid-cols-1 gap-1">
-                        {studio.operatingHours
-                          .sort((a, b) => a.day - b.day)
-                          .map(hours => (
-                          <div key={hours.day} className="flex justify-between text-xs">
-                            <span>{getDayName(hours.day)}</span>
-                            <span dir="ltr">
-                              {hours.isClosed ? 'Closed' : `${hours.openTime} - ${hours.closeTime}`}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-      
-                    <div className="text-xs text-gray-500 mt-2">
-                      {studio.translations?.[languageCode]?.description || studio.description}
-                    </div>
-                  </div>
-                </div>
-              ))}
+                  <option value={20}>20 km</option>
+                  <option value={50}>50 km</option>
+                  <option value={100}>100 km</option>
+                  <option value={500}>500 km</option>
+                  <option value={1000000}>{t('pickup.show_all')}</option>
+                </select>
+              </div>
             </div>
+      
+            {/* Filter status message */}
+            {userLocation && (
+              <div className="text-sm text-gray-600">
+                {totalFilteredStudios === 0 
+                  ? t('pickup.no_locations_within', { distance: distanceFilter })
+                  : t('pickup.showing_locations', { 
+                      count: totalFilteredStudios,
+                      total: totalAvailableStudios,
+                      distance: distanceFilter < 1000000 ? `${distanceFilter} km` : t('pickup.any_distance')
+                    })
+                }
+              </div>
+            )}
+      
+            {filteredStudios.length === 0 ? (
+              <div className="p-6 text-center border rounded-lg bg-gray-50">
+                <p className="mb-2 text-gray-700">{t('pickup.no_nearby_studios')}</p>
+                <p className="text-sm text-gray-500">{t('pickup.try_increasing')}</p>
+              </div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {displayedStudios.map(studio => (
+                  <div
+                    key={studio._id}
+                    className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                      selectedStudio?._id === studio._id
+                        ? 'border-yellow-400 bg-yellow-50'
+                        : 'hover:border-gray-400'
+                    }`}
+                    onClick={() => onStudioSelect(studio)}
+                  >
+                    <div className="flex justify-between items-start">
+                      <h3 className="font-medium text-lg mb-2">
+                        {studio.translations?.[languageCode]?.name || studio.name}
+                      </h3>
+                      {studio.distance !== undefined && (
+                        <div className="flex items-center text-sm text-gray-600">
+                          <Navigation size={16} className="mr-1" />
+                          {studio.distance.toFixed(1)} km
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        <span>
+                          {studio.translations?.[languageCode]?.address || studio.address}
+                        </span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} />
+                        <span dir="ltr">{studio.phone}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} />
+                        <span>{studio.email}</span>
+                      </div>
+      
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock size={16} />
+                          <span className="font-medium">{t('pickup.hours')}:</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          {studio.operatingHours
+                            .sort((a, b) => a.day - b.day)
+                            .map(hours => (
+                            <div key={hours.day} className="flex justify-between text-xs">
+                              <span>{getDayName(hours.day)}</span>
+                              <span dir="ltr">
+                                {hours.isClosed ? t('pickup.closed') : `${hours.openTime} - ${hours.closeTime}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+      
+                      <div className="text-xs text-gray-500 mt-2">
+                        {studio.translations?.[languageCode]?.description || studio.description}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
       
             {hasMoreStudios && (
               <div className="flex justify-center mt-4">
@@ -1302,12 +1351,12 @@ const [interacReference, setInteracReference] = useState('');
                 >
                   {showAll ? (
                     <>
-                      Show Less
+                      {t('pickup.show_less')}
                       <ChevronUp size={20} />
                     </>
                   ) : (
                     <>
-                      Show More Locations
+                      {t('pickup.show_more')}
                       <ChevronDown size={20} />
                     </>
                   )}

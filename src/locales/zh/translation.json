@@ -21,15 +21,25 @@
       "quality": "高质量打印"
     },
     "pickup": {
-      "details": "取货详情",
-      "location": "取货地点",
+      "details": "取件详情",
+      "location": "取件地点",
       "contact": "联系方式",
       "hours": "营业时间",
       "closed": "休息",
-      "payment_notice": "请在取货地点完成付款",
-      "select_location": "选择取货地点",
-      "no_locations": "您所在区域没有可用的取货地点",
-      "confirm_location": "确认取货地点"
+      "payment_notice": "请在取件地点完成付款",
+      "select_location": "选择取件地点",
+      "no_locations": "您所在地区没有可用的取件地点",
+      "confirm_location": "确认取件地点",
+      "nearest_locations": "最近的取件地点",
+      "distance_filter": "距离",
+      "show_all": "显示全部",
+      "no_locations_within": "{{distance}} 公里内没有地点",
+      "showing_locations": "在 {{distance}} 内显示 {{total}} 个地点中的 {{count}} 个",
+      "any_distance": "任意距离",
+      "no_nearby_studios": "在您的区域内未找到工作室",
+      "try_increasing": "尝试增加距离或选择'显示全部'",
+      "show_less": "显示更少",
+      "show_more": "显示更多地点"
     },
     "navigation": {
       "choose_photos": "选择照片",

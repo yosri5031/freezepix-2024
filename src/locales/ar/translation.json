@@ -20,17 +20,27 @@
     "online": "طلب عبر الإنترنت",
     "quality": "جودة عالية"
   },
-  "pickup": {
-  "details": "تفاصيل الاستلام",
-  "location": "موقع الاستلام",
-  "contact": "معلومات الاتصال",
-  "hours": "ساعات العمل",
-  "closed": "مغلق",
-  "payment_notice": "يرجى إكمال الدفع في موقع الاستلام",
-  "select_location": "اختر موقع الاستلام",
-  "no_locations": "لا تتوفر مواقع استلام في منطقتك",
-  "confirm_location": "تأكيد موقع الاستلام"
-},
+"pickup": {
+      "details": "تفاصيل الاستلام",
+      "location": "موقع الاستلام",
+      "contact": "جهة الاتصال",
+      "hours": "ساعات العمل",
+      "closed": "مغلق",
+      "payment_notice": "يرجى إتمام الدفع في موقع الاستلام",
+      "select_location": "اختر موقع الاستلام",
+      "no_locations": "لا توجد مواقع استلام متاحة في منطقتك",
+      "confirm_location": "تأكيد موقع الاستلام",
+      "nearest_locations": "أقرب مواقع الاستلام",
+      "distance_filter": "المسافة",
+      "show_all": "عرض الكل",
+      "no_locations_within": "لا توجد مواقع ضمن {{distance}} كم",
+      "showing_locations": "عرض {{count}} من {{total}} مواقع ضمن {{distance}}",
+      "any_distance": "أي مسافة",
+      "no_nearby_studios": "لم يتم العثور على استوديوهات في منطقتك",
+      "try_increasing": "حاول زيادة المسافة أو اختر 'عرض الكل'",
+      "show_less": "عرض أقل",
+      "show_more": "عرض المزيد من المواقع"
+    },
   "navigation": {
   "choose_photos": "اختر الصور",
   "select_sizes": "اختر الأحجام",

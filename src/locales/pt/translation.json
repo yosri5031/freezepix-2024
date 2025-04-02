@@ -21,15 +21,25 @@
       "quality": "Impressões de Qualidade"
     },
     "pickup": {
-      "details": "Detalhes da Retirada",
+      "details": "Detalhes de Retirada",
       "location": "Local de Retirada",
       "contact": "Contato",
       "hours": "Horário de Funcionamento",
       "closed": "Fechado",
       "payment_notice": "Por favor, complete o pagamento no local de retirada",
       "select_location": "Selecionar Local de Retirada",
-      "no_locations": "Nenhum local de retirada disponível em sua região",
-      "confirm_location": "Confirmar Local de Retirada"
+      "no_locations": "Não há locais de retirada disponíveis em sua região",
+      "confirm_location": "Confirmar Local de Retirada",
+      "nearest_locations": "Locais de Retirada Mais Próximos",
+      "distance_filter": "Distância",
+      "show_all": "Mostrar Todos",
+      "no_locations_within": "Nenhum local dentro de {{distance}} km",
+      "showing_locations": "Mostrando {{count}} de {{total}} locais dentro de {{distance}}",
+      "any_distance": "qualquer distância",
+      "no_nearby_studios": "Nenhum estúdio encontrado na sua área",
+      "try_increasing": "Tente aumentar a distância ou selecione 'Mostrar Todos'",
+      "show_less": "Mostrar Menos",
+      "show_more": "Mostrar Mais Locais"
     },
     "navigation": {
       "choose_photos": "Escolher Fotos",

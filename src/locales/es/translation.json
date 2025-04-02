@@ -20,7 +20,7 @@
       "online": "Pedidos Online",
       "quality": "Impresiones de Calidad"
     },
-    "pickup": {
+  "pickup": {
       "details": "Detalles de Recogida",
       "location": "Ubicación de Recogida",
       "contact": "Contacto",
@@ -29,7 +29,17 @@
       "payment_notice": "Por favor complete el pago en el lugar de recogida",
       "select_location": "Seleccionar Ubicación de Recogida",
       "no_locations": "No hay ubicaciones de recogida disponibles en tu región",
-      "confirm_location": "Confirmar Ubicación de Recogida"
+      "confirm_location": "Confirmar Ubicación de Recogida",
+      "nearest_locations": "Ubicaciones de Recogida más Cercanas",
+      "distance_filter": "Distancia",
+      "show_all": "Mostrar Todo",
+      "no_locations_within": "No hay ubicaciones dentro de {{distance}} km",
+      "showing_locations": "Mostrando {{count}} de {{total}} ubicaciones dentro de {{distance}}",
+      "any_distance": "cualquier distancia",
+      "no_nearby_studios": "No se encontraron estudios en tu área",
+      "try_increasing": "Intenta aumentar la distancia o selecciona 'Mostrar Todo'",
+      "show_less": "Mostrar Menos",
+      "show_more": "Mostrar Más Ubicaciones"
     },
     "navigation": {
       "choose_photos": "Elegir Fotos",

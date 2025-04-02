@@ -26,10 +26,20 @@
       "contact": "連絡先",
       "hours": "営業時間",
       "closed": "休業",
-      "payment_notice": "受け取り場所でお支払いを完了してください",
+      "payment_notice": "受け取り場所で支払いを完了してください",
       "select_location": "受け取り場所を選択",
-      "no_locations": "お住まいの地域に受け取り場所はありません",
-      "confirm_location": "受け取り場所を確認"
+      "no_locations": "お住まいの地域に利用可能な受け取り場所はありません",
+      "confirm_location": "受け取り場所を確認",
+      "nearest_locations": "最寄りの受け取り場所",
+      "distance_filter": "距離",
+      "show_all": "すべて表示",
+      "no_locations_within": "{{distance}} km以内に場所がありません",
+      "showing_locations": "{{distance}}以内の{{total}}件中{{count}}件の場所を表示しています",
+      "any_distance": "任意の距離",
+      "no_nearby_studios": "お近くにスタジオが見つかりません",
+      "try_increasing": "距離を広げるか'すべて表示'を選択してください",
+      "show_less": "表示を減らす",
+      "show_more": "より多くの場所を表示"
     },
     "navigation": {
       "choose_photos": "写真を選択",

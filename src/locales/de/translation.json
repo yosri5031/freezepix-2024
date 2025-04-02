@@ -26,10 +26,20 @@
       "contact": "Kontakt",
       "hours": "Öffnungszeiten",
       "closed": "Geschlossen",
-      "payment_notice": "Bitte bezahlen Sie bei der Abholung",
+      "payment_notice": "Bitte zahlen Sie am Abholort",
       "select_location": "Abholort auswählen",
       "no_locations": "Keine Abholorte in Ihrer Region verfügbar",
-      "confirm_location": "Abholort bestätigen"
+      "confirm_location": "Abholort bestätigen",
+      "nearest_locations": "Nächstgelegene Abholorte",
+      "distance_filter": "Entfernung",
+      "show_all": "Alle anzeigen",
+      "no_locations_within": "Keine Standorte innerhalb von {{distance}} km",
+      "showing_locations": "Anzeige von {{count}} von {{total}} Standorten innerhalb von {{distance}}",
+      "any_distance": "beliebiger Entfernung",
+      "no_nearby_studios": "Keine Studios in Ihrer Nähe gefunden",
+      "try_increasing": "Versuchen Sie, die Entfernung zu erhöhen oder wählen Sie 'Alle anzeigen'",
+      "show_less": "Weniger anzeigen",
+      "show_more": "Mehr Standorte anzeigen"
     },
     "navigation": {
       "choose_photos": "Fotos auswählen",
