@@ -13,7 +13,7 @@ const generateStudioSlug = (studioName) => {
     .replace(/^-|-$/g, '');
 };
 
-const ShareUrl = ({ studio }) => {
+export const ShareUrl = ({ studio }) => {
   const [copied, setCopied] = useState(false);
   const { t } = useTranslation();
   
