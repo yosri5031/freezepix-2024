@@ -1232,9 +1232,13 @@ const [interacReference, setInteracReference] = useState('');
       
         const languageCode = getLanguagePreference();
       
-        // Handler for studio selection with preventDefault to avoid page refresh
+        // Fixed handleStudioSelect function to prevent default behavior
         const handleStudioSelect = (e, studio) => {
-          e.preventDefault(); // This prevents any default behavior
+          // Prevent the default behavior which causes page refresh
+          e.preventDefault(); 
+          e.stopPropagation();
+          
+          // Call the parent's onStudioSelect function with the selected studio
           onStudioSelect(studio);
         };
       
@@ -1289,7 +1293,7 @@ const [interacReference, setInteracReference] = useState('');
                         ? 'border-yellow-400 bg-yellow-50'
                         : 'hover:border-gray-400'
                     }`}
-                    onClick={(e) => handleStudioSelect(e, studio)} // Updated handler with event parameter
+                    onClick={(e) => handleStudioSelect(e, studio)} // Using the improved handler
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium text-lg mb-2">
@@ -3108,6 +3112,7 @@ const handleNext = async () => {
         if (!selectedStudio) {
           throw new Error('Please select a pickup location');
         }
+        // If studio is selected, proceed to next step
         setActiveStep(prev => prev + 1);
         break;
 
