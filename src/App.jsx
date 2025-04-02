@@ -728,7 +728,6 @@ const BookingPopup = ({ onClose }) => {
     // Update browser URL without reloading the page
     window.history.pushState({ studioId: studio._id }, '', newUrl);
   };
-
 const FreezePIX = () => {
  
 
@@ -830,7 +829,7 @@ const [interacReference, setInteracReference] = useState('');
       };
 
       useEffect(() => {
-        const fetchPreselectedStudio = async () => {
+        const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
           
           if (!studioSlug) return;
@@ -846,6 +845,8 @@ const [interacReference, setInteracReference] = useState('');
             
             if (response.data && response.data._id) {
               console.log('Studio preselected from URL:', response.data.name);
+              
+              // Set the selected studio
               setSelectedStudio(response.data);
               
               // If country is specified in studio data, set it
@@ -856,10 +857,13 @@ const [interacReference, setInteracReference] = useState('');
                 }
               }
               
-              // Automatically advance to step 1 (studio selection) if not there already
-              if (activeStep === 0 && selectedPhotos.length > 0) {
-                setActiveStep(1);
-              }
+              // Skip intro and go directly to upload photos step
+              setShowIntro(false);
+              setActiveStep(0);
+              
+              // Mark this studio as preselected
+              localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
+              localStorage.setItem('isPreselectedFromUrl', 'true');
             }
           } catch (error) {
             console.error('Failed to find studio by slug, trying fuzzy match:', error);
@@ -873,6 +877,8 @@ const [interacReference, setInteracReference] = useState('');
               
               if (searchResponse.data && searchResponse.data.length > 0) {
                 console.log('Studio found by fuzzy search:', searchResponse.data[0].name);
+                
+                // Set the selected studio
                 setSelectedStudio(searchResponse.data[0]);
                 
                 // Set country if available
@@ -883,10 +889,13 @@ const [interacReference, setInteracReference] = useState('');
                   }
                 }
                 
-                // Automatically advance to step 1 if we have photos
-                if (activeStep === 0 && selectedPhotos.length > 0) {
-                  setActiveStep(1);
-                }
+                // Skip intro and go directly to upload photos step
+                setShowIntro(false);
+                setActiveStep(0);
+                
+                // Mark this studio as preselected
+                localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
+                localStorage.setItem('isPreselectedFromUrl', 'true');
               } else {
                 setStudioError('Studio not found');
               }
@@ -899,8 +908,8 @@ const [interacReference, setInteracReference] = useState('');
           }
         };
         
-        fetchPreselectedStudio();
-      }, []); 
+        handleStudioPreselection();
+      }, []);  // Run once on component mount 
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
@@ -1220,27 +1229,26 @@ const [interacReference, setInteracReference] = useState('');
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[day];
       };
-
-      // Updated StudioSelector component
-const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
+// Enhanced StudioSelector with support for preselected studios
+const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [showAll, setShowAll] = useState(false);
-  // Get the distanceFilter from localStorage if available, or use default value
   const [distanceFilter, setDistanceFilter] = useState(() => {
     const savedDistance = localStorage.getItem('studioDistanceFilter');
     return savedDistance ? parseInt(savedDistance) : 20; // Default to 20km
   });
-  const { t } = useTranslation();
   
   const studioSlug = parseStudioSlugFromUrl();
-
-
+  const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
+  const { t } = useTranslation();
+  
   // Number of studios to show initially
   const INITIAL_DISPLAY_COUNT = 4;
   
+  // Calculate distance between two geographical coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     const R = 6371; // Radius of the earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -1258,8 +1266,26 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     localStorage.setItem('studioDistanceFilter', distanceFilter.toString());
   }, [distanceFilter]);
 
+  // Function to handle studio selection
+  const handleStudioSelection = (e, studio) => {
+    // Prevent default form submission behavior
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Update URL with studio slug
+    updateUrlWithStudio(studio);
+    
+    // Save studio to localStorage
+    localStorage.setItem('selectedStudio', JSON.stringify(studio));
+    localStorage.setItem('isPreselectedFromUrl', 'false'); // Clear the URL preselection flag
+    
+    // Call the parent's onStudioSelect function
+    onStudioSelect(studio);
+  };
+  
+  // Get user's geolocation
   useEffect(() => {
-    if (navigator.geolocation) {
+    if (navigator.geolocation && !isPreselectedFromUrl) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setUserLocation({
@@ -1272,14 +1298,37 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
           setError('Please enable location services to find nearby studios');
         }
       );
-    } else {
-      setError('Geolocation is not supported by your browser');
     }
-  }, []);
+  }, [isPreselectedFromUrl]);
 
+  // Fetch studios data
   useEffect(() => {
     const fetchStudios = async () => {
       try {
+        // If we have a preselected studio from URL and it's already loaded in selectedStudio
+        if (isPreselectedFromUrl && selectedStudio && selectedStudio._id) {
+          console.log('Using preselected studio:', selectedStudio.name);
+          
+          // Use the preselected studio and also fetch others in the background
+          setStudios([selectedStudio]);
+          setLoading(false);
+          
+          // Still fetch all studios in the background
+          const allStudiosResponse = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+          let allStudios = Array.isArray(allStudiosResponse.data) ? allStudiosResponse.data : [allStudiosResponse.data];
+          allStudios = allStudios.filter(studio => studio.isActive);
+          
+          // Make sure our preselected studio is at the top
+          const otherStudios = allStudios.filter(studio => studio._id !== selectedStudio._id);
+          setStudios([selectedStudio, ...otherStudios]);
+          
+          // Since we're preselected, we don't need to show the distance UI
+          setShowAll(true);
+          
+          return;
+        }
+        
+        // Normal fetch for all studios
         const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
         let studiosData = Array.isArray(response.data) ? response.data : [response.data];
         
@@ -1291,12 +1340,21 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
             distance: calculateDistance(
               userLocation.latitude,
               userLocation.longitude,
-              studio.coordinates.latitude,
-              studio.coordinates.longitude
+              studio.coordinates?.latitude || 0,
+              studio.coordinates?.longitude || 0
             )
           }));
 
           studiosData.sort((a, b) => a.distance - b.distance);
+        }
+        
+        // If there's a preselected studio, make sure it's first in the list
+        if (selectedStudio && selectedStudio._id) {
+          const selectedIndex = studiosData.findIndex(s => s._id === selectedStudio._id);
+          if (selectedIndex > 0) {
+            const selected = studiosData.splice(selectedIndex, 1)[0];
+            studiosData.unshift(selected);
+          }
         }
         
         setStudios(studiosData);
@@ -1309,13 +1367,15 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     };
 
     fetchStudios();
-  }, [userLocation]);
+  }, [userLocation, selectedStudio, isPreselectedFromUrl]);
 
+  // Get day name from day number
   const getDayName = (day) => {
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     return days[day];
   };
 
+  // Get user's language preference
   const getLanguagePreference = () => {
     const userLang = navigator.language || navigator.userLanguage;
     if (userLang.startsWith('fr')) return 'fr';
@@ -1323,15 +1383,36 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     return 'en';
   };
 
-  // Filter studios based on distance
-  const filteredStudios = userLocation 
-    ? studios.filter(studio => studio.distance <= distanceFilter)
-    : studios;
+  // Filter studios based on distance (unless preselected)
+  const filteredStudios = isPreselectedFromUrl 
+    ? studios // If preselected, show all studios with preselected first
+    : userLocation 
+      ? studios.filter(studio => studio.distance <= distanceFilter)
+      : studios;
 
   const displayedStudios = showAll ? filteredStudios : filteredStudios.slice(0, INITIAL_DISPLAY_COUNT);
   const hasMoreStudios = filteredStudios.length > INITIAL_DISPLAY_COUNT;
   const totalAvailableStudios = studios.length;
   const totalFilteredStudios = filteredStudios.length;
+  const languageCode = getLanguagePreference();
+
+  // Function to copy studio URL to clipboard
+  const copyStudioUrl = (e, studio) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const slug = studio.slug || generateStudioSlug(studio.name);
+    const studioUrl = `${window.location.origin}/${slug}`;
+    
+    navigator.clipboard.writeText(studioUrl)
+      .then(() => {
+        // Show toast or notification
+        alert(t('pickup.url_copied'));
+      })
+      .catch(err => {
+        console.error('Failed to copy URL:', err);
+      });
+  };
 
   if (loading) {
     return (
@@ -1341,7 +1422,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     );
   }
 
-  if (error) {
+  if (error && !isPreselectedFromUrl) {
     return (
       <div className="text-red-500 text-center p-4">
         {error}
@@ -1357,55 +1438,13 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     );
   }
 
-  const languageCode = getLanguagePreference();
-
-  // Fixed handleStudioSelect function to prevent default behavior
-  const handleStudioSelect = (e, studio) => {
-    // Prevent default form submission behavior
-    e.preventDefault();
-    e.stopPropagation();
-    
-    // Update URL with studio slug
-    updateUrlWithStudio(studio);
-    
-    // Save studio to localStorage
-    localStorage.setItem('selectedStudio', JSON.stringify(studio));
-    
-    // Call the parent's onStudioSelect function
-    onStudioSelect(studio);
-  };
-  
-    // Handle distance filter change
-    const handleDistanceChange = (e) => {
-      const newDistance = Number(e.target.value);
-      setDistanceFilter(newDistance);
-    };
-  
- // Function to copy studio URL to clipboard
- const copyStudioUrl = (e, studio) => {
-  e.preventDefault();
-  e.stopPropagation();
-  
-  const slug = studio.slug || generateStudioSlug(studio.name);
-  const studioUrl = `${window.location.origin}/${slug}`;
-  
-  navigator.clipboard.writeText(studioUrl)
-    .then(() => {
-      // Show toast or notification
-      alert(t('pickup.url_copied'));
-    })
-    .catch(err => {
-      console.error('Failed to copy URL:', err);
-    });
-};
-
   return (
     <div className="space-y-6">
-      
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-medium">{t('pickup.nearest_locations')}</h2>
         
-        {studioSlug && selectedStudio && (
+        {/* Add this conditional notice for preselected studios */}
+        {isPreselectedFromUrl && selectedStudio && (
           <div className="bg-yellow-100 p-2 rounded-lg text-sm">
             <p className="flex items-center">
               <Check size={16} className="mr-1 text-green-500" />
@@ -1414,26 +1453,27 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
           </div>
         )}
         
-
-        {/* Distance filter */}
-        <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
-          <select 
-            value={distanceFilter} 
-            onChange={handleDistanceChange}
-            className="p-2 border rounded text-sm"
-          >
-            <option value={20}>20 km</option>
-            <option value={50}>50 km</option>
-            <option value={100}>100 km</option>
-            <option value={500}>500 km</option>
-            <option value={1000000}>{t('pickup.show_all')}</option>
-          </select>
-        </div>
+        {/* Only show distance filter if not preselected */}
+        {!isPreselectedFromUrl && (
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
+            <select 
+              value={distanceFilter} 
+              onChange={(e) => setDistanceFilter(Number(e.target.value))}
+              className="p-2 border rounded text-sm"
+            >
+              <option value={20}>20 km</option>
+              <option value={50}>50 km</option>
+              <option value={100}>100 km</option>
+              <option value={500}>500 km</option>
+              <option value={1000000}>{t('pickup.show_all')}</option>
+            </select>
+          </div>
+        )}
       </div>
 
-      {/* Filter status message */}
-      {userLocation && (
+      {/* Filter status message - only show if not preselected */}
+      {!isPreselectedFromUrl && userLocation && (
         <div className="text-sm text-gray-600">
           {totalFilteredStudios === 0 
             ? t('pickup.no_locations_within', { distance: distanceFilter })
@@ -1453,29 +1493,30 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-        {displayedStudios.map(studio => (
-          <div
-            key={studio._id}
-            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-              selectedStudio?._id === studio._id
-                ? 'border-yellow-400 bg-yellow-50'
-                : 'hover:border-gray-400'
-            }`}
-            onClick={(e) => handleStudioSelect(e, studio)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handleStudioSelect(e, studio);
-              }
-            }}
-          >
+          {displayedStudios.map(studio => (
+            <div
+              key={studio._id}
+              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                selectedStudio?._id === studio._id
+                  ? 'border-yellow-400 bg-yellow-50'
+                  : 'hover:border-gray-400'
+              }`}
+              onClick={(e) => handleStudioSelection(e, studio)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  handleStudioSelection(e, studio);
+                }
+              }}
+            >
+              {/* Studio information */}
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-lg mb-2">
                   {studio.translations?.[languageCode]?.name || studio.name}
                 </h3>
-                {studio.distance !== undefined && (
+                {studio.distance !== undefined && !isPreselectedFromUrl && (
                   <div className="flex items-center text-sm text-gray-600">
                     <Navigation size={16} className="mr-1" />
                     {studio.distance.toFixed(1)} km
@@ -1483,21 +1524,6 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
                 )}
               </div>
               
-               {/* Add a "Copy URL" button at the bottom */}
-            {selectedStudio?._id === studio._id && (
-              <div className="mt-2 pt-2 border-t">
-                <button
-                  onClick={(e) => copyStudioUrl(e, studio)}
-                  className="text-sm flex items-center text-blue-500 hover:text-blue-700"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
-                  </svg>
-                  {t('pickup.copy_url')}
-                </button>
-              </div>
-            )}
-
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
@@ -1539,16 +1565,21 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
                   {studio.translations?.[languageCode]?.description || studio.description}
                 </div>
               </div>
+              
+              {/* Add URL sharing for selected studio */}
+              {selectedStudio?._id === studio._id && (
+                <StudioUrlShare studio={studio} />
+              )}
             </div>
           ))}
         </div>
       )}
 
-      {hasMoreStudios && (
+      {hasMoreStudios && !isPreselectedFromUrl && (
         <div className="flex justify-center mt-4">
           <button
             onClick={(e) => {
-              e.preventDefault(); // Prevent default here too
+              e.preventDefault();
               setShowAll(!showAll);
             }}
             className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
