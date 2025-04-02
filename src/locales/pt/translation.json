@@ -39,7 +39,9 @@
       "no_nearby_studios": "Nenhum estúdio encontrado na sua área",
       "try_increasing": "Tente aumentar a distância ou selecione 'Mostrar Todos'",
       "show_less": "Mostrar Menos",
-      "show_more": "Mostrar Mais Locais"
+      "show_more": "Mostrar Mais Locais",
+          "preselected_studio": "Estúdio pré-selecionado a partir do link",
+    "studio_not_found": "Estúdio solicitado não encontrado"
     },
     "navigation": {
       "choose_photos": "Escolher Fotos",

@@ -694,6 +694,18 @@ const BookingPopup = ({ onClose }) => {
     );
   };
 
+  const parseStudioSlugFromUrl = () => {
+    // Check if URL contains a path segment after the domain
+    const pathSegments = window.location.pathname.split('/').filter(Boolean);
+    
+    if (pathSegments.length > 0) {
+      // The last path segment is our potential studio slug
+      return pathSegments[pathSegments.length - 1];
+    }
+    
+    return null;
+  };
+
 const FreezePIX = () => {
  
 
@@ -793,6 +805,79 @@ const [interacReference, setInteracReference] = useState('');
         };
         return countryMap[code] || code;
       };
+
+      useEffect(() => {
+        const fetchPreselectedStudio = async () => {
+          const studioSlug = parseStudioSlugFromUrl();
+          
+          if (!studioSlug) return;
+          
+          setIsLoadingStudio(true);
+          setStudioError(null);
+          
+          try {
+            // First try exact match on slug field
+            const response = await axios.get(
+              `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/by-slug/${studioSlug}`
+            );
+            
+            if (response.data && response.data._id) {
+              console.log('Studio preselected from URL:', response.data.name);
+              setSelectedStudio(response.data);
+              
+              // If country is specified in studio data, set it
+              if (response.data.country) {
+                const countryCode = mapCountryCode(response.data.country);
+                if (initialCountries.some(c => c.value === countryCode)) {
+                  setSelectedCountry(countryCode);
+                }
+              }
+              
+              // Automatically advance to step 1 (studio selection) if not there already
+              if (activeStep === 0 && selectedPhotos.length > 0) {
+                setActiveStep(1);
+              }
+            }
+          } catch (error) {
+            console.error('Failed to find studio by slug, trying fuzzy match:', error);
+            
+            try {
+              // Fall back to search by name if slug doesn't match exactly
+              const searchResponse = await axios.get(
+                `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/search`,
+                { params: { query: studioSlug.replace(/-/g, ' ') } }
+              );
+              
+              if (searchResponse.data && searchResponse.data.length > 0) {
+                console.log('Studio found by fuzzy search:', searchResponse.data[0].name);
+                setSelectedStudio(searchResponse.data[0]);
+                
+                // Set country if available
+                if (searchResponse.data[0].country) {
+                  const countryCode = mapCountryCode(searchResponse.data[0].country);
+                  if (initialCountries.some(c => c.value === countryCode)) {
+                    setSelectedCountry(countryCode);
+                  }
+                }
+                
+                // Automatically advance to step 1 if we have photos
+                if (activeStep === 0 && selectedPhotos.length > 0) {
+                  setActiveStep(1);
+                }
+              } else {
+                setStudioError('Studio not found');
+              }
+            } catch (searchError) {
+              console.error('Failed to find studio by search:', searchError);
+              setStudioError('Studio not found');
+            }
+          } finally {
+            setIsLoadingStudio(false);
+          }
+        };
+        
+        fetchPreselectedStudio();
+      }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
@@ -1127,6 +1212,9 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
   });
   const { t } = useTranslation();
   
+  const studioSlug = parseStudioSlugFromUrl();
+
+
   // Number of studios to show initially
   const INITIAL_DISPLAY_COUNT = 4;
   
@@ -1269,6 +1357,16 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
       
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-medium">{t('pickup.nearest_locations')}</h2>
+        
+        {studioSlug && selectedStudio && (
+          <div className="bg-yellow-100 p-2 rounded-lg text-sm">
+            <p className="flex items-center">
+              <Check size={16} className="mr-1 text-green-500" />
+              {t('pickup.preselected_studio')}
+            </p>
+          </div>
+        )}
+        
         
         {/* Distance filter */}
         <div className="flex items-center space-x-2">

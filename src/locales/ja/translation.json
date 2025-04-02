@@ -39,7 +39,9 @@
       "no_nearby_studios": "お近くにスタジオが見つかりません",
       "try_increasing": "距離を広げるか'すべて表示'を選択してください",
       "show_less": "表示を減らす",
-      "show_more": "より多くの場所を表示"
+      "show_more": "より多くの場所を表示",
+        "preselected_studio": "リンクから事前選択されたスタジオ",
+    "studio_not_found": "リクエストされたスタジオが見つかりません"
     },
     "navigation": {
       "choose_photos": "写真を選択",

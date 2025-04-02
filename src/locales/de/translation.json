@@ -39,7 +39,9 @@
       "no_nearby_studios": "Keine Studios in Ihrer Nähe gefunden",
       "try_increasing": "Versuchen Sie, die Entfernung zu erhöhen oder wählen Sie 'Alle anzeigen'",
       "show_less": "Weniger anzeigen",
-      "show_more": "Mehr Standorte anzeigen"
+      "show_more": "Mehr Standorte anzeigen",
+      "preselected_studio": "Studio über Link vorausgewählt",
+    "studio_not_found": "Angefordertes Studio nicht gefunden"
     },
     "navigation": {
       "choose_photos": "Fotos auswählen",
