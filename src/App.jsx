@@ -1232,6 +1232,12 @@ const [interacReference, setInteracReference] = useState('');
       
         const languageCode = getLanguagePreference();
       
+        // Handler for studio selection with preventDefault to avoid page refresh
+        const handleStudioSelect = (e, studio) => {
+          e.preventDefault(); // This prevents any default behavior
+          onStudioSelect(studio);
+        };
+      
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
@@ -1283,7 +1289,7 @@ const [interacReference, setInteracReference] = useState('');
                         ? 'border-yellow-400 bg-yellow-50'
                         : 'hover:border-gray-400'
                     }`}
-                    onClick={() => onStudioSelect(studio)}
+                    onClick={(e) => handleStudioSelect(e, studio)} // Updated handler with event parameter
                   >
                     <div className="flex justify-between items-start">
                       <h3 className="font-medium text-lg mb-2">
@@ -1346,7 +1352,10 @@ const [interacReference, setInteracReference] = useState('');
             {hasMoreStudios && (
               <div className="flex justify-center mt-4">
                 <button
-                  onClick={() => setShowAll(!showAll)}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent default here too
+                    setShowAll(!showAll);
+                  }}
                   className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors"
                 >
                   {showAll ? (
