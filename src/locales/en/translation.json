@@ -40,8 +40,13 @@
       "try_increasing": "Try increasing the distance or select 'Show All'",
       "show_less": "Show Less",
       "show_more": "Show More Locations",
-      "preselected_studio": "Studio preselected from link",
-    "studio_not_found": "Requested studio not found"
+   "preselected_studio": "Studio preselected from link",
+    "studio_not_found": "Requested studio not found",
+    "copy_url": "Copy studio link",
+    "url_copied": "Studio link copied to clipboard!",
+    "share_studio": "Share this studio",
+    "share_title": "Order prints at {{studio}}",
+    "share_text": "Use FreezePIX to order prints from {{studio}}"
     },
     "navigation": {
       "choose_photos": "Choose Photos",

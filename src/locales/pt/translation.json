@@ -40,8 +40,13 @@
       "try_increasing": "Tente aumentar a distância ou selecione 'Mostrar Todos'",
       "show_less": "Mostrar Menos",
       "show_more": "Mostrar Mais Locais",
-          "preselected_studio": "Estúdio pré-selecionado a partir do link",
-    "studio_not_found": "Estúdio solicitado não encontrado"
+      "preselected_studio": "Estúdio pré-selecionado a partir do link",
+    "studio_not_found": "Estúdio solicitado não encontrado",
+    "copy_url": "Copiar link do estúdio",
+    "url_copied": "Link do estúdio copiado para a área de transferência!",
+    "share_studio": "Compartilhar este estúdio",
+    "share_title": "Encomendar impressões em {{studio}}",
+    "share_text": "Use o FreezePIX para encomendar impressões de {{studio}}"
     },
     "navigation": {
       "choose_photos": "Escolher Fotos",

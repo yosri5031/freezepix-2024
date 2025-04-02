@@ -40,8 +40,13 @@
       "try_increasing": "حاول زيادة المسافة أو اختر 'عرض الكل'",
       "show_less": "عرض أقل",
       "show_more": "عرض المزيد من المواقع",
-       "preselected_studio": "تم اختيار الاستوديو مسبقًا من الرابط",
-    "studio_not_found": "الاستوديو المطلوب غير موجود"
+      "preselected_studio": "تم اختيار الاستوديو مسبقًا من الرابط",
+      "studio_not_found": "الاستوديو المطلوب غير موجود",
+      "copy_url": "نسخ رابط الاستوديو",
+      "url_copied": "تم نسخ رابط الاستوديو إلى الحافظة!",
+      "share_studio": "مشاركة هذا الاستوديو",
+      "share_title": "طلب الصور في {{studio}}",
+      "share_text": "استخدم FreezePIX لطلب الصور من {{studio}}"
     },
   "navigation": {
   "choose_photos": "اختر الصور",

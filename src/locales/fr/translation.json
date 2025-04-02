@@ -48,7 +48,12 @@
       "show_less": "Afficher Moins",
       "show_more": "Afficher Plus de Lieux",
       "preselected_studio": "Studio présélectionné depuis le lien",
-    "studio_not_found": "Studio demandé introuvable"
+    "studio_not_found": "Studio demandé introuvable",
+    "copy_url": "Copier le lien du studio",
+    "url_copied": "Lien du studio copié dans le presse-papiers !",
+    "share_studio": "Partager ce studio",
+    "share_title": "Commander des tirages chez {{studio}}",
+    "share_text": "Utilisez FreezePIX pour commander des tirages chez {{studio}}"
     },
     "placeholder": {
       "name": "Nom",

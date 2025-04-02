@@ -40,8 +40,13 @@
       "try_increasing": "距離を広げるか'すべて表示'を選択してください",
       "show_less": "表示を減らす",
       "show_more": "より多くの場所を表示",
-        "preselected_studio": "リンクから事前選択されたスタジオ",
-    "studio_not_found": "リクエストされたスタジオが見つかりません"
+      "preselected_studio": "リンクから事前選択されたスタジオ",
+      "studio_not_found": "リクエストされたスタジオが見つかりません",
+      "copy_url": "スタジオリンクをコピー",
+      "url_copied": "スタジオリンクがクリップボードにコピーされました！",
+      "share_studio": "このスタジオをシェア",
+      "share_title": "{{studio}}で写真を注文",
+      "share_text": "FreezePIXを使用して{{studio}}から写真を注文する"
     },
     "navigation": {
       "choose_photos": "写真を選択",

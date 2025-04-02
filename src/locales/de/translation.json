@@ -41,7 +41,12 @@
       "show_less": "Weniger anzeigen",
       "show_more": "Mehr Standorte anzeigen",
       "preselected_studio": "Studio über Link vorausgewählt",
-    "studio_not_found": "Angefordertes Studio nicht gefunden"
+      "studio_not_found": "Angefordertes Studio nicht gefunden",
+      "copy_url": "Studio-Link kopieren",
+      "url_copied": "Studio-Link in die Zwischenablage kopiert!",
+      "share_studio": "Dieses Studio teilen",
+      "share_title": "Abzüge bei {{studio}} bestellen",
+      "share_text": "Nutze FreezePIX um Abzüge bei {{studio}} zu bestellen"
     },
     "navigation": {
       "choose_photos": "Fotos auswählen",

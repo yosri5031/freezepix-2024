@@ -705,6 +705,29 @@ const BookingPopup = ({ onClose }) => {
     
     return null;
   };
+  
+  // Function to generate studio slug
+  const generateStudioSlug = (studioName) => {
+    if (!studioName) return '';
+    
+    return studioName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+  
+  // Function to update URL with studio slug without page reload
+  const updateUrlWithStudio = (studio) => {
+    if (!studio || !studio.name) return;
+    
+    const slug = studio.slug || generateStudioSlug(studio.name);
+    const baseUrl = window.location.origin;
+    const newUrl = `${baseUrl}/${slug}`;
+    
+    // Update browser URL without reloading the page
+    window.history.pushState({ studioId: studio._id }, '', newUrl);
+  };
 
 const FreezePIX = () => {
  
@@ -812,7 +835,7 @@ const [interacReference, setInteracReference] = useState('');
           
           if (!studioSlug) return;
           
-          setIsLoadingStudio(true);
+          setIsLoading(true);
           setStudioError(null);
           
           try {
@@ -872,12 +895,12 @@ const [interacReference, setInteracReference] = useState('');
               setStudioError('Studio not found');
             }
           } finally {
-            setIsLoadingStudio(false);
+            setIsLoading(false);
           }
         };
         
         fetchPreselectedStudio();
-      }, []);  // Run once on component mount
+      }, []); 
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
@@ -1338,19 +1361,37 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
 
   // Fixed handleStudioSelect function to prevent default behavior
   const handleStudioSelect = (e, studio) => {
-    // Prevent the default behavior which causes page refresh
-    e.preventDefault(); 
+    // Prevent default form submission behavior
+    e.preventDefault();
     e.stopPropagation();
     
-    // Call the parent's onStudioSelect function with the selected studio
+    // Update URL with studio slug
+    updateUrlWithStudio(studio);
+    
+    // Save studio to localStorage
+    localStorage.setItem('selectedStudio', JSON.stringify(studio));
+    
+    // Call the parent's onStudioSelect function
     onStudioSelect(studio);
   };
-
-  // Handle distance filter change
-  const handleDistanceChange = (e) => {
-    const newDistance = Number(e.target.value);
-    setDistanceFilter(newDistance);
-  };
+  
+ // Function to copy studio URL to clipboard
+ const copyStudioUrl = (e, studio) => {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const slug = studio.slug || generateStudioSlug(studio.name);
+  const studioUrl = `${window.location.origin}/${slug}`;
+  
+  navigator.clipboard.writeText(studioUrl)
+    .then(() => {
+      // Show toast or notification
+      alert(t('pickup.url_copied'));
+    })
+    .catch(err => {
+      console.error('Failed to copy URL:', err);
+    });
+};
 
   return (
     <div className="space-y-6">
@@ -1367,7 +1408,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
           </div>
         )}
         
-        
+
         {/* Distance filter */}
         <div className="flex items-center space-x-2">
           <span className="text-sm text-gray-600">{t('pickup.distance_filter')}:</span>
@@ -1406,26 +1447,24 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {displayedStudios.map(studio => (
-           <div
-           key={studio._id}
-           className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-             selectedStudio?._id === studio._id
-               ? 'border-yellow-400 bg-yellow-50'
-               : 'hover:border-gray-400'
-           }`}
-           onClick={(e) => handleStudioSelect(e, studio)}
-           onSubmit={(e) => e.preventDefault()} // Add this to prevent form submission
-           role="button" // Add accessibility role
-           tabIndex={0} // Make it focusable
-           // Add keyboard accessibility
-           onKeyDown={(e) => {
-             if (e.key === 'Enter' || e.key === ' ') {
-               e.preventDefault();
-               handleStudioSelect(e, studio);
-             }
-           }}
-         >
+        {displayedStudios.map(studio => (
+          <div
+            key={studio._id}
+            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+              selectedStudio?._id === studio._id
+                ? 'border-yellow-400 bg-yellow-50'
+                : 'hover:border-gray-400'
+            }`}
+            onClick={(e) => handleStudioSelect(e, studio)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                handleStudioSelect(e, studio);
+              }
+            }}
+          >
               <div className="flex justify-between items-start">
                 <h3 className="font-medium text-lg mb-2">
                   {studio.translations?.[languageCode]?.name || studio.name}
@@ -1438,6 +1477,21 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
                 )}
               </div>
               
+               {/* Add a "Copy URL" button at the bottom */}
+            {selectedStudio?._id === studio._id && (
+              <div className="mt-2 pt-2 border-t">
+                <button
+                  onClick={(e) => copyStudioUrl(e, studio)}
+                  className="text-sm flex items-center text-blue-500 hover:text-blue-700"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2" />
+                  </svg>
+                  {t('pickup.copy_url')}
+                </button>
+              </div>
+            )}
+            
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
@@ -2318,7 +2372,7 @@ const handlePayment = async (stripePaymentMethod, amount, currency, metadata) =>
 const OrderSuccess = () => {
   const [isValidating, setIsValidating] = useState(true);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
+  const navigate = navigate();
 
   useEffect(() => {
     const validatePayment = async () => {

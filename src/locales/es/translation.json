@@ -40,8 +40,13 @@
       "try_increasing": "Intenta aumentar la distancia o selecciona 'Mostrar Todo'",
       "show_less": "Mostrar Menos",
       "show_more": "Mostrar Más Ubicaciones",
-       "preselected_studio": "Estudio preseleccionado desde el enlace",
-    "studio_not_found": "Estudio solicitado no encontrado"
+      "preselected_studio": "Estudio preseleccionado desde el enlace",
+      "studio_not_found": "Estudio solicitado no encontrado",
+      "copy_url": "Copiar enlace del estudio",
+      "url_copied": "¡Enlace del estudio copiado al portapapeles!",
+      "share_studio": "Compartir este estudio",
+      "share_title": "Pedir impresiones en {{studio}}",
+      "share_text": "Usa FreezePIX para pedir impresiones desde {{studio}}"
     },
     "navigation": {
       "choose_photos": "Elegir Fotos",
