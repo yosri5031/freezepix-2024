@@ -1375,6 +1375,12 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
     onStudioSelect(studio);
   };
   
+    // Handle distance filter change
+    const handleDistanceChange = (e) => {
+      const newDistance = Number(e.target.value);
+      setDistanceFilter(newDistance);
+    };
+  
  // Function to copy studio URL to clipboard
  const copyStudioUrl = (e, studio) => {
   e.preventDefault();
@@ -1491,7 +1497,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio }) => {
                 </button>
               </div>
             )}
-            
+
               <div className="space-y-2 text-sm text-gray-600">
                 <div className="flex items-center gap-2">
                   <MapPin size={16} />
