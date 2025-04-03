@@ -999,93 +999,134 @@ const [interacReference, setInteracReference] = useState('');
         fetchDiscountCodes();
       }, []);
 
-      useEffect(() => {
-        // Check if we should restore from uploadedPhotos or freezepixState
-        const uploadedPhotos = localStorage.getItem('uploadedPhotos');
-        const savedState = localStorage.getItem('freezepixState');
+      const ensurePhotoPrices = (photos, countryCode) => {
+        if (!photos || !photos.length || !countryCode) return photos;
         
-        // First try to restore from uploadedPhotos
-        if (uploadedPhotos) {
-          try {
-            const parsedPhotos = JSON.parse(uploadedPhotos);
-            if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
-              console.log('Restoring photos from previous session:', parsedPhotos.length);
-              const restoredPhotos = parsedPhotos.map(photo => {
-                // Skip invalid entries
-                if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                  return null;
-                }
-                
-                // Try to reconstruct file
-                let fileObj = null;
-                try {
-                  if (photo.fileName && photo.base64) {
-                    fileObj = base64ToFile(photo.base64, photo.fileName);
-                  }
-                } catch (e) {
-                  console.warn('Could not convert base64 to file:', e);
-                }
-                
-                return {
-                  ...photo,
-                  file: fileObj,
-                  preview: photo.base64
-                };
-              }).filter(Boolean);
-              
-              if (restoredPhotos.length > 0) {
-                setSelectedPhotos(restoredPhotos);
+        const country = initialCountries.find(c => c.value === countryCode);
+        if (!country) return photos;
+        
+        return photos.map(photo => {
+          // Calculate the correct price if it's missing
+          if (!photo.price) {
+            let price = 0;
+            if (photo.productType === 'photo_print') {
+              switch (photo.size) {
+                case '4x6': price = country.size4x6; break;
+                case '5x7': price = country.size5x7; break;
+                case '8x10': price = country.size8x10; break;
+                case '4x4': price = country.size4x4; break;
+                case '10x15': price = country.size10x15 || country.size4x6; break;
+                case '15x22': price = country.size15x22 || country.size5x7; break;
+                case '3.5x4.5': price = country.size35x45; break;
+                default: price = country.size4x6; // Default to 4x6 price
               }
+            } else if (photo.productType === '3d_frame') {
+              price = country.crystal3d;
+            } else if (photo.productType === 'keychain') {
+              price = country.keychain;
+            } else if (photo.productType === 'keyring_magnet') {
+              price = country.keyring_magnet;
             }
-          } catch (error) {
-            console.error('Error restoring uploaded photos:', error);
+            
+            return {...photo, price};
+          }
+          
+          return photo;
+        });
+      };
+
+      useEffect(() => {
+  // Check if we should restore from uploadedPhotos or freezepixState
+  const uploadedPhotos = localStorage.getItem('uploadedPhotos');
+  const savedState = localStorage.getItem('freezepixState');
+  
+  // First try to restore from uploadedPhotos
+  if (uploadedPhotos) {
+    try {
+      const parsedPhotos = JSON.parse(uploadedPhotos);
+      if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+        console.log('Restoring photos from previous session:', parsedPhotos.length);
+        const restoredPhotos = parsedPhotos.map(photo => {
+          // Skip invalid entries
+          if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+            return null;
+          }
+          
+          // Try to reconstruct file
+          let fileObj = null;
+          try {
+            if (photo.fileName && photo.base64) {
+              fileObj = base64ToFile(photo.base64, photo.fileName);
+            }
+          } catch (e) {
+            console.warn('Could not convert base64 to file:', e);
+          }
+          
+          return {
+            ...photo,
+            file: fileObj,
+            preview: photo.base64
+          };
+        }).filter(Boolean);
+        
+        if (restoredPhotos.length > 0) {
+          // Apply price fixing to ensure all prices are set correctly
+          const photosWithPrices = ensurePhotoPrices(restoredPhotos, selectedCountry);
+          setSelectedPhotos(photosWithPrices);
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring uploaded photos:', error);
+    }
+  }
+  // Then try freezepixState as fallback
+  else if (savedState) {
+    try {
+      const parsedState = JSON.parse(savedState);
+      if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
+        console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
+        
+        // Process photos from freezepixState
+        const restoredPhotos = parsedState.selectedPhotos.map(photo => {
+          // Skip invalid entries
+          if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+            return null;
+          }
+          
+          // Try to reconstruct file
+          let fileObj = null;
+          try {
+            if (photo.fileName && photo.base64) {
+              fileObj = base64ToFile(photo.base64, photo.fileName);
+            }
+          } catch (e) {
+            console.warn('Could not convert base64 to file:', e);
+          }
+          
+          return {
+            ...photo,
+            file: fileObj,
+            preview: photo.base64
+          };
+        }).filter(Boolean);
+        
+        if (restoredPhotos.length > 0) {
+          // Apply price fixing before setting state
+          const countryToUse = parsedState.selectedCountry || selectedCountry;
+          const photosWithPrices = ensurePhotoPrices(restoredPhotos, countryToUse);
+          setSelectedPhotos(photosWithPrices);
+          
+          // Also restore other state if needed
+          if (parsedState.selectedCountry) {
+            setSelectedCountry(parsedState.selectedCountry);
           }
         }
-        // Then try freezepixState as fallback
-        else if (savedState) {
-          try {
-            const parsedState = JSON.parse(savedState);
-            if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
-              console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
-              
-              // Process photos from freezepixState
-              const restoredPhotos = parsedState.selectedPhotos.map(photo => {
-                // Skip invalid entries
-                if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                  return null;
-                }
-                
-                // Try to reconstruct file
-                let fileObj = null;
-                try {
-                  if (photo.fileName && photo.base64) {
-                    fileObj = base64ToFile(photo.base64, photo.fileName);
-                  }
-                } catch (e) {
-                  console.warn('Could not convert base64 to file:', e);
-                }
-                
-                return {
-                  ...photo,
-                  file: fileObj,
-                  preview: photo.base64
-                };
-              }).filter(Boolean);
-              
-              if (restoredPhotos.length > 0) {
-                setSelectedPhotos(restoredPhotos);
-                
-                // Also restore other state if needed
-                if (parsedState.selectedCountry) {
-                  setSelectedCountry(parsedState.selectedCountry);
-                }
-              }
-            }
-          } catch (error) {
-            console.error('Error restoring from freezepixState:', error);
-          }
-        }
-      }, []);
+      }
+    } catch (error) {
+      console.error('Error restoring from freezepixState:', error);
+    }
+  }
+}, [selectedCountry]);
 
       // Add this useEffect in your component to handle the return from Stripe
       useEffect(() => {
@@ -1985,40 +2026,62 @@ const closeProductDetails = () => {
 // Add this effect to update prices when country changes
 // Update the useEffect for country change
 useEffect(() => {
-    if (selectedCountry) {
-        const country = initialCountries.find(c => c.value === selectedCountry);
-        if (!country) return;
+  if (selectedCountry) {
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    if (!country) return;
 
-        // Update prices for all photos when country changes
-        setSelectedPhotos(prevPhotos => 
-            prevPhotos.map(photo => ({
-                ...photo,
-                price: calculateItemPrice({ 
-                    size: photo.size || '10x15',
-                    quantity: photo.quantity || 1
-                }, country)
-            }))
-        );
+    // Update prices for all photos when country changes
+    setSelectedPhotos(prevPhotos => 
+      prevPhotos.map(photo => {
+        // Calculate the new price based on the product type and size
+        let newPrice = 0;
+        if (photo.productType === 'photo_print') {
+          switch (photo.size) {
+            case '4x6': newPrice = country.size4x6; break;
+            case '5x7': newPrice = country.size5x7; break;
+            case '8x10': newPrice = country.size8x10; break;
+            case '4x4': newPrice = country.size4x4; break;
+            case '10x15': newPrice = country.size10x15 || country.size4x6; break;
+            case '15x22': newPrice = country.size15x22 || country.size5x7; break;
+            case '3.5x4.5': newPrice = country.size35x45; break;
+            default: newPrice = country.size4x6; // Default to 4x6 price
+          }
+        } else if (photo.productType === '3d_frame') {
+          newPrice = country.crystal3d;
+        } else if (photo.productType === 'keychain') {
+          newPrice = country.keychain;
+        } else if (photo.productType === 'keyring_magnet') {
+          newPrice = country.keyring_magnet;
+        }
 
-        // Update form data
-        setFormData(prev => ({
-          ...prev,
-          shippingAddress: {
-            ...prev.shippingAddress,
-            country: selectedCountry,
-            state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '', // Preserve state
-            province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : '' // Preserve province
-          },
-          billingAddress: {
-            ...prev.billingAddress,
-            country: selectedCountry,
-            state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '', // Preserve state
-            province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : '' // Preserve province
-          },
-          paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
-        }));
-      }
-    }, [selectedCountry]);
+        return {
+          ...photo,
+          price: newPrice,
+          quantity: photo.quantity || 1
+        };
+      })
+    );
+
+    // Update form data
+    setFormData(prev => ({
+      ...prev,
+      shippingAddress: {
+        ...prev.shippingAddress,
+        country: selectedCountry,
+        state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '', // Preserve state
+        province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : '' // Preserve province
+      },
+      billingAddress: {
+        ...prev.billingAddress,
+        country: selectedCountry,
+        state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '', // Preserve state
+        province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : '' // Preserve province
+      },
+      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
+    }));
+  }
+}, [selectedCountry]);
+
 
       const updateStandardSize = (photoId, standardSize) => {
         setSelectedPhotos(prevPhotos => 
@@ -2035,25 +2098,29 @@ useEffect(() => {
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
 
-     const calculateItemPrice = (photo, country) => {
-  if (photo.productType === 'photo_print') {
-    switch (photo.size) {
-      case '4x6': return country.size4x6;
-      case '5x7': return country.size5x7;
-      case '8x10' : return country.size8x10;
-      case '4x4': return country.size4x4;
-      case '10x15': return country.size10x15;
-      case '15x22': return country.size15x22;
-      case '3.5x4.5': return country.size35x45;
-      default: return 0;
-    }
-  } else if (photo.productType === '3d_frame') {
-    return country.crystal3d; // Assuming same pricing as 3D crystal
-  } else if (['keychain', 'keyring_magnet'].includes(photo.productType)) {
-    return country.value === 'TUN' ? 15 : 9.99;
-  }
-  return 0;
-};
+      const calculateItemPrice = (photo, country) => {
+        if (!photo || !country) return 0;
+        
+        if (photo.productType === 'photo_print') {
+          switch (photo.size) {
+            case '4x6': return country.size4x6 || 0;
+            case '5x7': return country.size5x7 || 0;
+            case '8x10': return country.size8x10 || 0;
+            case '4x4': return country.size4x4 || 0;
+            case '10x15': return country.size10x15 || country.size4x6 || 0;
+            case '15x22': return country.size15x22 || country.size5x7 || 0;
+            case '3.5x4.5': return country.size35x45 || 0;
+            default: return 0;
+          }
+        } else if (photo.productType === '3d_frame') {
+          return country.crystal3d || 0;
+        } else if (photo.productType === 'keychain') {
+          return country.keychain || 0;
+        } else if (photo.productType === 'keyring_magnet') {
+          return country.keyring_magnet || 0;
+        }
+        return 0;
+      };
 const convertFileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
