@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 
-// Studio Header Component that shows pre-selected studio
+// Optimized Studio Header Component with fixed width
 const StudioLocationHeader = ({ 
   selectedStudio, 
   onStudioSelect, 
@@ -104,34 +104,34 @@ const StudioLocationHeader = ({
   };
 
   return (
-    <div className="relative">
-      {/* Main header showing selected studio */}
+    <div className="relative w-full max-w-xs">
+      {/* Main header showing selected studio - with FIXED WIDTH */}
       <div 
-        className="flex items-center justify-between bg-gray-100 px-4 py-3 rounded-lg cursor-pointer border-2 border-transparent hover:border-green-400 transition-colors"
+        className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-lg cursor-pointer border-2 border-transparent hover:border-green-400 transition-colors"
         onClick={toggleDropdown}
       >
-        <div className="flex items-center">
-          <MapPin className="text-green-500 mr-2" size={20} />
+        <div className="flex items-center truncate">
+          <MapPin className="text-green-500 mr-1 flex-shrink-0" size={16} />
           {loading ? (
-            <div className="h-5 w-32 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
           ) : selectedStudio ? (
-            <span className="font-medium">{selectedStudio.name}</span>
+            <span className="font-medium text-sm truncate">{selectedStudio.name}</span>
           ) : (
-            <span className="text-gray-500">Select location</span>
+            <span className="text-gray-500 text-sm">Select location</span>
           )}
         </div>
         {isDropdownOpen ? (
-          <ChevronUp size={20} className="text-gray-500" />
+          <ChevronUp size={16} className="text-gray-500 flex-shrink-0" />
         ) : (
-          <ChevronDown size={20} className="text-gray-500" />
+          <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
         )}
       </div>
       
       {/* Dropdown for studio selection */}
       {isDropdownOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+        <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
           <div className="p-2">
-            <h3 className="font-medium px-3 py-2 border-b">Select Pickup Location</h3>
+            <h3 className="font-medium px-3 py-2 border-b text-sm">Select Pickup Location</h3>
             {studios.map(studio => (
               <div
                 key={studio._id}
@@ -140,12 +140,12 @@ const StudioLocationHeader = ({
                 }`}
                 onClick={() => handleStudioSelect(studio)}
               >
-                <div className="flex flex-col">
-                  <span className="font-medium">{studio.name}</span>
-                  <span className="text-sm text-gray-600">{studio.address}</span>
+                <div className="flex flex-col overflow-hidden">
+                  <span className="font-medium text-sm truncate">{studio.name}</span>
+                  <span className="text-xs text-gray-600 truncate">{studio.address}</span>
                 </div>
                 {studio.distance !== undefined && (
-                  <span className="text-sm text-gray-500">{studio.distance.toFixed(1)} km</span>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">{studio.distance.toFixed(1)} km</span>
                 )}
               </div>
             ))}
