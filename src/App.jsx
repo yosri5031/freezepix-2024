@@ -4328,29 +4328,23 @@ return (
       <div className="bg-white rounded-lg shadow-lg p-6">
         {/* New Header Organization */}
         <div className="mb-6">
-          {/* Top Row: Selector, Logo, Empty space */}
-          <div className="flex items-center mb-4">
-            {/* Studio Location Header (Left) - with constrained width */}
-            <div className="w-1/3">
-              <div className="max-w-xs">
-                <StudioLocationHeader 
-                  selectedStudio={selectedStudio}
-                  onStudioSelect={handleStudioSelect}
-                  selectedCountry={selectedCountry}
-                />
-              </div>
+          {/* First Row: Studio Location Header taking full width */}
+          <div className="mb-4">
+            <div className="w-full">
+              <StudioLocationHeader 
+                selectedStudio={selectedStudio}
+                onStudioSelect={handleStudioSelect}
+                selectedCountry={selectedCountry}
+              />
             </div>
-            
-            {/* Logo (Center) */}
-            <div className="flex justify-center w-1/3">
-              <div className="text-2xl font-bold">
-                <span className="text-black">freeze</span>
-                <span className="text-yellow-400">PIX</span>
-              </div>
+          </div>
+          
+          {/* Second Row: Logo */}
+          <div className="flex justify-center mb-4">
+            <div className="text-2xl font-bold">
+              <span className="text-black">freeze</span>
+              <span className="text-yellow-400">PIX</span>
             </div>
-            
-            {/* Empty space (Right) */}
-            <div className="w-1/3"></div>
           </div>
         </div>
 
@@ -4361,14 +4355,14 @@ return (
               w-8 h-8 rounded-full flex items-center justify-center
               ${activeStep >= 0 ? 'bg-yellow-400' : 'bg-gray-200'}
             `}>
-              <Camera size={24} />
+              <Camera size={32} />
             </div>
             <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
             <div className={`
               w-8 h-8 rounded-full flex items-center justify-center
               ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}
             `}>
-              <ShoppingCart size={24} />
+              <ShoppingCart size={32} />
             </div>
           </div>
         </div>

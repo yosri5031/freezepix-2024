@@ -104,26 +104,26 @@ const StudioLocationHeader = ({
   };
 
   return (
-    <div className="relative w-full max-w-xs">
-      {/* Main header showing selected studio - with FIXED WIDTH */}
+    <div className="relative w-full">
+      {/* Main header showing selected studio - full width with white background */}
       <div 
-        className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-lg cursor-pointer border-2 border-transparent hover:border-green-400 transition-colors"
+        className="flex items-center justify-between bg-white px-4 py-3 rounded-lg cursor-pointer border border-gray-300 hover:border-green-400 transition-colors shadow-sm"
         onClick={toggleDropdown}
       >
-        <div className="flex items-center truncate">
-          <MapPin className="text-green-500 mr-1 flex-shrink-0" size={16} />
+        <div className="flex items-center flex-grow">
+          <MapPin className="text-green-500 mr-2 flex-shrink-0" size={20} />
           {loading ? (
-            <div className="h-4 w-20 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-5 w-32 bg-gray-200 animate-pulse rounded"></div>
           ) : selectedStudio ? (
-            <span className="font-medium text-sm truncate">{selectedStudio.name}</span>
+            <span className="font-medium text-base">{selectedStudio.name}</span>
           ) : (
-            <span className="text-gray-500 text-sm">Select location</span>
+            <span className="text-gray-500 text-base">Select location</span>
           )}
         </div>
         {isDropdownOpen ? (
-          <ChevronUp size={16} className="text-gray-500 flex-shrink-0" />
+          <ChevronUp size={20} className="text-gray-500 flex-shrink-0" />
         ) : (
-          <ChevronDown size={16} className="text-gray-500 flex-shrink-0" />
+          <ChevronDown size={20} className="text-gray-500 flex-shrink-0" />
         )}
       </div>
       
