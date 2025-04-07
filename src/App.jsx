@@ -1283,36 +1283,68 @@ const [interacReference, setInteracReference] = useState('');
       };
 
       // Add this function to your FreezePIX component
-const handleStudioSelect = (studio) => {
-  // Check if studio is a valid object
-  if (!studio || !studio._id) {
-    console.error('Invalid studio selected:', studio);
-    return;
-  }
-  
-  // Save selected studio to component state
-  setSelectedStudio(studio);
-  
-  // Update URL with studio slug (if needed)
-  updateUrlWithStudio(studio);
-  
-  // Store in localStorage for persistence
-  localStorage.setItem('selectedStudio', JSON.stringify(studio));
-  
-  // If this is a newly selected studio (not from URL), update flag
-  if (localStorage.getItem('isPreselectedFromUrl') === 'true') {
-    localStorage.setItem('isPreselectedFromUrl', 'false');
-  }
-  
-  console.log('Studio selected:', studio.name);
-  
-  // Additional action if needed based on the current step
-  if (activeStep === 1) {
-    // If we're on the studio selection step, we can proceed to the next step
-    // You might want to automatically advance, or let the user click Next
-  }
-};
-
+      const handleStudioSelect = (studio) => {
+        // Check if studio is a valid object
+        if (!studio || !studio._id) {
+          console.error('Invalid studio selected:', studio);
+          return;
+        }
+        
+        // Map studio country to correct country code
+        const mapCountryCode = (countryName) => {
+          const countryMap = {
+            'United States': 'US',
+            'USA': 'US',
+            'Canada': 'CA',
+            'CAN': 'CA',
+            'Tunisia': 'TN',
+            'TUN': 'TN',
+            'United Kingdom': 'GB',
+            'Germany': 'DE',
+            'France': 'FR',
+            'Italy': 'IT',
+            'Spain': 'ES',
+            'Australia': 'AU',
+            'Japan': 'JP',
+            'Singapore': 'SG',
+            'United Arab Emirates': 'AE',
+            'Saudi Arabia': 'SA',
+            'Brazil': 'BR',
+            'Mexico': 'MX',
+            'Russia': 'RU',
+            'China': 'CN'
+          };
+          
+          return countryMap[countryName] || countryName;
+        };
+        
+        // Determine country from studio
+        const studioCountry = mapCountryCode(studio.country);
+        
+        // Validate that the country exists in our supported countries
+        const validCountry = initialCountries.some(c => c.value === studioCountry);
+        
+        // Update studio and country
+        setSelectedStudio(studio);
+        
+        // Only update country if it's a valid supported country
+        if (validCountry) {
+          setSelectedCountry(studioCountry);
+        }
+        
+        // Update URL with studio slug (if needed)
+        updateUrlWithStudio(studio);
+        
+        // Store in localStorage for persistence
+        localStorage.setItem('selectedStudio', JSON.stringify(studio));
+        
+        // If this is a newly selected studio (not from URL), update flag
+        if (localStorage.getItem('isPreselectedFromUrl') === 'true') {
+          localStorage.setItem('isPreselectedFromUrl', 'false');
+        }
+        
+        console.log('Studio selected:', studio.name, 'Country set to:', studioCountry);
+      };
 // Enhanced StudioSelector with fixed handleStudioSelection function
 const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
