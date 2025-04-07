@@ -452,7 +452,7 @@ const BookingPopup = ({ onClose }) => {
   
   // Add this function before the FreezePIX component
 
-  const PhotoOptions = () => {
+  const PhotoOptions = ({ onStudioSelect, activeStep, setActiveStep, setShowIntro }) => {
     const [showBookingForm, setShowBookingForm] = useState(false);
     const [showStudioList, setShowStudioList] = useState(false);
     const [studios, setStudios] = useState([]);
@@ -486,6 +486,7 @@ const BookingPopup = ({ onClose }) => {
       window.location.href = 'https://photo-passport-958d6e9780c3.herokuapp.com/';
     };
   
+    // Fixed function to handle studio selection
     const handleStudioSelect = (e, studio) => {
       // Prevent the default behavior which causes page refresh
       e.preventDefault(); 
@@ -494,10 +495,12 @@ const BookingPopup = ({ onClose }) => {
       // Save selected studio to localStorage for persistence
       localStorage.setItem('selectedStudio', JSON.stringify(studio));
       
+      // Set the local state
+      setSelectedStudio(studio);
+      
       // Call the parent's onStudioSelect function with the selected studio
       onStudioSelect(studio);
     };
-    
     
     const handleSubmit = (e) => {
       e.preventDefault();
@@ -542,14 +545,13 @@ const BookingPopup = ({ onClose }) => {
         </div>
       </div>
     );
-
+  
     if (showStudioList) {
       return (
         <div className="min-h-screen bg-gray-50 p-4">
           <Header />
-
+  
           <div className="max-w-md mx-auto">
-           
             
             <h2 className="text-2xl font-bold mb-6">Select a Studio</h2>
             
@@ -557,7 +559,7 @@ const BookingPopup = ({ onClose }) => {
               {studios.map((studio) => (
                 <div 
                   key={studio._id}
-                  onClick={() => handleStudioSelect(studio)}
+                  onClick={(e) => handleStudioSelect(e, studio)}
                   className="bg-white rounded-xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow"
                 >
                   <div className="flex items-center justify-between">
@@ -703,7 +705,6 @@ const BookingPopup = ({ onClose }) => {
       </div>
     );
   };
-
   const parseStudioSlugFromUrl = () => {
     // Check if URL contains a path segment after the domain
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
@@ -1280,11 +1281,43 @@ const [interacReference, setInteracReference] = useState('');
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         return days[day];
       };
-// Enhanced StudioSelector with better handling of preselected studios
+
+      // Add this function to your FreezePIX component
+const handleStudioSelect = (studio) => {
+  // Check if studio is a valid object
+  if (!studio || !studio._id) {
+    console.error('Invalid studio selected:', studio);
+    return;
+  }
+  
+  // Save selected studio to component state
+  setSelectedStudio(studio);
+  
+  // Update URL with studio slug (if needed)
+  updateUrlWithStudio(studio);
+  
+  // Store in localStorage for persistence
+  localStorage.setItem('selectedStudio', JSON.stringify(studio));
+  
+  // If this is a newly selected studio (not from URL), update flag
+  if (localStorage.getItem('isPreselectedFromUrl') === 'true') {
+    localStorage.setItem('isPreselectedFromUrl', 'false');
+  }
+  
+  console.log('Studio selected:', studio.name);
+  
+  // Additional action if needed based on the current step
+  if (activeStep === 1) {
+    // If we're on the studio selection step, we can proceed to the next step
+    // You might want to automatically advance, or let the user click Next
+  }
+};
+
+// Enhanced StudioSelector with fixed handleStudioSelection function
 const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setStudioError] = useState(null);
+  const [studioError, setStudioError] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
   const [showAll, setShowAll] = useState(false);
   const [distanceFilter, setDistanceFilter] = useState(() => {
@@ -1317,7 +1350,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
     localStorage.setItem('studioDistanceFilter', distanceFilter.toString());
   }, [distanceFilter]);
 
-  // Function to handle studio selection
+  // Function to handle studio selection - THIS is the missing function
   const handleStudioSelection = (e, studio) => {
     // Prevent default form submission behavior
     e.preventDefault();
@@ -1441,10 +1474,10 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
     );
   }
 
-  if (error && !isPreselectedFromUrl) {
+  if (studioError && !isPreselectedFromUrl) {
     return (
       <div className="text-red-500 text-center p-4">
-        {error}
+        {studioError}
       </div>
     );
   }
