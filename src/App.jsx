@@ -3421,39 +3421,51 @@ const handleNext = async (e) => {
   e.preventDefault();
   
   try {
+    // Clear any previous errors
+    setError(null);
+    
     switch (activeStep) {
-      case 0:
+      case 0: // Photo Upload step
         // Validate photos
         if (!selectedPhotos || selectedPhotos.length === 0) {
           throw new Error('Please select at least one photo');
         }
+
+        // Save selected photos to storage for persistence
+        try {
+          await savePhotosToStorage(selectedPhotos);
+        } catch (storageError) {
+          console.warn('Failed to save photos to storage:', storageError);
+          // Continue despite storage error
+        }
         
-        // If studio is preselected from URL, we can skip to step 2
-        if (localStorage.getItem('isPreselectedFromUrl') === 'true' && selectedStudio) {
-          setActiveStep(2);
+        // If studio is already selected (e.g., from URL parameter)
+        if (selectedStudio) {
+          // We can skip the studio selection step
+          setActiveStep(1); // Go directly to checkout step
         } else {
-          setActiveStep(1); // Go to studio selection step
+          // Otherwise proceed to studio selection step (StudioSelector component handling)
+          setActiveStep(1);
         }
         break;
 
-      case 1:
+      case 1: // Order Review & Contact Info step
+        // Validate contact information
+        if (!formData.email || !formData.phone || !formData.name) {
+          throw new Error('Please provide all required contact information');
+        }
+        
         // Validate studio selection
         if (!selectedStudio) {
           throw new Error('Please select a pickup location');
         }
-        // If studio is selected, proceed to next step
-        setActiveStep(2);
-        break;
 
-      case 2:
-        // Validate contact information and process order
-        if (!formData.email || !formData.phone || !formData.name) {
-          throw new Error('Please provide all required contact information');
-        }
-
+        // Set processing state
         setIsLoading(true);
+        
+        // Process order
         await handleOrderSuccess({
-          paymentMethod: 'in_store', // or whatever payment method
+          paymentMethod: 'in_store', // Always in-store payment for pickup
           formData,
           selectedCountry,
           selectedPhotos,
@@ -3461,17 +3473,16 @@ const handleNext = async (e) => {
           discountCode,
           selectedStudio
         });
+        
         break;
 
       default:
-        setActiveStep(prev => prev + 1);
+        console.warn(`Unknown step: ${activeStep}`);
         break;
     }
-    setError(null);
   } catch (error) {
     console.error('Error in handleNext:', error);
-    setError(error.message);
-  } finally {
+    setError(error.message || 'An unexpected error occurred');
     setIsLoading(false);
   }
 };
