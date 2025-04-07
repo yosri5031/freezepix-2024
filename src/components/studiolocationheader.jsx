@@ -113,11 +113,11 @@ const StudioLocationHeader = ({
         <div className="flex items-center flex-grow">
           <MapPin className="text-green-500 mr-2 flex-shrink-0" size={20} />
           {loading ? (
-            <div className="h-5 w-32 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-4 w-28 bg-gray-200 animate-pulse rounded"></div>
           ) : selectedStudio ? (
-            <span className="font-medium text-base">{selectedStudio.name}</span>
+            <span className="font-medium text-sm">{selectedStudio.name}</span>
           ) : (
-            <span className="text-gray-500 text-base">Select location</span>
+            <span className="text-gray-500 text-sm">Select location</span>
           )}
         </div>
         {isDropdownOpen ? (
