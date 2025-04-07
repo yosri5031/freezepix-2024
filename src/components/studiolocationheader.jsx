@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 
-// Optimized Studio Header Component with fixed width
+// Studio Header Component with Sobeys-style design
 const StudioLocationHeader = ({ 
   selectedStudio, 
   onStudioSelect, 
@@ -105,26 +105,22 @@ const StudioLocationHeader = ({
 
   return (
     <div className="relative w-full">
-      {/* Main header showing selected studio - full width with white background */}
+      {/* Main header showing selected studio - Sobeys style */}
       <div 
-        className="flex items-center justify-between bg-white px-4 py-3 rounded-lg cursor-pointer border border-gray-300 hover:border-green-400 transition-colors shadow-sm"
+        className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-full cursor-pointer border border-gray-200 hover:border-green-400 transition-colors"
         onClick={toggleDropdown}
       >
-        <div className="flex items-center flex-grow">
-          <MapPin className="text-green-500 mr-2 flex-shrink-0" size={20} />
+        <div className="flex items-center">
+          <MapPin className="text-green-500 mr-2 flex-shrink-0" size={18} />
           {loading ? (
-            <div className="h-4 w-28 bg-gray-200 animate-pulse rounded"></div>
+            <div className="h-4 w-24 bg-gray-200 animate-pulse rounded"></div>
           ) : selectedStudio ? (
-            <span className="font-medium text-sm">{selectedStudio.name}</span>
+            <span className="font-medium text-sm text-gray-700">{selectedStudio.name}</span>
           ) : (
             <span className="text-gray-500 text-sm">Select location</span>
           )}
         </div>
-        {isDropdownOpen ? (
-          <ChevronUp size={20} className="text-gray-500 flex-shrink-0" />
-        ) : (
-          <ChevronDown size={20} className="text-gray-500 flex-shrink-0" />
-        )}
+        <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-1" />
       </div>
       
       {/* Dropdown for studio selection */}

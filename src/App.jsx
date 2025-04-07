@@ -4326,16 +4326,18 @@ return (
   <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        {/* New Header Organization */}
+                {/* New Header Organization */}
         <div className="mb-6">
-          {/* First Row: Studio Location Header taking full width */}
+          {/* First Row: Studio Location Header taking full width but constrained in the middle */}
           <div className="mb-4">
-            <div className="w-full">
-              <StudioLocationHeader 
-                selectedStudio={selectedStudio}
-                onStudioSelect={handleStudioSelect}
-                selectedCountry={selectedCountry}
-              />
+            <div className="w-full flex justify-center">
+              <div className="w-full max-w-sm">
+                <StudioLocationHeader 
+                  selectedStudio={selectedStudio}
+                  onStudioSelect={handleStudioSelect}
+                  selectedCountry={selectedCountry}
+                />
+              </div>
             </div>
           </div>
           
