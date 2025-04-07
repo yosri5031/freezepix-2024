@@ -21,6 +21,7 @@ import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import {ShareUrl} from './StudioUrlShare';
+import StudioLocationHeader from './components/studiolocationheader';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
@@ -3702,302 +3703,273 @@ const handleFileChange = async (event) => {
     };
 };
 //..
-  const renderStepContent = () => {
-    const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
-    const { total } = calculateTotals();
-const countryCodeMap = {
-  'USA': 'US',
-  'CAN': 'CA',
-  'TUN': 'TN', 
-  'DEU': 'DE',
-  'FRA': 'FR',
-  'ITA': 'IT',
-  'GBR': 'GB',
-  'ESP': 'ES',
-  'United States': 'US',
-  'Canada': 'CA',
-  'Tunisia': 'TN',
-  'Germany': 'DE',
-  'France': 'FR',
-  'Italy': 'IT',
-  'Spain': 'ES',
-  'United Kingdom': 'GB'
-};
-
-    switch (activeStep) {
-      case 0:
-    return (
+const renderStepContent = () => {
+  const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
+  const { total } = calculateTotals();
+  
+  switch (activeStep) {
+    case 0:
+      return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
-                <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
-                <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-                >
-                    <Upload size={20} />
-                    {t('buttons.add_photos')}
-                </button>
-                <input
-                    type="file"
-                    ref={fileInputRef}
-                    onChange={handleFileChange}
-                    multiple
-                    accept="image/*"
-                    className="hidden"
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+            >
+              <Upload size={20} />
+              {t('buttons.add_photos')}
+            </button>
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              multiple
+              accept="image/*"
+              className="hidden"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {(selectedPhotos || []).map(photo => (
+              <div key={photo.id} className="relative border rounded-lg p-2">
+                <img
+                  src={photo.preview}
+                  alt="preview"
+                  className="w-full h-40 object-cover rounded"
                 />
-            </div>
+                <button
+                  onClick={() => removePhoto(photo.id)}
+                  className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
+                >
+                  <X size={16} />
+                </button>
+                <div className="mt-2 space-y-2">
+                  {/* Product Type Selection for US/Canada */}
+                  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR', 'US', 'CA', 'DE', 'FR', 'IT', 'ES', 'GB', 'RU', 'CN'].includes(selectedCountry)) && (
+                    <select
+                      value={photo.productType}
+                      onChange={(e) => updateProductType(photo.id, e.target.value)}
+                      className="w-full p-1 border rounded"
+                      style={{ display: 'none' }} // Hide the select element
+                    >
+                      <option value="photo_print">{t('produits.photo_print')}</option>
+                    </select>
+                  )}
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {(selectedPhotos || []).map(photo => (
-                    <div key={photo.id} className="relative border rounded-lg p-2">
-                        <img
-                            src={photo.preview}
-                            alt="preview"
-                            className="w-full h-40 object-cover rounded"
-                        />
-                        <button
-                            onClick={() => removePhoto(photo.id)}
-                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full"
-                        >
-                            <X size={16} />
-                        </button>
-                        <div className="mt-2 space-y-2">
-                              {/* Product Type Selection for US/Canada */}
-  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR', 'US', 'CA', 'DE', 'FR', 'IT', 'ES', 'GB', 'RU', 'CN'].includes(selectedCountry)) && (
-    <select
-      value={photo.productType}
-      onChange={(e) => updateProductType(photo.id, e.target.value)}
-      className="w-full p-1 border rounded"
-      style={{ display: 'none' }} // Hide the select element
-    >
-      <option value="photo_print">{t('produits.photo_print')}</option>
-    </select>
-  )}
-
-  {/* Product Type Selection for Tunisia */}
-  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1" style={{ display: 'none' }}>
-        {t('produits.product')}
-      </label>
-      <select
-        value={photo.productType}
-        onChange={(e) => updateProductType(photo.id, e.target.value)}
-        className="w-full p-1 border rounded"
-        style={{ display: 'none' }} // Hide the select element
-      >
-        <option value="photo_print">{t('produits.photo_print')}</option>
-      </select>
-    </div>
-  )}
-
-                            {/* Size selection for photo prints */}
-                            {photo.productType === 'photo_print' && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {t('produits.size')}
-                                    </label>
-                                    <select
-    value={photo.size}
-    onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-    className="w-full p-1 border rounded"
->
-    {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
-        <>
-            <option value="3.5x4.5">3.5x4.5 cm</option>
-            <option value="10x15">10x15 cm</option>
-            <option value="15x22">15x23 cm</option>
-        </>
-    ) : selectedCountry !== 'TUN' || selectedCountry !== 'TN' ? (
-        <>
-            <option value="4x4"> 4x4"</option>
-            <option value="4x6">4x6"</option>
-            <option value="5x7">5x7"</option>
-            <option value="8x10">8x10"</option>
-            
-        </>
-    ) : (
-        <>
-            <option value="4x6">4x6"</option>
-            <option value="5x7">5x7"</option>
-        </>
-    )}
-</select>
-                                </div>
-                            )}
-
-                            {/* Crystal shape selection for 3D frame */}
-                            {photo.productType === '3d_frame' && (
-                                <div>
-                                    <label class Name="block text-sm font-medium text-gray-700 mb-1">
-                                        {t('produits.shape')}
-                                    </label>
-                                    <select
-                                        value={photo.crystalShape}
-                                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
-                                        className="w-full p-1 border rounded"
-                                    >
-                                        <option value="rectangle">{t('produits.rectangle')}</option>
-                                        <option value="heart">{t('produits.heart')}</option>
-                                    </select>
-                                </div>
-                            )}
-
-                            {/* Standard Size selection for Keychain and Keyring & Magnet */}
-                            {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        {t('produits.size')}
-                                    </label>
-                                    <select
-                                        value={photo.standardSize || 'standard'}
-                                        onChange={(e) => updateStandardSize(photo.id, e.target.value)}
-                                        className="w-full p-1 border rounded"
-                                    >
-                                        <option value="standard">Standard</option>
-                                    </select>
-                                </div>
-                            )}
-
-                            {/* Quantity selection */}
-                           {/* Quantity selection */}
-<div>
-    <label className="block text-sm font-medium text-gray-700 mb-1">
-        {t('produits.quantity')}
-    </label>
-    <select
-        value={photo.quantity}
-        onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
-        className="w-full p-1 border rounded"
-    >
-        {photo.size === '3.5x4.5' ? (
-            // Generate options for multiples of 4 up to 96
-            [...Array(24)].map((_, i) => {
-                const quantity = (i + 1) * 4;
-                return (
-                    <option key={quantity} value={quantity}>
-                        {quantity}
-                    </option>
-                );
-            })
-        ) : (
-            // Regular quantity options (1-99) for other sizes
-            [...Array(99)].map((_, i) => (
-                <option key={i + 1} value={i + 1}>
-                    {i + 1}
-                </option>
-            ))
-        )}
-    </select>
-</div>
-
-                            {/* Single Details button at the end */}
-                            <button onClick={openProductDetails} className="text-sm text-blue-500 underline">
-                            {t('produits.details')}
-                            </button>
-                        </div>
+                  {/* Product Type Selection for Tunisia */}
+                  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1" style={{ display: 'none' }}>
+                        {t('produits.product')}
+                      </label>
+                      <select
+                        value={photo.productType}
+                        onChange={(e) => updateProductType(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                        style={{ display: 'none' }} // Hide the select element
+                      >
+                        <option value="photo_print">{t('produits.photo_print')}</option>
+                      </select>
                     </div>
-                ))}
-            </div>
-            <ProductDetailsPopup 
+                  )}
+
+                  {/* Size selection for photo prints */}
+                  {photo.productType === 'photo_print' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('produits.size')}
+                      </label>
+                      <select
+                        value={photo.size}
+                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
+                          <>
+                            <option value="3.5x4.5">3.5x4.5 cm</option>
+                            <option value="10x15">10x15 cm</option>
+                            <option value="15x22">15x23 cm</option>
+                          </>
+                        ) : selectedCountry !== 'TUN' || selectedCountry !== 'TN' ? (
+                          <>
+                            <option value="4x4"> 4x4"</option>
+                            <option value="4x6">4x6"</option>
+                            <option value="5x7">5x7"</option>
+                            <option value="8x10">8x10"</option>
+                          </>
+                        ) : (
+                          <>
+                            <option value="4x6">4x6"</option>
+                            <option value="5x7">5x7"</option>
+                          </>
+                        )}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Crystal shape selection for 3D frame */}
+                  {photo.productType === '3d_frame' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('produits.shape')}
+                      </label>
+                      <select
+                        value={photo.crystalShape}
+                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        <option value="rectangle">{t('produits.rectangle')}</option>
+                        <option value="heart">{t('produits.heart')}</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Standard Size selection for Keychain and Keyring & Magnet */}
+                  {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        {t('produits.size')}
+                      </label>
+                      <select
+                        value={photo.standardSize || 'standard'}
+                        onChange={(e) => updateStandardSize(photo.id, e.target.value)}
+                        className="w-full p-1 border rounded"
+                      >
+                        <option value="standard">Standard</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Quantity selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      {t('produits.quantity')}
+                    </label>
+                    <select
+                      value={photo.quantity}
+                      onChange={(e) => updatePhotoQuantity(photo.id, parseInt(e.target.value))}
+                      className="w-full p-1 border rounded"
+                    >
+                      {photo.size === '3.5x4.5' ? (
+                        // Generate options for multiples of 4 up to 96
+                        [...Array(24)].map((_, i) => {
+                          const quantity = (i + 1) * 4;
+                          return (
+                            <option key={quantity} value={quantity}>
+                              {quantity}
+                            </option>
+                          );
+                        })
+                      ) : (
+                        // Regular quantity options (1-99) for other sizes
+                        [...Array(99)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}
+                          </option>
+                        ))
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Single Details button at the end */}
+                  <button onClick={openProductDetails} className="text-sm text-blue-500 underline">
+                    {t('produits.details')}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <ProductDetailsPopup 
             isOpen={isProductDetailsOpen} 
             onClose={closeProductDetails} 
             selectedCountry={selectedCountry} 
-        />
-        </div>
-    );
-      case 1:
-        return (
-          <StudioSelector
-            onStudioSelect={setSelectedStudio}
-            selectedCountry={selectedCountry}
-            selectedStudio={selectedStudio}
           />
-        );
+        </div>
+      );
 
-      case 2:
-        return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
-            
-              {/* Contact Information */}
-              <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
-              <div className="space-y-4">
-              <input
-                  type="text"
-                  placeholder={t('placeholder.name')}
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full p-2 border rounded"
-                />
-
-                <input
-                  type="email"
-                  placeholder={t('placeholder.email')}
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  className="w-full p-2 border rounded"
-                />
-                <input
-                  type="tel"
-                  placeholder={t('placeholder.phone')}
-                  value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                  className="w-full p-2 border rounded"
-                />
-              </div>
-            </div>
-
-            {/* Order Items Summary */}
-            {renderInvoice()}
-  
-            {/* Pickup Details */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
-              {selectedStudio && (
-                <div className="space-y-2">
-                  <p className="font-medium">{selectedStudio.name}</p>
-                  <p>{selectedStudio.address}</p>
-                  <p>{selectedStudio.city}, {selectedStudio.country}</p>
-                  <p className="text-sm text-gray-600">
-                    {t('pickup.contact')}: {selectedStudio.phone}
-                  </p>
-                  <div className="mt-4">
-                    <p className="font-medium mb-2">{t('pickup.hours')}:</p>
-                    {selectedStudio.operatingHours.map((hours, index) => (
-                      <p key={index} className="text-sm">
-                        {getDayName(hours.day)}: {hours.isClosed ? 
-                          t('pickup.closed') : 
-                          `${hours.openTime} - ${hours.closeTime}`}
-                      </p>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-  
+    case 1:
+      return (
+        <div className="space-y-6">
+          <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
           
-  
-            {/* Order Note */}
-            <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('produits.note')}</h3>
-              <textarea
-                value={orderNote}
-                onChange={(e) => setOrderNote(e.target.value)}
+          {/* Contact Information */}
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
+            <div className="space-y-4">
+              <input
+                type="text"
+                placeholder={t('placeholder.name')}
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 className="w-full p-2 border rounded"
-                rows={3}
+              />
+
+              <input
+                type="email"
+                placeholder={t('placeholder.email')}
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full p-2 border rounded"
+              />
+              <input
+                type="tel"
+                placeholder={t('placeholder.phone')}
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                className="w-full p-2 border rounded"
               />
             </div>
-  
-           
           </div>
-        );
-  
+
+          {/* Order Items Summary */}
+          {renderInvoice()}
+
+          {/* Pickup Details */}
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
+            {selectedStudio && (
+              <div className="space-y-2">
+                <p className="font-medium">{selectedStudio.name}</p>
+                <p>{selectedStudio.address}</p>
+                <p>{selectedStudio.city}, {selectedStudio.country}</p>
+                <p className="text-sm text-gray-600">
+                  {t('pickup.contact')}: {selectedStudio.phone}
+                </p>
+                <div className="mt-4">
+                  <p className="font-medium mb-2">{t('pickup.hours')}:</p>
+                  {selectedStudio.operatingHours.map((hours, index) => (
+                    <p key={index} className="text-sm">
+                      {getDayName(hours.day)}: {hours.isClosed ? 
+                        t('pickup.closed') : 
+                        `${hours.openTime} - ${hours.closeTime}`}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Order Note */}
+          <div className="border rounded-lg p-4">
+            <h3 className="font-medium mb-3">{t('produits.note')}</h3>
+            <textarea
+              value={orderNote}
+              onChange={(e) => setOrderNote(e.target.value)}
+              className="w-full p-2 border rounded"
+              rows={3}
+            />
+          </div>
+        </div>
+      );
+
     default:
       return null;
-    }
-  };
+  }
+};
+
+
+
 
   const renderInvoice = () => {
     const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount,taxAmount } = calculateTotals();
@@ -4321,33 +4293,48 @@ return (
   <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
-        {/* Header with country and language selector */}
-        {/* Title only in header */}
-        <div className="flex justify-center mb-6">
+        {/* Header with title */}
+        <div className="flex justify-center mb-2">
           <div className="text-2xl font-bold">
             <span className="text-black">freeze</span>
             <span className="text-yellow-400">PIX</span>
           </div>
         </div>
-
-        {/* Stepper */}
-        <div className="flex items-center justify-between mb-8">
-          {['Upload Photos', 'Studio Selection', 'Review Order'].map((step, index) => (
-            <div key={step} className="flex items-center">
-              <div className={`
-                w-8 h-8 rounded-full flex items-center justify-center
-                ${activeStep >= index ? 'bg-yellow-400' : 'bg-gray-200'}
-              `}>
-                {index === 0 && <Camera size={16} />}
-                {index === 1 && <Package size={16} />}
-                {index === 2 && <ShoppingCart size={16} />}
-              </div>
-              {index < 2 && (
-                <div className={`h-1 w-full ${activeStep > index ? 'bg-yellow-400' : 'bg-gray-200'}`} />
-              )}
-            </div>
-          ))}
+        
+        {/* Studio Location Header - Always visible */}
+        <div className="mb-4 sticky top-0 z-40 bg-white pb-2">
+          <StudioLocationHeader 
+            selectedStudio={selectedStudio}
+            onStudioSelect={handleStudioSelect}
+            selectedCountry={selectedCountry}
+          />
         </div>
+
+        {/* Stepper - Only 2 steps now */}
+        <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center">
+            <div className={`
+              w-8 h-8 rounded-full flex items-center justify-center
+              ${activeStep >= 0 ? 'bg-yellow-400' : 'bg-gray-200'}
+            `}>
+              <Camera size={32} />
+            </div>
+            <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+            <div className={`
+              w-8 h-8 rounded-full flex items-center justify-center
+              ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}
+            `}>
+              <ShoppingCart size={32} />
+            </div>
+          </div>
+        </div>
+
+        {/* Error message if any */}
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
 
         {/* Step Content */}
         {orderSuccess ? (
@@ -4376,77 +4363,25 @@ return (
             </div>
             
             <button
-  onClick={() => {
-    // Reset order-related state but preserve the photos
-    setOrderSuccess(false);
-    setError(null);
-    setCurrentOrderNumber(null);
-    setOrderNote('');
-    setSelectedStudio(null);
-    
-    // Reset form data but keep any photos
-    setFormData({
-      email: '',
-      phone: '',
-      name: '',
-      shippingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry,
-        province: '',
-        state: ''
-      },
-      billingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry,
-        province: '',
-        state: ''
-      },
-      paymentMethod: 'cod'
-    });
-    
-    // Clear freezepixState EXCEPT for photos
-    try {
-      const currentState = JSON.parse(localStorage.getItem('freezepixState') || '{}');
-      const photosToKeep = currentState.selectedPhotos || [];
-      
-      // Save only the photos part
-      localStorage.setItem('freezepixState', JSON.stringify({
-        showIntro: false,
-        selectedCountry,
-        selectedPhotos: photosToKeep,
-        activeStep: 0,
-        formData: {
-          email: '',
-          phone: '',
-          name: '',
-          shippingAddress: {
-            country: selectedCountry
-          },
-          billingAddress: {
-            country: selectedCountry
-          }
-        }
-      }));
-    } catch (error) {
-      console.error('Error preserving photos:', error);
-    }
-    
-    // Go back to the first step (upload images)
-    setActiveStep(0);
-  }}
-  className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
->
-  {t('buttons.place_new')}
-</button>
-
+              onClick={() => {
+                setOrderSuccess(false);
+                setError(null);
+                setCurrentOrderNumber(null);
+                setOrderNote('');
+                setSelectedPhotos([]);
+                setActiveStep(0);
+                setFormData({
+                  email: '',
+                  phone: '',
+                  name: '',
+                  shippingAddress: { country: selectedCountry },
+                  billingAddress: { country: selectedCountry }
+                });
+              }}
+              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+            >
+              {t('buttons.place_new')}
+            </button>
           </div>
         ) : (
           // Render current step
@@ -4455,38 +4390,38 @@ return (
 
         {/* Navigation Buttons */}
         {!orderSuccess && (
-  <div className="flex justify-between mt-8">
-    {activeStep > 0 ? (
-      <button
-        onClick={handleBack}
-        className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-        type="button" 
-      >
-        {t('buttons.back')}
-      </button>
-    ) : (
-      <div></div> // Empty div for layout consistency
-    )}
+          <div className="flex justify-between mt-8">
+            {activeStep > 0 ? (
+              <button
+                onClick={handleBack}
+                className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+                type="button" 
+              >
+                {t('buttons.back')}
+              </button>
+            ) : (
+              <div></div> // Empty div for layout consistency
+            )}
 
-    <button
-      onClick={handleNext}
-      disabled={!validateStep()}
-      className={`px-6 py-2 rounded ${
-        validateStep()
-          ? 'bg-yellow-400 hover:bg-yellow-500'
-          : 'bg-gray-200 cursor-not-allowed'
-      }`}
-      type="button" 
-    >
-      {isLoading 
-        ? t('buttons.processing')
-        : activeStep === 2 
-          ? t('buttons.place_order')
-          : t('buttons.next')
-      }
-    </button>
-  </div>
-)}
+            <button
+              onClick={handleNext}
+              disabled={!validateStep()}
+              className={`px-6 py-2 rounded ${
+                validateStep()
+                  ? 'bg-yellow-400 hover:bg-yellow-500'
+                  : 'bg-gray-200 cursor-not-allowed'
+              }`}
+              type="button" 
+            >
+              {isLoading 
+                ? t('buttons.processing')
+                : activeStep === 1 
+                  ? t('buttons.place_order')
+                  : t('buttons.next')
+              }
+            </button>
+          </div>
+        )}
       </div>
     </div>
     
@@ -4512,18 +4447,6 @@ return (
         </div>
       </div>
     </div>
-    
-    {/* Product Details Popup */}
-    <ProductDetailsPopup 
-      isOpen={isProductDetailsOpen} 
-      onClose={() => setIsProductDetailsOpen(false)} 
-      selectedCountry={selectedCountry} 
-    />
-    
-    {/* Booking Popup */}
-    {showBookingPopup && (
-      <BookingPopup onClose={() => setShowBookingPopup(false)} />
-    )}
   </div>
 );
 };
