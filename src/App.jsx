@@ -4368,7 +4368,8 @@ const handleStepClick = (stepIndex) => {
   // Allow navigation to this step
   setActiveStep(stepIndex);
 };
-  
+const childrenArray = React.Children.toArray(children);
+
 return (
   <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
@@ -4433,7 +4434,7 @@ return (
       </div>
       
       {/* Render the current step's content */}
-      {children && React.Children.toArray(children)[activeStep]}
+      {childrenArray[activeStep]}
 
         {/* Error message if any */}
         {error && (
