@@ -104,7 +104,7 @@ const StudioLocationHeader = ({
   };
 
   return (
-    <div className="relative w-full">
+    <div className="relative" style={{ maxWidth: "250px" }}>
       {/* Main header showing selected studio - Sobeys style */}
       <div 
         className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-full cursor-pointer border border-gray-200 hover:border-green-400 transition-colors"

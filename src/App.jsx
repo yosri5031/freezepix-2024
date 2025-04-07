@@ -4339,27 +4339,25 @@ return (
       <div className="bg-white rounded-lg shadow-lg p-6">
                 {/* New Header Organization */}
         <div className="mb-6">
-          {/* First Row: Studio Location Header taking full width but constrained in the middle */}
-          <div className="mb-4">
-            <div className="w-full flex justify-center">
-              <div className="w-full max-w-sm">
-                <StudioLocationHeader 
-                  selectedStudio={selectedStudio}
-                  onStudioSelect={handleStudioSelect}
-                  selectedCountry={selectedCountry}
-                />
-              </div>
-            </div>
-          </div>
-          
-          {/* Second Row: Logo */}
-          <div className="flex justify-center mb-4">
-            <div className="text-2xl font-bold">
-              <span className="text-black">freeze</span>
-              <span className="text-yellow-400">PIX</span>
-            </div>
-          </div>
-        </div>
+          {/* First Row: Studio Location Header at top left */}
+  <div className="mb-4 flex">
+    <div className="w-auto">
+      <StudioLocationHeader 
+        selectedStudio={selectedStudio}
+        onStudioSelect={handleStudioSelect}
+        selectedCountry={selectedCountry}
+      />
+    </div>
+  </div>
+  
+  {/* Second Row: Logo */}
+  <div className="flex justify-center mb-4">
+    <div className="text-2xl font-bold">
+      <span className="text-black">freeze</span>
+      <span className="text-yellow-400">PIX</span>
+    </div>
+  </div>
+</div>
 
         {/* Stepper - Only 2 steps now */}
         <div className="flex items-center justify-center mb-8">
