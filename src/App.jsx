@@ -4364,6 +4364,10 @@ const validateStep = () => {
 };
 const { t } = useTranslation();
 
+const handleStepClick = (stepIndex) => {
+  // Allow navigation to this step
+  setActiveStep(stepIndex);
+};
   
 return (
   <div className="min-h-screen bg-gray-50 pb-24">
@@ -4393,22 +4397,43 @@ return (
 
         {/* Stepper - Only 2 steps now */}
         <div className="flex items-center justify-center mb-8">
-          <div className="flex items-center">
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center
+        <div className="flex items-center">
+          <div 
+            className={`
+              w-8 h-8 rounded-full flex items-center justify-center 
+              cursor-pointer hover:bg-yellow-500 transition-colors
               ${activeStep >= 0 ? 'bg-yellow-400' : 'bg-gray-200'}
-            `}>
-              <Camera size={32} />
-            </div>
-            <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
-            <div className={`
-              w-8 h-8 rounded-full flex items-center justify-center
+            `}
+            onClick={() => handleStepClick(0)}
+          >
+            <Camera 
+              className={`
+                ${activeStep >= 0 ? 'text-black' : 'text-gray-500'}
+              `} 
+              size={24} 
+            />
+          </div>
+          <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+          <div 
+            className={`
+              w-8 h-8 rounded-full flex items-center justify-center 
+              cursor-pointer hover:bg-yellow-500 transition-colors
               ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}
-            `}>
-              <ShoppingCart size={32} />
-            </div>
+            `}
+            onClick={() => handleStepClick(1)}
+          >
+            <ShoppingCart 
+              className={`
+                ${activeStep >= 1 ? 'text-black' : 'text-gray-500'}
+              `} 
+              size={24} 
+            />
           </div>
         </div>
+      </div>
+      
+      {/* Render the current step's content */}
+      {children && React.Children.toArray(children)[activeStep]}
 
         {/* Error message if any */}
         {error && (
