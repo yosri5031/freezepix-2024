@@ -4506,13 +4506,13 @@ return (
       </div>
     </div>
     
-   {/* Fixed bottom bar for country and language selection */}
+  {/* Fixed bottom bar for country and language selection */}
 <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
-  <div className="max-w-4xl mx-auto px-3 py-2">
+  <div className="max-w-4xl mx-auto px-4 py-2">
     <div className="grid grid-cols-2 gap-2 sm:gap-4">
       <div className="w-full">
         <select 
-          className="w-full px-2 py-1 text-sm sm:text-base border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
+          className="w-full px-2 py-1 text-sm border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
           value={selectedCountry}
           onChange={(e) => setSelectedCountry(e.target.value)}
         >
@@ -4524,7 +4524,12 @@ return (
           ))}
         </select>
       </div>
-      <LanguageSelector />
+      
+      {/* Modify LanguageSelector to match */}
+      <LanguageSelector 
+        className="text-sm" 
+        iconClassName="w-4 h-4" 
+      />
     </div>
   </div>
 </div>

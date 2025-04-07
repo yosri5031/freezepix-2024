@@ -152,7 +152,7 @@ const LanguageSelector = () => {
     <div className="relative inline-block text-left z-50" ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-4 py-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="flex items-center gap-2 px-2 py-1 text-sm bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-yellow-400"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
@@ -162,7 +162,7 @@ const LanguageSelector = () => {
         </span>
         <ChevronDown className="w-4 h-4 text-gray-500" />
       </button>
-
+  
       {isOpen && (
         <div 
           className="origin-bottom-right absolute bottom-full right-0 mb-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 max-h-80 overflow-y-auto"
