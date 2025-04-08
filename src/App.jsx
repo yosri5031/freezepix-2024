@@ -4279,7 +4279,7 @@ const renderStepContent = () => {
   })()}
 </div>
         
-      {/* Order Note */}
+      {/* Order Note 
       <div className="border rounded-lg p-4">
           <h3 className="font-medium mb-3">{t('produits.note')}</h3>
           <textarea
@@ -4289,7 +4289,7 @@ const renderStepContent = () => {
             className="w-full p-2 border rounded"
             rows={3}
           />
-        </div>
+        </div>*/}
       </div>
     );
   };
