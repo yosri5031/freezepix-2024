@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 import axios from 'axios';
 
-// Studio Header Component with improved location selection logic
+// Studio Header Component with Sobeys-style design
 const StudioLocationHeader = ({ 
   selectedStudio, 
   onStudioSelect, 
@@ -12,7 +12,6 @@ const StudioLocationHeader = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userLocation, setUserLocation] = useState(null);
-  const [manuallySelected, setManuallySelected] = useState(false);
   
   // Calculate distance between coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -44,31 +43,7 @@ const StudioLocationHeader = ({
     }
   }, []);
 
-  // Check if a studio was manually selected previously
-  useEffect(() => {
-    const wasManuallySelected = localStorage.getItem('studioManuallySelected') === 'true';
-    setManuallySelected(wasManuallySelected);
-    
-    // Clear manual selection if page was refreshed
-    // This ensures we always use closest studio on refresh/return
-    if (wasManuallySelected) {
-      const lastVisit = localStorage.getItem('lastStudioVisitTime');
-      const currentTime = Date.now();
-      const timeDifference = currentTime - parseInt(lastVisit || '0');
-      
-      // If more than 30 minutes since last interaction, clear manual selection
-      if (timeDifference > 30 * 60 * 1000) {
-        localStorage.removeItem('studioManuallySelected');
-        localStorage.removeItem('selectedStudio');
-        setManuallySelected(false);
-      }
-    }
-    
-    // Update last visit time
-    localStorage.setItem('lastStudioVisitTime', Date.now().toString());
-  }, []);
-
-  // Fetch studios and select closest one (unless manually selected)
+  // Fetch studios and pre-select closest one
   useEffect(() => {
     const fetchStudios = async () => {
       try {
@@ -78,28 +53,6 @@ const StudioLocationHeader = ({
         
         // Filter to active studios only
         studiosData = studiosData.filter(studio => studio.isActive);
-
-        // Filter studios by country if selectedCountry is provided
-        if (selectedCountry) {
-          // Map country codes to match studio country names
-          const countryMap = {
-            'US': ['United States', 'USA'],
-            'CA': ['Canada', 'CAN'],
-            'TN': ['Tunisia', 'TUN'],
-            'GB': ['United Kingdom', 'GBR'],
-            'DE': ['Germany', 'DEU'],
-            'FR': ['France', 'FRA'],
-            'IT': ['Italy', 'ITA'],
-            'ES': ['Spain', 'ESP'],
-            'RU': ['Russia', 'RUS'],
-            'CN': ['China', 'CHN']
-          };
-          
-          const matchingCountries = countryMap[selectedCountry] || [selectedCountry];
-          studiosData = studiosData.filter(studio => 
-            matchingCountries.includes(studio.country)
-          );
-        }
 
         // Add distance if user location is available
         if (userLocation) {
@@ -119,19 +72,12 @@ const StudioLocationHeader = ({
         
         setStudios(studiosData);
         
-        // Auto-select closest studio ONLY if:
-        // 1. No studio is currently selected OR 
-        // 2. Not manually selected AND not preselected from URL
-        const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
-        
-        if (studiosData.length > 0 && 
-            (!selectedStudio || (!manuallySelected && !isPreselectedFromUrl))) {
+        // Auto-select closest studio if none is selected
+        if (!selectedStudio && studiosData.length > 0) {
           onStudioSelect(studiosData[0]);
-          // Store in localStorage but don't mark as manually selected
+          // Store in localStorage
           localStorage.setItem('selectedStudio', JSON.stringify(studiosData[0]));
-          if (!isPreselectedFromUrl) {
-            localStorage.setItem('isPreselectedFromUrl', 'false');
-          }
+          localStorage.setItem('isPreselectedFromUrl', 'false');
         }
         
         setLoading(false);
@@ -142,20 +88,18 @@ const StudioLocationHeader = ({
     };
 
     fetchStudios();
-  }, [userLocation, selectedCountry, manuallySelected, onStudioSelect]);
+  }, [userLocation, selectedStudio, onStudioSelect]);
   
   // Toggle dropdown
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
   };
   
-  // Handle studio selection - mark as manually selected
+  // Handle studio selection
   const handleStudioSelect = (studio) => {
     onStudioSelect(studio);
     localStorage.setItem('selectedStudio', JSON.stringify(studio));
     localStorage.setItem('isPreselectedFromUrl', 'false');
-    localStorage.setItem('studioManuallySelected', 'true');
-    setManuallySelected(true);
     setIsDropdownOpen(false);
   };
 
@@ -176,11 +120,7 @@ const StudioLocationHeader = ({
             <span className="text-gray-500 text-sm">Select location</span>
           )}
         </div>
-        {isDropdownOpen ? (
-          <ChevronUp size={16} className="text-gray-500 flex-shrink-0 ml-1" />
-        ) : (
-          <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-1" />
-        )}
+        <ChevronDown size={16} className="text-gray-500 flex-shrink-0 ml-1" />
       </div>
       
       {/* Dropdown for studio selection */}
