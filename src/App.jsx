@@ -3742,32 +3742,50 @@ const handleFileChange = async (event) => {
   const detectCanadianProvince = (studio) => {
     if (!studio) return null;
     
+    console.log('Detecting province for studio:', {
+      name: studio.name,
+      address: studio.address,
+      city: studio.city
+    });
+    
     // First check if province is directly available in the studio object
-    if (studio.province) return studio.province;
+    if (studio.province) {
+      console.log('Province found directly in studio object:', studio.province);
+      return studio.province;
+    }
     
     // Create search text from address and city
     const searchText = `${studio.address || ''} ${studio.city || ''}`.toLowerCase();
+    console.log('Search text for province detection:', searchText);
     
-    // Map of province names and their variations (both English and French)
-    const provinceMatches = {
-      'Alberta': ['alberta', 'ab'],
-      'British Columbia': ['british columbia', 'colombie-britannique', 'bc', 'cb'],
-      'Manitoba': ['manitoba', 'mb'],
-      'New Brunswick': ['new brunswick', 'nouveau-brunswick', 'nb'],
-      'Newfoundland and Labrador': ['newfoundland', 'labrador', 'terre-neuve', 'nl', 'tn'],
-      'Northwest Territories': ['northwest territories', 'territoires du nord-ouest', 'nt', 'tno'],
-      'Nova Scotia': ['nova scotia', 'nouvelle-écosse', 'ns', 'né'],
-      'Nunavut': ['nunavut', 'nu'],
-      'Ontario': ['ontario', 'on'],
-      'Prince Edward Island': ['prince edward island', 'île-du-prince-édouard', 'pei', 'pe', 'ipe'],
-      'Quebec': ['quebec', 'québec', 'qc'],
-      'Saskatchewan': ['saskatchewan', 'sk'],
-      'Yukon': ['yukon', 'yt']
-    };
+    // First check for exact province names with word boundaries
+    // This is important for Quebec which can be confused with other terms
+    if (/ quebec\b/i.test(searchText) || / québec\b/i.test(searchText) || /\bqc\b/i.test(searchText)) {
+      console.log('Exact match found for Quebec');
+      return 'Quebec';
+    }
     
-    // Check for province matches in the search text
-    for (const [province, keywords] of Object.entries(provinceMatches)) {
-      if (keywords.some(keyword => searchText.includes(keyword))) {
+    // For other provinces, we need to handle full names and abbreviations
+    const provincePatterns = [
+      { province: 'Alberta', patterns: [/\balbert(a)?\b/i, /\bab\b/i] },
+      { province: 'British Columbia', patterns: [/british\s+columbia/i, /\bbc\b/i, /\bcolombie/i] },
+      { province: 'Manitoba', patterns: [/\bmanitoba\b/i, /\bmb\b/i] },
+      { province: 'New Brunswick', patterns: [/new\s+brunswick/i, /\bnb\b/i, /nouveau-brunswick/i] },
+      { province: 'Newfoundland and Labrador', patterns: [/newfoundland/i, /labrador/i, /\bnl\b/i] },
+      { province: 'Northwest Territories', patterns: [/northwest territories/i, /\bnt\b/i] },
+      { province: 'Nova Scotia', patterns: [/nova\s+scotia/i, /\bns\b/i] },
+      { province: 'Nunavut', patterns: [/\bnunavut\b/i, /\bnu\b/i] },
+      { province: 'Ontario', patterns: [/\bontario\b/i, /\bon\b/i] },
+      { province: 'Prince Edward Island', patterns: [/prince edward/i, /\bpei\b/i, /\bpe\b/i] },
+      { province: 'Quebec', patterns: [/\bquebec\b/i, /\bquébec\b/i, /\bqc\b/i] },
+      { province: 'Saskatchewan', patterns: [/\bsaskatchewan\b/i, /\bsk\b/i] },
+      { province: 'Yukon', patterns: [/\byukon\b/i, /\byt\b/i] }
+    ];
+    
+    // Test each pattern against the search text
+    for (const { province, patterns } of provincePatterns) {
+      if (patterns.some(pattern => pattern.test(searchText))) {
+        console.log(`Found match for ${province} using pattern check`);
         return province;
       }
     }
@@ -3798,12 +3816,42 @@ const handleFileChange = async (event) => {
       };
       
       if (postalCode.length > 0 && postalCodeMap[postalCode[0]]) {
+        console.log(`Found province from postal code starting with ${postalCode[0]}`);
         return postalCodeMap[postalCode[0]];
       }
     }
     
+    // Try to extract province from city string
+    // This is a fallback for addresses that don't explicitly state the province
+    // but have city names that include the province
+    if (studio.city) {
+      const cityLower = studio.city.toLowerCase();
+      
+      // Check for "Montreal, Quebec" pattern
+      const cityProvinceMatch = cityLower.match(/^(.+),\s*(.+)$/);
+      if (cityProvinceMatch) {
+        const potentialProvince = cityProvinceMatch[2].trim();
+        
+        // Check if this matches any known province names
+        for (const { province, patterns } of provincePatterns) {
+          if (patterns.some(pattern => pattern.test(potentialProvince))) {
+            console.log(`Found province ${province} from city component: ${potentialProvince}`);
+            return province;
+          }
+        }
+      }
+    }
+  
+    // Special case for Mount Royal, Quebec
+    if (/mount royal/i.test(searchText) || /mont-royal/i.test(searchText)) {
+      console.log('Found Mount Royal or Mont-Royal, assuming Quebec');
+      return 'Quebec';
+    }
+    
+    console.log('No province detected, returning null');
     return null;
   };
+  
 
   const calculateTotals = () => {
   const country = initialCountries.find(c => c.value === selectedCountry);
