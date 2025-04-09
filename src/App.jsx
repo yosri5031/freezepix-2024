@@ -3739,174 +3739,243 @@ const handleFileChange = async (event) => {
     ));
   };
 
-  const calculateTotals = () => {
-    const country = initialCountries.find(c => c.value === selectedCountry);
-    const quantities = {
-      '4x6': 0,
-      '5x7': 0,
-      '10x15': 0,
-      '15x22': 0,
-      '8x10': 0,
-      '4x4': 0,
-      '3.5x4.5': 0,
-      '3d_frame': 0,
-      'keychain': 0,
-      'keyring_magnet': 0
-    };
-  
-    const subtotalsBySize = {
-      '4x6': 0,
-      '5x7': 0,
-      '10x15': 0,
-      '15x22': 0,
-      '8x10': 0,
-      '4x4': 0,
-      '3.5x4.5': 0,
-      '3d_frame': 0,
-      'keychain': 0,
-      'keyring_magnet': 0
-    };
-  
-    // Count quantities and calculate subtotals for each size/product
-    selectedPhotos.forEach(photo => {
-      if (photo.productType === 'photo_print') {
-        quantities[photo.size] += photo.quantity || 1;
-        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-          if (photo.size === '10x15') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
-          } else if (photo.size === '15x22') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-          } else if (photo.size === '3.5x4.5') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
-          }
-        } else {
-          if (photo.size === '4x6') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
-          } else if (photo.size === '5x7') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-          } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
-          }
-          else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
-            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
-          }
-        }
-      } else if (photo.productType === '3d_frame') {
-        quantities['3d_frame'] += photo.quantity || 1;
-        subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
-      } else if (photo.productType === 'keychain') {
-        quantities['keychain'] += photo.quantity || 1;
-        subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
-      } else if (photo.productType === 'keyring_magnet') {
-        quantities['keyring_magnet'] += photo.quantity || 1;
-        subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
-      }
-    });
-  
-    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
+  const detectCanadianProvince = (studio) => {
+    if (!studio) return null;
     
-    // Calculate shipping fee based on country and delivery method
-    let shippingFee = 0;
-    const isOrderOverThreshold = subtotal >= 50;
-    const isOrderOver999 = subtotal >= 999;
-  
-    // Only apply shipping fee if delivery method is 'shipping'
-    if (deliveryMethod === 'shipping') {
-      if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
-        shippingFee = 0;
-      } else if (!isOrderOverThreshold) {
-        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-          shippingFee = 8;
-        } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-          shippingFee = 15;
-        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-          shippingFee = 15;
-        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-          shippingFee = 20;
-        } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-          shippingFee = 20;
-        }
-      }
-    }
-  
-    // Calculate discount if applicable
-    const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
-  
-    // Calculate tax
-    let taxAmount = 0;
-    const taxableAmount = subtotal + shippingFee;
-  
-    // Apply tax calculation for Tunisia
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-      taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
-    } 
-    // Apply tax calculation for Canada - both for pickup and shipping
-    else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-      // Get province based on delivery method
-      let province;
-      
-      if (deliveryMethod === 'pickup') {
-        // If pickup, get province from studio location
-        province = selectedStudio?.province;
-        
-        // If studio doesn't have province set, try to match it from the province list
-        if (!province && selectedStudio?.city) {
-          // This is a simple fallback - in production you'd want a proper mapping
-          // of cities to provinces
-          province = CANADIAN_PROVINCES.find(p => 
-            selectedStudio.city.includes(p) || 
-            p.includes(selectedStudio.city)
-          );
-        }
-      } else {
-        // If shipping, get province from shipping address
-        province = formData.shippingAddress.province;
-      }
-      
-      // Apply taxes if we have a valid province
-      if (province && TAX_RATES['CA'][province]) {
-        const provinceTaxes = TAX_RATES['CA'][province];
-  
-        if (provinceTaxes.HST) {
-          // Apply Harmonized Sales Tax (HST)
-          taxAmount = taxableAmount * (provinceTaxes.HST / 100);
-        } else {
-          // Apply GST and PST/QST separately
-          if (provinceTaxes.GST) {
-            taxAmount += taxableAmount * (provinceTaxes.GST / 100);
-          }
-          
-          if (provinceTaxes.PST) {
-            taxAmount += taxableAmount * (provinceTaxes.PST / 100);
-          }
-          
-          if (provinceTaxes.QST) {
-            taxAmount += taxableAmount * (provinceTaxes.QST / 100);
-          }
-        }
-      } else {
-        // Default to GST only if province is unknown
-        taxAmount = taxableAmount * 0.05; // 5% GST
-      }
-    }
-    // Apply taxes for other countries with tax rates
-    else if (TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default) {
-      taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
-    }
-  
-    // Calculate total (subtotal + shipping + tax - discount)
-    const total = subtotal + shippingFee + taxAmount - discount;
-  
-    return {
-      subtotalsBySize,
-      subtotal,
-      taxAmount,
-      shippingFee,
-      total,
-      quantities,
-      discount
+    // First check if province is directly available in the studio object
+    if (studio.province) return studio.province;
+    
+    // Create search text from address and city
+    const searchText = `${studio.address || ''} ${studio.city || ''}`.toLowerCase();
+    
+    // Map of province names and their variations (both English and French)
+    const provinceMatches = {
+      'Alberta': ['alberta', 'ab'],
+      'British Columbia': ['british columbia', 'colombie-britannique', 'bc', 'cb'],
+      'Manitoba': ['manitoba', 'mb'],
+      'New Brunswick': ['new brunswick', 'nouveau-brunswick', 'nb'],
+      'Newfoundland and Labrador': ['newfoundland', 'labrador', 'terre-neuve', 'nl', 'tn'],
+      'Northwest Territories': ['northwest territories', 'territoires du nord-ouest', 'nt', 'tno'],
+      'Nova Scotia': ['nova scotia', 'nouvelle-écosse', 'ns', 'né'],
+      'Nunavut': ['nunavut', 'nu'],
+      'Ontario': ['ontario', 'on'],
+      'Prince Edward Island': ['prince edward island', 'île-du-prince-édouard', 'pei', 'pe', 'ipe'],
+      'Quebec': ['quebec', 'québec', 'qc'],
+      'Saskatchewan': ['saskatchewan', 'sk'],
+      'Yukon': ['yukon', 'yt']
     };
+    
+    // Check for province matches in the search text
+    for (const [province, keywords] of Object.entries(provinceMatches)) {
+      if (keywords.some(keyword => searchText.includes(keyword))) {
+        return province;
+      }
+    }
+    
+    // Check postal code patterns as a fallback
+    if (studio.postalCode) {
+      const postalCode = studio.postalCode.toUpperCase().replace(/\s+/g, '');
+      // First letter of postal code can indicate province
+      const postalCodeMap = {
+        'A': 'Newfoundland and Labrador',
+        'B': 'Nova Scotia',
+        'C': 'Prince Edward Island',
+        'E': 'New Brunswick',
+        'G': 'Quebec',
+        'H': 'Quebec',
+        'J': 'Quebec',
+        'K': 'Ontario',
+        'L': 'Ontario',
+        'M': 'Ontario',
+        'N': 'Ontario',
+        'P': 'Ontario',
+        'R': 'Manitoba',
+        'S': 'Saskatchewan',
+        'T': 'Alberta',
+        'V': 'British Columbia',
+        'X': 'Northwest Territories or Nunavut',
+        'Y': 'Yukon'
+      };
+      
+      if (postalCode.length > 0 && postalCodeMap[postalCode[0]]) {
+        return postalCodeMap[postalCode[0]];
+      }
+    }
+    
+    return null;
   };
+
+  const calculateTotals = () => {
+  const country = initialCountries.find(c => c.value === selectedCountry);
+  const quantities = {
+    '4x6': 0,
+    '5x7': 0,
+    '10x15': 0,
+    '15x22': 0,
+    '8x10': 0,
+    '4x4': 0,
+    '3.5x4.5': 0,
+    '3d_frame': 0,
+    'keychain': 0,
+    'keyring_magnet': 0
+  };
+
+  const subtotalsBySize = {
+    '4x6': 0,
+    '5x7': 0,
+    '10x15': 0,
+    '15x22': 0,
+    '8x10': 0,
+    '4x4': 0,
+    '3.5x4.5': 0,
+    '3d_frame': 0,
+    'keychain': 0,
+    'keyring_magnet': 0
+  };
+
+  // Count quantities and calculate subtotals for each size/product
+  selectedPhotos.forEach(photo => {
+    if (photo.productType === 'photo_print') {
+      quantities[photo.size] += photo.quantity || 1;
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        if (photo.size === '10x15') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
+        } else if (photo.size === '15x22') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
+        } else if (photo.size === '3.5x4.5') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
+        }
+      } else {
+        if (photo.size === '4x6') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+        } else if (photo.size === '5x7') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+        } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
+        }
+        else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
+        }
+      }
+    } else if (photo.productType === '3d_frame') {
+      quantities['3d_frame'] += photo.quantity || 1;
+      subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+    } else if (photo.productType === 'keychain') {
+      quantities['keychain'] += photo.quantity || 1;
+      subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+    } else if (photo.productType === 'keyring_magnet') {
+      quantities['keyring_magnet'] += photo.quantity || 1;
+      subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+    }
+  });
+
+  const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
+  
+  // Calculate shipping fee based on country and delivery method
+  let shippingFee = 0;
+  const isOrderOverThreshold = subtotal >= 50;
+  const isOrderOver999 = subtotal >= 999;
+
+  // Only apply shipping fee if delivery method is 'shipping'
+  if (deliveryMethod === 'shipping') {
+    if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
+      shippingFee = 0;
+    } else if (!isOrderOverThreshold) {
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        shippingFee = 8;
+      } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
+        shippingFee = 15;
+      } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+        shippingFee = 15;
+      } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
+        shippingFee = 20;
+      } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
+        shippingFee = 20;
+      }
+    }
+  }
+
+  // Calculate discount if applicable
+  const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
+
+  // Calculate tax
+  let taxAmount = 0;
+  const taxableAmount = subtotal + shippingFee;
+  let appliedProvince = null;
+  let appliedTaxRates = null;
+
+  // Apply tax calculation for Tunisia
+  if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+    taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
+  } 
+  // Enhanced tax calculation for Canada - both for pickup and shipping
+  else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+    // Get province based on delivery method
+    let province;
+    
+    if (deliveryMethod === 'pickup') {
+      // For pickup, detect province from studio information
+      province = detectCanadianProvince(selectedStudio);
+      
+      // Log detected province for debugging
+      console.log('Detected province from studio:', {
+        studio: selectedStudio?.name,
+        address: selectedStudio?.address,
+        detectedProvince: province
+      });
+    } else {
+      // If shipping, get province from shipping address
+      province = formData.shippingAddress.province;
+    }
+    
+    // Apply taxes if we have a valid province
+    if (province && TAX_RATES['CA'][province]) {
+      appliedProvince = province;
+      appliedTaxRates = TAX_RATES['CA'][province];
+      
+      if (appliedTaxRates.HST) {
+        // Apply Harmonized Sales Tax (HST)
+        taxAmount = taxableAmount * (appliedTaxRates.HST / 100);
+      } else {
+        // Apply GST and PST/QST separately
+        if (appliedTaxRates.GST) {
+          taxAmount += taxableAmount * (appliedTaxRates.GST / 100);
+        }
+        
+        if (appliedTaxRates.PST) {
+          taxAmount += taxableAmount * (appliedTaxRates.PST / 100);
+        }
+        
+        if (appliedTaxRates.QST) {
+          taxAmount += taxableAmount * (appliedTaxRates.QST / 100);
+        }
+      }
+    } else {
+      // Default to GST only if province is unknown
+      taxAmount = taxableAmount * 0.05; // 5% GST
+    }
+  }
+  // Apply taxes for other countries with tax rates
+  else if (TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default) {
+    taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
+  }
+
+  // Calculate total (subtotal + shipping + tax - discount)
+  const total = subtotal + shippingFee + taxAmount - discount;
+
+  return {
+    subtotalsBySize,
+    subtotal,
+    taxAmount,
+    shippingFee,
+    total,
+    quantities,
+    discount,
+    appliedProvince,
+    appliedTaxRates
+  };
+};
+
 //..
 const renderStepContent = () => {
   const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
@@ -4335,7 +4404,7 @@ const renderStepContent = () => {
 
 
 const renderInvoice = () => {
-  const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount, taxAmount } = calculateTotals();
+  const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount, taxAmount, appliedProvince, appliedTaxRates } = calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
   
   return (
@@ -4457,34 +4526,56 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Canada tax - Fix to always show */}
+        {/* Enhanced Canada tax - using our improved detection */}
         {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
-              <span>Tax</span>
+              <span>Tax{appliedProvince ? ` (${appliedProvince})` : ''}</span>
               <span className="text-sm text-gray-600">
                 {(() => {
-                  // Get province from the correct address based on delivery method
-                  const province = deliveryMethod === 'pickup' 
-                    ? selectedStudio?.province || ''
-                    : formData.shippingAddress.province;
-                  
-                  if (province && TAX_RATES['CA'][province]) {
-                    const provinceTaxes = TAX_RATES['CA'][province];
-                    
-                    if (provinceTaxes.HST) {
-                      return `HST (${provinceTaxes.HST}%)`;
+                  if (appliedTaxRates) {
+                    if (appliedTaxRates.HST) {
+                      return `HST (${appliedTaxRates.HST}%)`;
                     }
                     return [
-                      provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
-                      provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
-                      provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
+                      appliedTaxRates.GST && `GST (${appliedTaxRates.GST}%)`,
+                      appliedTaxRates.PST && `PST (${appliedTaxRates.PST}%)`,
+                      appliedTaxRates.QST && `QST (${appliedTaxRates.QST}%)`
                     ].filter(Boolean).join(' + ');
+                  } else if (deliveryMethod === 'pickup') {
+                    // For pickup without detected province
+                    return 'GST (5%)';
+                  } else {
+                    // For shipping without selected province
+                    const province = formData.shippingAddress.province;
+                    
+                    if (province && TAX_RATES['CA'][province]) {
+                      const provinceTaxes = TAX_RATES['CA'][province];
+                      
+                      if (provinceTaxes.HST) {
+                        return `HST (${provinceTaxes.HST}%)`;
+                      }
+                      return [
+                        provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
+                        provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
+                        provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
+                      ].filter(Boolean).join(' + ');
+                    }
+                    return 'GST (5%)';
                   }
-                  return '';
                 })()}
               </span>
             </div>
+            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
+
+        {/* Display tax for other countries with tax rates */}
+        {selectedCountry !== 'TUN' && selectedCountry !== 'TN' && 
+         selectedCountry !== 'CAN' && selectedCountry !== 'CA' && 
+         TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default > 0 && (
+          <div className="flex justify-between py-2">
+            <span>{`Tax (${TAX_RATES[selectedCountry].default}%)`}</span>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
           </div>
         )}
