@@ -764,34 +764,36 @@ const FreezePIX = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+    const [deliveryMethod, setDeliveryMethod] = useState('pickup'); // 'pickup' or 'shipping'
 
 const [interacReference, setInteracReference] = useState('');
-    const [formData, setFormData] = useState({
-      email: '',
-      phone: '',
-      name:'',
-      shippingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry, // Initialize with selectedCountry
-        province: '',
-        state: ''
-      },
-      billingAddress: {
-        firstName: '',
-        lastName: '',
-        address: '',
-        city: '',
-        postalCode: '',
-        country: selectedCountry, // Initialize with selectedCountry
-        province: '',
-        state: ''
-      },
-      paymentMethod: 'cod'
-    });
+const [formData, setFormData] = useState({
+  email: '',
+  phone: '',
+  name:'',
+  shippingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: selectedCountry,
+    province: '',
+    state: ''
+  },
+  billingAddress: {
+    firstName: '',
+    lastName: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    country: selectedCountry,
+    province: '',
+    state: ''
+  },
+  paymentMethod: 'helcim'
+});
+
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
       const detectUserLocation = async () => {
@@ -2149,6 +2151,65 @@ useEffect(() => {
 }, [selectedCountry]);
 
 
+const renderNavigationButtons = () => {
+  const isStepValid = validateStep();
+  
+  return (
+    <div className="flex justify-between mt-8">
+      {activeStep > 0 ? (
+        <button
+          onClick={handleBack}
+          className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
+          type="button" 
+        >
+          {t('buttons.back')}
+        </button>
+      ) : (
+        <div></div> // Empty div for layout consistency
+      )}
+
+      {/* Conditional rendering for payment button */}
+      {activeStep === 1 && deliveryMethod === 'shipping' && paymentMethod === 'helcim' ? (
+        <div className="helcim-payment-wrapper">
+          <HelcimPayButton
+            onPaymentSuccess={handleHelcimPaymentSuccess}
+            isProcessing={isProcessingOrder}
+            disabled={!isStepValid}
+            selectedCountry={selectedCountry}
+            calculateTotals={calculateTotals}
+            total={calculateTotals().total}
+            setOrderSuccess={setOrderSuccess}
+            setError={setError}
+            setIsProcessingOrder={setIsProcessingOrder}
+          />
+        </div>
+      ) : (
+        <button
+          onClick={handleNext}
+          disabled={!isStepValid}
+          className={`px-6 py-2 rounded ${
+            isStepValid
+              ? 'bg-yellow-400 hover:bg-yellow-500'
+              : 'bg-gray-200 cursor-not-allowed'
+          }`}
+          type="button" 
+        >
+          {isLoading 
+            ? t('buttons.processing')
+            : activeStep === 1 
+              ? deliveryMethod === 'pickup'
+                ? t('buttons.place_order')
+                : paymentMethod === 'cod'
+                  ? t('buttons.place_order_cod')
+                  : t('buttons.proceed_to_payment')
+              : t('buttons.next')
+          }
+        </button>
+      )}
+    </div>
+  );
+};
+
       const updateStandardSize = (photoId, standardSize) => {
         setSelectedPhotos(prevPhotos => 
           prevPhotos.map(photo => 
@@ -2961,27 +3022,39 @@ const handleOrderSuccess = async ({
       throw new Error('Please provide all required contact information');
     }
 
-    if (!selectedStudio) {
+    if (deliveryMethod === 'pickup' && !selectedStudio) {
       throw new Error('Please select a pickup location');
+    }
+
+    if (deliveryMethod === 'shipping' && 
+        (!formData.shippingAddress.firstName || 
+         !formData.shippingAddress.lastName || 
+         !formData.shippingAddress.address || 
+         !formData.shippingAddress.city || 
+         !formData.shippingAddress.postalCode)) {
+      throw new Error('Please provide all required shipping information');
     }
 
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
-    const { total, currency, subtotal, taxAmount, discount } = calculateTotals();
+    const { total, currency, subtotal, taxAmount, discount, shippingFee } = calculateTotals();
 
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name,
-      pickupStudio: {
+      pickupStudio: deliveryMethod === 'pickup' ? {
         id: selectedStudio._id,
         name: selectedStudio.name,
         address: selectedStudio.address,
         city: selectedStudio.city,
         country: selectedStudio.country
-      },
+      } : null,
+      shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
+      billingAddress: isBillingAddressSameAsShipping ? 
+        formData.shippingAddress : formData.billingAddress,
       orderItems: selectedPhotos.map(photo => ({
         id: photo.id,
         file: photo.base64 || photo.file,
@@ -2993,12 +3066,12 @@ const handleOrderSuccess = async ({
       totalAmount: total,
       currency: initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD',
       orderNote: orderNote || '',
-      paymentMethod: 'in_store',
+      paymentMethod: deliveryMethod === 'pickup' ? 'in_store' : paymentMethod,
       status: 'Waiting for CSR approval',
       paymentStatus: 'pending',
-      shippingFee: 0,
-      shippingMethod: 'local_pickup',
-      deliveryMethod: 'pickup',
+      shippingFee: shippingFee,
+      shippingMethod: deliveryMethod === 'pickup' ? 'local_pickup' : 'standard',
+      deliveryMethod: deliveryMethod,
       taxAmount,
       discount,
       subtotal,
@@ -3014,31 +3087,19 @@ const handleOrderSuccess = async ({
 
     setIsProcessingOrder(true);
 
-    // Submit order first
+    // Submit order
     const response = await submitOrderWithOptimizedChunking(orderData);
     
     if (response) {
-      // Prepare email data
-      const emailOrderData = {
-        orderNumber: orderData.orderNumber,
-        email: orderData.email,
-        pickupStudio: orderData.pickupStudio,
-        phone: orderData.phone,
-        orderNote: orderData.orderNote,
-        paymentMethod: orderData.paymentMethod,
-        selectedPhotos: orderData.orderItems,
-        totalAmount: orderData.totalAmount,
-        currency: orderData.currency
-      };
-
+      // Send confirmation email
       try {
-        // Send confirmation email
-        await sendOrderConfirmationEmail(emailOrderData);
+        await sendOrderConfirmationEmail({
+          ...orderData,
+          selectedPhotos: orderData.orderItems
+        });
         console.log('Order confirmation email sent successfully');
       } catch (emailError) {
         console.error('Failed to send order confirmation email:', emailError);
-        // Don't throw here - we still want to complete the order process
-        // but maybe notify the user about email issues
         setError('Order placed successfully but confirmation email could not be sent. Please save your order number.');
       }
 
@@ -3046,7 +3107,6 @@ const handleOrderSuccess = async ({
       setOrderSuccess(true);
       setError(null);
       try {
-        // Save the current photos before clearing other state
         const photosToKeep = selectedPhotos.map(photo => ({
           id: photo.id,
           base64: photo.base64,
@@ -3057,10 +3117,8 @@ const handleOrderSuccess = async ({
           quantity: photo.quantity
         }));
         
-        // Store just the photos in uploadedPhotos
         localStorage.setItem('uploadedPhotos', JSON.stringify(photosToKeep));
         
-        // Clear other state data but preserve photos reference
         const minimalState = {
           showIntro: false,
           selectedCountry,
@@ -3643,141 +3701,139 @@ const handleFileChange = async (event) => {
   const calculateTotals = () => {
     const country = initialCountries.find(c => c.value === selectedCountry);
     const quantities = {
-        '4x6': 0,
-        '5x7': 0,
-        '10x15': 0,
-        '15x22': 0,
-        '8x10': 0,
-        '4x4': 0,
-        '3.5x4.5':0,
-        '3d_frame': 0,
-        'keychain': 0,
-        'keyring_magnet': 0
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '8x10': 0,
+      '4x4': 0,
+      '3.5x4.5':0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
     };
-
+  
     const subtotalsBySize = {
-        '4x6': 0,
-        '5x7': 0,
-        '10x15': 0,
-        '15x22': 0,
-        '8x10': 0,
-        '4x4': 0,
-        '3.5x4.5':0,
-        '3d_frame': 0,
-        'keychain': 0,
-        'keyring_magnet': 0
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '8x10': 0,
+      '4x4': 0,
+      '3.5x4.5':0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
     };
-
+  
     // Count quantities and calculate subtotals for each size/product
     selectedPhotos.forEach(photo => {
-        if (photo.productType === 'photo_print') {
-            quantities[photo.size] += photo.quantity || 1;
-            if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-                if (photo.size === '10x15') {
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
-                } else if (photo.size === '15x22') {
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-                } else if (photo.size === '3.5x4.5') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
-              }
-
-            } else {
-                if (photo.size === '4x6') {
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
-                } else if (photo.size === '5x7') {
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-                } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
-                    subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
-                }
-                else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
-                  subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
-              }
-            }
-        } else if (photo.productType === '3d_frame') {
-            quantities['3d_frame'] += photo.quantity || 1;
-            subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
-        } else if (photo.productType === 'keychain') {
-            quantities['keychain'] += photo.quantity || 1;
-            subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
-        } else if (photo.productType === 'keyring_magnet') {
-            quantities['keyring_magnet'] += photo.quantity || 1;
-            subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+      if (photo.productType === 'photo_print') {
+        quantities[photo.size] += photo.quantity || 1;
+        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+          if (photo.size === '10x15') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
+          } else if (photo.size === '15x22') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
+          } else if (photo.size === '3.5x4.5') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
+          }
+        } else {
+          if (photo.size === '4x6') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+          } else if (photo.size === '5x7') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+          } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
+          }
+          else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
+          }
         }
+      } else if (photo.productType === '3d_frame') {
+        quantities['3d_frame'] += photo.quantity || 1;
+        subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+        quantities['keychain'] += photo.quantity || 1;
+        subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+        quantities['keyring_magnet'] += photo.quantity || 1;
+        subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
+      }
     });
-
+  
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
-    console.log('Subtotal before discount:', subtotal);
-
-    // Calculate shipping fee based on country
+    
+    // Calculate shipping fee based on country and delivery method
     let shippingFee = 0;
     const isOrderOverThreshold = subtotal >= 50;
     const isOrderOver999 = subtotal >= 999;
-
-    if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
+  
+    // Only apply shipping fee if delivery method is 'shipping'
+    if (deliveryMethod === 'shipping') {
+      if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
         shippingFee = 0;
-    } else if (!isOrderOverThreshold) {
+      } else if (!isOrderOverThreshold) {
         if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-            shippingFee = 0;
+          shippingFee = 8;
         } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-            shippingFee = 0;
+          shippingFee = 15;
         } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-            shippingFee = 0;
+          shippingFee = 15;
         } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-            shippingFee = 0;
+          shippingFee = 20;
         } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-            shippingFee = 0;
+          shippingFee = 20;
         }
+      }
     }
-
-    // Calculate discount if applicable - must be synch from admin
+  
+    // Calculate discount if applicable
     const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
-    console.log('Calculated discount amount:', discount);
-
+  
+    // Calculate tax
     let taxAmount = 0;
-    // Calculate tax on pre-discount amount
     const taxableAmount = subtotal + shippingFee;
-    console.log('Taxable amount:', taxableAmount);
-
-   /* if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
+  
+    // Apply tax calculation
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+      taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
     } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-        const province = formData.shippingAddress.province;
+      const province = formData.shippingAddress.province;
+      if (province && TAX_RATES['CA'][province]) {
         const provinceTaxes = TAX_RATES['CA'][province];
-
-        if (provinceTaxes) {
-            if (provinceTaxes.HST) {
-                taxAmount = taxableAmount * (provinceTaxes.HST / 100);
-            } else {
-                // Calculate GST
-                if (provinceTaxes.GST) {
-                    taxAmount += taxableAmount * (provinceTaxes.GST / 100);
-                }
-                // Calculate PST or QST
-                if (provinceTaxes.PST) {
-                    taxAmount += taxableAmount * (provinceTaxes.PST / 100);
-                }
-                if (provinceTaxes.QST) {
-                    taxAmount += taxableAmount * (provinceTaxes.QST / 100);
-                }
-            }
+  
+        if (provinceTaxes.HST) {
+          taxAmount = taxableAmount * (provinceTaxes.HST / 100);
+        } else {
+          // Calculate GST
+          if (provinceTaxes.GST) {
+            taxAmount += taxableAmount * (provinceTaxes.GST / 100);
+          }
+          // Calculate PST or QST
+          if (provinceTaxes.PST) {
+            taxAmount += taxableAmount * (provinceTaxes.PST / 100);
+          }
+          if (provinceTaxes.QST) {
+            taxAmount += taxableAmount * (provinceTaxes.QST / 100);
+          }
         }
-    }*/
-
-    console.log('Tax amount:', taxAmount);
+      }
+    }
+  
     // Calculate total (apply discount after tax)
     const total = subtotal + shippingFee + taxAmount - discount;
-    console.log('Final total:', total);
-
+  
     return {
-        subtotalsBySize,
-        subtotal,
-        taxAmount,
-        shippingFee,
-        total,
-        quantities,
-        discount
+      subtotalsBySize,
+      subtotal,
+      taxAmount,
+      shippingFee,
+      total,
+      quantities,
+      discount
     };
-};
+  };
 //..
 const renderStepContent = () => {
   const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
@@ -3821,35 +3877,6 @@ const renderStepContent = () => {
                   <X size={16} />
                 </button>
                 <div className="mt-2 space-y-2">
-                  {/* Product Type Selection for US/Canada */}
-                  {(['USA', 'CAN', 'DEU', 'FRA', 'ITA', 'ESP', 'GBR', 'US', 'CA', 'DE', 'FR', 'IT', 'ES', 'GB', 'RU', 'CN'].includes(selectedCountry)) && (
-                    <select
-                      value={photo.productType}
-                      onChange={(e) => updateProductType(photo.id, e.target.value)}
-                      className="w-full p-1 border rounded"
-                      style={{ display: 'none' }} // Hide the select element
-                    >
-                      <option value="photo_print">{t('produits.photo_print')}</option>
-                    </select>
-                  )}
-
-                  {/* Product Type Selection for Tunisia */}
-                  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1" style={{ display: 'none' }}>
-                        {t('produits.product')}
-                      </label>
-                      <select
-                        value={photo.productType}
-                        onChange={(e) => updateProductType(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                        style={{ display: 'none' }} // Hide the select element
-                      >
-                        <option value="photo_print">{t('produits.photo_print')}</option>
-                      </select>
-                    </div>
-                  )}
-
                   {/* Size selection for photo prints */}
                   {photo.productType === 'photo_print' && (
                     <div>
@@ -3880,39 +3907,6 @@ const renderStepContent = () => {
                             <option value="5x7">5x7"</option>
                           </>
                         )}
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Crystal shape selection for 3D frame */}
-                  {photo.productType === '3d_frame' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('produits.shape')}
-                      </label>
-                      <select
-                        value={photo.crystalShape}
-                        onChange={(e) => updateCrystalShape(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        <option value="rectangle">{t('produits.rectangle')}</option>
-                        <option value="heart">{t('produits.heart')}</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {/* Standard Size selection for Keychain and Keyring & Magnet */}
-                  {(['keychain', 'keyring_magnet'].includes(photo.productType)) && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('produits.size')}
-                      </label>
-                      <select
-                        value={photo.standardSize || 'standard'}
-                        onChange={(e) => updateStandardSize(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        <option value="standard">Standard</option>
                       </select>
                     </div>
                   )}
@@ -3998,33 +3992,137 @@ const renderStepContent = () => {
             </div>
           </div>
 
-          {/* Order Items Summary */}
-          {renderInvoice()}
-
-          {/* Pickup Details */}
+          {/* Delivery Method Selection */}
           <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
-            {selectedStudio && (
-              <div className="space-y-2">
-                <p className="font-medium">{selectedStudio.name}</p>
-                <p>{selectedStudio.address}</p>
-                <p>{selectedStudio.city}, {selectedStudio.country}</p>
-                <p className="text-sm text-gray-600">
-                  {t('pickup.contact')}: {selectedStudio.phone}
-                </p>
+            <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
+            <div className="space-y-3">
+              <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryMethod"
+                  value="pickup"
+                  checked={deliveryMethod === 'pickup'}
+                  onChange={() => setDeliveryMethod('pickup')}
+                  className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                />
+                <div>
+                  <p className="font-medium">{t('order.studio_pickup')}</p>
+                  <p className="text-sm text-gray-600">{t('order.pickup_description')}</p>
+                </div>
+              </label>
+              
+              <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                <input
+                  type="radio"
+                  name="deliveryMethod"
+                  value="shipping"
+                  checked={deliveryMethod === 'shipping'}
+                  onChange={() => setDeliveryMethod('shipping')}
+                  className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                />
+                <div>
+                  <p className="font-medium">{t('order.shipping_to_address')}</p>
+                  <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Conditional rendering based on delivery method */}
+          {deliveryMethod === 'pickup' ? (
+            // Studio Pickup Section
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
+              <StudioSelector 
+                onStudioSelect={handleStudioSelect}
+                selectedStudio={selectedStudio}
+                selectedCountry={selectedCountry}
+              />
+            </div>
+          ) : (
+            // Shipping Address Section
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
+              <AddressForm
+                type="shipping"
+                data={formData.shippingAddress}
+                onChange={(newAddress) => setFormData({
+                  ...formData,
+                  shippingAddress: newAddress
+                })}
+              />
+              
+              {/* Billing Address Toggle */}
+              <div className="mt-4">
+                <label className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isBillingAddressSameAsShipping}
+                    onChange={() => setIsBillingAddressSameAsShipping(!isBillingAddressSameAsShipping)}
+                    className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                  />
+                  <span className="text-sm">{t('form.billing_same')}</span>
+                </label>
+              </div>
+              
+              {/* Show Billing Address if different from shipping */}
+              {!isBillingAddressSameAsShipping && (
                 <div className="mt-4">
-                  <p className="font-medium mb-2">{t('pickup.hours')}:</p>
-                  {selectedStudio.operatingHours.map((hours, index) => (
-                    <p key={index} className="text-sm">
-                      {getDayName(hours.day)}: {hours.isClosed ? 
-                        t('pickup.closed') : 
-                        `${hours.openTime} - ${hours.closeTime}`}
-                    </p>
-                  ))}
+                  <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
+                  <AddressForm
+                    type="billing"
+                    data={formData.billingAddress}
+                    onChange={(newAddress) => setFormData({
+                      ...formData,
+                      billingAddress: newAddress
+                    })}
+                  />
+                </div>
+              )}
+              
+              {/* Payment Method for Shipping */}
+              <div className="mt-6">
+                <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
+                <div className="space-y-3">
+                  <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="paymentMethod"
+                      value="helcim"
+                      checked={paymentMethod === 'helcim'}
+                      onChange={() => setPaymentMethod('helcim')}
+                      className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                    />
+                    <div>
+                      <p className="font-medium">{t('payment.credit_card')}</p>
+                      <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
+                    </div>
+                  </label>
+                  
+                  {/* Only show COD option for Tunisia */}
+                  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                    <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={paymentMethod === 'cod'}
+                        onChange={() => setPaymentMethod('cod')}
+                        className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                      />
+                      <div>
+                        <p className="font-medium">{t('payment.cash_on_delivery')}</p>
+                        <p className="text-sm text-gray-600">{t('payment.cod_description')}</p>
+                      </div>
+                    </label>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Order Items Summary */}
+          {renderInvoice()}
 
           {/* Order Note */}
           <div className="border rounded-lg p-4">
@@ -4036,6 +4134,26 @@ const renderStepContent = () => {
               rows={3}
             />
           </div>
+
+          {/* Show Helcim Pay Button for credit card payments when shipping is selected */}
+          {deliveryMethod === 'shipping' && paymentMethod === 'helcim' && validateStep() && (
+            <div className="border rounded-lg p-4 bg-gray-50">
+              <h3 className="font-medium mb-3">{t('payment.payment_details')}</h3>
+              <p className="text-sm text-gray-600 mb-4">{t('payment.secure_payment')}</p>
+              
+              <HelcimPayButton
+                onPaymentSuccess={handleHelcimPaymentSuccess}
+                isProcessing={isProcessingOrder}
+                disabled={!validateStep()}
+                selectedCountry={selectedCountry}
+                calculateTotals={calculateTotals}
+                total={total}
+                setOrderSuccess={setOrderSuccess}
+                setError={setError}
+                setIsProcessingOrder={setIsProcessingOrder}
+              />
+            </div>
+          )}
         </div>
       );
 
@@ -4046,184 +4164,121 @@ const renderStepContent = () => {
 
 
 
-
-  const renderInvoice = () => {
-    const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount,taxAmount } = calculateTotals();
-    const country = initialCountries.find(c => c.value === selectedCountry);
-    
-    return (
-      <div className="space-y-6">
-        
+const renderInvoice = () => {
+  const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount, taxAmount } = calculateTotals();
+  const country = initialCountries.find(c => c.value === selectedCountry);
   
-        {/* Contact Information 
-        <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
-          <p className="text-gray-600">{formData.email}</p>
-          <p className="text-gray-600">{formData.phone}</p>
-        </div>*/}
-  
-        {/* Shipping Address 
-        <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
-          <div className="text-gray-600">
-            <p>{formData.shippingAddress.firstName} {formData.shippingAddress.lastName}</p>
-            <p>{formData.shippingAddress.address}</p>
-            <p>{formData.shippingAddress.city}, {formData.shippingAddress.postalCode}</p>
-            {formData.shippingAddress.state && <p>{formData.shippingAddress.state}</p>}
-            {formData.shippingAddress.province && <p>{formData.shippingAddress.province}</p>}
-            <p>{country?.name}</p>
-          </div>
+  return (
+    <div className="space-y-6">
+      {/* Discount Code Section */}
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
+        <div className="space-y-2">
+          <input
+            type="text"
+            placeholder="xxxx"
+            value={discountCode}
+            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+          />
+          {discountError && (
+            <p className="text-red-500 text-sm">{discountError}</p>
+          )}
         </div>
-  
-        {/* Billing Address (if different from shipping) 
-        {!isBillingAddressSameAsShipping && formData.paymentMethod !== 'cod' && (
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
-            <div className="text-gray-600">
-              <p>{formData.billingAddress.firstName} {formData.billingAddress.lastName}</p>
-              <p>{formData.billingAddress.address}</p>
-              <p>{formData.billingAddress.city}, {formData.billingAddress.postalCode}</p>
-              {formData.billingAddress.state && <p>{formData.billingAddress.state}</p>}
-              {formData.billingAddress.province && <p>{formData.billingAddress.province}</p>}
-              <p>{country?.name}</p>
-            </div>
-          </div>
-        )} */}
-   {/* Discount Code Section */}
-   <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">{t('order.discount')}</h3>
-          <div className="space-y-2">
-            <input
-  type="text"
-  placeholder="xxxx"
-  value={discountCode}
-  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())} // Convert input to uppercase
-  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-/>
-            {discountError && (
-              <p className="text-red-500 text-sm">{discountError}</p>
-            )}
-          </div>
-        </div>
-        
+      </div>
+      
       {/* Order Summary */}
-<div className="border rounded-lg p-4">
-  <h3 className="font-medium mb-3">{t('order.summary')}</h3>
-  
-  {/* Photo Prints */}
-  {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
-    <>
-      {quantities['10x15'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {quantities['15x22'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {quantities['3.5x4.5'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>3.5x4.5 cm Photos ({quantities['3.5x4.5']} × {country?.size35x45.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-    </>
-  ) : (
-    <>
-      {quantities['4x6'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {quantities['5x7'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {(selectedCountry !== 'TN' || selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-      {(selectedCountry !== 'TN' || selectedCountry !== 'TUN')  && quantities['4x4'] > 0 && (
-        <div className="flex justify-between py-2">
-          <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
-          <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
-        </div>
-      )}
-    </>
-  )}
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-3">{t('order.summary')}</h3>
+        
+        {/* Photo Prints */}
+        {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
+          <>
+            {quantities['10x15'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+            {quantities['15x22'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+            {quantities['3.5x4.5'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>3.5x4.5 cm Photos ({quantities['3.5x4.5']} × {country?.size35x45.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {quantities['4x6'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+            {quantities['5x7'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN')  && quantities['4x4'] > 0 && (
+              <div className="flex justify-between py-2">
+                <span>4x4" Photo Magnets ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
+                <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
+              </div>
+            )}
+          </>
+        )}
 
-  {/* 3D Frame Items */}
-  {quantities['3d_frame'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
+        {/* 3D Frame Items */}
+        {quantities['3d_frame'] > 0 && (
+          <div className="flex justify-between py-2">
+            <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
+            <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
 
-  {/* Keychain Items */}
-  {quantities['keychain'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
+        {/* Keychain Items */}
+        {quantities['keychain'] > 0 && (
+          <div className="flex justify-between py-2">
+            <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
+            <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
 
-  {/* Keyring/Magnet Items */}
-  {quantities['keyring_magnet'] > 0 && (
-    <div className="flex justify-between py-2">
-      <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
-      <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
-    </div>
-  )}
+        {/* Keyring/Magnet Items */}
+        {quantities['keyring_magnet'] > 0 && (
+          <div className="flex justify-between py-2">
+            <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
+            <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
+          </div>
+        )}
 
-  {/* Calculations and Summary */}
-{(() => {
-    // Calculate tax amount
-    let taxAmount = 0;
-    const taxableAmount = subtotal + shippingFee; // Define taxable amount once
-    /*
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        taxAmount = taxableAmount * 0.19;
-    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province) {
-        const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-        if (provinceTaxes) {
-            if (provinceTaxes.HST) {
-                taxAmount = taxableAmount * (provinceTaxes.HST / 100); // Fixed: Include shipping fee in HST calculation
-            } else {
-                if (provinceTaxes.GST) taxAmount += taxableAmount * (provinceTaxes.GST / 100);
-                if (provinceTaxes.PST) taxAmount += taxableAmount * (provinceTaxes.PST / 100);
-                if (provinceTaxes.QST) taxAmount += taxableAmount * (provinceTaxes.QST / 100);
-            }
-        }
-    }
-*/
-    // Calculate final total
-    const finalTotal = subtotal + shippingFee + taxAmount - discount;
-
-    return (
-      <>
-        {/* Subtotal 
+        {/* Subtotal */}
         <div className="flex justify-between py-2 border-t">
           <span>{t('produits.subtotal')}</span>
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
-        </div>*/}
+        </div>
 
-        {/* Shipping Fee 
+        {/* Shipping Fee */}
         <div className="flex justify-between py-2">
-          <span>{t('order.shipping_fee')}</span>
+          <span>{deliveryMethod === 'pickup' ? t('order.pickup_fee') : t('order.shipping_fee')}</span>
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
-        </div>*/}
+        </div>
 
-        {/* Tax for Tunisia 
+        {/* Tax for applicable regions */}
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
@@ -4231,8 +4286,8 @@ const renderStepContent = () => {
           </div>
         )}
 
-        {/* Tax for Canada 
-        {selectedCountry === 'CAN' || selectedCountry === 'CA' && formData.shippingAddress.province && (
+        {/* Tax for Canada */}
+        {(selectedCountry === 'CAN' || selectedCountry === 'CA') && formData.shippingAddress.province && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
               <span>Tax</span>
@@ -4255,44 +4310,29 @@ const renderStepContent = () => {
             </div>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
           </div>
-        )}*/}
+        )}
 
-       {/* Discount */}
-{discount > 0 && (
-  <div className="flex justify-between py-2 text-green-600">
-    <span>
-      {t('order.discount')} ({getDiscountDisplay()})
-    </span>
-    <span>
-      -{Math.abs(discount).toFixed(2)} {country?.currency}
-    </span>
-  </div>
-)}
+        {/* Discount */}
+        {discount > 0 && (
+          <div className="flex justify-between py-2 text-green-600">
+            <span>
+              {t('order.discount')} ({getDiscountDisplay()})
+            </span>
+            <span>
+              -{Math.abs(discount).toFixed(2)} {country?.currency}
+            </span>
+          </div>
+        )}
 
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
           <span>{t('produits.total')}</span>
-          <span>{finalTotal.toFixed(2)} {country?.currency}</span>
+          <span>{total.toFixed(2)} {country?.currency}</span>
         </div>
-      </>
-    );
-  })()}
-</div>
-        
-      {/* Order Note 
-      <div className="border rounded-lg p-4">
-          <h3 className="font-medium mb-3">{t('produits.note')}</h3>
-          <textarea
-            placeholder="...."
-            value={orderNote}
-            onChange={(e) => setOrderNote(e.target.value)}
-            className="w-full p-2 border rounded"
-            rows={3}
-          />
-        </div>*/}
       </div>
-    );
-  };
+    </div>
+  );
+};
 
   // ... (Keep remaining component code) ...
   const handleShippingAddressChange = (field, value) => {
@@ -4349,19 +4389,43 @@ const handleStartPrinting = () => {
 };
 const validateStep = () => {
   switch (activeStep) {
-    case 0: // Upload Photos step
+    case 0: // Photo Upload step
       return selectedPhotos.length > 0;
       
-    case 1: // Studio Selection step
-      return selectedStudio !== null;
+    case 1: // Delivery & Review step
+      // Basic validation for all orders
+      if (!formData.email || !formData.phone || !formData.name) {
+        return false;
+      }
       
-    case 2: // Review Order step
-      return formData.email && formData.phone;
+      // Validation specific to delivery method
+      if (deliveryMethod === 'pickup') {
+        return selectedStudio !== null;
+      } else if (deliveryMethod === 'shipping') {
+        // Validate shipping address
+        const addr = formData.shippingAddress;
+        const isShippingValid = addr.firstName && 
+                               addr.lastName && 
+                               addr.address && 
+                               addr.city && 
+                               addr.postalCode;
+        
+        // Validate province/state for US/Canada
+        if (selectedCountry === 'US' || selectedCountry === 'USA') {
+          return isShippingValid && addr.state;
+        } else if (selectedCountry === 'CA' || selectedCountry === 'CAN') {
+          return isShippingValid && addr.province;
+        }
+        
+        return isShippingValid;
+      }
+      return false;
 
     default:
       return false;
   }
 };
+
 const { t } = useTranslation();
 
 const handleStepClick = (stepIndex) => {
@@ -4495,40 +4559,8 @@ return (
         )}
 
         {/* Navigation Buttons */}
-        {!orderSuccess && (
-          <div className="flex justify-between mt-8">
-            {activeStep > 0 ? (
-              <button
-                onClick={handleBack}
-                className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-                type="button" 
-              >
-                {t('buttons.back')}
-              </button>
-            ) : (
-              <div></div> // Empty div for layout consistency
-            )}
-
-            <button
-              onClick={handleNext}
-              disabled={!validateStep()}
-              className={`px-6 py-2 rounded ${
-                validateStep()
-                  ? 'bg-yellow-400 hover:bg-yellow-500'
-                  : 'bg-gray-200 cursor-not-allowed'
-              }`}
-              type="button" 
-            >
-              {isLoading 
-                ? t('buttons.processing')
-                : activeStep === 1 
-                  ? t('buttons.place_order')
-                  : t('buttons.next')
-              }
-            </button>
-          </div>
-        )}
-      </div>
+        {!orderSuccess && renderNavigationButtons()}
+              </div>
     </div>
     
   {/* Fixed bottom bar for country and language selection */}
