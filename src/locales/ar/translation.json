@@ -46,7 +46,9 @@
       "url_copied": "تم نسخ رابط الاستوديو إلى الحافظة!",
       "share_studio": "مشاركة هذا الاستوديو",
       "share_title": "طلب الصور في {{studio}}",
-      "share_text": "استخدم FreezePIX لطلب الصور من {{studio}}"
+      "share_text": "استخدم FreezePIX لطلب الصور من {{studio}}",
+      "change_location": "تغيير"
+
     },
   "navigation": {
   "choose_photos": "اختر الصور",
@@ -89,7 +91,9 @@
   "place_new": "طلب جديد",
   "review": "المراجعة والدفع",
    "book_now": "احجز الآن",
-    "take_photo": "التقط صورة"
+    "take_photo": "التقط صورة",
+    "place_order_cod": "تقديم الطلب (الدفع عند التسليم)",
+    "proceed_to_payment": "المتابعة إلى الدفع"
   },
   "steps": {
   "upload_photos": "رفع الصور",
@@ -121,7 +125,14 @@
   "cod": "سيتم معالجة طلبك كدفع عند الاستلام",
   "discount": "رمز الخصم",
   "summary": "ملخص الطلب",
-  "shipping_fee": "رسوم الشحن والمناولة"
+  "shipping_fee": "رسوم الشحن والمناولة",
+  "delivery_method": "طريقة التسليم",
+  "studio_pickup": "الاستلام من الأستوديو",
+  "pickup_description": "استلم صورك من أستوديو قريب. بدون رسوم شحن.",
+  "shipping_to_address": "الشحن إلى العنوان",
+  "shipping_description": "استلم صورك مباشرة عند باب منزلك.",
+  "details": "تفاصيل الطلب",
+  "pickup_fee": "رسوم الاستلام"
   },
   "validation": {
   "contact_info": "معلومات الاتصال",
@@ -206,6 +217,12 @@
   "invalidCVC": "رمز الأمان (CVC) غير صحيح",
   "processingError": "حدث خطأ في معالجة بطاقتك",
   "insufficientFunds": "رصيد غير كافٍ في حسابك",
-  "incorrectPostalCode": "الرمز البريدي لا يتطابق مع بطاقتك"
+  "incorrectPostalCode": "الرمز البريدي لا يتطابق مع بطاقتك",
+  "credit_card": "بطاقة ائتمان",
+    "credit_description": "ادفع بأمان باستخدام بطاقة الائتمان أو بطاقة الخصم",
+    "cash_on_delivery": "الدفع عند الاستلام",
+    "cod_description": "ادفع عند استلام مطبوعاتك",
+    "payment_details": "تفاصيل الدفع",
+    "secure_payment": "دفعتك مؤمنة بتشفير مستوى البنك"
   }
   }

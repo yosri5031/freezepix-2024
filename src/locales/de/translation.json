@@ -46,7 +46,9 @@
       "url_copied": "Studio-Link in die Zwischenablage kopiert!",
       "share_studio": "Dieses Studio teilen",
       "share_title": "Abzüge bei {{studio}} bestellen",
-      "share_text": "Nutze FreezePIX um Abzüge bei {{studio}} zu bestellen"
+      "share_text": "Nutze FreezePIX um Abzüge bei {{studio}} zu bestellen",
+      "change_location": "Ändern"
+
     },
     "navigation": {
       "choose_photos": "Fotos auswählen",
@@ -89,7 +91,9 @@
       "place_new": "Neue Bestellung aufgeben",
       "review": "Überprüfung & Zahlung",
       "book_now": "Studio buchen",
-      "take_photo": "Foto aufnehmen"
+      "take_photo": "Foto aufnehmen",
+       "place_order_cod": "Bestellung aufgeben (Nachnahme)",
+    "proceed_to_payment": "Weiter zur Zahlung"
     },
     "steps": {
       "upload_photos": "Fotos hochladen",
@@ -121,7 +125,14 @@
       "cod": "Ihre Bestellung wird als Nachnahme (COD) bearbeitet",
       "discount": "Rabattcode",
       "summary": "Bestellübersicht",
-      "shipping_fee": "Versand und Bearbeitung"
+      "shipping_fee": "Versand und Bearbeitung",
+      "delivery_method": "Liefermethode",
+      "studio_pickup": "Abholung im Studio",
+      "pickup_description": "Holen Sie Ihre Abzüge in einem Studio in der Nähe ab. Keine Versandkosten.",
+      "shipping_to_address": "Lieferung an Adresse",
+      "shipping_description": "Lassen Sie Ihre Abzüge direkt an Ihre Tür liefern.",
+      "details": "Bestelldetails",
+      "pickup_fee": "Abholgebühr"
     },
     "validation": {
       "contact_info": "Kontaktinformationen",
@@ -206,6 +217,12 @@
       "invalidCVC": "Der Sicherheitscode (CVC) ist falsch.",
       "processingError": "Bei der Verarbeitung Ihrer Karte ist ein Fehler aufgetreten.",
       "insufficientFunds": "Unzureichendes Guthaben auf Ihrem Konto.",
-      "incorrectPostalCode": "Die Postleitzahl stimmt nicht mit Ihrer Karte überein."
+      "incorrectPostalCode": "Die Postleitzahl stimmt nicht mit Ihrer Karte überein.",
+      "credit_card": "Kreditkarte",
+      "credit_description": "Zahlen Sie sicher mit Ihrer Kredit- oder Debitkarte",
+      "cash_on_delivery": "Nachnahme",
+      "cod_description": "Zahlen Sie bei Lieferung Ihrer Abzüge",
+      "payment_details": "Zahlungsdetails",
+      "secure_payment": "Ihre Zahlung ist mit Bankniveau-Verschlüsselung gesichert"
     }
   }

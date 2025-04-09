@@ -53,7 +53,9 @@
     "url_copied": "Lien du studio copié dans le presse-papiers !",
     "share_studio": "Partager ce studio",
     "share_title": "Commander des tirages chez {{studio}}",
-    "share_text": "Utilisez FreezePIX pour commander des tirages chez {{studio}}"
+    "share_text": "Utilisez FreezePIX pour commander des tirages chez {{studio}}",
+    "change_location": "Modifier"
+
     },
     "placeholder": {
       "name": "Nom",
@@ -89,7 +91,9 @@
       "place_new": "Passer une nouvelle commande",
       "review": "Révision et paiement",
       "book_now": "Réserver",
-      "take_photo": "Prendre Photo"
+      "take_photo": "Prendre Photo",
+        "place_order_cod": "Commander (paiement à la livraison)",
+    "proceed_to_payment": "Procéder au paiement"
     },
     "steps": {
       "upload_photos": "Télécharger des Photos",
@@ -121,7 +125,14 @@
       "cod": " livraison à domicile",
       "discount" : "Code de réduction",
       "summary": "Résumé de la commande",
-       "shipping_fee": "Frais de port et de manutention"
+       "shipping_fee": "Frais de port et de manutention",
+       "delivery_method": "Mode de livraison",
+       "studio_pickup": "Récupération en studio",
+       "pickup_description": "Récupérez vos tirages dans un studio à proximité. Pas de frais d'expédition.",
+       "shipping_to_address": "Livraison à domicile",
+       "shipping_description": "Faites-vous livrer vos tirages directement chez vous.",
+       "details": "Détails de la commande",
+       "pickup_fee": "Frais de récupération"
     },
     "validation": {
         "contact_info": "Coordonnées",
@@ -206,7 +217,13 @@
     "invalidCVC": "Le code de sécurité (CVC) est incorrect.",
     "processingError": "Une erreur s'est produite lors du traitement de votre carte.",
     "insufficientFunds": "Fonds insuffisants sur votre compte.",
-    "incorrectPostalCode": "Le code postal ne correspond pas à votre carte."
+    "incorrectPostalCode": "Le code postal ne correspond pas à votre carte.",
+    "credit_card": "Carte de crédit",
+    "credit_description": "Payez en toute sécurité avec votre carte de crédit ou de débit",
+    "cash_on_delivery": "Paiement à la livraison",
+    "cod_description": "Payez lorsque vos tirages sont livrés",
+    "payment_details": "Détails du paiement",
+    "secure_payment": "Votre paiement est sécurisé avec un chiffrement de niveau bancaire"
   }
       
   }
