@@ -114,7 +114,9 @@
       "select_country": "Selecione seu país",
       "same_address": "Endereço de cobrança igual ao endereço de envio",
       "shipping_a": "Endereço de Envio",
-      "billing_a": "Endereço de Cobrança"
+      "billing_a": "Endereço de Cobrança",
+      "billing_same": "As informações de cobrança são as mesmas que as informações de envio"
+
     },
     "order": {
       "success_message": "Obrigado pelo seu pedido!",
@@ -223,6 +225,9 @@
       "cash_on_delivery": "Pagamento na entrega",
       "cod_description": "Pague quando suas impressões forem entregues",
       "payment_details": "Detalhes do pagamento",
-      "secure_payment": "Seu pagamento é protegido com criptografia de nível bancário"
+      "secure_payment": "Seu pagamento é protegido com criptografia de nível bancário",
+      "pay_in_store": "Pagar na loja",
+      "in_store_description": "Pague quando retirar suas impressões na loja",
+      "credit_pickup_description": "Pague com segurança com seu cartão de crédito ou débito para pedidos de retirada"
     }
 }

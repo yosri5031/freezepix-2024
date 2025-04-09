@@ -114,7 +114,9 @@
       "select_country": "Sélectionnez votre pays",
       "same_address": "Adresse de facturation identique à l'adresse de livraison",
       "shipping_a" : "Adresse de livraison",
-       "billing_a" : "adresse de facturation"
+       "billing_a" : "adresse de facturation",
+       "billing_same": "Les informations de facturation sont identiques aux informations d'expédition"
+
     },
     "order": {
       "success_message": "Merci pour votre commande !",
@@ -223,7 +225,11 @@
     "cash_on_delivery": "Paiement à la livraison",
     "cod_description": "Payez lorsque vos tirages sont livrés",
     "payment_details": "Détails du paiement",
-    "secure_payment": "Votre paiement est sécurisé avec un chiffrement de niveau bancaire"
+    "secure_payment": "Votre paiement est sécurisé avec un chiffrement de niveau bancaire",
+    "pay_in_store": "Payer en magasin",
+    "in_store_description": "Payez lors du retrait de vos tirages en magasin",
+    "credit_pickup_description": "Payez en toute sécurité avec votre carte de crédit ou de débit pour les commandes à retirer"
+
   }
       
   }

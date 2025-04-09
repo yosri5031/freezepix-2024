@@ -114,7 +114,9 @@
       "select_country": "Seleziona il tuo paese",
       "same_address": "Indirizzo di fatturazione uguale a quello di spedizione",
       "shipping_a": "Indirizzo di Spedizione",
-      "billing_a": "Indirizzo di Fatturazione"
+      "billing_a": "Indirizzo di Fatturazione",
+      "billing_same": "Le informazioni di fatturazione sono le stesse delle informazioni di spedizione"
+
     },
     "order": {
       "success_message": "Grazie per il tuo ordine!",
@@ -223,6 +225,9 @@
       "cash_on_delivery": "Pagamento alla consegna",
       "cod_description": "Paga quando ricevi le tue stampe",
       "payment_details": "Dettagli di pagamento",
-      "secure_payment": "Il tuo pagamento è protetto con crittografia di livello bancario"
+      "secure_payment": "Il tuo pagamento è protetto con crittografia di livello bancario",
+      "pay_in_store": "Pagare in negozio",
+      "in_store_description": "Paga quando ritiri le tue stampe in negozio",
+      "credit_pickup_description": "Paga in modo sicuro con la tua carta di credito o di debito per gli ordini con ritiro"
     }
 }

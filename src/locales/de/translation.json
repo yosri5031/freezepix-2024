@@ -114,7 +114,9 @@
       "select_country": "Wählen Sie Ihr Land",
       "same_address": "Rechnungsadresse ist identisch mit Lieferadresse",
       "shipping_a": "Lieferadresse",
-      "billing_a": "Rechnungsadresse"
+      "billing_a": "Rechnungsadresse",
+      "billing_same": "Die Rechnungsinformationen sind die gleichen wie die Versandinformationen"
+
     },
     "order": {
       "success_message": "Vielen Dank für Ihre Bestellung!",
@@ -223,6 +225,9 @@
       "cash_on_delivery": "Nachnahme",
       "cod_description": "Zahlen Sie bei Lieferung Ihrer Abzüge",
       "payment_details": "Zahlungsdetails",
-      "secure_payment": "Ihre Zahlung ist mit Bankniveau-Verschlüsselung gesichert"
+      "secure_payment": "Ihre Zahlung ist mit Bankniveau-Verschlüsselung gesichert",
+      "pay_in_store": "Im Geschäft bezahlen",
+      "in_store_description": "Zahlen Sie, wenn Sie Ihre Abzüge im Geschäft abholen",
+      "credit_pickup_description": "Bezahlen Sie sicher mit Ihrer Kredit- oder Debitkarte für Abholaufträge"
     }
   }

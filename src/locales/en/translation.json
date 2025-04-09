@@ -113,7 +113,9 @@
       "select_country": "Select your country",
       "same_address": "Billing address same as shipping",
       "shipping_a" : "Shipping Address",
-      "billing_a" : "Billing Address"
+      "billing_a" : "Billing Address",
+      "billing_same": "Billing information is the same as shipping information"
+
     },
     "order": {
       "success_message": "Thank you for your order!",
@@ -224,7 +226,10 @@
     "cash_on_delivery": "Cash on Delivery",
     "cod_description": "Pay when your prints are delivered",
     "payment_details": "Payment Details",
-    "secure_payment": "Your payment is secured with bank-level encryption"
+    "secure_payment": "Your payment is secured with bank-level encryption",
+    "pay_in_store": "Pay in Store",
+    "in_store_description": "Pay when you pick up your prints at the store",
+    "credit_pickup_description": "Pay securely with your credit or debit card for pickup orders"
   }
   }
   

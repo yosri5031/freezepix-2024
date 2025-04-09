@@ -114,7 +114,9 @@
       "select_country": "选择您的国家",
       "same_address": "账单地址与送货地址相同",
       "shipping_a": "送货地址",
-      "billing_a": "账单地址"
+      "billing_a": "账单地址",
+      "billing_same": "账单信息与配送信息相同"
+
     },
     "order": {
       "success_message": "感谢您的订购！",
@@ -223,6 +225,9 @@
     "cash_on_delivery": "货到付款",
     "cod_description": "收到照片时付款",
     "payment_details": "支付详情",
-    "secure_payment": "您的付款受到银行级加密保护"
+    "secure_payment": "您的付款受到银行级加密保护",
+    "pay_in_store": "店内付款",
+    "in_store_description": "在店内取照片时付款",
+    "credit_pickup_description": "使用信用卡或借记卡安全支付自取订单"
     }
   }

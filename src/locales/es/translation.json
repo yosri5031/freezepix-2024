@@ -114,7 +114,9 @@
       "select_country": "Selecciona tu país",
       "same_address": "Dirección de facturación igual a la de envío",
       "shipping_a": "Dirección de Envío",
-      "billing_a": "Dirección de Facturación"
+      "billing_a": "Dirección de Facturación",
+      "billing_same": "La información de facturación es la misma que la información de envío"
+
     },
     "order": {
       "success_message": "¡Gracias por tu pedido!",
@@ -223,6 +225,9 @@
       "cash_on_delivery": "Pago contra reembolso",
       "cod_description": "Paga cuando recibas tus impresiones",
       "payment_details": "Detalles de pago",
-      "secure_payment": "Tu pago está protegido con cifrado de nivel bancario"
+      "secure_payment": "Tu pago está protegido con cifrado de nivel bancario",
+      "pay_in_store": "Pagar en tienda",
+      "in_store_description": "Pague cuando recoja sus impresiones en la tienda",
+      "credit_pickup_description": "Pague de forma segura con su tarjeta de crédito o débito para pedidos de recogida"
     }
   }

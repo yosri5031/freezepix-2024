@@ -114,7 +114,9 @@
       "select_country": "国を選択",
       "same_address": "請求先住所は配送先住所と同じ",
       "shipping_a": "配送先住所",
-      "billing_a": "請求先住所"
+      "billing_a": "請求先住所",
+      "billing_same": "請求情報は配送情報と同じです"
+
     },
     "order": {
       "success_message": "ご注文ありがとうございます！",
@@ -223,6 +225,9 @@
       "cash_on_delivery": "代金引換",
       "cod_description": "プリントが届いたときに支払う",
       "payment_details": "支払い詳細",
-      "secure_payment": "お支払いは銀行レベルの暗号化で保護されています"
+      "secure_payment": "お支払いは銀行レベルの暗号化で保護されています",
+      "pay_in_store": "店舗での支払い",
+      "in_store_description": "店舗でプリントを受け取る際にお支払いください",
+      "credit_pickup_description": "受け取り注文にはクレジットカードまたはデビットカードで安全にお支払いください"
     }
   }
