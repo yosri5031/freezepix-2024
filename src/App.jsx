@@ -2169,7 +2169,7 @@ const renderNavigationButtons = () => {
       )}
 
       {/* Conditional rendering for payment button */}
-      {activeStep === 1 && deliveryMethod === 'shipping' && paymentMethod === 'helcim' ? (
+      {activeStep === 1 && paymentMethod === 'helcim' ? (
         <div className="helcim-payment-wrapper">
           <HelcimPayButton
             onPaymentSuccess={handleHelcimPaymentSuccess}
@@ -2198,7 +2198,9 @@ const renderNavigationButtons = () => {
             ? t('buttons.processing')
             : activeStep === 1 
               ? deliveryMethod === 'pickup'
-                ? t('buttons.place_order')
+                ? paymentMethod === 'helcim'
+                  ? t('buttons.proceed_to_payment')
+                  : t('buttons.place_order')
                 : paymentMethod === 'cod'
                   ? t('buttons.place_order_cod')
                   : t('buttons.proceed_to_payment')
@@ -3040,6 +3042,15 @@ const handleOrderSuccess = async ({
     
     const { total, currency, subtotal, taxAmount, discount, shippingFee } = calculateTotals();
 
+    // Determine the payment method based on delivery and selected payment option
+    // This change allows Helcim payment for pickup as well
+    let finalPaymentMethod;
+    if (deliveryMethod === 'pickup') {
+      finalPaymentMethod = paymentMethod === 'helcim' ? 'helcim' : 'in_store';
+    } else {
+      finalPaymentMethod = paymentMethod;
+    }
+
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -3050,7 +3061,9 @@ const handleOrderSuccess = async ({
         name: selectedStudio.name,
         address: selectedStudio.address,
         city: selectedStudio.city,
-        country: selectedStudio.country
+        country: selectedStudio.country,
+        // Add province for Canadian tax calculation if available
+        province: selectedStudio.province || '' 
       } : null,
       shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
       billingAddress: isBillingAddressSameAsShipping ? 
@@ -3066,9 +3079,9 @@ const handleOrderSuccess = async ({
       totalAmount: total,
       currency: initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD',
       orderNote: orderNote || '',
-      paymentMethod: deliveryMethod === 'pickup' ? 'in_store' : paymentMethod,
-      status: 'Waiting for CSR approval',
-      paymentStatus: 'pending',
+      paymentMethod: finalPaymentMethod,
+      status: finalPaymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
+      paymentStatus: finalPaymentMethod === 'helcim' ? 'paid' : 'pending',
       shippingFee: shippingFee,
       shippingMethod: deliveryMethod === 'pickup' ? 'local_pickup' : 'standard',
       deliveryMethod: deliveryMethod,
@@ -3086,6 +3099,14 @@ const handleOrderSuccess = async ({
     };
 
     setIsProcessingOrder(true);
+
+    // If this is a Helcim payment but doesn't have token/transaction data
+    // We should not submit the order directly as it will be submitted after successful payment
+    if (finalPaymentMethod === 'helcim' && !paymentMethod.transactionId) {
+      console.log('Preparing Helcim payment, order will be submitted after payment completion');
+      setIsProcessingOrder(false);
+      return orderData; // Return order data for Helcim processing
+    }
 
     // Submit order
     const response = await submitOrderWithOptimizedChunking(orderData);
@@ -3199,8 +3220,9 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   setCurrentOrderNumber(orderNumber);
 
   const country = initialCountries.find(c => c.value === selectedCountry);
+  const { taxAmount, shippingFee } = calculateTotals();
 
-  // Rest of your existing code...
+  // Process photos with progress tracking
   const processPhotosWithProgress = async () => {
     try {
       const optimizedPhotosWithPrices = await processImagesInBatches(
@@ -3227,19 +3249,28 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   };
 
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
-  const { taxAmount,shippingFee } = calculateTotals();
-
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
     setIsProcessingOrder(true);
     
+    // Construct order data based on delivery method
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      shippingAddress: formData.billingAddress,
-      billingAddress: formData.billingAddress,
+      // For pickup, include pickup studio details
+      pickupStudio: deliveryMethod === 'pickup' ? {
+        id: selectedStudio._id,
+        name: selectedStudio.name,
+        address: selectedStudio.address,
+        city: selectedStudio.city,
+        country: selectedStudio.country
+      } : null,
+      // For shipping, include shipping address
+      shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
+      billingAddress: isBillingAddressSameAsShipping ? 
+        formData.shippingAddress : formData.billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -3251,15 +3282,17 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         productType: photo.productType
       })),
       totalAmount: paymentData.amount,
-      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
-      shippingFee: shippingFee, //shipping Same as invoice
-      taxAmount: taxAmount, // tax same as invoice
+      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : shippingFee),
+      shippingFee: shippingFee,
+      taxAmount: taxAmount,
       discount: 0,
       currency: paymentData.currency,
-      orderNote: "",
+      orderNote: orderNote || "",
       paymentMethod: "helcim",
+      // Add delivery method to order data
+      deliveryMethod: deliveryMethod,
       customerDetails: {
-        name: formData.billingAddress.firstName,
+        name: formData.name,
         country: selectedCountry
       },
       selectedCountry
@@ -3278,7 +3311,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     while (retryCount < maxRetries && !orderSubmitted) {
       try {
         const orderResponse = await submitOrderWithOptimizedChunking(orderData);
-        if (orderResponse ) {
+        if (orderResponse) {
           orderSubmitted = true;
           console.log('Order submitted successfully:', orderResponse);
           
@@ -3301,8 +3334,11 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setOrderSuccess(true);
           setSelectedPhotos([]);
           setError(null);
-          window.removeHelcimPayIframe(); // Assuming this function exists
-
+          
+          // Remove Helcim iframe if it exists
+          if (typeof window.removeHelcimPayIframe === 'function') {
+            window.removeHelcimPayIframe();
+          }
           
           // Clear session storage
           clearStateStorage();
@@ -3545,24 +3581,28 @@ const handleNext = async (e) => {
           throw new Error('Please provide all required contact information');
         }
         
-        // Validate studio selection
-        if (!selectedStudio) {
+        // Validate studio selection for pickup
+        if (deliveryMethod === 'pickup' && !selectedStudio) {
           throw new Error('Please select a pickup location');
         }
 
         // Set processing state
         setIsLoading(true);
         
-        // Process order
-        await handleOrderSuccess({
-          paymentMethod: 'in_store', // Always in-store payment for pickup
-          formData,
-          selectedCountry,
-          selectedPhotos,
-          orderNote,
-          discountCode,
-          selectedStudio
-        });
+        // For regular order (no credit card) or COD
+        if (paymentMethod === 'in_store' || paymentMethod === 'cod') {
+          // Process order
+          await handleOrderSuccess({
+            paymentMethod: deliveryMethod === 'pickup' ? 'in_store' : paymentMethod,
+            formData,
+            selectedCountry,
+            selectedPhotos,
+            orderNote,
+            discountCode,
+            selectedStudio
+          });
+        }
+        // For Helcim payments, the payment button handles this case
         
         break;
 
@@ -3576,6 +3616,7 @@ const handleNext = async (e) => {
     setIsLoading(false);
   }
 };
+
 
 
 const processImageData = async (imageData) => {
@@ -3707,7 +3748,7 @@ const handleFileChange = async (event) => {
       '15x22': 0,
       '8x10': 0,
       '4x4': 0,
-      '3.5x4.5':0,
+      '3.5x4.5': 0,
       '3d_frame': 0,
       'keychain': 0,
       'keyring_magnet': 0
@@ -3720,7 +3761,7 @@ const handleFileChange = async (event) => {
       '15x22': 0,
       '8x10': 0,
       '4x4': 0,
-      '3.5x4.5':0,
+      '3.5x4.5': 0,
       '3d_frame': 0,
       'keychain': 0,
       'keyring_magnet': 0
@@ -3795,33 +3836,65 @@ const handleFileChange = async (event) => {
     let taxAmount = 0;
     const taxableAmount = subtotal + shippingFee;
   
-    // Apply tax calculation
+    // Apply tax calculation for Tunisia
     if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
       taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
-    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-      const province = formData.shippingAddress.province;
+    } 
+    // Apply tax calculation for Canada - both for pickup and shipping
+    else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+      // Get province based on delivery method
+      let province;
+      
+      if (deliveryMethod === 'pickup') {
+        // If pickup, get province from studio location
+        province = selectedStudio?.province;
+        
+        // If studio doesn't have province set, try to match it from the province list
+        if (!province && selectedStudio?.city) {
+          // This is a simple fallback - in production you'd want a proper mapping
+          // of cities to provinces
+          province = CANADIAN_PROVINCES.find(p => 
+            selectedStudio.city.includes(p) || 
+            p.includes(selectedStudio.city)
+          );
+        }
+      } else {
+        // If shipping, get province from shipping address
+        province = formData.shippingAddress.province;
+      }
+      
+      // Apply taxes if we have a valid province
       if (province && TAX_RATES['CA'][province]) {
         const provinceTaxes = TAX_RATES['CA'][province];
   
         if (provinceTaxes.HST) {
+          // Apply Harmonized Sales Tax (HST)
           taxAmount = taxableAmount * (provinceTaxes.HST / 100);
         } else {
-          // Calculate GST
+          // Apply GST and PST/QST separately
           if (provinceTaxes.GST) {
             taxAmount += taxableAmount * (provinceTaxes.GST / 100);
           }
-          // Calculate PST or QST
+          
           if (provinceTaxes.PST) {
             taxAmount += taxableAmount * (provinceTaxes.PST / 100);
           }
+          
           if (provinceTaxes.QST) {
             taxAmount += taxableAmount * (provinceTaxes.QST / 100);
           }
         }
+      } else {
+        // Default to GST only if province is unknown
+        taxAmount = taxableAmount * 0.05; // 5% GST
       }
     }
+    // Apply taxes for other countries with tax rates
+    else if (TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default) {
+      taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
+    }
   
-    // Calculate total (apply discount after tax)
+    // Calculate total (subtotal + shipping + tax - discount)
     const total = subtotal + shippingFee + taxAmount - discount;
   
     return {
@@ -4082,9 +4155,49 @@ const renderStepContent = () => {
                         </div>
                       </div>
                       
-                      <div className="bg-yellow-50 p-2 rounded border border-yellow-200 mt-3">
-                        <p className="text-sm">{t('pickup.payment_notice')}</p>
-                      </div>
+                      {/* Payment Method for Pickup - NEW ADDITION */}
+                      {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
+                        <div className="mt-4 border-t pt-4">
+                          <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
+                          <div className="space-y-3">
+                            <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="pickupPaymentMethod"
+                                value="in_store"
+                                checked={paymentMethod === 'in_store'}
+                                onChange={() => setPaymentMethod('in_store')}
+                                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                              />
+                              <div>
+                                <p className="font-medium">{t('payment.pay_in_store')}</p>
+                                <p className="text-sm text-gray-600">{t('payment.in_store_description')}</p>
+                              </div>
+                            </label>
+                            
+                            <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="pickupPaymentMethod"
+                                value="helcim"
+                                checked={paymentMethod === 'helcim'}
+                                onChange={() => setPaymentMethod('helcim')}
+                                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                              />
+                              <div>
+                                <p className="font-medium">{t('payment.credit_card')}</p>
+                                <p className="text-sm text-gray-600">{t('payment.credit_pickup_description')}</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                        <div className="bg-yellow-50 p-2 rounded border border-yellow-200 mt-3">
+                          <p className="text-sm">{t('pickup.payment_notice')}</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
@@ -4192,8 +4305,8 @@ const renderStepContent = () => {
               />
             </div>
       
-            {/* Show Helcim Pay Button for credit card payments when shipping is selected */}
-            {deliveryMethod === 'shipping' && paymentMethod === 'helcim' && validateStep() && (
+            {/* Show Helcim Pay Button for credit card payments (for both shipping and pickup) */}
+            {paymentMethod === 'helcim' && validateStep() && (
               <div className="border rounded-lg p-4 bg-gray-50">
                 <h3 className="font-medium mb-3">{t('payment.payment_details')}</h3>
                 <p className="text-sm text-gray-600 mb-4">{t('payment.secure_payment')}</p>
@@ -4335,7 +4448,8 @@ const renderInvoice = () => {
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
         </div>
 
-        {/* Tax for applicable regions */}
+        {/* Tax for applicable regions - Always display if applicable */}
+        {/* Tunisia tax */}
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
@@ -4343,15 +4457,21 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Tax for Canada */}
-        {(selectedCountry === 'CAN' || selectedCountry === 'CA') && formData.shippingAddress.province && (
+        {/* Canada tax - Fix to always show */}
+        {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
               <span>Tax</span>
               <span className="text-sm text-gray-600">
                 {(() => {
-                  const provinceTaxes = TAX_RATES['CA'][formData.shippingAddress.province];
-                  if (provinceTaxes) {
+                  // Get province from the correct address based on delivery method
+                  const province = deliveryMethod === 'pickup' 
+                    ? selectedStudio?.province || ''
+                    : formData.shippingAddress.province;
+                  
+                  if (province && TAX_RATES['CA'][province]) {
+                    const provinceTaxes = TAX_RATES['CA'][province];
+                    
                     if (provinceTaxes.HST) {
                       return `HST (${provinceTaxes.HST}%)`;
                     }
@@ -4457,6 +4577,7 @@ const validateStep = () => {
       
       // Validation specific to delivery method
       if (deliveryMethod === 'pickup') {
+        // For pickup, we need a selected studio
         return selectedStudio !== null;
       } else if (deliveryMethod === 'shipping') {
         // Validate shipping address
