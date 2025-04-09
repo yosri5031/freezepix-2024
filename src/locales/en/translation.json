@@ -46,7 +46,8 @@
     "url_copied": "Studio link copied to clipboard!",
     "share_studio": "Share this studio",
     "share_title": "Order prints at {{studio}}",
-    "share_text": "Use FreezePIX to order prints from {{studio}}"
+    "share_text": "Use FreezePIX to order prints from {{studio}}",
+        "change_location": "Change"
     },
     "navigation": {
       "choose_photos": "Choose Photos",
@@ -89,7 +90,9 @@
       "place_new": "Place New Order",
       "review": "Review & Payment",
       "book_now": "Book Studio",
-      "take_photo": "Take Photo"
+      "take_photo": "Take Photo",
+       "place_order_cod": "Place Order (COD)",
+    "proceed_to_payment": "Proceed to Payment"
     },
     "steps": {
       "upload_photos": "Upload Photos",
@@ -121,7 +124,14 @@
       "cod": " Your order will be processed as Cash on Delivery (COD)",
       "discount" : "Discount Code",
       "summary": "Order Summary",
-      "shipping_fee": "Shipping and handling"
+      "shipping_fee": "Shipping and handling",
+      "delivery_method": "Delivery Method",
+    "studio_pickup": "Studio Pickup",
+    "pickup_description": "Pick up your prints at a nearby studio. No shipping fee.",
+    "shipping_to_address": "Ship to Address",
+    "shipping_description": "Have your prints delivered to your door.",
+    "details": "Order Details",
+    "pickup_fee": "Pickup Fee"
     },
     "validation": {
       "contact_info": "Contact Information",
@@ -208,7 +218,13 @@
     "invalidCVC": "The security code (CVC) is incorrect.",
     "processingError": "There was an error processing your card.",
     "insufficientFunds": "Insufficient funds in your account.",
-    "incorrectPostalCode": "The postal code doesn't match your card."
+    "incorrectPostalCode": "The postal code doesn't match your card.",
+    "credit_card": "Credit Card",
+    "credit_description": "Pay securely with your credit or debit card",
+    "cash_on_delivery": "Cash on Delivery",
+    "cod_description": "Pay when your prints are delivered",
+    "payment_details": "Payment Details",
+    "secure_payment": "Your payment is secured with bank-level encryption"
   }
   }
   

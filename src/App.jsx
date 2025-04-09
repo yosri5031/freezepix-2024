@@ -3958,207 +3958,264 @@ const renderStepContent = () => {
         </div>
       );
 
-    case 1:
-      return (
-        <div className="space-y-6">
-          <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
-          
-          {/* Contact Information */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
-            <div className="space-y-4">
-              <input
-                type="text"
-                placeholder={t('placeholder.name')}
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-
-              <input
-                type="email"
-                placeholder={t('placeholder.email')}
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-              <input
-                type="tel"
-                placeholder={t('placeholder.phone')}
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full p-2 border rounded"
-              />
-            </div>
-          </div>
-
-          {/* Delivery Method Selection */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
-            <div className="space-y-3">
-              <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value="pickup"
-                  checked={deliveryMethod === 'pickup'}
-                  onChange={() => setDeliveryMethod('pickup')}
-                  className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-                />
-                <div>
-                  <p className="font-medium">{t('order.studio_pickup')}</p>
-                  <p className="text-sm text-gray-600">{t('order.pickup_description')}</p>
-                </div>
-              </label>
-              
-              <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                <input
-                  type="radio"
-                  name="deliveryMethod"
-                  value="shipping"
-                  checked={deliveryMethod === 'shipping'}
-                  onChange={() => setDeliveryMethod('shipping')}
-                  className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-                />
-                <div>
-                  <p className="font-medium">{t('order.shipping_to_address')}</p>
-                  <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
-                </div>
-              </label>
-            </div>
-          </div>
-
-          {/* Conditional rendering based on delivery method */}
-          {deliveryMethod === 'pickup' ? (
-            // Studio Pickup Section
+      case 1:
+        return (
+          <div className="space-y-6">
+            <h2 className="text-xl font-medium">{t('buttons.review')}</h2>
+            
+            {/* Contact Information */}
             <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
-              <StudioSelector 
-                onStudioSelect={handleStudioSelect}
-                selectedStudio={selectedStudio}
-                selectedCountry={selectedCountry}
-              />
+              <h3 className="font-medium mb-3">{t('validation.contact_info')}</h3>
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder={t('placeholder.name')}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+      
+                <input
+                  type="email"
+                  placeholder={t('placeholder.email')}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+                <input
+                  type="tel"
+                  placeholder={t('placeholder.phone')}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
             </div>
-          ) : (
-            // Shipping Address Section
+      
+            {/* Delivery Method Selection */}
             <div className="border rounded-lg p-4">
-              <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
-              <AddressForm
-                type="shipping"
-                data={formData.shippingAddress}
-                onChange={(newAddress) => setFormData({
-                  ...formData,
-                  shippingAddress: newAddress
-                })}
-              />
-              
-              {/* Billing Address Toggle */}
-              <div className="mt-4">
-                <label className="flex items-center space-x-2 cursor-pointer">
+              <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
+              <div className="space-y-3">
+                <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                   <input
-                    type="checkbox"
-                    checked={isBillingAddressSameAsShipping}
-                    onChange={() => setIsBillingAddressSameAsShipping(!isBillingAddressSameAsShipping)}
+                    type="radio"
+                    name="deliveryMethod"
+                    value="pickup"
+                    checked={deliveryMethod === 'pickup'}
+                    onChange={() => setDeliveryMethod('pickup')}
                     className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                   />
-                  <span className="text-sm">{t('form.billing_same')}</span>
+                  <div>
+                    <p className="font-medium">{t('order.studio_pickup')}</p>
+                    <p className="text-sm text-gray-600">{t('order.pickup_description')}</p>
+                  </div>
+                </label>
+                
+                <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="radio"
+                    name="deliveryMethod"
+                    value="shipping"
+                    checked={deliveryMethod === 'shipping'}
+                    onChange={() => setDeliveryMethod('shipping')}
+                    className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                  />
+                  <div>
+                    <p className="font-medium">{t('order.shipping_to_address')}</p>
+                    <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
+                  </div>
                 </label>
               </div>
-              
-              {/* Show Billing Address if different from shipping */}
-              {!isBillingAddressSameAsShipping && (
-                <div className="mt-4">
-                  <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
-                  <AddressForm
-                    type="billing"
-                    data={formData.billingAddress}
-                    onChange={(newAddress) => setFormData({
-                      ...formData,
-                      billingAddress: newAddress
-                    })}
+            </div>
+      
+            {/* Conditional rendering based on delivery method */}
+            {deliveryMethod === 'pickup' ? (
+              // Studio Pickup Section
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-3">{t('pickup.details')}</h3>
+                
+                {selectedStudio ? (
+                  // Show selected studio details when already selected
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-start mb-4">
+                      <h4 className="font-semibold text-lg">{selectedStudio.name}</h4>
+                      
+                      {/* "Change" button to allow selecting a different studio */}
+                      <button 
+                        onClick={() => setSelectedStudio(null)}
+                        className="text-sm text-blue-500 hover:underline"
+                      >
+                        {t('pickup.change_location', 'Change')}
+                      </button>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-600">
+                      <div className="flex items-center gap-2">
+                        <MapPin size={16} />
+                        <span>{selectedStudio.address}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Phone size={16} />
+                        <span dir="ltr">{selectedStudio.phone}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mail size={16} />
+                        <span>{selectedStudio.email}</span>
+                      </div>
+                      
+                      <div className="border-t pt-2 mt-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <Clock size={16} />
+                          <span className="font-medium">{t('pickup.hours')}:</span>
+                        </div>
+                        <div className="grid grid-cols-1 gap-1">
+                          {selectedStudio.operatingHours
+                            ?.sort((a, b) => a.day - b.day)
+                            .map(hours => (
+                            <div key={hours.day} className="flex justify-between text-xs">
+                              <span>{getDayName(hours.day)}</span>
+                              <span dir="ltr">
+                                {hours.isClosed ? t('pickup.closed') : `${hours.openTime} - ${hours.closeTime}`}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      <div className="bg-yellow-50 p-2 rounded border border-yellow-200 mt-3">
+                        <p className="text-sm">{t('pickup.payment_notice')}</p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  // Show studio selector when no studio is selected
+                  <StudioSelector 
+                    onStudioSelect={handleStudioSelect}
+                    selectedStudio={selectedStudio}
+                    selectedCountry={selectedCountry}
                   />
-                </div>
-              )}
-              
-              {/* Payment Method for Shipping */}
-              <div className="mt-6">
-                <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
-                <div className="space-y-3">
-                  <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                )}
+              </div>
+            ) : (
+              // Shipping Address Section
+              <div className="border rounded-lg p-4">
+                <h3 className="font-medium mb-3">{t('form.shipping_a')}</h3>
+                <AddressForm
+                  type="shipping"
+                  data={formData.shippingAddress}
+                  onChange={(newAddress) => setFormData({
+                    ...formData,
+                    shippingAddress: newAddress
+                  })}
+                />
+                
+                {/* Billing Address Toggle */}
+                <div className="mt-4">
+                  <label className="flex items-center space-x-2 cursor-pointer">
                     <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="helcim"
-                      checked={paymentMethod === 'helcim'}
-                      onChange={() => setPaymentMethod('helcim')}
+                      type="checkbox"
+                      checked={isBillingAddressSameAsShipping}
+                      onChange={() => setIsBillingAddressSameAsShipping(!isBillingAddressSameAsShipping)}
                       className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                     />
-                    <div>
-                      <p className="font-medium">{t('payment.credit_card')}</p>
-                      <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
-                    </div>
+                    <span className="text-sm">{t('form.billing_same')}</span>
                   </label>
-                  
-                  {/* Only show COD option for Tunisia */}
-                  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                </div>
+                
+                {/* Show Billing Address if different from shipping */}
+                {!isBillingAddressSameAsShipping && (
+                  <div className="mt-4">
+                    <h3 className="font-medium mb-3">{t('form.billing_a')}</h3>
+                    <AddressForm
+                      type="billing"
+                      data={formData.billingAddress}
+                      onChange={(newAddress) => setFormData({
+                        ...formData,
+                        billingAddress: newAddress
+                      })}
+                    />
+                  </div>
+                )}
+                
+                {/* Payment Method for Shipping */}
+                <div className="mt-6">
+                  <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
+                  <div className="space-y-3">
                     <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                       <input
                         type="radio"
                         name="paymentMethod"
-                        value="cod"
-                        checked={paymentMethod === 'cod'}
-                        onChange={() => setPaymentMethod('cod')}
+                        value="helcim"
+                        checked={paymentMethod === 'helcim'}
+                        onChange={() => setPaymentMethod('helcim')}
                         className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                       />
                       <div>
-                        <p className="font-medium">{t('payment.cash_on_delivery')}</p>
-                        <p className="text-sm text-gray-600">{t('payment.cod_description')}</p>
+                        <p className="font-medium">{t('payment.credit_card')}</p>
+                        <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
                       </div>
                     </label>
-                  )}
+                    
+                    {/* Only show COD option for Tunisia */}
+                    {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="paymentMethod"
+                          value="cod"
+                          checked={paymentMethod === 'cod'}
+                          onChange={() => setPaymentMethod('cod')}
+                          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                        />
+                        <div>
+                          <p className="font-medium">{t('payment.cash_on_delivery')}</p>
+                          <p className="text-sm text-gray-600">{t('payment.cod_description')}</p>
+                        </div>
+                      </label>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* Order Items Summary */}
-          {renderInvoice()}
-
-          {/* Order Note */}
-          <div className="border rounded-lg p-4">
-            <h3 className="font-medium mb-3">{t('produits.note')}</h3>
-            <textarea
-              value={orderNote}
-              onChange={(e) => setOrderNote(e.target.value)}
-              className="w-full p-2 border rounded"
-              rows={3}
-            />
-          </div>
-
-          {/* Show Helcim Pay Button for credit card payments when shipping is selected */}
-          {deliveryMethod === 'shipping' && paymentMethod === 'helcim' && validateStep() && (
-            <div className="border rounded-lg p-4 bg-gray-50">
-              <h3 className="font-medium mb-3">{t('payment.payment_details')}</h3>
-              <p className="text-sm text-gray-600 mb-4">{t('payment.secure_payment')}</p>
-              
-              <HelcimPayButton
-                onPaymentSuccess={handleHelcimPaymentSuccess}
-                isProcessing={isProcessingOrder}
-                disabled={!validateStep()}
-                selectedCountry={selectedCountry}
-                calculateTotals={calculateTotals}
-                total={total}
-                setOrderSuccess={setOrderSuccess}
-                setError={setError}
-                setIsProcessingOrder={setIsProcessingOrder}
+            )}
+      
+            {/* Order Items Summary */}
+            {renderInvoice()}
+      
+            {/* Order Note */}
+            <div className="border rounded-lg p-4">
+              <h3 className="font-medium mb-3">{t('produits.note')}</h3>
+              <textarea
+                value={orderNote}
+                onChange={(e) => setOrderNote(e.target.value)}
+                className="w-full p-2 border rounded"
+                rows={3}
               />
             </div>
-          )}
-        </div>
-      );
-
-    default:
-      return null;
+      
+            {/* Show Helcim Pay Button for credit card payments when shipping is selected */}
+            {deliveryMethod === 'shipping' && paymentMethod === 'helcim' && validateStep() && (
+              <div className="border rounded-lg p-4 bg-gray-50">
+                <h3 className="font-medium mb-3">{t('payment.payment_details')}</h3>
+                <p className="text-sm text-gray-600 mb-4">{t('payment.secure_payment')}</p>
+                
+                <HelcimPayButton
+                  onPaymentSuccess={handleHelcimPaymentSuccess}
+                  isProcessing={isProcessingOrder}
+                  disabled={!validateStep()}
+                  selectedCountry={selectedCountry}
+                  calculateTotals={calculateTotals}
+                  total={total}
+                  setOrderSuccess={setOrderSuccess}
+                  setError={setError}
+                  setIsProcessingOrder={setIsProcessingOrder}
+                />
+              </div>
+            )}
+          </div>
+        );
+      
+      default:
+        return null;
   }
 };
 
