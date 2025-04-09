@@ -46,7 +46,9 @@
       "url_copied": "¡Enlace del estudio copiado al portapapeles!",
       "share_studio": "Compartir este estudio",
       "share_title": "Pedir impresiones en {{studio}}",
-      "share_text": "Usa FreezePIX para pedir impresiones desde {{studio}}"
+      "share_text": "Usa FreezePIX para pedir impresiones desde {{studio}}",
+      "change_location": "Cambiar"
+
     },
     "navigation": {
       "choose_photos": "Elegir Fotos",
@@ -89,7 +91,9 @@
       "place_new": "Hacer Nuevo Pedido",
       "review": "Revisar y Pago",
       "book_now": "Reservar Estudio",
-      "take_photo": "Tomar Foto"
+      "take_photo": "Tomar Foto",
+      "place_order_cod": "Realizar pedido (contra reembolso)",
+    "proceed_to_payment": "Proceder al pago"
     },
     "steps": {
       "upload_photos": "Subir Fotos",
@@ -121,7 +125,14 @@
       "cod": "Tu pedido será procesado como Pago contra Entrega (COD)",
       "discount": "Código de Descuento",
       "summary": "Resumen del Pedido",
-      "shipping_fee": "Gastos de envío y manipulación"
+      "shipping_fee": "Gastos de envío y manipulación",
+      "delivery_method": "Método de entrega",
+    "studio_pickup": "Recogida en estudio",
+    "pickup_description": "Recoge tus impresiones en un estudio cercano. Sin gastos de envío.",
+    "shipping_to_address": "Envío a domicilio",
+    "shipping_description": "Recibe tus impresiones directamente en tu puerta.",
+    "details": "Detalles del pedido",
+    "pickup_fee": "Tarifa de recogida"
     },
     "validation": {
       "contact_info": "Información de Contacto",
@@ -206,6 +217,12 @@
       "invalidCVC": "El código de seguridad (CVC) es incorrecto.",
       "processingError": "Hubo un error al procesar su tarjeta.",
       "insufficientFunds": "Fondos insuficientes en su cuenta.",
-      "incorrectPostalCode": "El código postal no coincide con su tarjeta."
+      "incorrectPostalCode": "El código postal no coincide con su tarjeta.",
+      "credit_card": "Tarjeta de crédito",
+      "credit_description": "Paga de forma segura con tu tarjeta de crédito o débito",
+      "cash_on_delivery": "Pago contra reembolso",
+      "cod_description": "Paga cuando recibas tus impresiones",
+      "payment_details": "Detalles de pago",
+      "secure_payment": "Tu pago está protegido con cifrado de nivel bancario"
     }
   }

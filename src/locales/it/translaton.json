@@ -46,7 +46,9 @@
     "url_copied": "Link dello studio copiato negli appunti!",
     "share_studio": "Condividi questo studio",
     "share_title": "Ordina stampe presso {{studio}}",
-    "share_text": "Usa FreezePIX per ordinare stampe da {{studio}}"
+    "share_text": "Usa FreezePIX per ordinare stampe da {{studio}}",
+    "change_location": "Cambia"
+
     },
     "navigation": {
       "choose_photos": "Scegli Foto",
@@ -89,7 +91,9 @@
       "place_new": "Effettua Nuovo Ordine",
       "review": "Revisione e Pagamento",
       "book_now": "Prenota Studio",
-      "take_photo": "Scatta Foto"
+      "take_photo": "Scatta Foto",
+      "place_order_cod": "Effettua ordine (pagamento alla consegna)",
+    "proceed_to_payment": "Procedi al pagamento"
     },
     "steps": {
       "upload_photos": "Carica Foto",
@@ -121,7 +125,14 @@
       "cod": "Il tuo ordine sarà elaborato come Contrassegno (COD)",
       "discount": "Codice Sconto",
       "summary": "Riepilogo Ordine",
-      "shipping_fee": "Spese di spedizione e gestione"
+      "shipping_fee": "Spese di spedizione e gestione",
+      "delivery_method": "Metodo di consegna",
+      "studio_pickup": "Ritiro in studio",
+      "pickup_description": "Ritira le tue stampe in uno studio vicino. Nessuna spesa di spedizione.",
+      "shipping_to_address": "Spedizione all'indirizzo",
+      "shipping_description": "Ricevi le tue stampe direttamente a casa tua.",
+      "details": "Dettagli dell'ordine",
+      "pickup_fee": "Costo di ritiro"
     },
     "validation": {
       "contact_info": "Informazioni di Contatto",
@@ -206,6 +217,12 @@
       "invalidCVC": "Il codice di sicurezza (CVC) non è corretto.",
       "processingError": "Si è verificato un errore durante l'elaborazione della carta.",
       "insufficientFunds": "Fondi insufficienti sul tuo conto.",
-      "incorrectPostalCode": "Il codice postale non corrisponde alla tua carta."
+      "incorrectPostalCode": "Il codice postale non corrisponde alla tua carta.",
+      "credit_card": "Carta di credito",
+      "credit_description": "Paga in modo sicuro con la tua carta di credito o debito",
+      "cash_on_delivery": "Pagamento alla consegna",
+      "cod_description": "Paga quando ricevi le tue stampe",
+      "payment_details": "Dettagli di pagamento",
+      "secure_payment": "Il tuo pagamento è protetto con crittografia di livello bancario"
     }
 }

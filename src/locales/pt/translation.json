@@ -46,7 +46,9 @@
     "url_copied": "Link do estúdio copiado para a área de transferência!",
     "share_studio": "Compartilhar este estúdio",
     "share_title": "Encomendar impressões em {{studio}}",
-    "share_text": "Use o FreezePIX para encomendar impressões de {{studio}}"
+    "share_text": "Use o FreezePIX para encomendar impressões de {{studio}}",
+    "change_location": "Alterar"
+
     },
     "navigation": {
       "choose_photos": "Escolher Fotos",
@@ -89,7 +91,9 @@
       "place_new": "Fazer Novo Pedido",
       "review": "Revisão e Pagamento",
       "book_now": "Reservar Estúdio",
-      "take_photo": "Tirar Foto"
+      "take_photo": "Tirar Foto",
+         "place_order_cod": "Fazer pedido (pagamento na entrega)",
+    "proceed_to_payment": "Prosseguir para pagamento"
     },
     "steps": {
       "upload_photos": "Enviar Fotos",
@@ -121,7 +125,14 @@
       "cod": "Seu pedido será processado como Pagamento na Entrega (COD)",
       "discount": "Código de Desconto",
       "summary": "Resumo do Pedido",
-      "shipping_fee": "Frete e manuseio"
+      "shipping_fee": "Frete e manuseio",
+      "delivery_method": "Método de entrega",
+      "studio_pickup": "Retirada no estúdio",
+      "pickup_description": "Retire suas impressões em um estúdio próximo. Sem taxa de envio.",
+      "shipping_to_address": "Envio para endereço",
+      "shipping_description": "Receba suas impressões diretamente em sua porta.",
+      "details": "Detalhes do pedido",
+      "pickup_fee": "Taxa de retirada"
     },
     "validation": {
       "contact_info": "Informações de Contato",
@@ -206,6 +217,12 @@
       "invalidCVC": "O código de segurança (CVC) está incorreto.",
       "processingError": "Houve um erro ao processar seu cartão.",
       "insufficientFunds": "Fundos insuficientes em sua conta.",
-      "incorrectPostalCode": "O código postal não corresponde ao seu cartão."
+      "incorrectPostalCode": "O código postal não corresponde ao seu cartão.",
+      "credit_card": "Cartão de crédito",
+      "credit_description": "Pague com segurança com seu cartão de crédito ou débito",
+      "cash_on_delivery": "Pagamento na entrega",
+      "cod_description": "Pague quando suas impressões forem entregues",
+      "payment_details": "Detalhes do pagamento",
+      "secure_payment": "Seu pagamento é protegido com criptografia de nível bancário"
     }
 }

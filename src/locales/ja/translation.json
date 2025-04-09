@@ -46,7 +46,9 @@
       "url_copied": "スタジオリンクがクリップボードにコピーされました！",
       "share_studio": "このスタジオをシェア",
       "share_title": "{{studio}}で写真を注文",
-      "share_text": "FreezePIXを使用して{{studio}}から写真を注文する"
+      "share_text": "FreezePIXを使用して{{studio}}から写真を注文する",
+      "change_location": "変更"
+
     },
     "navigation": {
       "choose_photos": "写真を選択",
@@ -89,7 +91,9 @@
       "place_new": "新規注文",
       "review": "確認と支払い",
       "book_now": "スタジオ予約",
-      "take_photo": "写真を撮る"
+      "take_photo": "写真を撮る",
+       "place_order_cod": "注文する（代金引換）",
+    "proceed_to_payment": "支払いに進む"
     },
     "steps": {
       "upload_photos": "写真をアップロード",
@@ -121,7 +125,14 @@
       "cod": "ご注文は代金引換（COD）で処理されます",
       "discount": "割引コード",
       "summary": "注文概要",
-      "shipping_fee": "配送料と取扱手数料"
+      "shipping_fee": "配送料と取扱手数料",
+      "delivery_method": "配送方法",
+      "studio_pickup": "スタジオでの受け取り",
+      "pickup_description": "お近くのスタジオでプリントを受け取ります。配送料はかかりません。",
+      "shipping_to_address": "住所への配送",
+      "shipping_description": "プリントをご自宅まで直接お届けします。",
+      "details": "注文詳細",
+      "pickup_fee": "受取手数料"
     },
     "validation": {
       "contact_info": "連絡先情報",
@@ -206,6 +217,12 @@
       "invalidCVC": "セキュリティコード（CVC）が正しくありません。",
       "processingError": "カードの処理中にエラーが発生しました。",
       "insufficientFunds": "口座の残高が不足しています。",
-      "incorrectPostalCode": "郵便番号がカードと一致しません。"
+      "incorrectPostalCode": "郵便番号がカードと一致しません。",
+      "credit_card": "クレジットカード",
+      "credit_description": "クレジットカードまたはデビットカードで安全に支払う",
+      "cash_on_delivery": "代金引換",
+      "cod_description": "プリントが届いたときに支払う",
+      "payment_details": "支払い詳細",
+      "secure_payment": "お支払いは銀行レベルの暗号化で保護されています"
     }
   }
