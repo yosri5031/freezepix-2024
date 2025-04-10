@@ -3173,7 +3173,7 @@ const handleOrderSuccess = async ({
       discount: Number(discount) || 0,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: finalPaymentMethod,
+      paymentMethod: 'helcim',
       status: finalPaymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
       paymentStatus: finalPaymentMethod === 'helcim' ? 'paid' : 'pending',
       deliveryMethod: deliveryMethod,
@@ -4719,20 +4719,7 @@ const renderStepContent = () => {
                         <div className="mt-4 border-t pt-4">
                           <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
                           <div className="space-y-3">
-                            <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="pickupPaymentMethod"
-                                value="in_store"
-                                checked={paymentMethod === 'in_store'}
-                                onChange={() => setPaymentMethod('in_store')}
-                                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-                              />
-                              <div>
-                                <p className="font-medium">{t('payment.pay_in_store')}</p>
-                                <p className="text-sm text-gray-600">{t('payment.in_store_description')}</p>
-                              </div>
-                            </label>
+                           
                             
                             <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                               <input
