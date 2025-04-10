@@ -2452,14 +2452,13 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
     // Prepare the base order data with required fields
     const baseOrderData = {
       ...orderData,
-      shippingFee: 0, // Set to 0 for local pickup
-      shippingMethod: 'local_pickup',
-      deliveryMethod: 'pickup',
-      status: 'Waiting for CSR approval',
-      paymentMethod: 'in_store',
-      paymentStatus: 'pending'
+      shippingFee: orderData.shippingFee || 0,
+      shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
+      deliveryMethod: orderData.deliveryMethod || 'pickup',
+      status: paymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
+      paymentMethod: paymentMethod, // Ensure payment method is passed through
+      paymentStatus: paymentMethod === 'helcim' ? 'paid' : 'pending'
     };
-
     // Process items
     const processedItems = await Promise.all(orderItems.map(async (item) => {
       let imageData;
