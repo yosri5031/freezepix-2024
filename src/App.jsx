@@ -2172,16 +2172,16 @@ const renderNavigationButtons = () => {
       {activeStep === 1 && paymentMethod === 'helcim' ? (
         <div className="helcim-payment-wrapper">
           <HelcimPayButton
-            onPaymentSuccess={handleHelcimPaymentSuccess}
-            isProcessing={isProcessingOrder}
-            disabled={!isStepValid}
-            selectedCountry={selectedCountry}
-            calculateTotals={calculateTotals}
-            total={calculateTotals().total}
-            setOrderSuccess={setOrderSuccess}
-            setError={setError}
-            setIsProcessingOrder={setIsProcessingOrder}
-          />
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={total}
+  setOrderSuccess={setOrderSuccess}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
+/>
         </div>
       ) : (
         <button
@@ -3010,40 +3010,101 @@ const formIsValid = (formData) => {
   return true;
 };
 
-const handleOrderSuccess = async ({
-  paymentMethod,
-  formData,
+const handleOrderSuccess = async ({ 
+  paymentMethod, 
+  formData, 
   selectedCountry,
   selectedPhotos,
   orderNote,
   discountCode,
-  selectedStudio
+  selectedStudio,
+  isBillingAddressSameAsShipping,
+  stripePaymentMethod = null,
+  helcimPaymentData = null
 }) => {
+  let orderData = null;
+  let orderNumber = null;
+  let paymentIntent = null;
+
   try {
-    if (!formData?.email || !formData?.phone || !formData?.name) {
-      throw new Error('Please provide all required contact information');
+    // Validate required fields first
+    if (!formData?.email || 
+      !formData?.shippingAddress?.firstName ||
+      !formData?.shippingAddress?.lastName ||
+      !formData?.shippingAddress?.address ||
+      !formData?.shippingAddress?.city ||
+      !formData?.shippingAddress?.postalCode) {
+      throw new Error('Missing required shipping information');
     }
 
     if (deliveryMethod === 'pickup' && !selectedStudio) {
       throw new Error('Please select a pickup location');
     }
 
-    if (deliveryMethod === 'shipping' && 
-        (!formData.shippingAddress.firstName || 
-         !formData.shippingAddress.lastName || 
-         !formData.shippingAddress.address || 
-         !formData.shippingAddress.city || 
-         !formData.shippingAddress.postalCode)) {
-      throw new Error('Please provide all required shipping information');
+    if (!formIsValid(formData)) {
+      throw new Error('Please fill in all required fields correctly');
     }
 
-    const orderNumber = generateOrderNumber();
+    const getStripeCountryCode = (countryCode) => {
+      const countryMappings = {
+        'USA': 'US',
+        'CAN': 'CA',
+        'TUN': 'TN', 
+        'DEU': 'DE',
+        'FRA': 'FR',
+        'ITA': 'IT',
+        'GBR': 'GB',
+        'ESP': 'ES',
+        'United States': 'US',
+        'Canada': 'CA',
+        'Tunisia': 'TN',
+        'Germany': 'DE',
+        'France': 'FR',
+        'Italy': 'IT',
+        'Spain': 'ES',
+        'United Kingdom': 'GB'
+      };
+      return countryMappings[countryCode] || countryCode;
+    };
+
+    // Format shipping address for Stripe
+    const shippingAddress = {
+      line1: formData.shippingAddress?.address || '',
+      city: formData.shippingAddress?.city || '',
+      state: formData.shippingAddress?.state || formData.shippingAddress?.province || '',
+      postal_code: formData.shippingAddress?.postalCode || '',
+      country: selectedCountry || '',
+      name: `${formData.shippingAddress?.firstName || ''} ${formData.shippingAddress?.lastName || ''}`,
+      phone: formData.phone || ''
+    };
+
+    // Format billing address
+    const billingAddress = isBillingAddressSameAsShipping 
+      ? shippingAddress
+      : {
+          line1: formData.billingAddress.address,
+          city: formData.billingAddress.city,
+          state: formData.billingAddress.state || formData.billingAddress.province || '',
+          postal_code: formData.billingAddress.postalCode,
+          country: formData.billingAddress.country || selectedCountry,
+          name: `${formData.billingAddress.firstName} ${formData.billingAddress.lastName}`,
+          phone: formData.phone || ''
+        };
+
+    setIsProcessingOrder(true);
+    setOrderSuccess(false);
+    setError(null);
+    setUploadProgress(0);
+
+    // Generate order number
+    orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
-    const { total, currency, subtotal, taxAmount, discount, shippingFee } = calculateTotals();
+    // Calculate order totals
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Determine the payment method based on delivery and selected payment option
-    // This change allows Helcim payment for pickup as well
     let finalPaymentMethod;
     if (deliveryMethod === 'pickup') {
       finalPaymentMethod = paymentMethod === 'helcim' ? 'helcim' : 'in_store';
@@ -3051,121 +3112,511 @@ const handleOrderSuccess = async ({
       finalPaymentMethod = paymentMethod;
     }
 
-    const orderData = {
+    // Process photos with improved batch processing and error handling
+    const processPhotosWithProgress = async () => {
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
+            ...photo,
+            price: photo.price || calculateItemPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+            if (progress % 20 === 0) {
+              saveStateWithCleanup({
+                orderNumber,
+                progress,
+                timestamp: new Date().toISOString()
+              });
+            }
+          }
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error(t('errors.photoProcessingFailed'));
+      }
+    };
+
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
+    // Construct order data
+    orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      name: formData.name,
       pickupStudio: deliveryMethod === 'pickup' ? {
         id: selectedStudio._id,
         name: selectedStudio.name,
         address: selectedStudio.address,
         city: selectedStudio.city,
         country: selectedStudio.country,
-        // Add province for Canadian tax calculation if available
-        province: selectedStudio.province || '' 
+        province: selectedStudio.province || ''
       } : null,
       shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
-      billingAddress: isBillingAddressSameAsShipping ? 
-        formData.shippingAddress : formData.billingAddress,
-      orderItems: selectedPhotos.map(photo => ({
+      billingAddress: isBillingAddressSameAsShipping 
+        ? formData.shippingAddress 
+        : formData.billingAddress,
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
         id: photo.id,
-        file: photo.base64 || photo.file,
         quantity: photo.quantity,
         size: photo.size,
         price: photo.price,
         productType: photo.productType
       })),
       totalAmount: total,
-      currency: initialCountries.find(c => c.value === selectedCountry)?.currency || 'USD',
+      subtotal,
+      shippingFee,
+      taxAmount,
+      discount,
+      currency: country.currency,
       orderNote: orderNote || '',
       paymentMethod: finalPaymentMethod,
       status: finalPaymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
       paymentStatus: finalPaymentMethod === 'helcim' ? 'paid' : 'pending',
-      shippingFee: shippingFee,
-      shippingMethod: deliveryMethod === 'pickup' ? 'local_pickup' : 'standard',
       deliveryMethod: deliveryMethod,
-      taxAmount,
-      discount,
-      subtotal,
+      stripePaymentId: stripePaymentMethod,
+      paymentIntentId: paymentIntent?.id,
       customerDetails: {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
         country: selectedCountry
       },
+      selectedCountry,
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
 
-    setIsProcessingOrder(true);
+    const subtotalsBySize = selectedPhotos.reduce((acc, photo) => {
+      const size = photo.size;
+      const amount = (photo.price || 0) * (photo.quantity || 1);
+      acc[size] = (acc[size] || 0) + amount;
+      return acc;
+    }, {});
 
     // If this is a Helcim payment but doesn't have token/transaction data
     // We should not submit the order directly as it will be submitted after successful payment
-    if (finalPaymentMethod === 'helcim' && !paymentMethod.transactionId) {
+    if (finalPaymentMethod === 'helcim' && !helcimPaymentData?.transactionId) {
       console.log('Preparing Helcim payment, order will be submitted after payment completion');
       setIsProcessingOrder(false);
       return orderData; // Return order data for Helcim processing
     }
 
-    // Submit order
-    const response = await submitOrderWithOptimizedChunking(orderData);
+    if (paymentMethod === 'helcim') {
+      try {
+        // Initialize Helcim payment
+        const helcimResponse = await initializeHelcimPayCheckout({
+          formData,
+          selectedCountry,
+          total,
+          subtotalsBySize,
+          selectedStudio
+        });
+
+        if (!helcimResponse?.checkoutToken) {
+          throw new Error('Failed to initialize Helcim payment');
+        }
+
+        // Store Helcim payment data
+        orderData = {
+          ...orderData,
+          paymentMethod: 'helcim',
+          helcimPaymentId: helcimResponse.checkoutToken,
+          paymentStatus: helcimPaymentData?.success ? 'paid' : 'pending'
+        };
+
+        // If payment was successful, proceed with order processing
+        if (helcimPaymentData?.success) {
+          // Validate Helcim payment response
+          const isValid = await validateHelcimPayment(helcimPaymentData, helcimResponse.secretToken);
+          if (!isValid) {
+            throw new Error('Invalid Helcim payment validation');
+          }
+        } else {
+          throw new Error('Helcim payment not completed');
+        }
+
+      } catch (helcimError) {
+        console.error('Helcim payment error:', helcimError);
+        throw new Error(`Helcim payment failed: ${helcimError.message}`);
+      }
+    }
+
+    if (paymentMethod === 'credit') {
+      let checkoutSession = null;
+  
+      try {
+        console.log('Discount Code:', discountCode);
+        console.log('Tax Amount:', taxAmount);
+        const getStripeCouponId = (code) => {
+          const coupons = {
+            'MOHAMED': 'promo_1QOzC2KmwKMSxU2Dzexmr58J',
+            'B2B': 'promo_1QOz9yKmwKMSxU2Duc7WtDlu',
+            'MCF99': 'promo_1QOzCvKmwKMSxU2D0ItOujrd'
+          };
+          return coupons[code?.toUpperCase()];
+        };
+        
+        const stripeOrderData = {
+          ...orderData,
+          line_items: [
+            // Regular items
+            ...orderData.orderItems.map(item => ({
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: `Photo Print - ${item.size}`,
+                },
+                unit_amount: Math.round(item.price * 100), // Convert to cents
+              },
+              quantity: item.quantity,
+            })),
+            
+            // Shipping fee (if applicable)
+            ...(shippingFee > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Shipping Fee',
+                },
+                unit_amount: Math.round(shippingFee * 100), // Convert to cents
+              },
+              quantity: 1,
+            }] : []),
+            
+            // Tax (explicitly added)
+            ...(taxAmount > 0 ? [{
+              price_data: {
+                currency: orderData.currency.toLowerCase(),
+                product_data: {
+                  name: 'Sales Tax',
+                },
+                unit_amount: Math.round(taxAmount * 100), // Convert to cents
+              },
+              quantity: 1,
+            }] : []),
+          ],
+          
+          mode: 'payment',
+          customer_email: formData.email,
+          
+          // Comprehensive metadata
+          metadata: {
+            orderNumber: orderNumber,
+            discountCode: discountCode || 'none',
+            discount: discount || 0,
+            taxAmount: taxAmount || 0,
+            shippingFee: shippingFee || 0,
+            totalAmount: total
+          },
+          
+          // Success and cancel URLs
+          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${window.location.origin}/order-cancel`,
+        };
+      
+        console.log('Stripe Order Data:', stripeOrderData);
+      
+        checkoutSession = await createStripeCheckoutSession(stripeOrderData);
+        
+        if (!checkoutSession?.url) {
+          //throw new Error('Invalid checkout session response: Missing URL');
+        }
+  
+        // Save order data to session storage before redirect
+        sessionStorage.setItem('pendingOrder', JSON.stringify({
+          orderNumber: orderData.orderNumber,
+          orderData: orderData
+        }));
+        sessionStorage.setItem('stripeSessionId', checkoutSession.id);
+        
+        // Enhanced iframe detection and redirect handling
+        const handleRedirect = (url) => {
+          return new Promise((resolve, reject) => {
+            // Set a timeout for redirect failure
+            const timeoutId = setTimeout(() => {
+              reject(new Error('Redirect timeout after 5000ms'));
+            }, 5000);
+  
+            try {
+              // Check if we're in an iframe
+              const isInIframe = window.self !== window.top;
+              
+              if (isInIframe) {
+                // First try: Direct parent redirect with try-catch
+                try {
+                  window.parent.location.href = url;
+                  clearTimeout(timeoutId);
+                  resolve(true);
+                } catch (directRedirectError) {
+                  console.warn('Direct parent redirect failed, attempting postMessage:', directRedirectError);
+                  
+                  // Second try: postMessage with confirmation
+                  const messageHandler = (event) => {
+                    if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
+                      window.removeEventListener('message', messageHandler);
+                      clearTimeout(timeoutId);
+                      resolve(true);
+                    }
+                  };
+  
+                  window.addEventListener('message', messageHandler);
+                  
+                  // Send message to parent with all necessary data
+                  window.parent.postMessage({
+                    type: 'STRIPE_REDIRECT',
+                    url: url,
+                    sessionId: checkoutSession.id,
+                    orderNumber: orderData.orderNumber
+                  }, '*');
+  
+                  // Don't resolve here - wait for confirmation or timeout
+                }
+              } else {
+                // Not in iframe, do regular redirect
+                window.location.href = url;
+                clearTimeout(timeoutId);
+                resolve(true);
+              }
+            } catch (error) {
+              clearTimeout(timeoutId);
+              reject(new Error(`Redirect failed: ${error.message}`));
+            }
+          });
+        };
+  
+        try {
+          await handleRedirect(checkoutSession.url);
+          return; // Successful redirect
+        } catch (redirectError) {
+          console.error('Redirect failed:', redirectError);
+          throw new Error(`Failed to redirect to payment page: ${redirectError.message}`);
+        }
+  
+      } catch (stripeError) {
+        console.error('Stripe checkout error:', stripeError);
+        
+        // Enhanced error logging with null check for checkoutSession
+        const errorDetails = {
+          message: stripeError.message,
+          isInIframe: window.self !== window.top,
+          sessionData: checkoutSession || 'Session creation failed',
+          timestamp: new Date().toISOString(),
+          orderNumber: orderData.orderNumber,
+          paymentMethod: paymentMethod,
+          country: selectedCountry
+        };
+        
+        console.error('Detailed checkout error:', errorDetails);
+        
+        // Save error state for recovery with more context
+        try {
+          await saveStateWithCleanup({
+            checkoutError: errorDetails,
+            recoveryData: {
+              orderNumber: orderData.orderNumber,
+              timestamp: new Date().toISOString(),
+              lastAttemptedStep: checkoutSession ? 'redirect' : 'session_creation'
+            }
+          });
+        } catch (storageError) {
+          console.warn('Failed to save checkout error state:', storageError);
+        }
+        
+        // Set more specific error message based on the failure point
+        const errorMessage = checkoutSession 
+          ? 'Payment redirect failed. Please try again.'
+          : 'Unable to initialize payment. Please try again.';
+        
+        setError(errorMessage);
+        throw stripeError;
+      }
+    }
+
+    // Helper function to validate Helcim payment
+    const validateHelcimPayment = async (paymentData, secretToken) => {
+      try {
+        // Generate hash for validation
+        const generateHash = (data, secretToken) => {
+          const jsonData = JSON.stringify(data);
+          return window.crypto.subtle.digest(
+            'SHA-256', 
+            new TextEncoder().encode(jsonData + secretToken)
+          );
+        };
+
+        const localHash = await generateHash(paymentData.data, secretToken);
+        const remoteHash = paymentData.hash;
+
+        return localHash === remoteHash;
+      } catch (error) {
+        console.error('Payment validation error:', error);
+        return false;
+      }
+    };
+
+    // Helper function to cancel Helcim payment
+    const cancelHelcimPayment = async (paymentId) => {
+      try {
+        await axios.post(
+          `${HELCIM_API_URL}/cancel`,
+          { paymentId },
+          {
+            headers: {
+              'accept': 'application/json',
+              'api-token': API_TOKEN,
+              'content-type': 'application/json'
+            }
+          }
+        );
+      } catch (error) {
+        console.error('Failed to cancel Helcim payment:', error);
+        throw error;
+      }
+    };
+
+    // Submit order with retry mechanism
+    const maxRetries = 3;
+    let retryCount = 0;
+    let responses;
+
+    while (retryCount < maxRetries) {
+      try {
+        responses = await submitOrderWithOptimizedChunking(orderData);
+        if (responses && responses.length > 0) {
+          break;
+        }
+        throw new Error('Empty response received');
+      } catch (submitError) {
+        retryCount++;
+        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+        
+        if (retryCount === maxRetries) {
+          throw new Error(t('errors.orderSubmissionFailed'));
+        }
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email with retry
+    let emailSent = false;
+    retryCount = 0;
     
-    if (response) {
-      // Send confirmation email
+    while (retryCount < maxRetries && !emailSent) {
       try {
         await sendOrderConfirmationEmail({
           ...orderData,
-          selectedPhotos: orderData.orderItems
+          orderItems: orderData.orderItems.map(item => ({
+            ...item,
+            file: undefined,
+            thumbnail: item.thumbnail
+          }))
         });
-        console.log('Order confirmation email sent successfully');
+        emailSent = true;
       } catch (emailError) {
-        console.error('Failed to send order confirmation email:', emailError);
-        setError('Order placed successfully but confirmation email could not be sent. Please save your order number.');
+        retryCount++;
+        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+        if (retryCount < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+        }
       }
+    }
 
-      // Complete the order process
-      setOrderSuccess(true);
-      setError(null);
-      try {
-        const photosToKeep = selectedPhotos.map(photo => ({
-          id: photo.id,
-          base64: photo.base64,
-          fileName: photo.fileName || photo.file?.name,
-          fileType: photo.fileType || photo.file?.type,
-          productType: photo.productType,
-          size: photo.size,
-          quantity: photo.quantity
-        }));
-        
-        localStorage.setItem('uploadedPhotos', JSON.stringify(photosToKeep));
-        
-        const minimalState = {
-          showIntro: false,
-          selectedCountry,
-          selectedPhotos: photosToKeep,
-          activeStep: 0,
-          formData: {
-            email: '',
-            phone: '',
-            name: '',
-            shippingAddress: { country: selectedCountry },
-            billingAddress: { country: selectedCountry }
-          }
-        };
-        
-        localStorage.setItem('freezepixState', JSON.stringify(minimalState));
-      } catch (error) {
-        console.error('Error preserving photos after order:', error);
-      }
+    setOrderSuccess(true);
+    console.log('Order created successfully:', {
+      orderNumber,
+      totalItems: orderData.orderItems.length,
+      responses
+    });
+
+    // Cleanup
+    try {
+      clearStateChunks();
+      await saveStateWithCleanup({
+        orderNumber,
+        orderDate: new Date().toISOString(),
+        totalAmount: total,
+        currency: country.currency,
+        itemCount: orderData.orderItems.length,
+        customerEmail: formData.email
+      });
+      setSelectedPhotos([]);
+    } catch (cleanupError) {
+      console.warn('Post-order cleanup warning:', cleanupError);
     }
 
   } catch (error) {
     console.error('Order Processing Error:', error);
-    setError(error.message);
+
+    // Attempt to rollback/cleanup any partial processing
+    try {
+      if (paymentIntent?.id) {
+        await stripe.cancelPaymentIntent(paymentIntent.id);
+      }
+    } catch (rollbackError) {
+      console.error('Rollback failed:', rollbackError);
+    }
+
+    let errorMessage = t('errors.genericError');
+    
+    if (error.response?.data?.details) {
+      errorMessage = error.response.data.details;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message
+        .replace('TypeError:', '')
+        .replace('Error:', '')
+        .trim();
+    }
+
+    setError(errorMessage);
     setOrderSuccess(false);
+
+    if (typeof trackError === 'function') {
+      trackError({
+        error,
+        orderNumber,
+        context: 'handleOrderSuccess',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Save error state for recovery
+    try {
+      await saveStateWithCleanup({
+        failedOrderNumber: orderNumber,
+        errorMessage,
+        timestamp: new Date().toISOString(),
+        recoveryData: {
+          formData,
+          selectedPhotos: selectedPhotos?.map(photo => ({
+            id: photo.id,
+            thumbnail: photo.thumbnail,
+            price: photo.price,
+            quantity: photo.quantity,
+            size: photo.size
+          }))
+        }
+      });
+    } catch (storageError) {
+      console.warn('Failed to save error state:', storageError);
+    }
+
+    throw error; // Re-throw to be handled by the form
+
   } finally {
     setIsProcessingOrder(false);
+    setUploadProgress(0);
+    
+    if (orderSuccess) {
+      clearStateStorage();
+    }
   }
 };
 
@@ -3220,9 +3671,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   setCurrentOrderNumber(orderNumber);
 
   const country = initialCountries.find(c => c.value === selectedCountry);
-  const { taxAmount, shippingFee } = calculateTotals();
 
-  // Process photos with progress tracking
+  // Rest of your existing code...
   const processPhotosWithProgress = async () => {
     try {
       const optimizedPhotosWithPrices = await processImagesInBatches(
@@ -3249,17 +3699,17 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
   };
 
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
+  const { taxAmount,shippingFee } = calculateTotals();
+
 
   try {
     console.log('Payment Success Handler - Processing payment:', paymentData);
     setIsProcessingOrder(true);
     
-    // Construct order data based on delivery method
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
-      // For pickup, include pickup studio details
       pickupStudio: deliveryMethod === 'pickup' ? {
         id: selectedStudio._id,
         name: selectedStudio.name,
@@ -3267,10 +3717,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         city: selectedStudio.city,
         country: selectedStudio.country
       } : null,
-      // For shipping, include shipping address
-      shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
-      billingAddress: isBillingAddressSameAsShipping ? 
-        formData.shippingAddress : formData.billingAddress,
+      shippingAddress: formData.billingAddress,
+      billingAddress: formData.billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -3282,17 +3730,15 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         productType: photo.productType
       })),
       totalAmount: paymentData.amount,
-      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : shippingFee),
-      shippingFee: shippingFee,
-      taxAmount: taxAmount,
+      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
+      shippingFee: shippingFee, //shipping Same as invoice
+      taxAmount: taxAmount, // tax same as invoice
       discount: 0,
       currency: paymentData.currency,
-      orderNote: orderNote || "",
+      orderNote: "",
       paymentMethod: "helcim",
-      // Add delivery method to order data
-      deliveryMethod: deliveryMethod,
       customerDetails: {
-        name: formData.name,
+        name: formData.billingAddress.firstName,
         country: selectedCountry
       },
       selectedCountry
@@ -3311,7 +3757,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     while (retryCount < maxRetries && !orderSubmitted) {
       try {
         const orderResponse = await submitOrderWithOptimizedChunking(orderData);
-        if (orderResponse) {
+        if (orderResponse ) {
           orderSubmitted = true;
           console.log('Order submitted successfully:', orderResponse);
           
@@ -3334,11 +3780,8 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setOrderSuccess(true);
           setSelectedPhotos([]);
           setError(null);
-          
-          // Remove Helcim iframe if it exists
-          if (typeof window.removeHelcimPayIframe === 'function') {
-            window.removeHelcimPayIframe();
-          }
+          window.removeHelcimPayIframe(); // Assuming this function exists
+
           
           // Clear session storage
           clearStateStorage();
