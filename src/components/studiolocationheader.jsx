@@ -18,6 +18,7 @@ const StudioLocationHeader = ({
   const lastLocationUpdateRef = useRef(Date.now());
   const studiosLoadedRef = useRef(false);
   const visibilityTimeoutRef = useRef(null);
+  const dropdownOpenedOnceRef = useRef(false);
   
   // Constants
   const locationExpiryTime = 30 * 60 * 1000; // 30 minutes in milliseconds
@@ -41,11 +42,6 @@ const StudioLocationHeader = ({
 
   // Get user's location with stable caching
   const getUserLocation = useCallback(() => {
-    // Skip if we already have a selected studio (important to prevent loops)
-    if (selectedStudio && initialLoadCompleteRef.current) {
-      return;
-    }
-    
     // Try to load cached location first
     const cachedLocation = localStorage.getItem('userLocationCache');
     const cachedTimestamp = localStorage.getItem('userLocationTimestamp');
@@ -104,12 +100,55 @@ const StudioLocationHeader = ({
         { maximumAge: locationExpiryTime, timeout: 10000 }
       );
     }
-  }, [selectedStudio, userLocation]); // Include dependencies to prevent stale closures
+  }, [userLocation]); // Only depend on userLocation
 
-  // Fetch studios and pre-select closest one
-  const fetchAndSelectStudio = useCallback(async () => {
+  // Fetch studios data
+  const fetchStudios = useCallback(async (force = false) => {
+    // Don't fetch if already loading
+    if (loading && !force) return;
+    
+    try {
+      setLoading(true);
+      
+      const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+      let studiosData = Array.isArray(response.data) ? response.data : [response.data];
+      
+      // Filter to active studios only
+      studiosData = studiosData.filter(studio => studio.isActive);
+
+      // Add distance if user location is available
+      if (userLocation) {
+        studiosData = studiosData.map(studio => ({
+          ...studio,
+          distance: calculateDistance(
+            userLocation.latitude,
+            userLocation.longitude,
+            studio.coordinates?.latitude || 0,
+            studio.coordinates?.longitude || 0
+          )
+        }));
+
+        // Sort by distance
+        studiosData.sort((a, b) => a.distance - b.distance);
+      }
+      
+      // Update state
+      setStudios(studiosData);
+      studiosLoadedRef.current = true;
+      
+      return studiosData;
+    } catch (error) {
+      console.error('Error fetching studios:', error);
+      return [];
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, userLocation]); 
+
+  // Auto-select nearest studio on first load
+  const autoSelectNearestStudio = useCallback(async () => {
     // Skip if we already loaded studios once or already have a selected studio
-    if (studiosLoadedRef.current || (selectedStudio && initialLoadCompleteRef.current)) {
+    if (initialLoadCompleteRef.current) {
       return;
     }
 
@@ -118,10 +157,9 @@ const StudioLocationHeader = ({
       const storedStudio = localStorage.getItem('selectedStudio');
       const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
       
-      // If already selected, particularly from URL, don't change it
+      // If already selected from URL, don't change it
       if (isPreselectedFromUrl && selectedStudio) {
         initialLoadCompleteRef.current = true;
-        studiosLoadedRef.current = true;
         return;
       }
       
@@ -139,39 +177,12 @@ const StudioLocationHeader = ({
         }
       }
       
-      // Only fetch if we don't have studios yet
-      if (studios.length === 0) {
-        setLoading(true);
+      // If no studio selected yet, fetch and select nearest
+      if (!selectedStudio) {
+        const studiosData = await fetchStudios();
         
-        // Fetch studios with debounce to prevent multiple calls
-        const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-        let studiosData = Array.isArray(response.data) ? response.data : [response.data];
-        
-        // Filter to active studios only
-        studiosData = studiosData.filter(studio => studio.isActive);
-  
-        // Add distance if user location is available
-        if (userLocation) {
-          studiosData = studiosData.map(studio => ({
-            ...studio,
-            distance: calculateDistance(
-              userLocation.latitude,
-              userLocation.longitude,
-              studio.coordinates?.latitude || 0,
-              studio.coordinates?.longitude || 0
-            )
-          }));
-  
-          // Sort by distance
-          studiosData.sort((a, b) => a.distance - b.distance);
-        }
-        
-        // Mark as loaded to prevent repeat loads
-        studiosLoadedRef.current = true;
-        setStudios(studiosData);
-        
-        // Auto-select closest studio only if none is selected and we have studios
-        if (!selectedStudio && studiosData.length > 0) {
+        // Auto-select closest studio if we have studios
+        if (studiosData && studiosData.length > 0) {
           onStudioSelect(studiosData[0]);
           // Store in localStorage
           localStorage.setItem('selectedStudio', JSON.stringify(studiosData[0]));
@@ -180,12 +191,11 @@ const StudioLocationHeader = ({
         }
       }
     } catch (error) {
-      console.error('Error fetching studios:', error);
+      console.error('Error in auto-selecting studio:', error);
     } finally {
-      setLoading(false);
       initialLoadCompleteRef.current = true;
     }
-  }, [userLocation, onStudioSelect, selectedStudio, studios.length]);
+  }, [selectedStudio, onStudioSelect, fetchStudios]);
 
   // Initial load - get location once
   useEffect(() => {
@@ -194,12 +204,12 @@ const StudioLocationHeader = ({
     }
   }, [getUserLocation]);
 
-  // When user location is set, fetch studios once
+  // When user location is set, auto-select nearest studio
   useEffect(() => {
-    if (userLocation && !studiosLoadedRef.current) {
-      fetchAndSelectStudio();
+    if (userLocation && !initialLoadCompleteRef.current) {
+      autoSelectNearestStudio();
     }
-  }, [userLocation, fetchAndSelectStudio]);
+  }, [userLocation, autoSelectNearestStudio]);
 
   // Handle visibility change (user returns to app) - with debounce
   useEffect(() => {
@@ -214,7 +224,7 @@ const StudioLocationHeader = ({
         visibilityTimeoutRef.current = setTimeout(() => {
           const now = Date.now();
           // If location data is older than expiry time, refresh it
-          if (now - lastLocationUpdateRef.current > locationExpiryTime && !selectedStudio) {
+          if (now - lastLocationUpdateRef.current > locationExpiryTime) {
             console.log('App returned to foreground, updating location data');
             getUserLocation();
           }
@@ -230,14 +240,16 @@ const StudioLocationHeader = ({
         clearTimeout(visibilityTimeoutRef.current);
       }
     };
-  }, [getUserLocation, selectedStudio]);
+  }, [getUserLocation]);
   
-  // Force fetch studios if none loaded yet and dropdown is opened
+  // Fetch studios when dropdown is opened for the first time
   useEffect(() => {
-    if (isDropdownOpen && studios.length === 0 && !studiosLoadedRef.current) {
-      fetchAndSelectStudio();
+    if (isDropdownOpen) {
+      // Always fetch when opening the dropdown to ensure fresh data
+      fetchStudios();
+      dropdownOpenedOnceRef.current = true;
     }
-  }, [isDropdownOpen, studios.length, fetchAndSelectStudio]);
+  }, [isDropdownOpen, fetchStudios]);
   
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -252,6 +264,11 @@ const StudioLocationHeader = ({
     setIsDropdownOpen(false);
   };
 
+  // Force refresh studios
+  const refreshStudios = () => {
+    fetchStudios(true);
+  };
+
   return (
     <div className="relative" style={{ maxWidth: "250px" }}>
       {/* Main header showing selected studio - Sobeys style */}
@@ -261,7 +278,7 @@ const StudioLocationHeader = ({
       >
         <div className="flex items-center">
           <MapPin className="text-green-500 mr-2 flex-shrink-0" size={18} />
-          {loading ? (
+          {loading && !selectedStudio ? (
             <div className="h-4 w-24 bg-gray-200 animate-pulse rounded"></div>
           ) : selectedStudio ? (
             <span className="font-medium text-sm text-gray-700 truncate">{selectedStudio.name}</span>
@@ -280,8 +297,17 @@ const StudioLocationHeader = ({
       {isDropdownOpen && (
         <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
           <div className="p-2">
-            <h3 className="font-medium px-3 py-2 border-b text-sm">Select Pickup Location</h3>
-            {studios.length === 0 && loading ? (
+            <div className="flex justify-between items-center px-3 py-2 border-b">
+              <h3 className="font-medium text-sm">Select Pickup Location</h3>
+              <button 
+                onClick={refreshStudios}
+                className="text-xs text-blue-500 hover:text-blue-700"
+              >
+                Refresh
+              </button>
+            </div>
+            
+            {loading ? (
               // Loading skeleton
               <div className="animate-pulse space-y-2 p-3">
                 {[1, 2, 3].map(i => (

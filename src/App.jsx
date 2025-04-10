@@ -4739,10 +4739,7 @@ const renderStepContent = () => {
                         </div>
                       )}
                       
-                      {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-                        <div className="bg-yellow-50 p-2 rounded border border-yellow-200 mt-3">
-                        </div>
-                      )}
+                     
                     </div>
                   </div>
                 ) : (
