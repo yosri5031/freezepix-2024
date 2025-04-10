@@ -4741,7 +4741,6 @@ const renderStepContent = () => {
                       
                       {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
                         <div className="bg-yellow-50 p-2 rounded border border-yellow-200 mt-3">
-                          <p className="text-sm">{t('pickup.payment_notice')}</p>
                         </div>
                       )}
                     </div>
