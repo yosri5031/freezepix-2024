@@ -4423,24 +4423,7 @@ const renderStepContent = () => {
             </div>
       
             {/* Show Helcim Pay Button for credit card payments (for both shipping and pickup) */}
-            {paymentMethod === 'helcim' && validateStep() && (
-              <div className="border rounded-lg p-4 bg-gray-50">
-                <h3 className="font-medium mb-3">{t('payment.payment_details')}</h3>
-                <p className="text-sm text-gray-600 mb-4">{t('payment.secure_payment')}</p>
-                
-                <HelcimPayButton
-                  onPaymentSuccess={handleHelcimPaymentSuccess}
-                  isProcessing={isProcessingOrder}
-                  disabled={!validateStep()}
-                  selectedCountry={selectedCountry}
-                  calculateTotals={calculateTotals}
-                  total={total}
-                  setOrderSuccess={setOrderSuccess}
-                  setError={setError}
-                  setIsProcessingOrder={setIsProcessingOrder}
-                />
-              </div>
-            )}
+           
           </div>
         );
       
