@@ -2171,16 +2171,16 @@ const renderNavigationButtons = () => {
       {/* Conditional rendering for payment button */}
       {activeStep === 1 && paymentMethod === 'helcim' ? (
         <div className="helcim-payment-wrapper">
-          <HelcimPayButton
+        <HelcimPayButton
   onPaymentSuccess={handleHelcimPaymentSuccess}
   isProcessing={isProcessingOrder}
   disabled={!formIsValid}
   selectedCountry={selectedCountry}
-  total={total}
+  total={calculateTotals().total} // Fix: use the total from calculateTotals
   setOrderSuccess={setOrderSuccess}
   setError={setError}
   setIsProcessingOrder={setIsProcessingOrder}
-  onSecretTokenReceived={handleSecretTokenReceived} // Add this new prop
+  onSecretTokenReceived={handleSecretTokenReceived}
 />
         </div>
       ) : (
