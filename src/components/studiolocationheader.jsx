@@ -12,149 +12,209 @@ const StudioLocationHeader = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  const [error, setError] = useState(null);
   
   // Create all refs at the top level of the component
   const initialLoadCompleteRef = useRef(false);
   const lastLocationUpdateRef = useRef(Date.now());
-  const studiosLoadedRef = useRef(false);
   const visibilityTimeoutRef = useRef(null);
-  const dropdownOpenedOnceRef = useRef(false);
+  const fetchAbortController = useRef(null);
   
   // Constants
   const locationExpiryTime = 30 * 60 * 1000; // 30 minutes in milliseconds
+  const API_URL = 'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios';
   
-  // Calculate distance between coordinates
+  // Calculate distance between coordinates - with null safety
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) {
-      return Number.MAX_SAFE_INTEGER; // Return max distance if coordinates missing
+      return null; // Return null instead of MAX_SAFE_INTEGER for better error handling
     }
     
-    const R = 6371; // Radius of the earth in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distance in km
+    try {
+      const R = 6371; // Radius of the earth in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; // Distance in km
+    } catch (err) {
+      console.error('Error calculating distance:', err);
+      return null;
+    }
   };
 
   // Get user's location with stable caching
   const getUserLocation = useCallback(() => {
     // Try to load cached location first
-    const cachedLocation = localStorage.getItem('userLocationCache');
-    const cachedTimestamp = localStorage.getItem('userLocationTimestamp');
-    
-    if (cachedLocation && cachedTimestamp) {
-      const timestamp = parseInt(cachedTimestamp, 10);
-      const now = Date.now();
+    try {
+      const cachedLocation = localStorage.getItem('userLocationCache');
+      const cachedTimestamp = localStorage.getItem('userLocationTimestamp');
       
-      // If cache is fresh (less than 30 minutes old)
-      if (now - timestamp < locationExpiryTime) {
-        try {
-          const parsedLocation = JSON.parse(cachedLocation);
-          setUserLocation(parsedLocation);
-          lastLocationUpdateRef.current = timestamp;
-          return; // Use cached location and don't request new one
-        } catch (e) {
-          console.error('Error parsing cached location:', e);
-          // Continue to get fresh location if parsing fails
+      if (cachedLocation && cachedTimestamp) {
+        const timestamp = parseInt(cachedTimestamp, 10);
+        const now = Date.now();
+        
+        // If cache is fresh (less than 30 minutes old)
+        if (now - timestamp < locationExpiryTime) {
+          try {
+            const parsedLocation = JSON.parse(cachedLocation);
+            setUserLocation(parsedLocation);
+            lastLocationUpdateRef.current = timestamp;
+            return; // Use cached location and don't request new one
+          } catch (e) {
+            console.error('Error parsing cached location:', e);
+            // Continue to get fresh location if parsing fails
+          }
         }
       }
+    } catch (err) {
+      console.error('Error getting cached location:', err);
     }
     
     // Get fresh location if no cache or cache expired
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const location = {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          };
-          
-          // Update state (only if needed)
-          if (!userLocation || 
-              userLocation.latitude !== location.latitude || 
-              userLocation.longitude !== location.longitude) {
+          try {
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            
+            // Update state
             setUserLocation(location);
+            
+            // Update cache
+            localStorage.setItem('userLocationCache', JSON.stringify(location));
+            localStorage.setItem('userLocationTimestamp', Date.now().toString());
+            lastLocationUpdateRef.current = Date.now();
+          } catch (err) {
+            console.error('Error processing geolocation data:', err);
           }
-          
-          // Update cache
-          localStorage.setItem('userLocationCache', JSON.stringify(location));
-          localStorage.setItem('userLocationTimestamp', Date.now().toString());
-          lastLocationUpdateRef.current = Date.now();
         },
         (error) => {
           console.error('Error getting location:', error);
+          
           // Still use cached location even if expired, if we have it
-          if (cachedLocation) {
-            try {
+          try {
+            const cachedLocation = localStorage.getItem('userLocationCache');
+            if (cachedLocation) {
               const parsedLocation = JSON.parse(cachedLocation);
               setUserLocation(parsedLocation);
-            } catch (e) {
-              console.error('Error parsing cached location as fallback:', e);
             }
+          } catch (e) {
+            console.error('Error parsing cached location as fallback:', e);
           }
         },
         { maximumAge: locationExpiryTime, timeout: 10000 }
       );
     }
-  }, [userLocation]); // Only depend on userLocation
+  }, []); // No dependencies for this function
 
-  // Fetch studios data
-  const fetchStudios = useCallback(async (force = false) => {
+  // Fetch studios data (simple, stable version)
+  const fetchStudios = useCallback(async () => {
     // Don't fetch if already loading
-    if (loading && !force) return;
+    if (loading) return;
+    
+    // Cancel any previous fetch
+    if (fetchAbortController.current) {
+      fetchAbortController.current.abort();
+    }
+    
+    // Create new abort controller
+    fetchAbortController.current = new AbortController();
     
     try {
       setLoading(true);
+      setError(null);
       
-      const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-      let studiosData = Array.isArray(response.data) ? response.data : [response.data];
+      const response = await axios.get(API_URL, {
+        signal: fetchAbortController.current.signal,
+        timeout: 15000 // 15 seconds timeout
+      });
       
-      // Filter to active studios only
-      studiosData = studiosData.filter(studio => studio.isActive);
+      let studiosData = [];
+      
+      // Safely handle response data
+      if (response && response.data) {
+        studiosData = Array.isArray(response.data) ? response.data : [response.data];
+        
+        // Filter to active studios only
+        studiosData = studiosData.filter(studio => studio && studio.isActive);
 
-      // Add distance if user location is available
-      if (userLocation) {
-        studiosData = studiosData.map(studio => ({
-          ...studio,
-          distance: calculateDistance(
-            userLocation.latitude,
-            userLocation.longitude,
-            studio.coordinates?.latitude || 0,
-            studio.coordinates?.longitude || 0
-          )
-        }));
+        // Add distance if user location is available
+        if (userLocation && userLocation.latitude && userLocation.longitude) {
+          studiosData = studiosData.map(studio => {
+            if (!studio || !studio.coordinates) {
+              return {
+                ...studio,
+                distance: null
+              };
+            }
+            
+            const distance = calculateDistance(
+              userLocation.latitude,
+              userLocation.longitude,
+              studio.coordinates?.latitude || null,
+              studio.coordinates?.longitude || null
+            );
+            
+            return {
+              ...studio,
+              distance: distance
+            };
+          });
 
-        // Sort by distance
-        studiosData.sort((a, b) => a.distance - b.distance);
+          // Sort by distance, handling null distance values
+          studiosData.sort((a, b) => {
+            if (a.distance === null && b.distance === null) return 0;
+            if (a.distance === null) return 1;
+            if (b.distance === null) return -1;
+            return a.distance - b.distance;
+          });
+        }
       }
       
       // Update state
       setStudios(studiosData);
-      studiosLoadedRef.current = true;
       
       return studiosData;
     } catch (error) {
-      console.error('Error fetching studios:', error);
+      if (axios.isCancel(error)) {
+        console.log('Studio fetch cancelled');
+      } else {
+        console.error('Error fetching studios:', error);
+        setError('Failed to fetch studios');
+      }
       return [];
     } finally {
       setLoading(false);
+      fetchAbortController.current = null;
     }
   }, [loading, userLocation]); 
 
   // Auto-select nearest studio on first load
   const autoSelectNearestStudio = useCallback(async () => {
-    // Skip if we already loaded studios once or already have a selected studio
+    // Skip if we already completed initial load
     if (initialLoadCompleteRef.current) {
       return;
     }
 
     try {
       // Check if we already have a studio in localStorage
-      const storedStudio = localStorage.getItem('selectedStudio');
+      let storedStudio = null;
+      try {
+        const storedStudioJson = localStorage.getItem('selectedStudio');
+        if (storedStudioJson) {
+          storedStudio = JSON.parse(storedStudioJson);
+        }
+      } catch (e) {
+        console.error('Error parsing stored studio:', e);
+      }
+      
       const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
       
       // If already selected from URL, don't change it
@@ -164,17 +224,10 @@ const StudioLocationHeader = ({
       }
       
       // If we already have a stored studio and it wasn't auto-selected, use it
-      if (storedStudio && !selectedStudio) {
-        try {
-          const parsedStudio = JSON.parse(storedStudio);
-          if (parsedStudio && parsedStudio._id) {
-            onStudioSelect(parsedStudio);
-            initialLoadCompleteRef.current = true;
-            return;
-          }
-        } catch (e) {
-          console.error('Error parsing stored studio:', e);
-        }
+      if (storedStudio && storedStudio._id && !selectedStudio) {
+        onStudioSelect(storedStudio);
+        initialLoadCompleteRef.current = true;
+        return;
       }
       
       // If no studio selected yet, fetch and select nearest
@@ -183,11 +236,13 @@ const StudioLocationHeader = ({
         
         // Auto-select closest studio if we have studios
         if (studiosData && studiosData.length > 0) {
-          onStudioSelect(studiosData[0]);
-          // Store in localStorage
-          localStorage.setItem('selectedStudio', JSON.stringify(studiosData[0]));
-          localStorage.setItem('isPreselectedFromUrl', 'false');
-          console.log('Auto-selected closest studio:', studiosData[0].name);
+          const studioToSelect = studiosData[0];
+          if (studioToSelect && studioToSelect._id) {
+            onStudioSelect(studioToSelect);
+            // Store in localStorage
+            localStorage.setItem('selectedStudio', JSON.stringify(studioToSelect));
+            localStorage.setItem('isPreselectedFromUrl', 'false');
+          }
         }
       }
     } catch (error) {
@@ -199,9 +254,7 @@ const StudioLocationHeader = ({
 
   // Initial load - get location once
   useEffect(() => {
-    if (!initialLoadCompleteRef.current) {
-      getUserLocation();
-    }
+    getUserLocation();
   }, [getUserLocation]);
 
   // When user location is set, auto-select nearest studio
@@ -225,7 +278,6 @@ const StudioLocationHeader = ({
           const now = Date.now();
           // If location data is older than expiry time, refresh it
           if (now - lastLocationUpdateRef.current > locationExpiryTime) {
-            console.log('App returned to foreground, updating location data');
             getUserLocation();
           }
         }, 1000); // 1 second debounce
@@ -239,15 +291,18 @@ const StudioLocationHeader = ({
       if (visibilityTimeoutRef.current) {
         clearTimeout(visibilityTimeoutRef.current);
       }
+      
+      // Cancel any pending fetch
+      if (fetchAbortController.current) {
+        fetchAbortController.current.abort();
+      }
     };
   }, [getUserLocation]);
   
-  // Fetch studios when dropdown is opened for the first time
+  // Fetch studios when dropdown is opened
   useEffect(() => {
     if (isDropdownOpen) {
-      // Always fetch when opening the dropdown to ensure fresh data
       fetchStudios();
-      dropdownOpenedOnceRef.current = true;
     }
   }, [isDropdownOpen, fetchStudios]);
   
@@ -258,20 +313,28 @@ const StudioLocationHeader = ({
   
   // Handle studio selection
   const handleStudioSelect = (studio) => {
-    onStudioSelect(studio);
-    localStorage.setItem('selectedStudio', JSON.stringify(studio));
-    localStorage.setItem('isPreselectedFromUrl', 'false');
-    setIsDropdownOpen(false);
+    if (studio && studio._id) {
+      onStudioSelect(studio);
+      try {
+        localStorage.setItem('selectedStudio', JSON.stringify(studio));
+        localStorage.setItem('isPreselectedFromUrl', 'false');
+      } catch (err) {
+        console.error('Error saving studio to localStorage:', err);
+      }
+      setIsDropdownOpen(false);
+    }
   };
 
   // Force refresh studios
-  const refreshStudios = () => {
-    fetchStudios(true);
+  const refreshStudios = (e) => {
+    e.stopPropagation(); // Prevent dropdown from closing
+    fetchStudios();
   };
 
+  // Simplified render with better error handling
   return (
     <div className="relative" style={{ maxWidth: "250px" }}>
-      {/* Main header showing selected studio - Sobeys style */}
+      {/* Main header showing selected studio */}
       <div 
         className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-full cursor-pointer border border-gray-200 hover:border-green-400 transition-colors"
         onClick={toggleDropdown}
@@ -307,7 +370,17 @@ const StudioLocationHeader = ({
               </button>
             </div>
             
-            {loading ? (
+            {error ? (
+              <div className="px-3 py-2 text-sm text-red-500">
+                {error}
+                <button 
+                  onClick={refreshStudios}
+                  className="ml-2 text-blue-500 hover:underline"
+                >
+                  Try again
+                </button>
+              </div>
+            ) : loading ? (
               // Loading skeleton
               <div className="animate-pulse space-y-2 p-3">
                 {[1, 2, 3].map(i => (
@@ -321,22 +394,24 @@ const StudioLocationHeader = ({
               <p className="px-3 py-2 text-sm text-gray-500">No studios available</p>
             ) : (
               studios.map(studio => (
-                <div
-                  key={studio._id}
-                  className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
-                    selectedStudio?._id === studio._id ? 'bg-green-50 border-l-4 border-green-500' : ''
-                  }`}
-                  onClick={() => handleStudioSelect(studio)}
-                >
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="font-medium text-sm truncate">{studio.name}</span>
-                    <span className="text-xs text-gray-600 truncate">{studio.address}</span>
+                studio && studio._id ? (
+                  <div
+                    key={studio._id}
+                    className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
+                      selectedStudio?._id === studio._id ? 'bg-green-50 border-l-4 border-green-500' : ''
+                    }`}
+                    onClick={() => handleStudioSelect(studio)}
+                  >
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="font-medium text-sm truncate">{studio.name}</span>
+                      <span className="text-xs text-gray-600 truncate">{studio.address || 'No address'}</span>
+                    </div>
+                    {studio.distance !== null && (
+                      <span className="text-xs text-gray-500 whitespace-nowrap">{studio.distance.toFixed(1)} km</span>
+                    )}
                   </div>
-                  {studio.distance !== undefined && (
-                    <span className="text-xs text-gray-500 whitespace-nowrap">{studio.distance.toFixed(1)} km</span>
-                  )}
-                </div>
-              ))
+                ) : null
+              )).filter(Boolean) // Filter out any null elements
             )}
           </div>
         </div>
