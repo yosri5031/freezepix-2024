@@ -12,10 +12,6 @@ export const initializeHelcimPayCheckout = async ({ selectedCountry, total }) =>
     console.log('Initializing Helcim Pay with:', { selectedCountry, total });
     
     // Validate input parameters
-    if (!selectedCountry) {
-      throw new Error('Country is required');
-    }
-    
     if (!total || isNaN(parseFloat(total)) || parseFloat(total) <= 0) {
       throw new Error('Valid payment amount is required');
     }
@@ -49,20 +45,25 @@ export const initializeHelcimPayCheckout = async ({ selectedCountry, total }) =>
     // Format the amount to 2 decimal places
     const formattedAmount = parseFloat(total).toFixed(2);
     
-    // Prepare request data
+    // Prepare request data - simplified for troubleshooting
     const requestData = {
       amount: formattedAmount,
-      currency: currency,
-      paymentType: 'purchase',
-      paymentMethod: 'cc',
-      customStyling: {
-        appearance: 'light',
-        brandColor: 'fcd704'
-      },
-      logo: 'https://cdn.shopify.com/s/files/1/0671/1387/7804/files/Freezepix_Logo_VF_2.jpg?v=1738964599'
+      currency: currency
     };
     
     console.log('Sending Helcim request:', requestData);
+    
+    // We'll use a mock implementation for testing if the server is unavailable
+    const useMockImplementation = false; // Set to true for testing
+    
+    if (useMockImplementation) {
+      console.log('Using mock implementation');
+      // Return mock data for testing
+      return {
+        checkoutToken: 'mock-checkout-token-' + Date.now(),
+        secretToken: 'mock-secret-token'
+      };
+    }
     
     // Make request to your backend API
     const response = await axios.post(
@@ -86,7 +87,25 @@ export const initializeHelcimPayCheckout = async ({ selectedCountry, total }) =>
     return response.data;
   } catch (error) {
     console.error('Helcim initialization error:', error);
-    throw new Error(`Failed to initialize Helcim payment: ${error.response?.data?.message || error.message}`);
+    
+    // Create a more descriptive error message
+    let errorMessage = 'Payment initialization failed';
+    
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      errorMessage = error.response.data?.message || 
+                    error.response.data?.details || 
+                    `Server error: ${error.response.status}`;
+    } else if (error.request) {
+      // The request was made but no response was received
+      errorMessage = 'No response from payment server. Please check your internet connection.';
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      errorMessage = error.message;
+    }
+    
+    throw new Error(`Failed to initialize payment: ${errorMessage}`);
   }
 };
 
