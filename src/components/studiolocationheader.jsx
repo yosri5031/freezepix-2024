@@ -12,10 +12,15 @@ const StudioLocationHeader = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
+  
+  // Create all refs at the top level of the component
   const initialLoadCompleteRef = useRef(false);
   const lastLocationUpdateRef = useRef(Date.now());
-  const locationExpiryTime = 30 * 60 * 1000; // 30 minutes in milliseconds
   const studiosLoadedRef = useRef(false);
+  const visibilityTimeoutRef = useRef(null);
+  
+  // Constants
+  const locationExpiryTime = 30 * 60 * 1000; // 30 minutes in milliseconds
   
   // Calculate distance between coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -99,7 +104,7 @@ const StudioLocationHeader = ({
         { maximumAge: locationExpiryTime, timeout: 10000 }
       );
     }
-  }, []); // Empty dependency array to prevent recreation
+  }, [selectedStudio, userLocation]); // Include dependencies to prevent stale closures
 
   // Fetch studios and pre-select closest one
   const fetchAndSelectStudio = useCallback(async () => {
@@ -198,17 +203,15 @@ const StudioLocationHeader = ({
 
   // Handle visibility change (user returns to app) - with debounce
   useEffect(() => {
-    const visibilityTimeout = useRef(null);
-    
     const handleVisibilityChange = () => {
       // Clear any pending timeout
-      if (visibilityTimeout.current) {
-        clearTimeout(visibilityTimeout.current);
+      if (visibilityTimeoutRef.current) {
+        clearTimeout(visibilityTimeoutRef.current);
       }
       
       if (document.visibilityState === 'visible') {
         // Set a timeout to debounce the operation
-        visibilityTimeout.current = setTimeout(() => {
+        visibilityTimeoutRef.current = setTimeout(() => {
           const now = Date.now();
           // If location data is older than expiry time, refresh it
           if (now - lastLocationUpdateRef.current > locationExpiryTime && !selectedStudio) {
@@ -223,11 +226,18 @@ const StudioLocationHeader = ({
     
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      if (visibilityTimeout.current) {
-        clearTimeout(visibilityTimeout.current);
+      if (visibilityTimeoutRef.current) {
+        clearTimeout(visibilityTimeoutRef.current);
       }
     };
   }, [getUserLocation, selectedStudio]);
+  
+  // Force fetch studios if none loaded yet and dropdown is opened
+  useEffect(() => {
+    if (isDropdownOpen && studios.length === 0 && !studiosLoadedRef.current) {
+      fetchAndSelectStudio();
+    }
+  }, [isDropdownOpen, studios.length, fetchAndSelectStudio]);
   
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -241,13 +251,6 @@ const StudioLocationHeader = ({
     localStorage.setItem('isPreselectedFromUrl', 'false');
     setIsDropdownOpen(false);
   };
-
-  // Force fetch studios if none loaded yet and dropdown is opened
-  useEffect(() => {
-    if (isDropdownOpen && studios.length === 0 && !studiosLoadedRef.current) {
-      fetchAndSelectStudio();
-    }
-  }, [isDropdownOpen, studios.length, fetchAndSelectStudio]);
 
   return (
     <div className="relative" style={{ maxWidth: "250px" }}>
