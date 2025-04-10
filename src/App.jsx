@@ -5257,7 +5257,6 @@ return (
                     <p>{selectedStudio.city}, {selectedStudio.country}</p>
                   </>
                 )}
-                <p className="text-sm text-gray-600 mt-2">{t('pickup.payment_notice')}</p>
               </div>
             </div>
             
