@@ -3167,11 +3167,11 @@ const handleOrderSuccess = async ({
         price: photo.price,
         productType: photo.productType
       })),
-      totalAmount: total,
-      subtotal,
-      shippingFee,
-      taxAmount,
-      discount,
+      totalAmount: Number(total) || 0,
+      subtotal: Number(subtotal) || 0,
+      shippingFee: Number(shippingFee) || 0,
+      taxAmount: Number(taxAmount) || 0,
+      discount: Number(discount) || 0,
       currency: country.currency,
       orderNote: orderNote || '',
       paymentMethod: finalPaymentMethod,
@@ -3729,10 +3729,10 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         price: photo.price,
         productType: photo.productType
       })),
-      totalAmount: paymentData.amount,
-      subtotal: paymentData.amount - (paymentData.amount > 69.99 ? 0 : 20),
-      shippingFee: shippingFee, //shipping Same as invoice
-      taxAmount: taxAmount, // tax same as invoice
+      totalAmount: Number(paymentData.amount) || 0,
+      subtotal: Number(paymentData.amount) - (paymentData.amount > 69.99 ? 0 : 20),
+      shippingFee: Number(shippingFee) || 0, //shipping Same as invoice
+      taxAmount: Number(taxAmount), // tax same as invoice
       discount: 0,
       currency: paymentData.currency,
       orderNote: "",
