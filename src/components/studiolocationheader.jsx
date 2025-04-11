@@ -1,27 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Enhanced StudioLocationHeader with wider dropdown and improved text wrapping
+// Enhanced StudioLocationHeader with country filtering
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [userCountry, setUserCountry] = useState(null);
   
   // Use refs to prevent unnecessary re-renders
   const fetchingRef = useRef(false);
   const hasFetchedRef = useRef(false);
   const locationRef = useRef(null);
   
-  // Get user location once on mount
+  // Get user location and country once on mount
   useEffect(() => {
     const getUserLocation = () => {
       try {
         // Try to get cached location first
         const cachedLocation = localStorage.getItem('userLocationCache');
+        const cachedCountry = localStorage.getItem('userCountry');
         
         if (cachedLocation) {
           locationRef.current = JSON.parse(cachedLocation);
+          if (cachedCountry) {
+            setUserCountry(cachedCountry);
+          }
           
           // If we have a cached location but no selected studio, fetch and select nearest
           if (!selectedStudio && !hasFetchedRef.current) {
@@ -36,7 +41,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       // Get fresh location if no cache
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
-          (position) => {
+          async (position) => {
             const location = {
               latitude: position.coords.latitude,
               longitude: position.coords.longitude
@@ -44,6 +49,17 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             
             locationRef.current = location;
             localStorage.setItem('userLocationCache', JSON.stringify(location));
+            
+            // Get country from coordinates using reverse geocoding
+            try {
+              const country = await getCountryFromCoordinates(location.latitude, location.longitude);
+              if (country) {
+                setUserCountry(country);
+                localStorage.setItem('userCountry', country);
+              }
+            } catch (err) {
+              console.error('Error getting country:', err);
+            }
             
             // If no studio is selected yet, fetch and select the nearest
             if (!selectedStudio && !hasFetchedRef.current) {
@@ -60,6 +76,36 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     getUserLocation();
   }, [selectedStudio]);
+  
+  // Get country from coordinates using a reverse geocoding service
+  const getCountryFromCoordinates = async (latitude, longitude) => {
+    try {
+      // Option 1: Using a free geocoding API
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Geocoding error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data.address.country;
+      
+      // Option 2: If you have a Google Maps API key
+      // const response = await fetch(
+      //   `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
+      // );
+      // const data = await response.json();
+      // const countryResult = data.results.find(result => 
+      //   result.types.includes('country')
+      // );
+      // return countryResult?.address_components[0].long_name;
+    } catch (error) {
+      console.error('Error in reverse geocoding:', error);
+      return null;
+    }
+  };
   
   // Calculate distance between coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
@@ -148,6 +194,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
           return { ...studio, distance };
         });
         
+        // Filter by user's country if available
+        if (userCountry) {
+          studiosWithDistance = studiosWithDistance.filter(studio => 
+            studio && studio.country && studio.country.toLowerCase() === userCountry.toLowerCase()
+          );
+        }
+        
         // Sort by distance
         studiosWithDistance.sort((a, b) => {
           if (a.distance === null && b.distance === null) return 0;
@@ -186,7 +239,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
 
   // Set base width for the component
   const baseWidth = 250;
-  // Calculate dropdown width (1.5x the base width)
+  // Calculate dropdown width (1.3x the base width)
   const dropdownWidth = baseWidth * 1.3;
 
   return (
@@ -211,7 +264,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         )}
       </div>
       
-      {/* Dropdown - Now 1.5x wider than the parent */}
+      {/* Dropdown - Now 1.3x wider than the parent */}
       {isDropdownOpen && (
         <div 
           className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
@@ -219,7 +272,9 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         >
           <div className="p-2">
             <div className="flex justify-between items-center px-3 py-2 border-b">
-              <h3 className="font-medium text-sm">Select Pickup Location</h3>
+              <h3 className="font-medium text-sm">
+                {userCountry ? `Studios in ${userCountry}` : 'Select Pickup Location'}
+              </h3>
               <button 
                 onClick={handleRefresh}
                 className="text-xs text-blue-500 hover:text-blue-700"
@@ -240,7 +295,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
                   ))}
                 </div>
               ) : studios.length === 0 ? (
-                <p className="px-3 text-sm text-gray-500">No studios available</p>
+                <p className="px-3 text-sm text-gray-500">
+                  {userCountry 
+                    ? `No studios available in ${userCountry}` 
+                    : 'No studios available'}
+                </p>
               ) : (
                 studios.map(studio => (
                   studio && studio._id ? (
