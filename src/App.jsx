@@ -2196,39 +2196,37 @@ const renderNavigationButtons = () => {
           <div className="flex items-center justify-center gap-2 relative z-10">
             <span className="text-black font-bold tracking-wide">Print</span>
             <div className="relative">
-              {/* FreezeFIX custom printer icon */}
-              <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Main printer body - black like "freeze" */}
-                <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
+              {/* FreezeFIX custom printer icon with CSS style inspiration */}
+              <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Main printer body - black like "freeze" (rounded like the CSS example) */}
+                <path d="M5.6 19.6C5.6 18.272 6.672 17.2 8 17.2H20C21.328 17.2 22.4 18.272 22.4 19.6V22.4C22.4 23.728 21.328 24.8 20 24.8H8C6.672 24.8 5.6 23.728 5.6 22.4V19.6Z" fill="black" />
                 
-                {/* Paper input tray */}
-                <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
+                {/* Printer top cutout */}
+                <rect x="9.6" y="19.6" width="8.8" height="2.4" fill="#FFCC00" rx="1" />
                 
-                {/* Paper output */}
-                <rect 
-                  x="7" 
-                  y="16" 
-                  width="14" 
-                  height="6"
-                  fill="white" 
-                />
+                {/* Printer bottom cutout */}
+                <path d="M9.6 22.4C9.6 22.4 9.6 26.4 9.6 26.4C9.6 27.064 10.136 27.6 10.8 27.6H17.2C17.864 27.6 18.4 27.064 18.4 26.4V22.4H9.6Z" fill="#FFCC00" />
                 
-                {/* FreezeFIX-style pixels on printer in yellow like "FIX" */}
-                <rect x="18" y="8" width="2" height="2" fill="#FFCC00" />
-                <rect x="20" y="8" width="2" height="2" fill="#FFCC00" />
-                <rect x="20" y="10" width="2" height="2" fill="#FFCC00" />
+                {/* Photo being printed (with sky and landscape) */}
+                <rect x="8.4" y="7.6" width="11.2" height="9.6" fill="white" rx="0.8" />
+                <rect x="8.4" y="7.6" width="11.2" height="4.8" fill="#99CCFF" rx="0.8" />
+                <rect x="8.4" y="12.4" width="11.2" height="4.8" fill="#44CC44" />
                 
-                {/* Printer controls */}
-                <rect x="8" y="9" width="2" height="2" fill="#444" />
-                <rect x="11" y="9" width="3" height="2" fill="#444" />
+                {/* Sun in the photo */}
+                <circle cx="16" cy="9.6" r="1.6" fill="#FFCC00" />
                 
-                {/* Yellow pixel pattern on printed paper */}
-                <rect x="9" y="17" width="2" height="2" fill="#FFCC00" />
-                <rect x="11" y="17" width="2" height="2" fill="#FFCC00" />
-                <rect x="9" y="19" width="2" height="2" fill="#FFCC00" />
-                <rect x="16" y="18" width="2" height="2" fill="#FFCC00" />
-                <rect x="18" y="18" width="1" height="1" fill="#FFCC00" />
-                <rect x="16" y="20" width="1" height="1" fill="#FFCC00" />
+                {/* FreezeFIX yellow pixels on the bottom of the photo */}
+                <rect x="10" y="14" width="1.2" height="1.2" fill="#FFCC00" />
+                <rect x="12" y="14.8" width="1.6" height="0.8" fill="#FFCC00" />
+                <rect x="15.2" y="13.6" width="1.2" height="1.2" fill="#FFCC00" />
+                
+                {/* Printer status light */}
+                <circle cx="20" cy="21.2" r="0.8" fill="#FFCC00" />
+                
+                {/* Completed photo output */}
+                <rect x="9.6" y="25.2" width="8.8" height="2.4" fill="white" rx="0.4" />
+                <rect x="10.8" y="25.6" width="1.2" height="0.8" fill="#FFCC00" />
+                <rect x="16" y="26" width="1.2" height="0.8" fill="#FFCC00" />
               </svg>
             </div>
           </div>
