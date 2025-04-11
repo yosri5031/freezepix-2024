@@ -2185,28 +2185,33 @@ const renderNavigationButtons = () => {
         </div>
       ) : (
         <button
-          onClick={handleNext}
-          disabled={!isStepValid}
-          className={`px-6 py-2 rounded ${
-            isStepValid
-              ? 'bg-yellow-400 hover:bg-yellow-500'
-              : 'bg-gray-200 cursor-not-allowed'
-          }`}
-          type="button" 
+        onClick={handleNext}
+        disabled={!isStepValid}
+        className={`px-6 py-2 rounded flex items-center justify-center space-x-2 ${
+          isStepValid
+            ? 'bg-yellow-400 hover:bg-yellow-500'
+            : 'bg-gray-200 cursor-not-allowed'
+        }`}
+        type="button"
+      >
+        <span className="text-black">Print</span>
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          width="16" 
+          height="16" 
+          viewBox="0 0 24 24" 
+          fill="none" 
+          stroke="currentColor" 
+          strokeWidth="2" 
+          strokeLinecap="round" 
+          strokeLinejoin="round" 
+          className="text-black"
         >
-          {isLoading 
-            ? t('buttons.processing')
-            : activeStep === 1 
-              ? deliveryMethod === 'pickup'
-                ? paymentMethod === 'helcim'
-                  ? t('buttons.proceed_to_payment')
-                  : t('buttons.place_order')
-                : paymentMethod === 'cod'
-                  ? t('buttons.place_order_cod')
-                  : t('buttons.proceed_to_payment')
-              : t('buttons.next')
-          }
-        </button>
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+      </button>
       )}
     </div>
   );
