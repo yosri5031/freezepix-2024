@@ -359,6 +359,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
           // Apply the country filtering
           studiosWithDistance = studiosWithDistance.filter(studio => {
             if (!studio || !studio.country) return false;
+            
+            // Debug logging to trace the filtering
+            console.log(`Checking ${studio.name} (${studio.country}) against user country ${userCountry}`);
+            
+            // Use a more comprehensive matching approach for country codes
             return matchCountries(userCountry, studio.country);
           });
           
