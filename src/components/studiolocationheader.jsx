@@ -63,29 +63,148 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   
   // Get user location once on mount
   useEffect(() => {
-    const getUserLocation = () => {
+    const getUserLocation = async () => {
+      // Always try to get a fresh location first, instead of relying on cache
+      if (navigator.geolocation) {
+        console.log('Requesting fresh user location...');
+        navigator.geolocation.getCurrentPosition(
+          async (position) => {
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            
+            console.log('Fresh location obtained:', location);
+            locationRef.current = location;
+            localStorage.setItem('userLocationCache', JSON.stringify(location));
+            
+            // Get country from coordinates using reverse geocoding
+            try {
+              const country = await getCountryFromCoordinates(location.latitude, location.longitude);
+              if (country) {
+                console.log('Fresh country detected:', country);
+                setUserCountry(country);
+                localStorage.setItem('userCountry', country);
+                
+                // Fetch studios with the fresh country
+                if (!hasFetchedRef.current) {
+                  await fetchStudios(true);
+                }
+                return;
+              }
+            } catch (err) {
+              console.error('Error getting country from fresh coordinates:', err);
+            }
+            
+            // If fresh country detection failed, fall back to IP-based detection
+            const ipSuccess = await getCountryFromIP();
+            if (!ipSuccess) {
+              // If all else fails, try cached values
+              tryUsingCache();
+            }
+          },
+          async (error) => {
+            console.error('Error getting fresh location:', error);
+            // Try IP-based detection first
+            const ipSuccess = await getCountryFromIP();
+            if (!ipSuccess) {
+              // If IP detection fails, try using cached values
+              tryUsingCache();
+            }
+          },
+          { timeout: 5000, maximumAge: 0 } // Request fresh location with no cache
+        );
+      } else {
+        // No geolocation support, try IP-based detection
+        const ipSuccess = await getCountryFromIP();
+        if (!ipSuccess) {
+          // If IP detection fails, try using cached values
+          tryUsingCache();
+        }
+      }
+    };
+    
+    // Try IP-based location
+    const getCountryFromIP = async () => {
       try {
-        // Try to get cached location and country first
+        console.log('Trying IP-based country detection...');
+        const response = await fetch('https://ipapi.co/json/');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.country_name) {
+            console.log('IP-based country detected:', data.country_name);
+            setUserCountry(data.country_name);
+            localStorage.setItem('userCountry', data.country_name);
+            
+            if (data.latitude && data.longitude) {
+              const location = {
+                latitude: data.latitude,
+                longitude: data.longitude
+              };
+              locationRef.current = location;
+              localStorage.setItem('userLocationCache', JSON.stringify(location));
+            }
+            
+            // Fetch studios with the IP-based country
+            if (!hasFetchedRef.current) {
+              await fetchStudios(true);
+            }
+            return true;
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error('Error getting country from IP:', error);
+        return false;
+      }
+    };
+    
+    // Try using cached values as last resort
+    const tryUsingCache = async () => {
+      try {
+        console.log('Trying cached location values as last resort...');
         const cachedLocation = localStorage.getItem('userLocationCache');
         const cachedCountry = localStorage.getItem('userCountry');
         
         if (cachedLocation) {
           locationRef.current = JSON.parse(cachedLocation);
+          console.log('Using cached location:', locationRef.current);
           
           if (cachedCountry) {
-            setUserCountry(cachedCountry);
             console.log('Using cached country:', cachedCountry);
+            setUserCountry(cachedCountry);
+            
+            // Fetch studios with cached country
+            if (!hasFetchedRef.current) {
+              await fetchStudios(true);
+            }
+            return true;
           }
-          
-          // If we have a cached location but no selected studio, fetch and select nearest
-          if (!selectedStudio && !hasFetchedRef.current) {
-            fetchStudios(true);
-          }
-          return;
         }
+        
+        // If we got here, we have no location or country information
+        // Fetch studios without filtering
+        console.log('No location/country information available, fetching all studios');
+        if (!hasFetchedRef.current) {
+          await fetchStudios(true);
+        }
+        return false;
       } catch (e) {
         console.error('Error reading cached location:', e);
+        // Clear potentially corrupted cache
+        localStorage.removeItem('userLocationCache');
+        localStorage.removeItem('userCountry');
+        
+        // Fetch studios without filtering
+        if (!hasFetchedRef.current) {
+          await fetchStudios(true);
+        }
+        return false;
       }
+    };
+    
+    getUserLocation();
+  }, []);
       
       // Try IP-based location as fallback before asking for geolocation permission
       const getCountryFromIP = async () => {
@@ -350,6 +469,15 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   // Studio selection handler
   const handleStudioSelect = (studio) => {
     if (studio && studio._id) {
+      console.log('Studio selected:', studio.name, 'Country:', studio.country);
+      
+      // If the user's country isn't set yet, try to set it from the selected studio
+      if (!userCountry && studio.country) {
+        console.log('Setting user country from selected studio:', studio.country);
+        setUserCountry(studio.country);
+        localStorage.setItem('userCountry', studio.country);
+      }
+      
       onStudioSelect(studio);
       
       // Save to localStorage
@@ -416,8 +544,10 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         
         // Filter by user's country if available
         if (userCountry) {
+          const beforeFilter = studiosWithDistance.length;
+          
           // Apply the country filtering with robust matching
-          studiosWithDistance = studiosWithDistance.filter(studio => {
+          const filteredStudios = studiosWithDistance.filter(studio => {
             if (!studio || !studio.country) return false;
             
             // Debug logging to trace the filtering
@@ -429,8 +559,14 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             return matches;
           });
           
-          // Log the filtering results
-          console.log(`Country filtering: ${activeStudios.length} studios → ${studiosWithDistance.length} studios in ${userCountry}`);
+          // Only apply filtering if we found at least one match
+          // This prevents showing no studios if country detection fails
+          if (filteredStudios.length > 0) {
+            studiosWithDistance = filteredStudios;
+            console.log(`Country filtering: ${beforeFilter} studios → ${studiosWithDistance.length} studios in ${userCountry}`);
+          } else {
+            console.log(`No studios matched country ${userCountry}, showing all studios`);
+          }
         }
         
         // Sort by distance
@@ -450,6 +586,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       if (autoSelect && studiosWithDistance.length > 0 && !selectedStudio) {
         const nearestStudio = studiosWithDistance[0];
         if (nearestStudio && nearestStudio._id) {
+          console.log('Auto-selecting studio:', nearestStudio.name, 'Country:', nearestStudio.country);
           handleStudioSelect(nearestStudio);
         }
       }
