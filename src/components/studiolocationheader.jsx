@@ -77,32 +77,96 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     getUserLocation();
   }, [selectedStudio]);
   
-  // Get country from coordinates using a reverse geocoding service
+        // Get country from coordinates using a reverse geocoding service
   const getCountryFromCoordinates = async (latitude, longitude) => {
     try {
-      // Option 1: Using a free geocoding API
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3`
-      );
+      // Try both OpenStreetMap and Google APIs for better reliability
+      let country = null;
       
-      if (!response.ok) {
-        throw new Error(`Geocoding error: ${response.status}`);
+      // 1. Try OpenStreetMap first (free)
+      try {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&zoom=3&accept-language=en`
+        );
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.address && data.address.country) {
+            country = data.address.country;
+            console.log('Detected country from OSM:', country);
+          }
+        }
+      } catch (error) {
+        console.error('Error with OpenStreetMap geocoding:', error);
       }
       
-      const data = await response.json();
-      return data.address.country;
+      // 2. Fallback to Google if available and OSM failed
+      if (!country && typeof google !== 'undefined' && google.maps && google.maps.Geocoder) {
+        try {
+          const geocoder = new google.maps.Geocoder();
+          const results = await new Promise((resolve) => {
+            geocoder.geocode(
+              { location: { lat: parseFloat(latitude), lng: parseFloat(longitude) } },
+              (results, status) => {
+                resolve(status === 'OK' ? results : null);
+              }
+            );
+          });
+          
+          if (results && results.length > 0) {
+            // Find country component
+            for (const result of results) {
+              for (const component of result.address_components) {
+                if (component.types.includes('country')) {
+                  country = component.long_name;
+                  console.log('Detected country from Google:', country);
+                  break;
+                }
+              }
+              if (country) break;
+            }
+          }
+        } catch (error) {
+          console.error('Error with Google geocoding:', error);
+        }
+      }
       
-      // Option 2: If you have a Google Maps API key
-      // const response = await fetch(
-      //   `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=YOUR_GOOGLE_API_KEY`
-      // );
-      // const data = await response.json();
-      // const countryResult = data.results.find(result => 
-      //   result.types.includes('country')
-      // );
-      // return countryResult?.address_components[0].long_name;
+      // 3. Last resort hardcoded fallback for common coordinates
+      if (!country) {
+        // Rough country detection based on latitude/longitude ranges
+        // This is very approximate and only for major countries
+        const lat = parseFloat(latitude);
+        const lng = parseFloat(longitude);
+        
+        // North America (USA)
+        if (lat > 24 && lat < 50 && lng > -125 && lng < -66) {
+          country = 'United States';
+        }
+        // Canada
+        else if (lat > 49 && lat < 70 && lng > -140 && lng < -50) {
+          country = 'Canada';
+        }
+        // UK
+        else if (lat > 49 && lat < 59 && lng > -11 && lng < 2) {
+          country = 'United Kingdom';
+        }
+        // France
+        else if (lat > 41 && lat < 51 && lng > -5 && lng < 10) {
+          country = 'France';
+        }
+        // Tunisia
+        else if (lat > 30 && lat < 38 && lng > 7 && lng < 12) {
+          country = 'Tunisia';
+        }
+        
+        if (country) {
+          console.log('Fallback country detection:', country);
+        }
+      }
+      
+      return country;
     } catch (error) {
-      console.error('Error in reverse geocoding:', error);
+      console.error('Error in all geocoding methods:', error);
       return null;
     }
   };
@@ -173,6 +237,10 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       
       // Process the data
       const studiosArray = Array.isArray(data) ? data : [data];
+      
+      // Debug logging to see studio data
+      console.log('Studio data countries:', studiosArray.map(s => s?.country || 'unknown'));
+      
       const activeStudios = studiosArray.filter(studio => studio && studio.isActive);
       
       // Add distance if location is available
@@ -196,9 +264,93 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         
         // Filter by user's country if available
         if (userCountry) {
-          studiosWithDistance = studiosWithDistance.filter(studio => 
-            studio && studio.country && studio.country.toLowerCase() === userCountry.toLowerCase()
-          );
+          // Create a comprehensive country mapping
+          const countryMappings = {
+            // ==================== North America ====================
+            "usa": ["united states", "united states of america", "états-unis", "etats-unis", "USA", "US"],
+            "canada": ["canada", "CAN", "CA"],
+            "mexico": ["méxico", "mexique", "MEX", "MX"],
+            
+            // ==================== Europe ====================
+            "united kingdom": ["uk", "great britain", "royaume-uni", "grande-bretagne", "GBR", "GB"],
+            "france": ["france", "république française", "republique francaise", "FRA", "FR"],
+            "germany": ["deutschland", "allemagne", "DEU", "DE"],
+            "spain": ["españa", "espagne", "ESP", "ES"],
+            "italy": ["italia", "italie", "ITA", "IT"],
+            
+            // ==================== Africa ====================
+            "tunisia": ["tunisie", "TUN", "TN", "تونس"],
+            "morocco": ["maroc", "المغرب", "MAR", "MA"],
+            "algeria": ["algérie", "algerie", "الجزائر", "DZA", "DZ"],
+            "egypt": ["مصر", "égypte", "egypte", "EGY", "EG"],
+            
+            // ==================== Asia ====================
+            "japan": ["日本", "japon", "JPN", "JP"],
+            "china": ["中国", "中國", "chine", "CHN", "CN"],
+            "india": ["भारत", "inde", "IND", "IN"],
+            "russia": ["россия", "russie", "RUS", "RU"],
+            
+            // Add more country mappings as needed
+          };
+          
+          // Create a normalized mapping for easier lookup
+          const normalizedMappings = {};
+          
+          // Process the hierarchical mapping into a flat lookup
+          Object.entries(countryMappings).forEach(([mainName, alternateNames]) => {
+            // Normalize the main name
+            const normalizedMain = mainName.toLowerCase().trim();
+            normalizedMappings[normalizedMain] = normalizedMain;
+            
+            // For each alternate name, create a mapping to the main name
+            alternateNames.forEach(altName => {
+              const normalizedAlt = altName.toLowerCase().trim();
+              normalizedMappings[normalizedAlt] = normalizedMain;
+            });
+          });
+          
+          // Function to match countries with normalization
+          const matchCountries = (geocoded, database) => {
+            if (!geocoded || !database) return false;
+            
+            const normalizedGeocoded = geocoded.toLowerCase().trim();
+            const normalizedDatabase = database.toLowerCase().trim();
+            
+            // Try direct match
+            if (normalizedGeocoded === normalizedDatabase) return true;
+            
+            // Try normalized lookup
+            const normalizedGeocodedKey = normalizedMappings[normalizedGeocoded];
+            const normalizedDatabaseKey = normalizedMappings[normalizedDatabase];
+            
+            // If both map to the same normalized country, it's a match
+            if (normalizedGeocodedKey && normalizedDatabaseKey && 
+                normalizedGeocodedKey === normalizedDatabaseKey) {
+              return true;
+            }
+            
+            // Try substring match as a last resort (e.g., "United States" contains "States")
+            if (normalizedGeocoded.includes(normalizedDatabase) || 
+                normalizedDatabase.includes(normalizedGeocoded)) {
+              return true;
+            }
+            
+            return false;
+          };
+          
+          // Apply the country filtering
+          studiosWithDistance = studiosWithDistance.filter(studio => {
+            if (!studio || !studio.country) return false;
+            return matchCountries(userCountry, studio.country);
+          });
+          
+          // Log the filtering results for debugging
+          console.log('Country filtering:', {
+            userCountry,
+            beforeFilter: activeStudios.length,
+            afterFilter: studiosWithDistance.length,
+            filteredStudios: studiosWithDistance.map(s => s.name)
+          });
         }
         
         // Sort by distance
@@ -273,7 +425,14 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
           <div className="p-2">
             <div className="flex justify-between items-center px-3 py-2 border-b">
               <h3 className="font-medium text-sm">
-                {userCountry ? `Studios in ${userCountry}` : 'Select Pickup Location'}
+                {userCountry ? (
+                  <div className="flex items-center">
+                    Studios in {userCountry}
+                    <span className="ml-1 text-xs text-gray-500">
+                      ({studios.length})
+                    </span>
+                  </div>
+                ) : 'Select Pickup Location'}
               </h3>
               <button 
                 onClick={handleRefresh}
