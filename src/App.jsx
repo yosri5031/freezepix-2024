@@ -1332,11 +1332,6 @@ const [formData, setFormData] = useState({
         // Only update country if it's a valid supported country
         if (validCountry) {
           setSelectedCountry(studioCountry);
-          
-          // Set appropriate payment method based on country
-          if (studioCountry === 'TN' || studioCountry === 'TUN') {
-            setPaymentMethod('cod');
-          }
         }
         
         // Update URL with studio slug (if needed)
@@ -2103,11 +2098,6 @@ useEffect(() => {
     const country = initialCountries.find(c => c.value === selectedCountry);
     if (!country) return;
 
-    // Force payment method to 'cod' for Tunisia regardless of delivery method
-    if (selectedCountry === 'TN' || selectedCountry === 'TN') {
-      setPaymentMethod('cod');
-    }
-
     // Update prices for all photos when country changes
     setSelectedPhotos(prevPhotos => 
       prevPhotos.map(photo => {
@@ -2163,16 +2153,14 @@ useEffect(() => {
 
 const renderNavigationButtons = () => {
   const isStepValid = validateStep();
-  const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
   
   return (
     <div className="flex justify-between mt-8">
-      {/* Back button - same for all countries */}
       {activeStep > 0 ? (
         <button
           onClick={handleBack}
           className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-          type="button"
+          type="button" 
         >
           {t('buttons.back')}
         </button>
@@ -2180,76 +2168,44 @@ const renderNavigationButtons = () => {
         <div></div> // Empty div for layout consistency
       )}
 
-      {/* Next/Submit button - different behavior based on country and step */}
-      {activeStep === 1 ? (
-        isTunisia ? (
-          // Tunisia-specific button (always regular button, never Helcim)
-          <button
-            onClick={handleNext}
-            disabled={!isStepValid || isLoading}
-            className={`px-6 py-2 rounded ${
-              isStepValid && !isLoading
-                ? 'bg-yellow-400 hover:bg-yellow-500'
-                : 'bg-gray-200 cursor-not-allowed'
-            }`}
-            type="button"
-          >
-            {isLoading 
-              ? t('buttons.processing')
-              : deliveryMethod === 'pickup'
-                ? t('buttons.place_order') // "Place Order" for studio pickup
-                : t('buttons.place_order_cod') // "Place Order (COD)" for shipping
-            }
-          </button>
-        ) : (
-          // Non-Tunisia - maintain original logic with Helcim button when needed
-          paymentMethod === 'helcim' ? (
-            <div className="helcim-payment-wrapper">
-              <HelcimPayButton
-                onPaymentSuccess={handleHelcimPaymentSuccess}
-                isProcessing={isProcessingOrder}
-                disabled={!formIsValid}
-                selectedCountry={selectedCountry}
-                total={calculateTotals().total}
-                setOrderSuccess={setOrderSuccess}
-                setError={setError}
-                setIsProcessingOrder={setIsProcessingOrder}
-                onSecretTokenReceived={handleSecretTokenReceived}
-              />
-            </div>
-          ) : (
-            <button
-              onClick={handleNext}
-              disabled={!isStepValid || isLoading}
-              className={`px-6 py-2 rounded ${
-                isStepValid && !isLoading
-                  ? 'bg-yellow-400 hover:bg-yellow-500'
-                  : 'bg-gray-200 cursor-not-allowed'
-              }`}
-              type="button"
-            >
-              {isLoading 
-                ? t('buttons.processing')
-                : paymentMethod === 'cod'
-                  ? t('buttons.place_order_cod')
-                  : t('buttons.proceed_to_payment')
-              }
-            </button>
-          )
-        )
+      {/* Conditional rendering for payment button */}
+      {activeStep === 1 && paymentMethod === 'helcim' ? (
+        <div className="helcim-payment-wrapper">
+        <HelcimPayButton
+  onPaymentSuccess={handleHelcimPaymentSuccess}
+  isProcessing={isProcessingOrder}
+  disabled={!formIsValid}
+  selectedCountry={selectedCountry}
+  total={calculateTotals().total} // Fix: use the total from calculateTotals
+  setOrderSuccess={setOrderSuccess}
+  setError={setError}
+  setIsProcessingOrder={setIsProcessingOrder}
+  onSecretTokenReceived={handleSecretTokenReceived}
+/>
+        </div>
       ) : (
-        // First step - always just "Next" button
         <button
           onClick={handleNext}
-          disabled={!isStepValid || isLoading}
+          disabled={!isStepValid}
           className={`px-6 py-2 rounded ${
-            isStepValid && !isLoading
+            isStepValid
               ? 'bg-yellow-400 hover:bg-yellow-500'
               : 'bg-gray-200 cursor-not-allowed'
           }`}
-          type="button"
+          type="button" 
         >
-          {isLoading ? t('buttons.processing') : t('buttons.next')}
+          {isLoading 
+            ? t('buttons.processing')
+            : activeStep === 1 
+              ? deliveryMethod === 'pickup'
+                ? paymentMethod === 'helcim'
+                  ? t('buttons.proceed_to_payment')
+                  : t('buttons.place_order')
+                : paymentMethod === 'cod'
+                  ? t('buttons.place_order_cod')
+                  : t('buttons.proceed_to_payment')
+              : t('buttons.next')
+          }
         </button>
       )}
     </div>
@@ -3068,22 +3024,15 @@ const handleOrderSuccess = async ({
   let orderData = null;
   let orderNumber = null;
   let paymentIntent = null;
-  // Check if the country is Tunisia
-  const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
 
   try {
-    // Validate required fields first - with special handling for Tunisia pickup
-    if (!formData?.email || !formData?.phone) {
-      throw new Error('Missing required contact information');
-    }
-
-    // Only validate shipping address if not Tunisia pickup
-    if ((deliveryMethod === 'shipping' || !isTunisia) && 
-        (!formData?.shippingAddress?.firstName ||
-        !formData?.shippingAddress?.lastName ||
-        !formData?.shippingAddress?.address ||
-        !formData?.shippingAddress?.city ||
-        !formData?.shippingAddress?.postalCode)) {
+    // Validate required fields first
+    if (!formData?.email || 
+      !formData?.shippingAddress?.firstName ||
+      !formData?.shippingAddress?.lastName ||
+      !formData?.shippingAddress?.address ||
+      !formData?.shippingAddress?.city ||
+      !formData?.shippingAddress?.postalCode) {
       throw new Error('Missing required shipping information');
     }
 
@@ -3155,12 +3104,8 @@ const handleOrderSuccess = async ({
     const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Determine the payment method based on delivery and selected payment option
-    // Modified to handle Tunisia case correctly
     let finalPaymentMethod;
-    if (isTunisia) {
-      // For Tunisia: always cod for shipping, in_store for pickup
-      finalPaymentMethod = deliveryMethod === 'pickup' ? 'in_store' : 'cod';
-    } else if (deliveryMethod === 'pickup') {
+    if (deliveryMethod === 'pickup') {
       finalPaymentMethod = paymentMethod === 'helcim' ? 'helcim' : 'in_store';
     } else {
       finalPaymentMethod = paymentMethod;
@@ -3194,7 +3139,7 @@ const handleOrderSuccess = async ({
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Construct order data - using finalPaymentMethod instead of hardcoded value
+    // Construct order data
     orderData = {
       orderNumber,
       email: formData.email,
@@ -3228,9 +3173,9 @@ const handleOrderSuccess = async ({
       discount: Number(discount) || 0,
       currency: country.currency,
       orderNote: orderNote || '',
-      paymentMethod: finalPaymentMethod, // Using finalPaymentMethod instead of hardcoded value
-      status: isTunisia || finalPaymentMethod !== 'helcim' ? 'Waiting for CSR approval' : 'Processing',
-      paymentStatus: isTunisia || finalPaymentMethod !== 'helcim' ? 'pending' : 'paid',
+      paymentMethod: 'helcim',
+      status: finalPaymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
+      paymentStatus: finalPaymentMethod === 'helcim' ? 'paid' : 'pending',
       deliveryMethod: deliveryMethod,
       stripePaymentId: stripePaymentMethod,
       paymentIntentId: paymentIntent?.id,
@@ -3253,15 +3198,14 @@ const handleOrderSuccess = async ({
     }, {});
 
     // If this is a Helcim payment but doesn't have token/transaction data
-    // Skip Helcim processing for Tunisia
-    if (finalPaymentMethod === 'helcim' && !helcimPaymentData?.transactionId && !isTunisia) {
+    // We should not submit the order directly as it will be submitted after successful payment
+    if (finalPaymentMethod === 'helcim' && !helcimPaymentData?.transactionId) {
       console.log('Preparing Helcim payment, order will be submitted after payment completion');
       setIsProcessingOrder(false);
       return orderData; // Return order data for Helcim processing
     }
 
-    // Only process Helcim for non-Tunisia orders
-    if (paymentMethod === 'helcim' && !isTunisia) {
+    if (paymentMethod === 'helcim') {
       try {
         // Initialize Helcim payment
         const helcimResponse = await initializeHelcimPayCheckout({
@@ -3301,8 +3245,7 @@ const handleOrderSuccess = async ({
       }
     }
 
-    // Only process credit card payments for non-Tunisia orders
-    if (paymentMethod === 'credit' && !isTunisia) {
+    if (paymentMethod === 'credit') {
       let checkoutSession = null;
   
       try {
@@ -4663,7 +4606,7 @@ const renderStepContent = () => {
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full p-2 border rounded"
                 />
-        
+      
                 <input
                   type="email"
                   placeholder={t('placeholder.email')}
@@ -4680,7 +4623,7 @@ const renderStepContent = () => {
                 />
               </div>
             </div>
-        
+      
             {/* Delivery Method Selection */}
             <div className="border rounded-lg p-4">
               <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
@@ -4691,13 +4634,7 @@ const renderStepContent = () => {
                     name="deliveryMethod"
                     value="pickup"
                     checked={deliveryMethod === 'pickup'}
-                    onChange={() => {
-                      setDeliveryMethod('pickup');
-                      // Force payment method for Tunisia
-                      if (selectedCountry === 'TN' || selectedCountry === 'TUN') {
-                        setPaymentMethod('cod');
-                      }
-                    }}
+                    onChange={() => setDeliveryMethod('pickup')}
                     className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                   />
                   <div>
@@ -4712,13 +4649,7 @@ const renderStepContent = () => {
                     name="deliveryMethod"
                     value="shipping"
                     checked={deliveryMethod === 'shipping'}
-                    onChange={() => {
-                      setDeliveryMethod('shipping');
-                      // Force payment method for Tunisia
-                      if (selectedCountry === 'TN' || selectedCountry === 'TUN') {
-                        setPaymentMethod('cod');
-                      }
-                    }}
+                    onChange={() => setDeliveryMethod('shipping')}
                     className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                   />
                   <div>
@@ -4728,7 +4659,7 @@ const renderStepContent = () => {
                 </label>
               </div>
             </div>
-        
+      
             {/* Conditional rendering based on delivery method */}
             {deliveryMethod === 'pickup' ? (
               // Studio Pickup Section
@@ -4783,22 +4714,13 @@ const renderStepContent = () => {
                         </div>
                       </div>
                       
-                      {/* Payment Method section - now properly conditional for Tunisia */}
-                      <div className="mt-4 border-t pt-4">
-                        <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
-                        
-                        {/* Check if Tunisia to show the right payment option */}
-                        {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
-                          // Tunisia - show the in-store payment message
-                          <div className="p-3 bg-gray-100 rounded-lg">
-                            <p className="font-medium">{t('payment.pay_in_studio', 'Pay in studio')}</p>
-                            <p className="text-sm text-gray-600">
-                              {t('payment.pay_in_studio_description', 'You will pay when you pick up your order at the studio.')}
-                            </p>
-                          </div>
-                        ) : (
-                          // Non-Tunisia - show credit card option
+                      {/* Payment Method for Pickup - NEW ADDITION */}
+                      {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
+                        <div className="mt-4 border-t pt-4">
+                          <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
                           <div className="space-y-3">
+                           
+                            
                             <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                               <input
                                 type="radio"
@@ -4814,8 +4736,10 @@ const renderStepContent = () => {
                               </div>
                             </label>
                           </div>
-                        )}
-                      </div>
+                        </div>
+                      )}
+                      
+                     
                     </div>
                   </div>
                 ) : (
@@ -4868,20 +4792,34 @@ const renderStepContent = () => {
                   </div>
                 )}
                 
-                {/* Payment Method for Shipping - Fixed for Tunisia */}
+                {/* Payment Method for Shipping */}
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
-                  
-                  {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
-                    // Tunisia - Only show COD
-                    <div className="space-y-3">
-                      <label className="flex items-center space-x-3 p-2 border rounded bg-gray-50 cursor-pointer">
+                  <div className="space-y-3">
+                    <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="helcim"
+                        checked={paymentMethod === 'helcim'}
+                        onChange={() => setPaymentMethod('helcim')}
+                        className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                      />
+                      <div>
+                        <p className="font-medium">{t('payment.credit_card')}</p>
+                        <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
+                      </div>
+                    </label>
+                    
+                    {/* Only show COD option for Tunisia */}
+                    {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                         <input
                           type="radio"
                           name="paymentMethod"
                           value="cod"
-                          checked={true} // Always checked for Tunisia
-                          readOnly
+                          checked={paymentMethod === 'cod'}
+                          onChange={() => setPaymentMethod('cod')}
                           className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
                         />
                         <div>
@@ -4889,33 +4827,15 @@ const renderStepContent = () => {
                           <p className="text-sm text-gray-600">{t('payment.cod_description')}</p>
                         </div>
                       </label>
-                    </div>
-                  ) : (
-                    // Non-Tunisia - Show credit card option
-                    <div className="space-y-3">
-                      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                        <input
-                          type="radio"
-                          name="paymentMethod"
-                          value="helcim"
-                          checked={paymentMethod === 'helcim'}
-                          onChange={() => setPaymentMethod('helcim')}
-                          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-                        />
-                        <div>
-                          <p className="font-medium">{t('payment.credit_card')}</p>
-                          <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
-                        </div>
-                      </label>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
-        
+      
             {/* Order Items Summary */}
             {renderInvoice()}
-        
+      
             {/* Order Note */}
             <div className="border rounded-lg p-4">
               <h3 className="font-medium mb-3">{t('produits.note')}</h3>
@@ -4926,6 +4846,9 @@ const renderStepContent = () => {
                 rows={3}
               />
             </div>
+      
+            {/* Show Helcim Pay Button for credit card payments (for both shipping and pickup) */}
+           
           </div>
         );
       
