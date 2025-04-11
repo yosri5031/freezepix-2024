@@ -475,24 +475,28 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             
             {/* Country filter buttons */}
             <div className="flex flex-wrap gap-1 px-3 py-2 border-b">
-              <button 
-                onClick={() => setCountryFilter('Tunisia')}
-                className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'tunisia' || userCountry?.toLowerCase() === 'tn' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
-              >
-                Tunisia
-              </button>
+          
               <button 
                 onClick={() => setCountryFilter('CA')}
                 className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'ca' || userCountry?.toLowerCase() === 'canada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
               >
                 Canada
               </button>
+
               <button 
                 onClick={() => setCountryFilter('US')}
                 className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'us' || userCountry?.toLowerCase() === 'usa' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
               >
                 USA
               </button>
+
+              <button 
+                onClick={() => setCountryFilter('Tunisia')}
+                className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'tunisia' || userCountry?.toLowerCase() === 'tn' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+              >
+                Tunisia
+              </button>
+              
               <button 
                 onClick={() => setCountryFilter(null)}
                 className={`text-xs px-2 py-1 rounded ${!userCountry ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
