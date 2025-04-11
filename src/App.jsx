@@ -2185,33 +2185,30 @@ const renderNavigationButtons = () => {
         </div>
       ) : (
         <button
-        onClick={handleNext}
-        disabled={!isStepValid}
-        className={`px-6 py-2 rounded flex items-center justify-center space-x-2 ${
-          isStepValid
-            ? 'bg-yellow-400 hover:bg-yellow-500'
-            : 'bg-gray-200 cursor-not-allowed'
-        }`}
-        type="button"
-      >
-        <span className="text-black">Print</span>
-        <svg 
-          xmlns="http://www.w3.org/2000/svg" 
-          width="16" 
-          height="16" 
-          viewBox="0 0 24 24" 
-          fill="none" 
-          stroke="currentColor" 
-          strokeWidth="2" 
-          strokeLinecap="round" 
-          strokeLinejoin="round" 
-          className="text-black"
-        >
-          <polyline points="6 9 6 2 18 2 18 9"></polyline>
-          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-          <rect x="6" y="14" width="12" height="8"></rect>
-        </svg>
-      </button>
+  onClick={handleNext}
+  disabled={!isStepValid}
+  className={`px-6 py-2 rounded flex items-center justify-center space-x-2 ${
+    isStepValid
+      ? 'bg-yellow-400 hover:bg-yellow-500'
+      : 'bg-gray-200 cursor-not-allowed'
+  }`}
+  type="button"
+>
+  <span className="text-black font-medium">Print</span>
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="20" 
+    height="20" 
+    viewBox="0 0 24 24" 
+    className="ml-1"
+  >
+    <path d="M6 9V2h12v7" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="6" y="14" width="12" height="8" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M10 17h4" stroke="#FFCC00" strokeWidth="2.5" strokeLinecap="round" />
+    <path d="M18 7h2" stroke="#FFCC00" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+</button>
       )}
     </div>
   );
