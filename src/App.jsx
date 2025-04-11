@@ -2150,7 +2150,6 @@ useEffect(() => {
   }
 }, [selectedCountry]);
 
-
 const renderNavigationButtons = () => {
   const isStepValid = validateStep();
   
@@ -2160,55 +2159,80 @@ const renderNavigationButtons = () => {
         <button
           onClick={handleBack}
           className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-          type="button" 
+          type="button"
         >
           {t('buttons.back')}
         </button>
       ) : (
         <div></div> // Empty div for layout consistency
       )}
-
+      
       {/* Conditional rendering for payment button */}
       {activeStep === 1 && paymentMethod === 'helcim' ? (
         <div className="helcim-payment-wrapper">
-        <HelcimPayButton
-  onPaymentSuccess={handleHelcimPaymentSuccess}
-  isProcessing={isProcessingOrder}
-  disabled={!formIsValid}
-  selectedCountry={selectedCountry}
-  total={calculateTotals().total} // Fix: use the total from calculateTotals
-  setOrderSuccess={setOrderSuccess}
-  setError={setError}
-  setIsProcessingOrder={setIsProcessingOrder}
-  onSecretTokenReceived={handleSecretTokenReceived}
-/>
+          <HelcimPayButton 
+            onPaymentSuccess={handleHelcimPaymentSuccess}
+            isProcessing={isProcessingOrder}
+            disabled={!formIsValid}
+            selectedCountry={selectedCountry}
+            total={calculateTotals().total} // Fix: use the total from calculateTotals
+            setOrderSuccess={setOrderSuccess}
+            setError={setError}
+            setIsProcessingOrder={setIsProcessingOrder}
+            onSecretTokenReceived={handleSecretTokenReceived}
+          />
         </div>
       ) : (
         <button
-  onClick={handleNext}
-  disabled={!isStepValid}
-  className={`px-6 py-2 rounded flex items-center justify-center space-x-2 ${
-    isStepValid
-      ? 'bg-yellow-400 hover:bg-yellow-500'
-      : 'bg-gray-200 cursor-not-allowed'
-  }`}
-  type="button"
->
-  <span className="text-black font-medium">Print</span>
-  <svg 
-    xmlns="http://www.w3.org/2000/svg" 
-    width="20" 
-    height="20" 
-    viewBox="0 0 24 24" 
-    className="ml-1"
-  >
-    <path d="M6 9V2h12v7" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <rect x="6" y="14" width="12" height="8" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M10 17h4" stroke="#FFCC00" strokeWidth="2.5" strokeLinecap="round" />
-    <path d="M18 7h2" stroke="#FFCC00" strokeWidth="2" strokeLinecap="round" />
-  </svg>
-</button>
+          onClick={handleNext}
+          disabled={!isStepValid}
+          className={`px-6 py-2 rounded relative overflow-hidden transition-all duration-300 ${
+            isStepValid
+              ? 'bg-yellow-400 hover:bg-yellow-500'
+              : 'bg-gray-200 cursor-not-allowed'
+          }`}
+          type="button"
+        >
+          <div className="flex items-center justify-center gap-2 relative z-10">
+            <span className="text-black font-bold tracking-wide">Print</span>
+            <div className="relative">
+              {/* FreezeFIX custom printer icon */}
+              <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                {/* Main printer body - black like "freeze" */}
+                <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
+                
+                {/* Paper input tray */}
+                <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
+                
+                {/* Paper output */}
+                <rect 
+                  x="7" 
+                  y="16" 
+                  width="14" 
+                  height="6"
+                  fill="white" 
+                />
+                
+                {/* FreezeFIX-style pixels on printer in yellow like "FIX" */}
+                <rect x="18" y="8" width="2" height="2" fill="#FFCC00" />
+                <rect x="20" y="8" width="2" height="2" fill="#FFCC00" />
+                <rect x="20" y="10" width="2" height="2" fill="#FFCC00" />
+                
+                {/* Printer controls */}
+                <rect x="8" y="9" width="2" height="2" fill="#444" />
+                <rect x="11" y="9" width="3" height="2" fill="#444" />
+                
+                {/* Yellow pixel pattern on printed paper */}
+                <rect x="9" y="17" width="2" height="2" fill="#FFCC00" />
+                <rect x="11" y="17" width="2" height="2" fill="#FFCC00" />
+                <rect x="9" y="19" width="2" height="2" fill="#FFCC00" />
+                <rect x="16" y="18" width="2" height="2" fill="#FFCC00" />
+                <rect x="18" y="18" width="1" height="1" fill="#FFCC00" />
+                <rect x="16" y="20" width="1" height="1" fill="#FFCC00" />
+              </svg>
+            </div>
+          </div>
+        </button>
       )}
     </div>
   );
