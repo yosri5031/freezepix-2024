@@ -176,15 +176,29 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     if (!lat1 || !lon1 || !lat2 || !lon2) return null;
     
     try {
+      // Convert string coordinates to numbers if needed
+      const latitude1 = typeof lat1 === 'string' ? parseFloat(lat1) : lat1;
+      const longitude1 = typeof lon1 === 'string' ? parseFloat(lon1) : lon1;
+      const latitude2 = typeof lat2 === 'string' ? parseFloat(lat2) : lat2;
+      const longitude2 = typeof lon2 === 'string' ? parseFloat(lon2) : lon2;
+      
+      // Check for invalid numbers
+      if (isNaN(latitude1) || isNaN(longitude1) || isNaN(latitude2) || isNaN(longitude2)) {
+        return null;
+      }
+      
       const R = 6371; // Radius of the earth in km
-      const dLat = (lat2 - lat1) * Math.PI / 180;
-      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const dLat = (latitude2 - latitude1) * Math.PI / 180;
+      const dLon = (longitude2 - longitude1) * Math.PI / 180;
       const a = 
         Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.cos(latitude1 * Math.PI / 180) * Math.cos(latitude2 * Math.PI / 180) * 
         Math.sin(dLon/2) * Math.sin(dLon/2);
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      return R * c; // Distance in km
+      const distance = R * c; // Distance in km
+      
+      // One more check to ensure we have a valid number
+      return (isFinite(distance) && !isNaN(distance)) ? distance : null;
     } catch (err) {
       console.error('Error calculating distance:', err);
       return null;
@@ -259,7 +273,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             studio.coordinates?.longitude || null
           );
           
-          return { ...studio, distance };
+          // Ensure distance is a valid number before adding it
+          return { 
+            ...studio, 
+            distance: (distance !== null && !isNaN(distance) && isFinite(distance)) ? distance : null 
+          };
         });
         
         // Filter by user's country if available
@@ -473,9 +491,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
                         <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
                         <span className="text-xs text-gray-600 break-words">{studio.address || 'No address'}</span>
                       </div>
-                      {studio.distance !== null && (
+                      {studio.distance !== null && studio.distance !== undefined ? (
                         <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                           {studio.distance.toFixed(1)} km
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                          -- km
                         </span>
                       )}
                     </div>
