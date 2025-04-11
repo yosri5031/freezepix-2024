@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Simple but functional StudioLocationHeader with nearest studio selection
+// Enhanced StudioLocationHeader with wider dropdown and improved text wrapping
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [studios, setStudios] = useState([]);
@@ -184,8 +184,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     fetchStudios();
   };
 
+  // Set base width for the component
+  const baseWidth = 250;
+  // Calculate dropdown width (1.5x the base width)
+  const dropdownWidth = baseWidth * 1.5;
+
   return (
-    <div className="relative" style={{ maxWidth: "250px" }}>
+    <div className="relative" style={{ width: `${baseWidth}px` }}>
       {/* Header button */}
       <div 
         className="flex items-center justify-between bg-gray-100 px-3 py-2 rounded-full cursor-pointer border border-gray-200 hover:border-green-400 transition-colors"
@@ -206,9 +211,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         )}
       </div>
       
-      {/* Dropdown */}
+      {/* Dropdown - Now 1.5x wider than the parent */}
       {isDropdownOpen && (
-        <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto">
+        <div 
+          className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+          style={{ width: `${dropdownWidth}px` }}
+        >
           <div className="p-2">
             <div className="flex justify-between items-center px-3 py-2 border-b">
               <h3 className="font-medium text-sm">Select Pickup Location</h3>
@@ -243,12 +251,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
                       }`}
                       onClick={() => handleStudioSelect(studio)}
                     >
-                      <div className="flex flex-col">
+                      <div className="flex flex-col flex-grow mr-2">
                         <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
-                        <span className="text-xs text-gray-600 truncate">{studio.address || 'No address'}</span>
+                        <span className="text-xs text-gray-600 break-words">{studio.address || 'No address'}</span>
                       </div>
                       {studio.distance !== null && (
-                        <span className="text-xs text-gray-500 whitespace-nowrap">
+                        <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                           {studio.distance.toFixed(1)} km
                         </span>
                       )}
