@@ -187,7 +187,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   // Set base width for the component
   const baseWidth = 250;
   // Calculate dropdown width (1.5x the base width)
-  const dropdownWidth = baseWidth * 1.5;
+  const dropdownWidth = baseWidth * 1.3;
 
   return (
     <div className="relative" style={{ width: `${baseWidth}px` }}>
