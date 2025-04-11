@@ -60,7 +60,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   
   // Create the mapping once
   const countryLookupMap = getCountryMappings();
-  
+
   // Get user location once on mount
   useEffect(() => {
     const getUserLocation = async () => {
@@ -97,29 +97,44 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             }
             
             // If fresh country detection failed, fall back to IP-based detection
-            const ipSuccess = await getCountryFromIP();
-            if (!ipSuccess) {
-              // If all else fails, try cached values
-              tryUsingCache();
+            try {
+              const ipSuccess = await getCountryFromIP();
+              if (!ipSuccess) {
+                // If all else fails, try cached values
+                await tryUsingCache();
+              }
+            } catch (err) {
+              console.error('Error in IP detection:', err);
+              await tryUsingCache();
             }
           },
           async (error) => {
             console.error('Error getting fresh location:', error);
             // Try IP-based detection first
-            const ipSuccess = await getCountryFromIP();
-            if (!ipSuccess) {
-              // If IP detection fails, try using cached values
-              tryUsingCache();
+            try {
+              const ipSuccess = await getCountryFromIP();
+              if (!ipSuccess) {
+                // If IP detection fails, try using cached values
+                await tryUsingCache();
+              }
+            } catch (err) {
+              console.error('Error in IP detection after geolocation failure:', err);
+              await tryUsingCache();
             }
           },
           { timeout: 5000, maximumAge: 0 } // Request fresh location with no cache
         );
       } else {
         // No geolocation support, try IP-based detection
-        const ipSuccess = await getCountryFromIP();
-        if (!ipSuccess) {
-          // If IP detection fails, try using cached values
-          tryUsingCache();
+        try {
+          const ipSuccess = await getCountryFromIP();
+          if (!ipSuccess) {
+            // If IP detection fails, try using cached values
+            await tryUsingCache();
+          }
+        } catch (err) {
+          console.error('Error in IP detection with no geolocation:', err);
+          await tryUsingCache();
         }
       }
     };
@@ -205,89 +220,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     getUserLocation();
   }, []);
-      
-      // Try IP-based location as fallback before asking for geolocation permission
-      const getCountryFromIP = async () => {
-        try {
-          const response = await fetch('https://ipapi.co/json/');
-          if (response.ok) {
-            const data = await response.json();
-            if (data.country_name) {
-              console.log('IP-based country detection:', data.country_name);
-              setUserCountry(data.country_name);
-              localStorage.setItem('userCountry', data.country_name);
-              
-              if (data.latitude && data.longitude) {
-                const location = {
-                  latitude: data.latitude,
-                  longitude: data.longitude
-                };
-                locationRef.current = location;
-                localStorage.setItem('userLocationCache', JSON.stringify(location));
-              }
-              
-              if (!selectedStudio && !hasFetchedRef.current) {
-                fetchStudios(true);
-              }
-              return true;
-            }
-          }
-          return false;
-        } catch (error) {
-          console.error('Error getting country from IP:', error);
-          return false;
-        }
-      };
-      
-      // Get fresh location if no cache
-      if (navigator.geolocation) {
-        // Try IP-based detection first, then fall back to geolocation
-        getCountryFromIP().then(success => {
-          if (!success) {
-            // Ask for precise location if IP detection failed
-            navigator.geolocation.getCurrentPosition(
-              async (position) => {
-                const location = {
-                  latitude: position.coords.latitude,
-                  longitude: position.coords.longitude
-                };
-                
-                locationRef.current = location;
-                localStorage.setItem('userLocationCache', JSON.stringify(location));
-                
-                // Get country from coordinates using reverse geocoding
-                try {
-                  const country = await getCountryFromCoordinates(location.latitude, location.longitude);
-                  if (country) {
-                    setUserCountry(country);
-                    localStorage.setItem('userCountry', country);
-                  }
-                } catch (err) {
-                  console.error('Error getting country:', err);
-                }
-                
-                // If no studio is selected yet, fetch and select the nearest
-                if (!selectedStudio && !hasFetchedRef.current) {
-                  fetchStudios(true);
-                }
-              },
-              (error) => {
-                console.error('Error getting location:', error);
-                // Try IP-based fallback on geolocation error
-                getCountryFromIP();
-              },
-              { timeout: 10000 }
-            );
-          }
-        });
-      } else {
-        // No geolocation support, try IP-based detection
-        getCountryFromIP();
-      }
-    };
-    
-    getUserLocation();
-  }, [selectedStudio]);
   
   // Get country from coordinates using a reverse geocoding service
   const getCountryFromCoordinates = async (latitude, longitude) => {
@@ -391,8 +323,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     const normalized1 = country1.toLowerCase().trim();
     const normalized2 = country2.toLowerCase().trim();
     
+    console.log(`  Comparing '${normalized1}' with '${normalized2}'`);
+    
     // 1. Direct match (already normalized)
     if (normalized1 === normalized2) {
+      console.log(`  Direct match!`);
       return true;
     }
     
@@ -400,8 +335,32 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     const key1 = countryLookupMap[normalized1];
     const key2 = countryLookupMap[normalized2];
     
+    console.log(`  Normalized keys: '${key1}' and '${key2}'`);
+    
+    // Special case for Tunisia/TN
+    if ((normalized1 === 'tunisia' || normalized1 === 'tn' || normalized1 === 'tun') && 
+        (normalized2 === 'tunisia' || normalized2 === 'tn' || normalized2 === 'tun')) {
+      console.log(`  Special Tunisia match!`);
+      return true;
+    }
+    
+    // Special case for US/USA
+    if ((normalized1 === 'us' || normalized1 === 'usa' || normalized1 === 'united states') && 
+        (normalized2 === 'us' || normalized2 === 'usa' || normalized2 === 'united states')) {
+      console.log(`  Special US match!`);
+      return true;
+    }
+    
+    // Special case for CA/Canada
+    if ((normalized1 === 'ca' || normalized1 === 'canada') && 
+        (normalized2 === 'ca' || normalized2 === 'canada')) {
+      console.log(`  Special Canada match!`);
+      return true;
+    }
+    
     // 3. If both have normalized keys and they match, it's a match
     if (key1 && key2 && key1 === key2) {
+      console.log(`  Keys match!`);
       return true;
     }
     
@@ -409,6 +368,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     const cleanKey1 = normalized1.replace(/[^a-z0-9]/g, '');
     const cleanKey2 = normalized2.replace(/[^a-z0-9]/g, '');
     if (cleanKey1 && cleanKey2 && cleanKey1 === cleanKey2) {
+      console.log(`  Clean keys match!`);
       return true;
     }
     
@@ -416,10 +376,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     // Only use for longer country names (>3 chars) to avoid "US" matching "Russia"
     if (normalized1.length > 3 && normalized2.length > 3) {
       if (normalized1.includes(normalized2) || normalized2.includes(normalized1)) {
+        console.log(`  Substring match!`);
         return true;
       }
     }
     
+    console.log(`  No match`);
     return false;
   };
   
@@ -633,7 +595,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         )}
       </div>
       
-      {/* Dropdown - Now 1.3x wider than the parent */}
+      {/* Dropdown - 1.3x wider than the parent */}
       {isDropdownOpen && (
         <div 
           className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
