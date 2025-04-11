@@ -4698,13 +4698,13 @@ const renderStepContent = () => {
                     <div className="flex justify-between items-start mb-4">
                       <h4 className="font-semibold text-lg">{selectedStudio.name}</h4>
                       
-                      {/* "Change" button to allow selecting a different studio */}
+                      {/* "Change" button to allow selecting a different studio 
                       <button 
                         onClick={() => setSelectedStudio(null)}
                         className="text-sm text-blue-500 hover:underline"
                       >
                         {t('pickup.change_location', 'Change')}
-                      </button>
+                      </button>*/}
                     </div>
                     
                     <div className="space-y-2 text-sm text-gray-600">
