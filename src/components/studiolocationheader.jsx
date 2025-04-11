@@ -143,30 +143,65 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     const getCountryFromIP = async () => {
       try {
         console.log('Trying IP-based country detection...');
-        const response = await fetch('https://ipapi.co/json/');
+        
+        // Use jsonip.com instead of ipapi.co (has CORS headers)
+        const response = await fetch('https://jsonip.com/', {
+          mode: 'cors',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          if (data.country_name) {
-            console.log('IP-based country detected:', data.country_name);
-            setUserCountry(data.country_name);
-            localStorage.setItem('userCountry', data.country_name);
-            
-            if (data.latitude && data.longitude) {
-              const location = {
-                latitude: data.latitude,
-                longitude: data.longitude
-              };
-              locationRef.current = location;
-              localStorage.setItem('userLocationCache', JSON.stringify(location));
+          
+          // jsonip.com only gives IP, so we need another service to get country from IP
+          if (data.ip) {
+            try {
+              // Try to get country from IP
+              const geoResponse = await fetch(`https://get.geojs.io/v1/ip/country/${data.ip}.json`, {
+                mode: 'cors'
+              });
+              
+              if (geoResponse.ok) {
+                const geoData = await geoResponse.json();
+                if (geoData.name) {
+                  console.log('IP-based country detected:', geoData.name);
+                  setUserCountry(geoData.name);
+                  localStorage.setItem('userCountry', geoData.name);
+                  
+                  // We don't get lat/long from this API, so just use the country
+                  // Fetch studios with the IP-based country
+                  if (!hasFetchedRef.current) {
+                    await fetchStudios(true);
+                  }
+                  return true;
+                }
+              }
+            } catch (geoError) {
+              console.error('Error getting country from IP:', geoError);
             }
-            
-            // Fetch studios with the IP-based country
-            if (!hasFetchedRef.current) {
-              await fetchStudios(true);
-            }
-            return true;
           }
         }
+        
+        console.log('IP-based country detection failed, falling back to client side detection');
+        
+        // Client-side fallback for common browsers
+        const language = navigator.language || navigator.userLanguage || '';
+        const countryCode = language.split('-')[1]; // en-US -> US
+        
+        if (countryCode && countryCode.length === 2) {
+          console.log('Using browser language for country detection:', countryCode);
+          setUserCountry(countryCode);
+          localStorage.setItem('userCountry', countryCode);
+          
+          // Fetch studios with the language-based country
+          if (!hasFetchedRef.current) {
+            await fetchStudios(true);
+          }
+          return true;
+        }
+        
         return false;
       } catch (error) {
         console.error('Error getting country from IP:', error);
