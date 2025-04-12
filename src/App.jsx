@@ -4703,37 +4703,31 @@ const renderStepContent = () => {
                   // Show selected studio details when already selected
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <div className="flex justify-between items-start mb-4">
-                      <h4 className="font-semibold text-lg">{selectedStudio.name}</h4>
-                      
-                      {/* "Change" button to allow selecting a different studio 
-                      <button 
-                        onClick={() => setSelectedStudio(null)}
-                        className="text-sm text-blue-500 hover:underline"
-                      >
-                        {t('pickup.change_location', 'Change')}
-                      </button>*/}
-                    </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <MapPin size={16} />
-                        <span>{selectedStudio.address}</span>
-                      </div>
-                          {/* Add distance display if available */}
+              <h4 className="font-semibold text-lg">{selectedStudio.name}</h4>
+      
+      {/* Add distance display if available - highlighted in green similar to screenshot */}
       {selectedStudio.distance !== undefined && (
-        <div className="flex items-center gap-2 text-blue-600 font-medium">
-          <Navigation size={16} />
-          <span>{selectedStudio.distance.toFixed(1)} km</span>
+        <div className="bg-green-100 text-green-600 font-medium py-1 px-3 rounded-full text-sm flex items-center">
+          <Navigation size={14} className="mr-1" />
+          {selectedStudio.distance.toFixed(1)} km
         </div>
       )}
-                      <div className="flex items-center gap-2">
-                        <Phone size={16} />
-                        <span dir="ltr">{selectedStudio.phone}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Mail size={16} />
-                        <span>{selectedStudio.email}</span>
-                      </div>
+    </div>
+    
+    <div className="space-y-2 text-sm text-gray-600">
+      <div className="flex items-center gap-2">
+        <MapPin size={16} />
+        <span>{selectedStudio.address}</span>
+      </div>
+      
+      <div className="flex items-center gap-2">
+        <Phone size={16} />
+        <span dir="ltr">{selectedStudio.phone}</span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Mail size={16} />
+        <span>{selectedStudio.email}</span>
+      </div>
                       
                       <div className="border-t pt-2 mt-2">
                         <div className="flex items-center gap-2 mb-1">
@@ -4900,7 +4894,7 @@ const renderStepContent = () => {
 
 
 const renderInvoice = () => {
-    const { 
+  const { 
     subtotalsBySize, 
     subtotal, 
     shippingFee, 
@@ -4912,10 +4906,28 @@ const renderInvoice = () => {
     appliedProvince, 
     appliedTaxRates 
   } = calculateTotals();
+  
   const country = initialCountries.find(c => c.value === selectedCountry);
   
-   return (
+  return (
     <div className="space-y-6">
+      {/* Discount Code Section - Moved to top before summary as requested */}
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
+        <div className="space-y-2">
+          <input
+            type="text"
+            placeholder="xxxx"
+            value={discountCode}
+            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+          />
+          {discountError && (
+            <p className="text-red-500 text-sm">{discountError}</p>
+          )}
+        </div>
+      </div>
+      
       {/* Order Summary */}
       <div className="border rounded-lg p-4">
         <h3 className="font-medium mb-3">{t('order.summary')}</h3>
@@ -5012,9 +5024,7 @@ const renderInvoice = () => {
           <div className="flex justify-between py-2 text-green-600">
             <span>
               {t('order.discount')} ({getDiscountDisplay()})
-              <div className="text-xs text-gray-500">
-                {t('order.applied_to_subtotal_shipping')}
-              </div>
+             
             </span>
             <span>
               -{Math.abs(discount).toFixed(2)} {country?.currency}
@@ -5089,23 +5099,6 @@ const renderInvoice = () => {
         <div className="flex justify-between py-2 border-t font-bold">
           <span>{t('produits.total')}</span>
           <span>{total.toFixed(2)} {country?.currency}</span>
-        </div>
-      </div>
-      
-      {/* Discount Code Section */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
-        <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="xxxx"
-            value={discountCode}
-            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-          />
-          {discountError && (
-            <p className="text-red-500 text-sm">{discountError}</p>
-          )}
         </div>
       </div>
     </div>
