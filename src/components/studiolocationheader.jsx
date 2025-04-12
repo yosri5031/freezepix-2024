@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Simplified StudioLocationHeader with basic country detection
+// Improved StudioLocationHeader with better geolocation and studio selection
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [studios, setStudios] = useState([]);
@@ -11,62 +11,85 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   const [allStudios, setAllStudios] = useState([]);
   
   // Use refs to prevent unnecessary re-renders
-  const fetchingRef = useRef(false);
-  const hasFetchedRef = useRef(false);
   const locationRef = useRef(null);
+  const hasFetchedRef = useRef(false);
+  const lastRefreshTimeRef = useRef(0);
   
-  // Try to detect user location - only basic method that doesn't use external APIs
+  // Try to detect user location - improved method
   useEffect(() => {
-    const detectUserCountry = async () => {
+    const detectUserLocation = async () => {
       try {
-        // First check if we have a saved country
-        const savedCountry = localStorage.getItem('userCountry');
-        if (savedCountry) {
-          console.log('Using saved country:', savedCountry);
-          setUserCountry(savedCountry);
+        // Check if we have a recent location in localStorage (less than 1 hour old)
+        const locationCache = localStorage.getItem('userLocationCache');
+        const locationTimestamp = parseInt(localStorage.getItem('userLocationTimestamp') || '0', 10);
+        const now = Date.now();
+        const ONE_HOUR = 60 * 60 * 1000;
+        
+        if (locationCache && (now - locationTimestamp < ONE_HOUR)) {
+          console.log('Using cached location, age:', (now - locationTimestamp) / 1000, 'seconds');
+          const parsedLocation = JSON.parse(locationCache);
+          locationRef.current = parsedLocation;
+          
+          // Get country from cached location if needed
+          if (!userCountry) {
+            const savedCountry = localStorage.getItem('userCountry');
+            if (savedCountry) {
+              console.log('Using saved country:', savedCountry);
+              setUserCountry(savedCountry);
+            }
+          }
+          
           return;
         }
         
         // Try to get user location from browser
         if (navigator.geolocation) {
-          console.log('Requesting user location...');
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              console.log('Location obtained:', position.coords);
-              
-              // Save coordinates for distance calculation
-              const location = {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude
-              };
-              locationRef.current = location;
-              localStorage.setItem('userLocationCache', JSON.stringify(location));
-              
-              // Use the coordinates to estimate country
-              // This is a simple approximation
-              const country = estimateCountryFromCoordinates(
-                position.coords.latitude, 
-                position.coords.longitude
-              );
-              
-              if (country) {
-                console.log('Estimated country:', country);
-                setUserCountry(country);
-                localStorage.setItem('userCountry', country);
-              }
-            },
-            (error) => {
-              console.log('Error getting location:', error);
-              // Use browser language as fallback
-              tryBrowserLanguage();
-            }
+          console.log('Requesting fresh user location...');
+          
+          // Promise-based geolocation
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 5000,
+              maximumAge: 0
+            });
+          });
+          
+          console.log('Fresh location obtained:', position.coords);
+          
+          // Save coordinates for distance calculation
+          const location = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          };
+          
+          // Store location with timestamp
+          locationRef.current = location;
+          localStorage.setItem('userLocationCache', JSON.stringify(location));
+          localStorage.setItem('userLocationTimestamp', now.toString());
+          
+          // Use the coordinates to estimate country
+          const country = estimateCountryFromCoordinates(
+            position.coords.latitude, 
+            position.coords.longitude
           );
+          
+          if (country) {
+            console.log('Estimated country:', country);
+            setUserCountry(country);
+            localStorage.setItem('userCountry', country);
+          }
+          
+          // Force a refresh of the studio list with the new location
+          hasFetchedRef.current = false;
+          fetchAllStudios();
         } else {
           // No geolocation support, try browser language
           tryBrowserLanguage();
         }
       } catch (error) {
-        console.error('Error detecting country:', error);
+        console.error('Error detecting location:', error);
+        tryBrowserLanguage();
       }
     };
     
@@ -117,97 +140,130 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       return null;
     };
     
-    detectUserCountry();
+    detectUserLocation();
   }, []);
   
-  // Fetch studios on mount
-  useEffect(() => {
-    const fetchAllStudios = async () => {
-      if (hasFetchedRef.current) return;
-      
-      try {
-        console.log('Fetching all studios...');
-        setLoading(true);
-        
-        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-        
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Process the data
-        const studiosArray = Array.isArray(data) ? data : [data];
-        const activeStudios = studiosArray.filter(studio => studio && studio.isActive);
-        
-        // Log all studio countries for debugging
-        console.log('Studio data countries:', studiosArray.map(s => s?.country || 'unknown'));
-        
-        // Store all studios
-        setAllStudios(activeStudios);
-        hasFetchedRef.current = true;
-        
-        // Calculate distances if we have user location
-        let studiosWithDistance = activeStudios;
-        if (locationRef.current) {
-          studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
-        }
-        
-        // Apply country filtering if we have a user country
-        if (userCountry) {
-          const filtered = filterStudiosByCountry(studiosWithDistance, userCountry);
-          // Only use filtered if we found matches
-          if (filtered.length > 0) {
-            studiosWithDistance = filtered;
-          }
-        }
-        
-        // Set studios
-        setStudios(studiosWithDistance);
-        
-        // If no studio is selected yet, select the nearest one
-        if (!selectedStudio && studiosWithDistance.length > 0) {
-          // Sort by distance if available
-          if (locationRef.current) {
-            studiosWithDistance.sort((a, b) => {
-              if (a.distance === undefined || a.distance === null) return 1;
-              if (b.distance === undefined || b.distance === null) return -1;
-              return a.distance - b.distance;
-            });
-          }
-          
-          const firstStudio = studiosWithDistance[0];
-          console.log('Auto-selecting first studio:', firstStudio.name);
-          
-          // Set country from selected studio if not set
-          if (firstStudio.country && !userCountry) {
-            console.log('Setting country from first studio:', firstStudio.country);
-            setUserCountry(firstStudio.country);
-            localStorage.setItem('userCountry', firstStudio.country);
-          }
-          
-          // Call parent handler to select this studio
-          if (onStudioSelect) {
-            onStudioSelect(firstStudio);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching studios:', err);
-        setError('Failed to load studios. Please try again.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch studios function - separated from useEffect for clarity
+  const fetchAllStudios = async () => {
+    // Prevent multiple simultaneous fetches
+    if (loading) return;
     
-    fetchAllStudios();
-  }, [selectedStudio, onStudioSelect, userCountry]);
+    // Throttle refreshes to prevent infinite loops
+    const now = Date.now();
+    const TEN_SECONDS = 10 * 1000;
+    if ((now - lastRefreshTimeRef.current) < TEN_SECONDS && lastRefreshTimeRef.current !== 0) {
+      console.log('Throttling refresh, last refresh was', (now - lastRefreshTimeRef.current) / 1000, 'seconds ago');
+      return;
+    }
+    
+    try {
+      console.log('Fetching all studios...');
+      setLoading(true);
+      lastRefreshTimeRef.current = now;
+      
+      const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      // Process the data
+      const studiosArray = Array.isArray(data) ? data : [];
+      const activeStudios = studiosArray.filter(studio => studio && studio.isActive);
+      
+      // Log all studio countries for debugging
+      console.log('Studio data countries:', activeStudios.map(s => s?.country || 'unknown'));
+      
+      // Store all studios
+      setAllStudios(activeStudios);
+      hasFetchedRef.current = true;
+      
+      // Calculate distances if we have user location
+      let studiosWithDistance = activeStudios;
+      if (locationRef.current) {
+        studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
+        
+        // Sort by distance first
+        studiosWithDistance.sort((a, b) => {
+          if (a.distance === undefined || a.distance === null) return 1;
+          if (b.distance === undefined || b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+        
+        console.log('Studios sorted by distance:', 
+          studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
+        );
+      }
+      
+      // Apply country filtering if we have a user country
+      let filteredStudios = studiosWithDistance;
+      if (userCountry) {
+        const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
+        // Only use filtered if we found matches
+        if (countryMatches.length > 0) {
+          filteredStudios = countryMatches;
+          console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
+        }
+      }
+      
+      // Set studios for display
+      setStudios(filteredStudios);
+      
+      // If no studio is selected yet, select the nearest one
+      if (!selectedStudio && filteredStudios.length > 0) {
+        const nearestStudio = filteredStudios[0];
+        console.log('Auto-selecting nearest studio:', nearestStudio.name, 
+          nearestStudio.distance ? `(${nearestStudio.distance.toFixed(1)} km)` : '');
+        
+        // Set country from selected studio if not set
+        if (nearestStudio.country && !userCountry) {
+          console.log('Setting country from nearest studio:', nearestStudio.country);
+          setUserCountry(nearestStudio.country);
+          localStorage.setItem('userCountry', nearestStudio.country);
+        }
+        
+        // Call parent handler to select this studio
+        if (onStudioSelect) {
+          onStudioSelect(nearestStudio);
+        }
+        
+        // Save to localStorage
+        try {
+          localStorage.setItem('selectedStudio', JSON.stringify(nearestStudio));
+          localStorage.setItem('isPreselectedFromUrl', 'false');
+        } catch (e) {
+          console.error('Error saving studio to localStorage:', e);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching studios:', err);
+      setError('Failed to load studios. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
   
-  // Calculate distances between user and studios
+  // Fetch studios on mount or when dependencies change
+  useEffect(() => {
+    // Only fetch if we haven't already, or if user country changed
+    if (!hasFetchedRef.current) {
+      fetchAllStudios();
+    }
+  }, [selectedStudio, userCountry]);
+  
+  // Calculate distances between user and studios with improved error handling
   const calculateDistances = (studios, userLocation) => {
+    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+      return studios;
+    }
+    
     return studios.map(studio => {
-      if (!studio.coordinates || !studio.coordinates.latitude || !studio.coordinates.longitude) {
-        return { ...studio, distance: null };
+      if (!studio.coordinates || 
+          typeof studio.coordinates.latitude === 'undefined' || 
+          typeof studio.coordinates.longitude === 'undefined') {
+        return { ...studio, distance: Infinity }; // Use Infinity to push to bottom when sorting
       }
       
       try {
@@ -220,16 +276,18 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         
         return {
           ...studio,
-          distance: distance !== null && !isNaN(distance) ? distance : null
+          distance: (distance !== null && !isNaN(distance) && isFinite(distance)) 
+            ? distance 
+            : Infinity
         };
       } catch (error) {
-        console.error('Error calculating distance:', error);
-        return { ...studio, distance: null };
+        console.error('Error calculating distance for studio:', studio.name, error);
+        return { ...studio, distance: Infinity };
       }
     });
   };
   
-  // Calculate distance between coordinates
+  // Calculate distance between coordinates (Haversine formula)
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     try {
       // Convert to numbers if they're strings
@@ -240,7 +298,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       
       // Check for invalid values
       if (isNaN(latitude1) || isNaN(longitude1) || isNaN(latitude2) || isNaN(longitude2)) {
-        return null;
+        return Infinity;
       }
       
       // Calculate distance using Haversine formula
@@ -254,14 +312,14 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const distance = R * c;
       
-      return isFinite(distance) ? distance : null;
+      return isFinite(distance) ? distance : Infinity;
     } catch (error) {
       console.error('Distance calculation error:', error);
-      return null;
+      return Infinity;
     }
   };
   
-  // Filter studios by country - simplified but robust function
+  // Filter studios by country - robust function with better normalization
   const filterStudiosByCountry = (studios, country) => {
     if (!country || !studios || studios.length === 0) {
       return studios;
@@ -269,43 +327,38 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     console.log(`Filtering ${studios.length} studios by country: ${country}`);
     
-    // Simple direct matching function - handles the key country codes we need
-    const matchCountry = (studio) => {
-      if (!studio.country) return false;
+    // Normalize country codes for comparison
+    const normalizeCountry = (countryStr) => {
+      if (!countryStr) return '';
       
-      const normalizedStudioCountry = studio.country.toLowerCase().trim();
-      const normalizedUserCountry = country.toLowerCase().trim();
+      const normalized = countryStr.toLowerCase().trim();
       
-      // Direct match
-      if (normalizedStudioCountry === normalizedUserCountry) {
-        return true;
+      // Map common country names/codes to consistent values
+      if (normalized === 'tunisia' || normalized === 'tn' || normalized === 'tun') {
+        return 'tunisia';
+      }
+      if (normalized === 'us' || normalized === 'usa' || normalized === 'united states') {
+        return 'us';
+      }
+      if (normalized === 'ca' || normalized === 'can' || normalized === 'canada') {
+        return 'ca';
+      }
+      if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'gb') {
+        return 'uk';
       }
       
-      // TUNISIA check (special case)
-      if ((normalizedUserCountry === 'tunisia' || normalizedUserCountry === 'tn' || normalizedUserCountry === 'tun') &&
-          (normalizedStudioCountry === 'tunisia' || normalizedStudioCountry === 'tn' || normalizedStudioCountry === 'tun')) {
-        return true;
-      }
-      
-      // US/USA check (special case)
-      if ((normalizedUserCountry === 'us' || normalizedUserCountry === 'usa' || normalizedUserCountry === 'united states') &&
-          (normalizedStudioCountry === 'us' || normalizedStudioCountry === 'usa' || normalizedStudioCountry === 'united states')) {
-        return true;
-      }
-      
-      // CANADA check (special case)
-      if ((normalizedUserCountry === 'ca' || normalizedUserCountry === 'can' || normalizedUserCountry === 'canada') &&
-          (normalizedStudioCountry === 'ca' || normalizedStudioCountry === 'can' || normalizedStudioCountry === 'canada')) {
-        return true;
-      }
-      
-      return false;
+      return normalized;
     };
     
-    // Filter studios
-    const filteredStudios = studios.filter(matchCountry);
-    console.log(`Found ${filteredStudios.length} studios matching country ${country}`);
+    const normalizedUserCountry = normalizeCountry(country);
     
+    // Filter studios by normalized country
+    const filteredStudios = studios.filter(studio => {
+      const normalizedStudioCountry = normalizeCountry(studio.country);
+      return normalizedStudioCountry === normalizedUserCountry;
+    });
+    
+    console.log(`Found ${filteredStudios.length} studios matching country ${country}`);
     return filteredStudios;
   };
   
@@ -317,10 +370,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   // Studio selection handler
   const handleStudioSelect = (studio) => {
     if (studio && studio._id) {
-      console.log('Studio selected:', studio.name, 'Country:', studio.country);
+      console.log('Studio selected:', studio.name, 'Country:', studio.country, 
+        studio.distance ? `Distance: ${studio.distance.toFixed(1)} km` : '');
       
       // If the user's country isn't set yet, try to set it from the selected studio
-      if (studio.country) {
+      if (studio.country && !userCountry) {
         console.log('Setting user country from selected studio:', studio.country);
         setUserCountry(studio.country);
         localStorage.setItem('userCountry', studio.country);
@@ -369,54 +423,57 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   // Refresh button handler
   const handleRefresh = (e) => {
     e.stopPropagation();
+    
+    // Clear cache flags to force refresh
     hasFetchedRef.current = false;
     
-    // Refetch all studios
-    const fetchStudios = async () => {
+    // For a full refresh, also clear location cache to get fresh position
+    localStorage.removeItem('userLocationCache');
+    localStorage.removeItem('userLocationTimestamp');
+    
+    // Re-detect location then fetch studios
+    const refreshAll = async () => {
       try {
         setLoading(true);
         
-        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios');
-        
-        if (!response.ok) {
-          throw new Error(`Error: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        // Process the data
-        const studiosArray = Array.isArray(data) ? data : [data];
-        const activeStudios = studiosArray.filter(studio => studio && studio.isActive);
-        
-        // Calculate distances if we have user location
-        let studiosWithDistance = activeStudios;
-        if (locationRef.current) {
-          studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
-        }
-        
-        // Store all studios
-        setAllStudios(studiosWithDistance);
-        
-        // Apply country filter if available
-        if (userCountry) {
-          const filtered = filterStudiosByCountry(studiosWithDistance, userCountry);
-          if (filtered.length > 0) {
-            setStudios(filtered);
-          } else {
-            setStudios(studiosWithDistance);
+        // Get fresh geolocation if available
+        if (navigator.geolocation) {
+          try {
+            const position = await new Promise((resolve, reject) => {
+              navigator.geolocation.getCurrentPosition(resolve, reject, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+              });
+            });
+            
+            const location = {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            };
+            
+            // Update location ref and cache
+            locationRef.current = location;
+            localStorage.setItem('userLocationCache', JSON.stringify(location));
+            localStorage.setItem('userLocationTimestamp', Date.now().toString());
+            
+            console.log('Updated user location on refresh:', location);
+          } catch (locError) {
+            console.log('Could not get fresh location, using cached if available');
           }
-        } else {
-          setStudios(studiosWithDistance);
         }
+        
+        // Now fetch studios with updated location
+        await fetchAllStudios();
       } catch (err) {
-        console.error('Error refreshing studios:', err);
-        setError('Failed to refresh studios. Please try again.');
+        console.error('Error during full refresh:', err);
+        setError('Failed to refresh. Please try again.');
       } finally {
         setLoading(false);
       }
     };
     
-    fetchStudios();
+    refreshAll();
   };
 
   // Set base width for the component
@@ -469,13 +526,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
                 className="text-xs text-blue-500 hover:text-blue-700"
                 disabled={loading}
               >
-                Refresh
+                {loading ? 'Refreshing...' : 'Refresh'}
               </button>
             </div>
             
             {/* Country filter buttons */}
             <div className="flex flex-wrap gap-1 px-3 py-2 border-b">
-          
               <button 
                 onClick={() => setCountryFilter('CA')}
                 className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'ca' || userCountry?.toLowerCase() === 'canada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
@@ -505,7 +561,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
               </button>
             </div>
             
-            {/* Content */}
+            {/* Studios list */}
             <div className="py-2">
               {error ? (
                 <p className="px-3 text-sm text-red-500">{error}</p>
@@ -535,7 +591,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
                         <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
                         <span className="text-xs text-gray-600 break-words">{studio.address || 'No address'}</span>
                       </div>
-                      {studio.distance !== null && studio.distance !== undefined ? (
+                      {studio.distance !== null && studio.distance !== undefined && studio.distance !== Infinity ? (
                         <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
                           {studio.distance.toFixed(1)} km
                         </span>
