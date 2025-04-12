@@ -4321,7 +4321,8 @@ const handleFileChange = async (event) => {
   };
   
 
-  const calculateTotals = () => {
+
+const calculateTotals = () => {
   const country = initialCountries.find(c => c.value === selectedCountry);
   const quantities = {
     '4x6': 0,
@@ -4411,12 +4412,17 @@ const handleFileChange = async (event) => {
     }
   }
 
-  // Calculate discount if applicable
-  const discount = discountCode ? subtotal * calculateDiscountValue(discountCode) : 0;
+  // Combine subtotal and shipping before calculating discount
+  const preDiscountTotal = subtotal + shippingFee;
+  
+  // Calculate discount if applicable (now applies to subtotal + shipping)
+  const discount = discountCode ? preDiscountTotal * calculateDiscountValue(discountCode) : 0;
 
+  // Calculate taxable amount AFTER discount is applied
+  const taxableAmount = preDiscountTotal - discount;
+  
   // Calculate tax
   let taxAmount = 0;
-  const taxableAmount = subtotal + shippingFee;
   let appliedProvince = null;
   let appliedTaxRates = null;
 
@@ -4476,8 +4482,8 @@ const handleFileChange = async (event) => {
     taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
   }
 
-  // Calculate total (subtotal + shipping + tax - discount)
-  const total = subtotal + shippingFee + taxAmount - discount;
+  // Calculate total with the correct order: subtotal + shipping - discount + tax
+  const total = taxableAmount + taxAmount;
 
   return {
     subtotalsBySize,
@@ -4487,6 +4493,7 @@ const handleFileChange = async (event) => {
     total,
     quantities,
     discount,
+    preDiscountTotal,
     appliedProvince,
     appliedTaxRates
   };
@@ -4712,6 +4719,13 @@ const renderStepContent = () => {
                         <MapPin size={16} />
                         <span>{selectedStudio.address}</span>
                       </div>
+                          {/* Add distance display if available */}
+      {selectedStudio.distance !== undefined && (
+        <div className="flex items-center gap-2 text-blue-600 font-medium">
+          <Navigation size={16} />
+          <span>{selectedStudio.distance.toFixed(1)} km</span>
+        </div>
+      )}
                       <div className="flex items-center gap-2">
                         <Phone size={16} />
                         <span dir="ltr">{selectedStudio.phone}</span>
@@ -4886,28 +4900,22 @@ const renderStepContent = () => {
 
 
 const renderInvoice = () => {
-  const { subtotalsBySize, subtotal, shippingFee, total, quantities, discount, taxAmount, appliedProvince, appliedTaxRates } = calculateTotals();
+    const { 
+    subtotalsBySize, 
+    subtotal, 
+    shippingFee, 
+    total, 
+    quantities, 
+    discount, 
+    taxAmount, 
+    preDiscountTotal,
+    appliedProvince, 
+    appliedTaxRates 
+  } = calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
   
-  return (
+   return (
     <div className="space-y-6">
-      {/* Discount Code Section */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
-        <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="xxxx"
-            value={discountCode}
-            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-          />
-          {discountError && (
-            <p className="text-red-500 text-sm">{discountError}</p>
-          )}
-        </div>
-      </div>
-      
       {/* Order Summary */}
       <div className="border rounded-lg p-4">
         <h3 className="font-medium mb-3">{t('order.summary')}</h3>
@@ -4998,8 +5006,23 @@ const renderInvoice = () => {
           <span>{deliveryMethod === 'pickup' ? t('order.pickup_fee') : t('order.shipping_fee')}</span>
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
         </div>
+        
+        {/* Discount - Now positioned AFTER subtotal and shipping */}
+        {discount > 0 && (
+          <div className="flex justify-between py-2 text-green-600">
+            <span>
+              {t('order.discount')} ({getDiscountDisplay()})
+              <div className="text-xs text-gray-500">
+                {t('order.applied_to_subtotal_shipping')}
+              </div>
+            </span>
+            <span>
+              -{Math.abs(discount).toFixed(2)} {country?.currency}
+            </span>
+          </div>
+        )}
 
-        {/* Tax for applicable regions - Always display if applicable */}
+        {/* Tax for applicable regions - Now calculated based on (subtotal + shipping - discount) */}
         {/* Tunisia tax */}
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
@@ -5062,22 +5085,27 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Discount */}
-        {discount > 0 && (
-          <div className="flex justify-between py-2 text-green-600">
-            <span>
-              {t('order.discount')} ({getDiscountDisplay()})
-            </span>
-            <span>
-              -{Math.abs(discount).toFixed(2)} {country?.currency}
-            </span>
-          </div>
-        )}
-
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
           <span>{t('produits.total')}</span>
           <span>{total.toFixed(2)} {country?.currency}</span>
+        </div>
+      </div>
+      
+      {/* Discount Code Section */}
+      <div className="border rounded-lg p-4">
+        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
+        <div className="space-y-2">
+          <input
+            type="text"
+            placeholder="xxxx"
+            value={discountCode}
+            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+          />
+          {discountError && (
+            <p className="text-red-500 text-sm">{discountError}</p>
+          )}
         </div>
       </div>
     </div>
