@@ -115,29 +115,73 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     // Simple function to estimate country from coordinates
     const estimateCountryFromCoordinates = (latitude, longitude) => {
-      // Simple bounding boxes for common countries
-      // Tunisia
-      if (latitude > 30 && latitude < 38 && longitude > 7 && longitude < 12) {
-        return 'Tunisia';
+      // Country bounding boxes - improved accuracy
+      const countryBounds = [
+        // North America
+        { name: 'US', minLat: 24.396308, maxLat: 49.384358, minLng: -125.000000, maxLng: -66.934570 },
+        { name: 'CA', minLat: 41.676556, maxLat: 83.110626, minLng: -141.001944, maxLng: -52.636291 },
+        
+        // Europe
+        { name: 'UK', minLat: 49.674, maxLat: 61.061, minLng: -8.623, maxLng: 1.759 },
+        { name: 'France', minLat: 41.333, maxLat: 51.124, minLng: -5.143, maxLng: 9.560 },
+        { name: 'Germany', minLat: 47.270, maxLat: 55.058, minLng: 5.866, maxLng: 15.039 },
+        { name: 'Italy', minLat: 36.619, maxLat: 47.095, minLng: 6.626, maxLng: 18.520 },
+        { name: 'Spain', minLat: 36.000, maxLat: 43.792, minLng: -9.301, maxLng: 3.322 },
+        
+        // Africa
+        { name: 'Tunisia', minLat: 30.231, maxLat: 37.543, minLng: 7.524, maxLng: 11.590 },
+        
+        // Asia & Oceania
+        { name: 'JP', minLat: 30.970, maxLat: 45.523, minLng: 129.705, maxLng: 145.817 },
+        { name: 'SG', minLat: 1.236, maxLat: 1.466, minLng: 103.602, maxLng: 104.031 },
+        { name: 'AU', minLat: -43.651, maxLat: -10.584, minLng: 112.911, maxLng: 153.639 },
+        { name: 'RU', minLat: 41.186, maxLat: 81.857, minLng: 19.638, maxLng: 180.000 },
+        { name: 'CN', minLat: 18.155, maxLat: 53.557, minLng: 73.556, maxLng: 134.773 }
+      ];
+    
+      // Check if coordinates are within any country bounds
+      for (const country of countryBounds) {
+        if (
+          latitude >= country.minLat && latitude <= country.maxLat &&
+          longitude >= country.minLng && longitude <= country.maxLng
+        ) {
+          return country.name;
+        }
       }
-      // USA (continental)
-      if (latitude > 24 && latitude < 50 && longitude > -125 && longitude < -66) {
-        return 'US';
-      }
-      // Canada (southern part)
-      if (latitude > 42 && latitude < 70 && longitude > -140 && longitude < -52) {
-        return 'CA';
-      }
-      // UK
-      if (latitude > 49 && latitude < 60 && longitude > -10 && longitude < 2) {
-        return 'UK';
-      }
-      // France
-      if (latitude > 41 && latitude < 51 && longitude > -5 && longitude < 10) {
-        return 'France';
+    
+      // If not in bounds, find nearest country center
+      const countryCenters = [
+        { name: 'US', lat: 37.0902, lng: -95.7129 },
+        { name: 'CA', lat: 56.1304, lng: -106.3468 },
+        { name: 'Tunisia', lat: 34.0, lng: 9.0 },
+        { name: 'UK', lat: 55.3781, lng: -3.4360 },
+        { name: 'France', lat: 46.2276, lng: 2.2137 },
+        { name: 'Germany', lat: 51.1657, lng: 10.4515 },
+        { name: 'Italy', lat: 41.8719, lng: 12.5674 },
+        { name: 'Spain', lat: 40.4637, lng: -3.7492 },
+        { name: 'JP', lat: 36.2048, lng: 138.2529 },
+        { name: 'SG', lat: 1.3521, lng: 103.8198 },
+        { name: 'AU', lat: -25.2744, lng: 133.7751 },
+        { name: 'RU', lat: 61.5240, lng: 105.3188 },
+        { name: 'CN', lat: 35.8617, lng: 104.1954 }
+      ];
+    
+      let closestCountry = null;
+      let minDistance = Infinity;
+    
+      for (const country of countryCenters) {
+        const distance = calculateDistance(
+          latitude, longitude,
+          country.lat, country.lng
+        );
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestCountry = country.name;
+        }
       }
       
-      return null;
+      return closestCountry;
     };
     
     detectUserLocation();
@@ -181,33 +225,35 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       hasFetchedRef.current = true;
       
       // Calculate distances if we have user location
-      let studiosWithDistance = activeStudios;
-      if (locationRef.current) {
-        studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
-        
-        // Sort by distance first
-        studiosWithDistance.sort((a, b) => {
-          if (a.distance === undefined || a.distance === null) return 1;
-          if (b.distance === undefined || b.distance === null) return -1;
-          return a.distance - b.distance;
-        });
-        
-        console.log('Studios sorted by distance:', 
-          studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
-        );
-      }
-      
-      // Apply country filtering if we have a user country
-      let filteredStudios = studiosWithDistance;
-      if (userCountry) {
-        const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
-        // Only use filtered if we found matches
-        if (countryMatches.length > 0) {
-          filteredStudios = countryMatches;
-          console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
-        }
-      }
-      
+ // Calculate distances if we have user location
+ let studiosWithDistance = activeStudios;
+ if (locationRef.current) {
+   studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
+   
+   // Sort by distance first - THIS IS VERY IMPORTANT!
+   studiosWithDistance.sort((a, b) => {
+     if (a.distance === undefined || a.distance === null) return 1;
+     if (b.distance === undefined || b.distance === null) return -1;
+     return a.distance - b.distance;
+   });
+   
+   console.log('Studios sorted by distance:', 
+     studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
+   );
+ }
+ 
+ // Apply country filtering ONLY if we have user country AND there are studios in that country
+ let filteredStudios = studiosWithDistance;
+ if (userCountry) {
+   const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
+   // Only use filtered if we found matches
+   if (countryMatches.length > 0) {
+     filteredStudios = countryMatches;
+     console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
+   } else {
+     console.log(`No studios found in ${userCountry}, showing all studios sorted by distance`);
+   }
+ }
       // Set studios for display
       setStudios(filteredStudios);
       

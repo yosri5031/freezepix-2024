@@ -798,28 +798,71 @@ const [formData, setFormData] = useState({
 
       const detectUserLocation = async () => {
         try {
+          // First try browser geolocation for the most accurate results
+          if (navigator.geolocation) {
+            try {
+              console.log('Requesting geolocation from browser...');
+              const position = await new Promise((resolve, reject) => {
+                navigator.geolocation.getCurrentPosition(
+                  resolve, 
+                  reject, 
+                  { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+                );
+              });
+              
+              console.log('Geolocation successful:', position.coords);
+              
+              // Find nearest country from coordinates
+              const nearestCountry = findNearestCountry(
+                position.coords.latitude, 
+                position.coords.longitude
+              );
+              
+              console.log('Nearest country determined from coordinates:', nearestCountry);
+              
+              return {
+                country: nearestCountry,
+                coordinates: {
+                  latitude: position.coords.latitude,
+                  longitude: position.coords.longitude
+                },
+                method: 'geolocation'
+              };
+            } catch (geoError) {
+              console.warn('Browser geolocation failed:', geoError);
+              // Fall through to IP-based detection
+            }
+          }
+          
+          // Fallback to server-side detection
+          console.log('Falling back to IP-based location detection');
           const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/geo-location', {
             method: 'GET',
-            headers: {
-              'Accept': 'application/json'
-            },
+            headers: { 'Accept': 'application/json' },
             credentials: 'include'
           });
       
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error: ${response.status}`);
           }
       
           const data = await response.json();
+          console.log('IP-based location data:', data);
+          
+          // Make sure we map the country code correctly
+          const countryCode = data.country_code;
           return {
-            country: data.country_code,
-            language: data.languages?.split(',')[0] || 'en'
+            country: countryCode,
+            language: data.languages?.split(',')[0] || 'en',
+            method: 'ip'
           };
         } catch (error) {
-          console.warn('Location detection failed:', error);
+          console.warn('All location detection methods failed:', error);
+          // Default fallback
           return {
-            country: 'USA',
-            language: navigator.language?.split('-')[0] || 'en'
+            country: 'US',
+            language: navigator.language?.split('-')[0] || 'en',
+            method: 'fallback'
           };
         }
       };
@@ -928,35 +971,61 @@ const [formData, setFormData] = useState({
       useEffect(() => {
         const setInitialCountryAndLanguage = async () => {
           try {
-            // Get current language using the context hook
-            const currentLanguage = language || 'en'; // Access from context or use default
+            setIsLoading(true);
             
-            const location = await detectUserLocation();
-            if (location) {
-              const mappedCountry = mapCountryCode(location.country);
+            // Get current language from context
+            const currentLanguage = language || 'en';
+            
+            // Try to detect user location
+            const locationData = await detectUserLocation();
+            console.log('Location detection result:', locationData);
+            
+            if (locationData?.country) {
+              const mappedCountry = mapCountryCode(locationData.country);
               
-              // Set the country if it's in our list of supported countries
+              // Only set country if it's in our supported list
               if (initialCountries.some(c => c.value === mappedCountry)) {
+                console.log('Setting country based on geolocation:', mappedCountry);
                 setSelectedCountry(mappedCountry);
                 
-                // Set language based on country, but don't override user's active selection
-                // Only if the changeLanguage function is available
-                if (changeLanguage && !currentLanguage) { 
-                  // Map country to language preference
+                // Update form data with country
+                setFormData(prev => ({
+                  ...prev,
+                  shippingAddress: {
+                    ...prev.shippingAddress,
+                    country: mappedCountry
+                  },
+                  billingAddress: {
+                    ...prev.billingAddress,
+                    country: mappedCountry
+                  }
+                }));
+                
+                // Set language based on country
+                if (changeLanguage && !currentLanguage) {
                   let languageToUse = 'en'; // Default
                   
                   if (mappedCountry === 'TN') {
                     languageToUse = 'ar';
-                  } else if (location.language === 'fr') {
+                  } else if (locationData.language === 'fr') {
                     languageToUse = 'fr';
                   }
                   
                   changeLanguage(languageToUse);
                 }
+              } else {
+                console.log('Detected country not supported:', mappedCountry);
+                setSelectedCountry('US'); // Default to US
               }
+            } else {
+              console.log('No country detected, defaulting to US');
+              setSelectedCountry('US');
             }
           } catch (error) {
-            console.error('Error detecting location:', error);
+            console.error('Error in country/language setup:', error);
+            setSelectedCountry('US'); // Default to US on error
+          } finally {
+            setIsLoading(false);
           }
         };
       
