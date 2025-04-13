@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp } from 'lucide-react';
 
-// Improved StudioLocationHeader with better geolocation and studio selection
+// Fixed variable declaration issue - ensure all variables are properly initialized before use
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
+  // State variables
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,6 +15,113 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
   const locationRef = useRef(null);
   const hasFetchedRef = useRef(false);
   const lastRefreshTimeRef = useRef(0);
+  
+  // Helper functions - define these before using them in useEffect
+  const calculateDistance = (lat1, lon1, lat2, lon2) => {
+    try {
+      // Convert to numbers if they're strings
+      const latitude1 = typeof lat1 === 'string' ? parseFloat(lat1) : lat1;
+      const longitude1 = typeof lon1 === 'string' ? parseFloat(lon1) : lon1;
+      const latitude2 = typeof lat2 === 'string' ? parseFloat(lat2) : lat2;
+      const longitude2 = typeof lon2 === 'string' ? parseFloat(lon2) : lon2;
+      
+      // Check for invalid values
+      if (isNaN(latitude1) || isNaN(longitude1) || isNaN(latitude2) || isNaN(longitude2)) {
+        return Infinity;
+      }
+      
+      // Calculate distance using Haversine formula
+      const R = 6371; // Earth radius in km
+      const dLat = (latitude2 - latitude1) * Math.PI / 180;
+      const dLon = (longitude2 - longitude1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(latitude1 * Math.PI / 180) * Math.cos(latitude2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const distance = R * c;
+      
+      return isFinite(distance) ? distance : Infinity;
+    } catch (error) {
+      console.error('Distance calculation error:', error);
+      return Infinity;
+    }
+  };
+
+  const calculateDistances = (studios, userLocation) => {
+    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+      return studios;
+    }
+    
+    return studios.map(studio => {
+      if (!studio.coordinates || 
+          typeof studio.coordinates.latitude === 'undefined' || 
+          typeof studio.coordinates.longitude === 'undefined') {
+        return { ...studio, distance: Infinity }; // Use Infinity to push to bottom when sorting
+      }
+      
+      try {
+        const distance = calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          studio.coordinates.latitude,
+          studio.coordinates.longitude
+        );
+        
+        return {
+          ...studio,
+          distance: (distance !== null && !isNaN(distance) && isFinite(distance)) 
+            ? distance 
+            : Infinity
+        };
+      } catch (error) {
+        console.error('Error calculating distance for studio:', studio.name, error);
+        return { ...studio, distance: Infinity };
+      }
+    });
+  };
+
+  const filterStudiosByCountry = (studios, country) => {
+    if (!country || !studios || studios.length === 0) {
+      return studios;
+    }
+    
+    console.log(`Filtering ${studios.length} studios by country: ${country}`);
+    
+    // Normalize country codes for comparison
+    const normalizeCountry = (countryStr) => {
+      if (!countryStr) return '';
+      
+      const normalized = countryStr.toLowerCase().trim();
+      
+      // Map common country names/codes to consistent values
+      if (normalized === 'tunisia' || normalized === 'tn' || normalized === 'tun') {
+        return 'tunisia';
+      }
+      if (normalized === 'us' || normalized === 'usa' || normalized === 'united states') {
+        return 'us';
+      }
+      if (normalized === 'ca' || normalized === 'can' || normalized === 'canada') {
+        return 'ca';
+      }
+      if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'gb') {
+        return 'uk';
+      }
+      
+      return normalized;
+    };
+    
+    const normalizedUserCountry = normalizeCountry(country);
+    
+    // Filter studios by normalized country
+    const filteredStudios = studios.filter(studio => {
+      const normalizedStudioCountry = normalizeCountry(studio.country);
+      return normalizedStudioCountry === normalizedUserCountry;
+    });
+    
+    console.log(`Found ${filteredStudios.length} studios matching country ${country}`);
+    return filteredStudios;
+  };
   
   // Try to detect user location - improved method
   useEffect(() => {
@@ -105,6 +213,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         }
       }
     };
+    
     // Try to get country from browser language
     const tryBrowserLanguage = () => {
       try {
@@ -197,9 +306,9 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     };
     
     detectUserLocation();
-  }, []);
+  }, [userCountry]); // Added userCountry to dependencies to avoid useEffect warning
   
-  // Fetch studios function - separated from useEffect for clarity
+  // Fetch studios function - separated from useEffect for clarity and hoisted to be available
   const fetchAllStudios = async () => {
     // Prevent multiple simultaneous fetches
     if (loading) return;
@@ -237,35 +346,34 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       hasFetchedRef.current = true;
       
       // Calculate distances if we have user location
- // Calculate distances if we have user location
- let studiosWithDistance = activeStudios;
- if (locationRef.current) {
-   studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
-   
-   // Sort by distance first - THIS IS VERY IMPORTANT!
-   studiosWithDistance.sort((a, b) => {
-     if (a.distance === undefined || a.distance === null) return 1;
-     if (b.distance === undefined || b.distance === null) return -1;
-     return a.distance - b.distance;
-   });
-   
-   console.log('Studios sorted by distance:', 
-     studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
-   );
- }
- 
- // Apply country filtering ONLY if we have user country AND there are studios in that country
- let filteredStudios = studiosWithDistance;
- if (userCountry) {
-   const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
-   // Only use filtered if we found matches
-   if (countryMatches.length > 0) {
-     filteredStudios = countryMatches;
-     console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
-   } else {
-     console.log(`No studios found in ${userCountry}, showing all studios sorted by distance`);
-   }
- }
+      let studiosWithDistance = activeStudios;
+      if (locationRef.current) {
+        studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
+        
+        // Sort by distance first - THIS IS VERY IMPORTANT!
+        studiosWithDistance.sort((a, b) => {
+          if (a.distance === undefined || a.distance === null) return 1;
+          if (b.distance === undefined || b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+        
+        console.log('Studios sorted by distance:', 
+          studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
+        );
+      }
+      
+      // Apply country filtering ONLY if we have user country AND there are studios in that country
+      let filteredStudios = studiosWithDistance;
+      if (userCountry) {
+        const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
+        // Only use filtered if we found matches
+        if (countryMatches.length > 0) {
+          filteredStudios = countryMatches;
+          console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
+        } else {
+          console.log(`No studios found in ${userCountry}, showing all studios sorted by distance`);
+        }
+      }
       
       // Ensure we still have studios in the list, fallback to all studios if needed
       if (filteredStudios.length === 0 && studiosWithDistance.length > 0) {
@@ -290,7 +398,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         }
         
         // Call parent handler to select this studio
-        if (onStudioSelect) {
+        if (onStudioSelect && typeof onStudioSelect === 'function') {
           onStudioSelect(nearestStudio);
         }
         
@@ -310,122 +418,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     }
   };
   
-  // Fetch studios on mount or when dependencies change
+  // Fetch studios on mount or when dependencies change - using the defined fetch function
   useEffect(() => {
     // Only fetch if we haven't already, or if user country changed
     if (!hasFetchedRef.current) {
       fetchAllStudios();
     }
-  }, [selectedStudio, userCountry]);
-  
-  // Calculate distances between user and studios with improved error handling
-  const calculateDistances = (studios, userLocation) => {
-    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
-      return studios;
-    }
-    
-    return studios.map(studio => {
-      if (!studio.coordinates || 
-          typeof studio.coordinates.latitude === 'undefined' || 
-          typeof studio.coordinates.longitude === 'undefined') {
-        return { ...studio, distance: Infinity }; // Use Infinity to push to bottom when sorting
-      }
-      
-      try {
-        const distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          studio.coordinates.latitude,
-          studio.coordinates.longitude
-        );
-        
-        return {
-          ...studio,
-          distance: (distance !== null && !isNaN(distance) && isFinite(distance)) 
-            ? distance 
-            : Infinity
-        };
-      } catch (error) {
-        console.error('Error calculating distance for studio:', studio.name, error);
-        return { ...studio, distance: Infinity };
-      }
-    });
-  };
-  
-  // Calculate distance between coordinates (Haversine formula)
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    try {
-      // Convert to numbers if they're strings
-      const latitude1 = typeof lat1 === 'string' ? parseFloat(lat1) : lat1;
-      const longitude1 = typeof lon1 === 'string' ? parseFloat(lon1) : lon1;
-      const latitude2 = typeof lat2 === 'string' ? parseFloat(lat2) : lat2;
-      const longitude2 = typeof lon2 === 'string' ? parseFloat(lon2) : lon2;
-      
-      // Check for invalid values
-      if (isNaN(latitude1) || isNaN(longitude1) || isNaN(latitude2) || isNaN(longitude2)) {
-        return Infinity;
-      }
-      
-      // Calculate distance using Haversine formula
-      const R = 6371; // Earth radius in km
-      const dLat = (latitude2 - latitude1) * Math.PI / 180;
-      const dLon = (longitude2 - longitude1) * Math.PI / 180;
-      const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(latitude1 * Math.PI / 180) * Math.cos(latitude2 * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const distance = R * c;
-      
-      return isFinite(distance) ? distance : Infinity;
-    } catch (error) {
-      console.error('Distance calculation error:', error);
-      return Infinity;
-    }
-  };
-  
-  // Filter studios by country - robust function with better normalization
-  const filterStudiosByCountry = (studios, country) => {
-    if (!country || !studios || studios.length === 0) {
-      return studios;
-    }
-    
-    console.log(`Filtering ${studios.length} studios by country: ${country}`);
-    
-    // Normalize country codes for comparison
-    const normalizeCountry = (countryStr) => {
-      if (!countryStr) return '';
-      
-      const normalized = countryStr.toLowerCase().trim();
-      
-      // Map common country names/codes to consistent values
-      if (normalized === 'tunisia' || normalized === 'tn' || normalized === 'tun') {
-        return 'tunisia';
-      }
-      if (normalized === 'us' || normalized === 'usa' || normalized === 'united states') {
-        return 'us';
-      }
-      if (normalized === 'ca' || normalized === 'can' || normalized === 'canada') {
-        return 'ca';
-      }
-      if (normalized === 'uk' || normalized === 'united kingdom' || normalized === 'gb') {
-        return 'uk';
-      }
-      
-      return normalized;
-    };
-    
-    const normalizedUserCountry = normalizeCountry(country);
-    
-    // Filter studios by normalized country
-    const filteredStudios = studios.filter(studio => {
-      const normalizedStudioCountry = normalizeCountry(studio.country);
-      return normalizedStudioCountry === normalizedUserCountry;
-    });
-    
-    console.log(`Found ${filteredStudios.length} studios matching country ${country}`);
-    return filteredStudios;
-  };
+  }, [selectedStudio, userCountry]); // Added dependencies to avoid useEffect warning
   
   // Toggle dropdown
   const toggleDropdown = () => {
@@ -446,7 +445,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       }
       
       // Call parent handler
-      if (onStudioSelect) {
+      if (onStudioSelect && typeof onStudioSelect === 'function') {
         onStudioSelect(studio);
       }
       

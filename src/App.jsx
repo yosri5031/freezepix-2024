@@ -1,12 +1,33 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
+import { 
+  Upload, ShoppingCart, Package, Camera, X, Loader, MapPin, 
+  Clock, Phone, Mail, Navigation, Check, ChevronDown, 
+  ChevronUp, Calendar, ChevronLeft, Store 
+} from 'lucide-react';
+
+// Import third-party libraries before local components
 import './index.css'; 
-import { loadStripe } from "@stripe/stripe-js";
-import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
 import { useTranslation } from 'react-i18next';
+import imageCompression from 'browser-image-compression';
+import CryptoJS from 'crypto-js';
+import { Routes, Route, useLocation } from 'react-router-dom';
+
+// Now import components and assets
 import LanguageSelector from './components/LanguageSelector';
+import { useLanguage } from './contexts/LanguageContext';
+import { processImagesInBatches } from './imageProcessingUtils';
+import { clearStateStorage } from './stateManagementUtils';
+import { ShareUrl } from './StudioUrlShare';
+import { HelcimPayButton } from './HelcimPayButton';
+import { initializeHelcimPayCheckout } from './helcimService';
+
+// Import the fixed StudioLocationHeader component
+import StudioLocationHeader from './components/studiolocationheader';
+
+// Import image assets
 import photoprint4x6 from './assets/photoprint4x6.jpg';
 import photoprint5x7 from './assets/photoprint5x7.jpg';
 import photoprint8x10 from './assets/photoprint8x10.jpg';
@@ -17,13 +38,8 @@ import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
 import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
-import imageCompression from 'browser-image-compression';
-import { processImagesInBatches } from './imageProcessingUtils';
-import {clearStateStorage} from './stateManagementUtils';
-import {ShareUrl} from './StudioUrlShare';
-import StudioLocationHeader from './components/studiolocationheader';
-import Stripe from 'stripe';
-import { Routes, Route, useLocation } from 'react-router-dom';
+
+// Import utility functions last
 import { 
   convertImageToBase64, 
   base64ToFile, 
@@ -31,15 +47,7 @@ import {
   loadPhotosFromStorage,
   clearPhotoStorage 
 } from './imageHandlingUtils';
-import CryptoJS from 'crypto-js';
-import { useLanguage } from './contexts/LanguageContext'; // Adjust the import depending on your file structure
-const stripe = new Stripe('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', {
-  apiVersion: 'latest' // Recommended to specify version
-});
-//import { sendOrderConfirmation } from './utils/emailService'..;
 
-import {HelcimPayButton } from './HelcimPayButton';
-import { initializeHelcimPayCheckout } from './helcimService';
 const initialCountries = [
   {name: 'United States', 
     value: 'US', 
@@ -739,6 +747,20 @@ const BookingPopup = ({ onClose }) => {
     // Update browser URL without reloading the page
     window.history.pushState({ studioId: studio._id }, '', newUrl);
   };
+
+    // Calculate distance between two geographical coordinates
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+      const R = 6371; // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; // Distance in km
+    };
+    
 const FreezePIX = () => {
  
 
@@ -1476,18 +1498,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   // Number of studios to show initially
   const INITIAL_DISPLAY_COUNT = 4;
   
-  // Calculate distance between two geographical coordinates
-  const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c; // Distance in km
-  };
+
 
   // Save distance filter to localStorage whenever it changes
   useEffect(() => {
