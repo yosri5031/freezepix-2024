@@ -127,7 +127,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     // Simple function to estimate country from coordinates
     const estimateCountryFromCoordinates = (latitude, longitude) => {
-      // Country bounding boxes - improved accuracy
+      // Better coordinate ranges for major countries
       const countryBounds = [
         // North America
         { name: 'US', minLat: 24.396308, maxLat: 49.384358, minLng: -125.000000, maxLng: -66.934570 },
@@ -148,7 +148,15 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         { name: 'SG', minLat: 1.236, maxLat: 1.466, minLng: 103.602, maxLng: 104.031 },
         { name: 'AU', minLat: -43.651, maxLat: -10.584, minLng: 112.911, maxLng: 153.639 },
         { name: 'RU', minLat: 41.186, maxLat: 81.857, minLng: 19.638, maxLng: 180.000 },
-        { name: 'CN', minLat: 18.155, maxLat: 53.557, minLng: 73.556, maxLng: 134.773 }
+        { name: 'CN', minLat: 18.155, maxLat: 53.557, minLng: 73.556, maxLng: 134.773 },
+        
+        // Middle East
+        { name: 'AE', minLat: 22.633, maxLat: 26.084, minLng: 51.583, maxLng: 56.382 },
+        { name: 'SA', minLat: 16.347, maxLat: 32.158, minLng: 34.495, maxLng: 55.667 },
+        
+        // South America
+        { name: 'BR', minLat: -33.750, maxLat: 5.272, minLng: -73.990, maxLng: -34.793 },
+        { name: 'MX', minLat: 14.532, maxLat: 32.718, minLng: -118.368, maxLng: -86.710 }
       ];
     
       // Check if coordinates are within any country bounds
@@ -161,7 +169,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         }
       }
     
-      // If not in bounds, find nearest country center
+      // If not in specific bounds, find nearest country center
       const countryCenters = [
         { name: 'US', lat: 37.0902, lng: -95.7129 },
         { name: 'CA', lat: 56.1304, lng: -106.3468 },
@@ -175,7 +183,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         { name: 'SG', lat: 1.3521, lng: 103.8198 },
         { name: 'AU', lat: -25.2744, lng: 133.7751 },
         { name: 'RU', lat: 61.5240, lng: 105.3188 },
-        { name: 'CN', lat: 35.8617, lng: 104.1954 }
+        { name: 'CN', lat: 35.8617, lng: 104.1954 },
+        { name: 'AE', lat: 23.4241, lng: 53.8478 },
+        { name: 'SA', lat: 23.8859, lng: 45.0792 },
+        { name: 'BR', lat: -14.2350, lng: -51.9253 },
+        { name: 'MX', lat: 23.6345, lng: -102.5528 }
       ];
     
       let closestCountry = null;
@@ -237,35 +249,34 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       hasFetchedRef.current = true;
       
       // Calculate distances if we have user location
- // Calculate distances if we have user location
- let studiosWithDistance = activeStudios;
- if (locationRef.current) {
-   studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
-   
-   // Sort by distance first - THIS IS VERY IMPORTANT!
-   studiosWithDistance.sort((a, b) => {
-     if (a.distance === undefined || a.distance === null) return 1;
-     if (b.distance === undefined || b.distance === null) return -1;
-     return a.distance - b.distance;
-   });
-   
-   console.log('Studios sorted by distance:', 
-     studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
-   );
- }
- 
- // Apply country filtering ONLY if we have user country AND there are studios in that country
- let filteredStudios = studiosWithDistance;
- if (userCountry) {
-   const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
-   // Only use filtered if we found matches
-   if (countryMatches.length > 0) {
-     filteredStudios = countryMatches;
-     console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
-   } else {
-     console.log(`No studios found in ${userCountry}, showing all studios sorted by distance`);
-   }
- }
+      let studiosWithDistance = activeStudios;
+      if (locationRef.current) {
+        studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
+        
+        // Sort by distance first - THIS IS VERY IMPORTANT!
+        studiosWithDistance.sort((a, b) => {
+          if (a.distance === undefined || a.distance === null) return 1;
+          if (b.distance === undefined || b.distance === null) return -1;
+          return a.distance - b.distance;
+        });
+        
+        console.log('Studios sorted by distance:', 
+          studiosWithDistance.map(s => `${s.name}: ${s.distance ? s.distance.toFixed(1) : 'unknown'} km`)
+        );
+      }
+      
+      // Apply country filtering if we have a user country
+      let filteredStudios = studiosWithDistance;
+      if (userCountry) {
+        const countryMatches = filterStudiosByCountry(studiosWithDistance, userCountry);
+        // Only use filtered if we found matches
+        if (countryMatches.length > 0) {
+          filteredStudios = countryMatches;
+          console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
+        } else {
+          console.log(`No studios found in ${userCountry}, showing all studios`);
+        }
+      }
       
       // Ensure we still have studios in the list, fallback to all studios if needed
       if (filteredStudios.length === 0 && studiosWithDistance.length > 0) {
