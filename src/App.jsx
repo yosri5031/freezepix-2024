@@ -796,112 +796,33 @@ const [formData, setFormData] = useState({
 
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
 
-      const findNearestCountry = (latitude, longitude) => {
-        // Define country bounding boxes and center points
-        const countries = [
-          { code: 'US', center: { lat: 37.0902, lng: -95.7129 } },
-          { code: 'CA', center: { lat: 56.1304, lng: -106.3468 } },
-          { code: 'TN', center: { lat: 34.0, lng: 9.0 } },
-          { code: 'GB', center: { lat: 55.3781, lng: -3.4360 } },
-          { code: 'DE', center: { lat: 51.1657, lng: 10.4515 } },
-          { code: 'FR', center: { lat: 46.2276, lng: 2.2137 } },
-          { code: 'IT', center: { lat: 41.8719, lng: 12.5674 } },
-          { code: 'ES', center: { lat: 40.4637, lng: -3.7492 } },
-          { code: 'AU', center: { lat: -25.2744, lng: 133.7751 } },
-          { code: 'JP', center: { lat: 36.2048, lng: 138.2529 } },
-          { code: 'SG', center: { lat: 1.3521, lng: 103.8198 } },
-          { code: 'RU', center: { lat: 61.5240, lng: 105.3188 } },
-          { code: 'CN', center: { lat: 35.8617, lng: 104.1954 } },
-          { code: 'AE', center: { lat: 23.4241, lng: 53.8478 } },
-          { code: 'SA', center: { lat: 23.8859, lng: 45.0792 } },
-          { code: 'BR', center: { lat: -14.2350, lng: -51.9253 } },
-          { code: 'MX', center: { lat: 23.6345, lng: -102.5528 } }
-        ];
-        
-        // Calculate distances to each country center
-        const distances = countries.map(country => {
-          const distance = calculateDistance(
-            latitude, 
-            longitude, 
-            country.center.lat, 
-            country.center.lng
-          );
-          return { code: country.code, distance };
-        });
-        
-        // Sort by distance and return closest
-        distances.sort((a, b) => a.distance - b.distance);
-        console.log('Sorted country distances:', distances);
-        
-        return distances[0].code;
+      const detectUserLocation = async () => {
+        try {
+          const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/geo-location', {
+            method: 'GET',
+            headers: {
+              'Accept': 'application/json'
+            },
+            credentials: 'include'
+          });
+      
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+      
+          const data = await response.json();
+          return {
+            country: data.country_code,
+            language: data.languages?.split(',')[0] || 'en'
+          };
+        } catch (error) {
+          console.warn('Location detection failed:', error);
+          return {
+            country: 'USA',
+            language: navigator.language?.split('-')[0] || 'en'
+          };
+        }
       };
-
-   // Replace the existing detectUserLocation function in App.jsx with this improved version
-const detectUserLocation = async () => {
-  try {
-    // First try to get browser geolocation (most accurate)
-    if (navigator.geolocation) {
-      try {
-        // Create a promise-based geolocation request
-        const position = await new Promise((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(
-            resolve,
-            reject,
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-          );
-        });
-        
-        console.log('Browser geolocation successful:', position.coords);
-        
-        // Use coords to detect the closest country
-        const nearestCountry = findNearestCountry(position.coords.latitude, position.coords.longitude);
-        console.log('Nearest country from coordinates:', nearestCountry);
-        
-        return {
-          country: nearestCountry,
-          coordinates: {
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          },
-          method: 'geolocation'
-        };
-      } catch (geoError) {
-        console.warn('Browser geolocation failed:', geoError);
-        // Fall through to IP-based detection
-      }
-    }
-    
-    // Fallback to server-side IP detection
-    console.log('Falling back to IP-based location detection');
-    const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/geo-location', {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json'
-      },
-      credentials: 'include'
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log('IP-based location:', data);
-    
-    return {
-      country: data.country_code,
-      language: data.languages?.split(',')[0] || 'en',
-      method: 'ip'
-    };
-  } catch (error) {
-    console.warn('All location detection methods failed:', error);
-    return {
-      country: 'US', // Default fallback
-      language: navigator.language?.split('-')[0] || 'en',
-      method: 'fallback'
-    };
-  }
-};
       
       const mapCountryCode = (code) => {
         const countryMap = {
@@ -1004,95 +925,43 @@ const detectUserLocation = async () => {
       }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
-    // Replace this useEffect in your FreezePIX component
-useEffect(() => {
-  const setInitialCountryAndLanguage = async () => {
-    try {
-      setIsLoading(true);
-      // Get current language using the context hook
-      const currentLanguage = language || 'en'; // Access from context or use default
-      
-      // First try to get stored location if it exists and is recent
-      const storedLocation = localStorage.getItem('userLocationData');
-      const locationTimestamp = parseInt(localStorage.getItem('userLocationTimestamp') || '0', 10);
-      const now = Date.now();
-      const ONE_HOUR = 60 * 60 * 1000;
-      
-      let locationData;
-      
-      // Use stored location if it's fresh (less than 1 hour old)
-      if (storedLocation && (now - locationTimestamp < ONE_HOUR)) {
-        try {
-          locationData = JSON.parse(storedLocation);
-          console.log('Using cached location data:', locationData);
-        } catch (error) {
-          console.warn('Failed to parse stored location, will detect fresh location');
-          locationData = null;
-        }
-      }
-      
-      // If no valid stored location, detect new location
-      if (!locationData) {
-        locationData = await detectUserLocation();
-        
-        // Store the new location data with timestamp
-        try {
-          localStorage.setItem('userLocationData', JSON.stringify(locationData));
-          localStorage.setItem('userLocationTimestamp', now.toString());
-        } catch (storageError) {
-          console.warn('Failed to cache location data:', storageError);
-        }
-      }
-      
-      if (locationData) {
-        const mappedCountry = mapCountryCode(locationData.country);
-        
-        // Set the country if it's in our list of supported countries
-        if (initialCountries.some(c => c.value === mappedCountry)) {
-          console.log('Setting country based on geolocation:', mappedCountry);
-          setSelectedCountry(mappedCountry);
-          
-          // Update form data with the country
-          setFormData(prev => ({
-            ...prev,
-            shippingAddress: {
-              ...prev.shippingAddress,
-              country: mappedCountry
-            },
-            billingAddress: {
-              ...prev.billingAddress,
-              country: mappedCountry
-            }
-          }));
-          
-          // Set language based on country, but don't override user's active selection
-          if (changeLanguage && !currentLanguage) { 
-            // Map country to language preference
-            let languageToUse = 'en'; // Default
+      useEffect(() => {
+        const setInitialCountryAndLanguage = async () => {
+          try {
+            // Get current language using the context hook
+            const currentLanguage = language || 'en'; // Access from context or use default
             
-            if (mappedCountry === 'TN') {
-              languageToUse = 'ar';
-            } else if (locationData.language === 'fr') {
-              languageToUse = 'fr';
+            const location = await detectUserLocation();
+            if (location) {
+              const mappedCountry = mapCountryCode(location.country);
+              
+              // Set the country if it's in our list of supported countries
+              if (initialCountries.some(c => c.value === mappedCountry)) {
+                setSelectedCountry(mappedCountry);
+                
+                // Set language based on country, but don't override user's active selection
+                // Only if the changeLanguage function is available
+                if (changeLanguage && !currentLanguage) { 
+                  // Map country to language preference
+                  let languageToUse = 'en'; // Default
+                  
+                  if (mappedCountry === 'TN') {
+                    languageToUse = 'ar';
+                  } else if (location.language === 'fr') {
+                    languageToUse = 'fr';
+                  }
+                  
+                  changeLanguage(languageToUse);
+                }
+              }
             }
-            
-            changeLanguage(languageToUse);
+          } catch (error) {
+            console.error('Error detecting location:', error);
           }
-        } else {
-          console.log('Country from geolocation not supported:', mappedCountry);
-          setSelectedCountry('US'); // Default to US if country not supported
-        }
-      }
-    } catch (error) {
-      console.error('Error detecting location:', error);
-      setSelectedCountry('US'); // Default to US on error
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  setInitialCountryAndLanguage();
-}, [language, changeLanguage]); // Only depend on language context
+        };
+      
+        setInitialCountryAndLanguage();
+      }, []);
       
       useEffect(() => {
         setFormData(prev => ({
@@ -1499,7 +1368,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   
   // Calculate distance between two geographical coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
-    const R = 6371; // Earth's radius in km
+    const R = 6371; // Radius of the earth in km
     const dLat = (lat2 - lat1) * Math.PI / 180;
     const dLon = (lon2 - lon1) * Math.PI / 180;
     const a = 

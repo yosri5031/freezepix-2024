@@ -39,23 +39,18 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
             }
           }
           
-          // Ensure we still fetch studios even with cached location
-          if (!hasFetchedRef.current) {
-            fetchAllStudios();
-          }
-          
           return;
         }
         
-        // Try to get user location from browser with higher timeout
+        // Try to get user location from browser
         if (navigator.geolocation) {
           console.log('Requesting fresh user location...');
           
-          // Promise-based geolocation with increased timeout
+          // Promise-based geolocation
           const position = await new Promise((resolve, reject) => {
             navigator.geolocation.getCurrentPosition(resolve, reject, {
               enableHighAccuracy: true,
-              timeout: 10000, // Increased to 10 seconds
+              timeout: 5000,
               maximumAge: 0
             });
           });
@@ -91,20 +86,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         } else {
           // No geolocation support, try browser language
           tryBrowserLanguage();
-          // Also fetch studios even without geolocation
-          if (!hasFetchedRef.current) {
-            fetchAllStudios();
-          }
         }
       } catch (error) {
         console.error('Error detecting location:', error);
         tryBrowserLanguage();
-        // Still try to fetch studios on error
-        if (!hasFetchedRef.current) {
-          fetchAllStudios();
-        }
       }
     };
+    
     // Try to get country from browser language
     const tryBrowserLanguage = () => {
       try {
@@ -127,85 +115,29 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
     
     // Simple function to estimate country from coordinates
     const estimateCountryFromCoordinates = (latitude, longitude) => {
-      // Better coordinate ranges for major countries
-      const countryBounds = [
-        // North America
-        { name: 'US', minLat: 24.396308, maxLat: 49.384358, minLng: -125.000000, maxLng: -66.934570 },
-        { name: 'CA', minLat: 41.676556, maxLat: 83.110626, minLng: -141.001944, maxLng: -52.636291 },
-        
-        // Europe
-        { name: 'UK', minLat: 49.674, maxLat: 61.061, minLng: -8.623, maxLng: 1.759 },
-        { name: 'France', minLat: 41.333, maxLat: 51.124, minLng: -5.143, maxLng: 9.560 },
-        { name: 'Germany', minLat: 47.270, maxLat: 55.058, minLng: 5.866, maxLng: 15.039 },
-        { name: 'Italy', minLat: 36.619, maxLat: 47.095, minLng: 6.626, maxLng: 18.520 },
-        { name: 'Spain', minLat: 36.000, maxLat: 43.792, minLng: -9.301, maxLng: 3.322 },
-        
-        // Africa
-        { name: 'Tunisia', minLat: 30.231, maxLat: 37.543, minLng: 7.524, maxLng: 11.590 },
-        
-        // Asia & Oceania
-        { name: 'JP', minLat: 30.970, maxLat: 45.523, minLng: 129.705, maxLng: 145.817 },
-        { name: 'SG', minLat: 1.236, maxLat: 1.466, minLng: 103.602, maxLng: 104.031 },
-        { name: 'AU', minLat: -43.651, maxLat: -10.584, minLng: 112.911, maxLng: 153.639 },
-        { name: 'RU', minLat: 41.186, maxLat: 81.857, minLng: 19.638, maxLng: 180.000 },
-        { name: 'CN', minLat: 18.155, maxLat: 53.557, minLng: 73.556, maxLng: 134.773 },
-        
-        // Middle East
-        { name: 'AE', minLat: 22.633, maxLat: 26.084, minLng: 51.583, maxLng: 56.382 },
-        { name: 'SA', minLat: 16.347, maxLat: 32.158, minLng: 34.495, maxLng: 55.667 },
-        
-        // South America
-        { name: 'BR', minLat: -33.750, maxLat: 5.272, minLng: -73.990, maxLng: -34.793 },
-        { name: 'MX', minLat: 14.532, maxLat: 32.718, minLng: -118.368, maxLng: -86.710 }
-      ];
-    
-      // Check if coordinates are within any country bounds
-      for (const country of countryBounds) {
-        if (
-          latitude >= country.minLat && latitude <= country.maxLat &&
-          longitude >= country.minLng && longitude <= country.maxLng
-        ) {
-          return country.name;
-        }
+      // Simple bounding boxes for common countries
+      // Tunisia
+      if (latitude > 30 && latitude < 38 && longitude > 7 && longitude < 12) {
+        return 'Tunisia';
       }
-    
-      // If not in specific bounds, find nearest country center
-      const countryCenters = [
-        { name: 'US', lat: 37.0902, lng: -95.7129 },
-        { name: 'CA', lat: 56.1304, lng: -106.3468 },
-        { name: 'Tunisia', lat: 34.0, lng: 9.0 },
-        { name: 'UK', lat: 55.3781, lng: -3.4360 },
-        { name: 'France', lat: 46.2276, lng: 2.2137 },
-        { name: 'Germany', lat: 51.1657, lng: 10.4515 },
-        { name: 'Italy', lat: 41.8719, lng: 12.5674 },
-        { name: 'Spain', lat: 40.4637, lng: -3.7492 },
-        { name: 'JP', lat: 36.2048, lng: 138.2529 },
-        { name: 'SG', lat: 1.3521, lng: 103.8198 },
-        { name: 'AU', lat: -25.2744, lng: 133.7751 },
-        { name: 'RU', lat: 61.5240, lng: 105.3188 },
-        { name: 'CN', lat: 35.8617, lng: 104.1954 },
-        { name: 'AE', lat: 23.4241, lng: 53.8478 },
-        { name: 'SA', lat: 23.8859, lng: 45.0792 },
-        { name: 'BR', lat: -14.2350, lng: -51.9253 },
-        { name: 'MX', lat: 23.6345, lng: -102.5528 }
-      ];
-    
-      let closestCountry = null;
-      let minDistance = Infinity;
-    
-      for (const country of countryCenters) {
-        const distance = calculateDistance(
-          latitude, longitude,
-          country.lat, country.lng
-        );
-        
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestCountry = country.name;
-        }
+      // USA (continental)
+      if (latitude > 24 && latitude < 50 && longitude > -125 && longitude < -66) {
+        return 'US';
+      }
+      // Canada (southern part)
+      if (latitude > 42 && latitude < 70 && longitude > -140 && longitude < -52) {
+        return 'CA';
+      }
+      // UK
+      if (latitude > 49 && latitude < 60 && longitude > -10 && longitude < 2) {
+        return 'UK';
+      }
+      // France
+      if (latitude > 41 && latitude < 51 && longitude > -5 && longitude < 10) {
+        return 'France';
       }
       
-      return closestCountry;
+      return null;
     };
     
     detectUserLocation();
@@ -253,7 +185,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       if (locationRef.current) {
         studiosWithDistance = calculateDistances(activeStudios, locationRef.current);
         
-        // Sort by distance first - THIS IS VERY IMPORTANT!
+        // Sort by distance first
         studiosWithDistance.sort((a, b) => {
           if (a.distance === undefined || a.distance === null) return 1;
           if (b.distance === undefined || b.distance === null) return -1;
@@ -273,15 +205,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
         if (countryMatches.length > 0) {
           filteredStudios = countryMatches;
           console.log(`Found ${countryMatches.length} studios in ${userCountry}`);
-        } else {
-          console.log(`No studios found in ${userCountry}, showing all studios`);
         }
-      }
-      
-      // Ensure we still have studios in the list, fallback to all studios if needed
-      if (filteredStudios.length === 0 && studiosWithDistance.length > 0) {
-        console.log('Filtered list empty, reverting to all studios sorted by distance');
-        filteredStudios = studiosWithDistance;
       }
       
       // Set studios for display
@@ -581,115 +505,109 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect }) => {
       
       {/* Dropdown - 1.3x wider than the parent */}
       {isDropdownOpen && (
-  <div 
-    className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
-    style={{ width: `${dropdownWidth}px` }}
-  >
-    <div className="p-2">
-      <div className="flex justify-between items-center px-3 py-2 border-b">
-        <h3 className="font-medium text-sm">
-          {userCountry ? (
-            <div className="flex items-center">
-              Studios in {userCountry}
-              <span className="ml-1 text-xs text-gray-500">
-                ({studios.length})
-              </span>
-            </div>
-          ) : 'Select Pickup Location'}
-        </h3>
-        <button 
-          onClick={handleRefresh}
-          className="text-xs text-blue-500 hover:text-blue-700"
-          disabled={loading}
+        <div 
+          className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg z-50 max-h-64 overflow-y-auto"
+          style={{ width: `${dropdownWidth}px` }}
         >
-          {loading ? 'Refreshing...' : 'Refresh'}
-        </button>
-      </div>
-      
-      {/* Country filter buttons */}
-      <div className="flex flex-wrap gap-1 px-3 py-2 border-b">
-        <button 
-          onClick={() => setCountryFilter('CA')}
-          className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'ca' || userCountry?.toLowerCase() === 'canada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
-        >
-          Canada
-        </button>
-
-        <button 
-          onClick={() => setCountryFilter('US')}
-          className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'us' || userCountry?.toLowerCase() === 'usa' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
-        >
-          USA
-        </button>
-
-        <button 
-          onClick={() => setCountryFilter('Tunisia')}
-          className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'tunisia' || userCountry?.toLowerCase() === 'tn' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
-        >
-          Tunisia
-        </button>
-        
-        <button 
-          onClick={() => setCountryFilter(null)}
-          className={`text-xs px-2 py-1 rounded ${!userCountry ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
-        >
-          All
-        </button>
-      </div>
-      
-      {/* Studios list */}
-      <div className="py-2">
-        {error ? (
-          <p className="px-3 text-sm text-red-500">{error}</p>
-        ) : loading ? (
-          <div className="animate-pulse space-y-2 p-3">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-10 bg-gray-200 rounded"></div>
-            ))}
-          </div>
-        ) : studios.length === 0 ? (
-          <p className="px-3 text-sm text-gray-500">
-            {userCountry 
-              ? `No studios available in ${userCountry}` 
-              : 'No studios available'}
-          </p>
-        ) : (
-          studios.map(studio => (
-            studio && studio._id ? (
-              <div
-                key={studio._id}
-                className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
-                  selectedStudio?._id === studio._id ? 'bg-green-50 border-l-4 border-green-500' : ''
-                }`}
-                onClick={() => handleStudioSelect(studio)}
-              >
-                <div className="flex flex-col flex-grow mr-2">
+          <div className="p-2">
+            <div className="flex justify-between items-center px-3 py-2 border-b">
+              <h3 className="font-medium text-sm">
+                {userCountry ? (
                   <div className="flex items-center">
-                    <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
-                    {/* Add country indicator badge */}
-                    <span className="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
-                      {studio.country || 'N/A'}
+                    Studios in {userCountry}
+                    <span className="ml-1 text-xs text-gray-500">
+                      ({studios.length})
                     </span>
                   </div>
-                  <span className="text-xs text-gray-600 break-words">{studio.address || 'No address'}</span>
+                ) : 'Select Pickup Location'}
+              </h3>
+              <button 
+                onClick={handleRefresh}
+                className="text-xs text-blue-500 hover:text-blue-700"
+                disabled={loading}
+              >
+                {loading ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </div>
+            
+            {/* Country filter buttons */}
+            <div className="flex flex-wrap gap-1 px-3 py-2 border-b">
+              <button 
+                onClick={() => setCountryFilter('CA')}
+                className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'ca' || userCountry?.toLowerCase() === 'canada' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+              >
+                Canada
+              </button>
+
+              <button 
+                onClick={() => setCountryFilter('US')}
+                className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'us' || userCountry?.toLowerCase() === 'usa' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+              >
+                USA
+              </button>
+
+              <button 
+                onClick={() => setCountryFilter('Tunisia')}
+                className={`text-xs px-2 py-1 rounded ${userCountry?.toLowerCase() === 'tunisia' || userCountry?.toLowerCase() === 'tn' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}
+              >
+                Tunisia
+              </button>
+              
+              <button 
+                onClick={() => setCountryFilter(null)}
+                className={`text-xs px-2 py-1 rounded ${!userCountry ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'}`}
+              >
+                All
+              </button>
+            </div>
+            
+            {/* Studios list */}
+            <div className="py-2">
+              {error ? (
+                <p className="px-3 text-sm text-red-500">{error}</p>
+              ) : loading ? (
+                <div className="animate-pulse space-y-2 p-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-10 bg-gray-200 rounded"></div>
+                  ))}
                 </div>
-                {studio.distance !== null && studio.distance !== undefined && studio.distance !== Infinity ? (
-                  <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                    {studio.distance.toFixed(1)} km
-                  </span>
-                ) : (
-                  <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                    {studio.country || '--'}
-                  </span>
-                )}
-              </div>
-            ) : null
-          ))
-        )}
-      </div>
-    </div>
-  </div>
-)}
+              ) : studios.length === 0 ? (
+                <p className="px-3 text-sm text-gray-500">
+                  {userCountry 
+                    ? `No studios available in ${userCountry}` 
+                    : 'No studios available'}
+                </p>
+              ) : (
+                studios.map(studio => (
+                  studio && studio._id ? (
+                    <div
+                      key={studio._id}
+                      className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
+                        selectedStudio?._id === studio._id ? 'bg-green-50 border-l-4 border-green-500' : ''
+                      }`}
+                      onClick={() => handleStudioSelect(studio)}
+                    >
+                      <div className="flex flex-col flex-grow mr-2">
+                        <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
+                        <span className="text-xs text-gray-600 break-words">{studio.address || 'No address'}</span>
+                      </div>
+                      {studio.distance !== null && studio.distance !== undefined && studio.distance !== Infinity ? (
+                        <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                          {studio.distance.toFixed(1)} km
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
+                          {studio.country || '--'}
+                        </span>
+                      )}
+                    </div>
+                  ) : null
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
