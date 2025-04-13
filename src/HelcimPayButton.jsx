@@ -256,7 +256,7 @@ const HelcimPayButton = ({
       ? 'Processing...' 
       : !scriptLoaded
         ? 'Loading Payment System...'
-        : 'Pay Order';
+        : 'Pay';
 
   return (
     <div className="helcim-pay-container">
