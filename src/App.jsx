@@ -2239,17 +2239,17 @@ const renderNavigationButtons = () => {
       {/* Conditional rendering for payment button */}
       {activeStep === 1 && paymentMethod === 'helcim' ? (
         <div className="helcim-payment-wrapper">
-          <HelcimPayButton 
-            onPaymentSuccess={handleHelcimPaymentSuccess}
-            isProcessing={isProcessingOrder}
-            disabled={!formIsValid}
-            selectedCountry={selectedCountry}
-            total={calculateTotals().total} // Fix: use the total from calculateTotals
-            setOrderSuccess={setOrderSuccess}
-            setError={setError}
-            setIsProcessingOrder={setIsProcessingOrder}
-            onSecretTokenReceived={handleSecretTokenReceived}
-          />
+         <HelcimPayButton 
+      onPaymentSuccess={handleHelcimPaymentSuccess}
+      isProcessing={isProcessingOrder}
+      disabled={!validatePaymentForm()} // Use the new validation function here
+      selectedCountry={selectedCountry}
+      total={calculateTotals().total}
+      setOrderSuccess={setOrderSuccess}
+      setError={setError}
+      setIsProcessingOrder={setIsProcessingOrder}
+      onSecretTokenReceived={handleSecretTokenReceived}
+    />
         </div>
       ) : (
         <button
@@ -5227,40 +5227,47 @@ const handleStartPrinting = () => {
   setShowIntro(false);
   setActiveStep(0);
 };
+const validatePaymentForm = () => {
+  // Always validate basic contact information
+  if (!formData.email || !formData.phone || !formData.name) {
+    return false;
+  }
+  
+  // If delivery method is pickup, we need a selected studio
+  if (deliveryMethod === 'pickup') {
+    return selectedStudio !== null;
+  } 
+  // If delivery method is shipping, validate shipping address
+  else if (deliveryMethod === 'shipping') {
+    const addr = formData.shippingAddress;
+    const isShippingValid = addr.firstName && 
+                          addr.lastName && 
+                          addr.address && 
+                          addr.city && 
+                          addr.postalCode;
+    
+    // Additional validation for US/Canada
+    if (selectedCountry === 'US' || selectedCountry === 'USA') {
+      return isShippingValid && addr.state;
+    } else if (selectedCountry === 'CA' || selectedCountry === 'CAN') {
+      return isShippingValid && addr.province;
+    }
+    
+    return isShippingValid;
+  }
+  
+  return false;
+};
+
 const validateStep = () => {
   switch (activeStep) {
     case 0: // Photo Upload step
       return selectedPhotos.length > 0;
       
     case 1: // Delivery & Review step
-      // Basic validation for all orders
-      if (!formData.email || !formData.phone || !formData.name) {
-        return false;
-      }
-      
-      // Validation specific to delivery method
-      if (deliveryMethod === 'pickup') {
-        // For pickup, we need a selected studio
-        return selectedStudio !== null;
-      } else if (deliveryMethod === 'shipping') {
-        // Validate shipping address
-        const addr = formData.shippingAddress;
-        const isShippingValid = addr.firstName && 
-                               addr.lastName && 
-                               addr.address && 
-                               addr.city && 
-                               addr.postalCode;
-        
-        // Validate province/state for US/Canada
-        if (selectedCountry === 'US' || selectedCountry === 'USA') {
-          return isShippingValid && addr.state;
-        } else if (selectedCountry === 'CA' || selectedCountry === 'CAN') {
-          return isShippingValid && addr.province;
-        }
-        
-        return isShippingValid;
-      }
-      return false;
+      // For step navigation, we should use the same validation as the payment button
+      // This ensures consistency between the "Next" button and the Helcim payment button
+      return validatePaymentForm();
 
     default:
       return false;
