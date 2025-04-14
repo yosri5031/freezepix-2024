@@ -8,6 +8,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
+  const [nearestStudio, setNearestStudio] = useState(null);
   
   // Use refs to manage state that shouldn't trigger re-renders
   const locationRef = useRef(null);
@@ -180,20 +181,25 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
       // Set studios for display
       setStudios(studiosWithDistance);
       
+      // Store the nearest studio first
+      if (studiosWithDistance.length > 0) {
+        setNearestStudio(studiosWithDistance[0]);
+      }
+      
       // Auto-select nearest studio if none selected yet
       if (!selectedStudio && studiosWithDistance.length > 0 && !hasAutoSelected) {
-        const nearestStudio = studiosWithDistance[0];
+        const nearest = studiosWithDistance[0];
         
         // Call parent handler to select this studio
         if (onStudioSelect) {
-          onStudioSelect(nearestStudio);
+          onStudioSelect(nearest);
           // Mark that we've done auto-selection
           setHasAutoSelected(true);
         }
         
         // Save to localStorage
         try {
-          localStorage.setItem('selectedStudio', JSON.stringify(nearestStudio));
+          localStorage.setItem('selectedStudio', JSON.stringify(nearest));
           localStorage.setItem('isPreselectedFromUrl', 'false');
         } catch (e) {
           console.error('Error saving studio to localStorage:', e);
@@ -398,20 +404,27 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                   ({studios.length})
                 </span>
               </h3>
-              <button 
-                onClick={handleRefresh}
-                className="text-xs flex items-center text-blue-500 hover:text-blue-700"
-                disabled={loading}
-              >
-                {loading ? (
-                  'Loading...'
-                ) : (
-                  <>
-                    <RefreshCw size={12} className="mr-1" />
-                    Refresh
-                  </>
+              <div className="flex items-center space-x-2">
+                {selectedCountry && (
+                  <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded-full">
+                    {selectedCountry}
+                  </span>
                 )}
-              </button>
+                <button 
+                  onClick={handleRefresh}
+                  className="text-xs flex items-center text-blue-500 hover:text-blue-700"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    'Loading...'
+                  ) : (
+                    <>
+                      <RefreshCw size={12} className="mr-1" />
+                      Refresh
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
             
             {/* Studios list */}
@@ -429,27 +442,58 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                   No studios available
                 </p>
               ) : (
-                studios.map(studio => (
-                  studio && studio._id ? (
-                    <div
-                      key={studio._id}
-                      className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
-                        selectedStudio?._id === studio._id ? 'bg-green-50 border-l-4 border-green-500' : ''
-                      }`}
-                      onClick={() => handleStudioSelect(studio)}
-                    >
-                      <div className="flex flex-col flex-grow mr-2">
-                        <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
-                        <span className="text-xs text-gray-600 truncate">{studio.address || 'No address'}</span>
-                      </div>
-                      {studio.distance !== undefined && studio.distance !== null && studio.distance !== Infinity ? (
-                        <span className="text-xs bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                          {studio.distance.toFixed(1)} km
+                <>
+                  {/* Nearest studio highlight - always at the top */}
+                  {nearestStudio && nearestStudio.distance !== undefined && (
+                    <div className="mb-2 px-3 py-1">
+                      <div className="text-xs font-medium text-green-600 uppercase mb-1">Nearest Location:</div>
+                      <div
+                        className={`flex items-center justify-between px-3 py-2 bg-green-50 hover:bg-green-100 cursor-pointer rounded border border-green-200 ${
+                          selectedStudio?._id === nearestStudio._id ? 'border-l-4 border-green-500' : ''
+                        }`}
+                        onClick={() => handleStudioSelect(nearestStudio)}
+                      >
+                        <div className="flex flex-col flex-grow mr-2">
+                          <span className="font-medium text-sm">{nearestStudio.name || 'Unnamed Studio'}</span>
+                          <span className="text-xs text-gray-600 truncate">{nearestStudio.address || 'No address'}</span>
+                        </div>
+                        <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 font-medium">
+                          {nearestStudio.distance.toFixed(1)} km
                         </span>
-                      ) : null}
+                      </div>
                     </div>
-                  ) : null
-                ))
+                  )}
+                  
+                  {/* Divider between nearest and all locations */}
+                  {nearestStudio && (
+                    <div className="px-3 py-1">
+                      <div className="text-xs font-medium text-gray-500 uppercase">All Locations:</div>
+                    </div>
+                  )}
+                  
+                  {/* All studios list */}
+                  {studios.map(studio => (
+                    studio && studio._id ? (
+                      <div
+                        key={studio._id}
+                        className={`flex items-center justify-between px-3 py-2 hover:bg-gray-100 cursor-pointer rounded ${
+                          selectedStudio?._id === studio._id ? 'bg-yellow-50 border-l-4 border-yellow-500' : ''
+                        }`}
+                        onClick={() => handleStudioSelect(studio)}
+                      >
+                        <div className="flex flex-col flex-grow mr-2">
+                          <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
+                          <span className="text-xs text-gray-600 truncate">{studio.address || 'No address'}</span>
+                        </div>
+                        {studio.distance !== undefined && studio.distance !== null && studio.distance !== Infinity ? (
+                          <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                            {studio.distance.toFixed(1)} km
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null
+                  ))}
+                </>
               )}
             </div>
           </div>
