@@ -1,19 +1,16 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
-// Improved StudioLocationHeader with better studio auto-selection
+// Simplified StudioLocationHeader that focuses on showing the nearest location
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [userCountry, setUserCountry] = useState(null);
-  const [allStudios, setAllStudios] = useState([]);
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
   
   // Use refs to manage state that shouldn't trigger re-renders
   const locationRef = useRef(null);
-  const fetchTimeoutRef = useRef(null);
   const lastRefreshTimeRef = useRef(0);
   
   // Normalize country codes consistently
@@ -46,18 +43,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
     return countryMap[code] || code;
   };
   
-  // Use the selectedCountry prop from parent when available
+  // Fetch studios and auto-select nearest one
   useEffect(() => {
-    if (selectedCountry) {
-      const normalized = normalizeCountryCode(selectedCountry);
-      console.log('Using selected country from props:', normalized);
-      setUserCountry(normalized);
-    }
-  }, [selectedCountry]);
-  
-  // Detect user location on component mount
-  useEffect(() => {
-    const detectUserLocation = async () => {
+    // Don't do anything if there's already a selected studio
+    if (selectedStudio) return;
+    
+    const detectLocationAndFetchStudios = async () => {
       try {
         // Check for cached location (max 1 hour old)
         const locationCache = localStorage.getItem('userLocationCache');
@@ -66,21 +57,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
         const ONE_HOUR = 60 * 60 * 1000;
         
         if (locationCache && (now - locationTimestamp < ONE_HOUR)) {
-          console.log('Using cached location data, age:', Math.round((now - locationTimestamp) / 1000), 'seconds');
+          console.log('Using cached location data');
           const parsedLocation = JSON.parse(locationCache);
           locationRef.current = parsedLocation;
           
-          // Get country from cached location if needed
-          if (!userCountry && !selectedCountry) {
-            const savedCountry = localStorage.getItem('userCountry');
-            if (savedCountry) {
-              console.log('Using saved country from localStorage:', savedCountry);
-              setUserCountry(savedCountry);
-            }
-          }
-          
           // Fetch studios with the cached location
-          fetchAllStudios(parsedLocation);
+          fetchStudios(parsedLocation);
           return;
         }
         
@@ -90,7 +72,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
           
           navigator.geolocation.getCurrentPosition(
             (position) => {
-              console.log('Geolocation success:', position.coords);
+              console.log('Geolocation success');
               
               // Save coordinates for distance calculation
               const location = {
@@ -104,28 +86,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
               localStorage.setItem('userLocationTimestamp', now.toString());
               
               // Fetch studios with the new location
-              fetchAllStudios(location);
-              
-              // Use the coordinates to estimate country if not already set
-              if (!userCountry && !selectedCountry) {
-                const country = estimateCountryFromCoordinates(
-                  position.coords.latitude, 
-                  position.coords.longitude
-                );
-                
-                if (country) {
-                  console.log('Estimated country from coordinates:', country);
-                  setUserCountry(country);
-                  localStorage.setItem('userCountry', country);
-                }
-              }
+              fetchStudios(location);
             },
             (error) => {
               console.warn('Geolocation error:', error);
-              // Use browser language as fallback
-              tryBrowserLanguage();
               // Still fetch studios even without location
-              fetchAllStudios(null);
+              fetchStudios(null);
             },
             { 
               enableHighAccuracy: true, 
@@ -135,50 +101,19 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
           );
         } else {
           console.log('Geolocation not supported');
-          tryBrowserLanguage();
-          fetchAllStudios(null);
+          fetchStudios(null);
         }
       } catch (error) {
         console.error('Error in location detection:', error);
-        fetchAllStudios(null);
+        fetchStudios(null);
       }
     };
     
-    // Try to get country from browser language
-    const tryBrowserLanguage = () => {
-      if (userCountry || selectedCountry) return;
-      
-      try {
-        // Get browser language code
-        const language = navigator.language || navigator.userLanguage;
-        if (language) {
-          // Extract country code (e.g., 'en-US' -> 'US')
-          const parts = language.split('-');
-          if (parts.length > 1) {
-            const countryCode = parts[1].toUpperCase();
-            console.log('Detected country from browser language:', countryCode);
-            setUserCountry(countryCode);
-            localStorage.setItem('userCountry', countryCode);
-          }
-        }
-      } catch (error) {
-        console.error('Error getting browser language:', error);
-      }
-    };
-    
-    // Start the detection process
-    detectUserLocation();
-    
-    // Clear any pending timeouts on unmount
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-    };
-  }, []);
+    detectLocationAndFetchStudios();
+  }, [selectedStudio, selectedCountry]);
   
-  // Fetch all studios from the API
-  const fetchAllStudios = async (userLocation = null) => {
+  // Fetch studios with filtering by selected country
+  const fetchStudios = async (userLocation = null) => {
     // Prevent multiple simultaneous fetches
     if (loading) return;
     
@@ -186,13 +121,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
     const now = Date.now();
     const FIVE_SECONDS = 5 * 1000;
     if ((now - lastRefreshTimeRef.current) < FIVE_SECONDS && lastRefreshTimeRef.current !== 0) {
-      console.log('Throttling studio refresh, last refresh was', 
-                 Math.round((now - lastRefreshTimeRef.current) / 1000), 'seconds ago');
+      console.log('Throttling studio refresh');
       return;
     }
     
     try {
-      console.log('Fetching all studios...');
+      console.log('Fetching studios...');
       setLoading(true);
       lastRefreshTimeRef.current = now;
       
@@ -212,14 +146,27 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
         studio._id // Make sure it has an ID
       );
       
-      // Store all studios
-      setAllStudios(activeStudios);
+      // Filter by selectedCountry if it exists
+      let countryFilteredStudios = activeStudios;
+      if (selectedCountry) {
+        const normalizedSelectedCountry = normalizeCountryCode(selectedCountry);
+        const countryStudios = activeStudios.filter(studio => {
+          if (!studio.country) return false;
+          const normalizedStudioCountry = normalizeCountryCode(studio.country);
+          return normalizedStudioCountry === normalizedSelectedCountry;
+        });
+        
+        // Only use filtered list if we found matches
+        if (countryStudios.length > 0) {
+          countryFilteredStudios = countryStudios;
+        }
+      }
       
       // Calculate distances if we have user location
-      let studiosWithDistance = activeStudios;
+      let studiosWithDistance = countryFilteredStudios;
       if (userLocation || locationRef.current) {
         const locationToUse = userLocation || locationRef.current;
-        studiosWithDistance = calculateDistances(activeStudios, locationToUse);
+        studiosWithDistance = calculateDistances(countryFilteredStudios, locationToUse);
         
         // Sort by distance
         studiosWithDistance.sort((a, b) => {
@@ -230,31 +177,12 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
         });
       }
       
-      // Apply country filtering if we have user country
-      let filteredStudios = studiosWithDistance;
-      const countryToUse = selectedCountry || userCountry;
-      
-      if (countryToUse) {
-        const normalizedCountry = normalizeCountryCode(countryToUse);
-        const countryMatches = filterStudiosByCountry(studiosWithDistance, normalizedCountry);
-        
-        // Only use filtered list if we found matches
-        if (countryMatches.length > 0) {
-          filteredStudios = countryMatches;
-          console.log(`Found ${countryMatches.length} studios in ${normalizedCountry}`);
-        } else {
-          console.log(`No studios found in ${normalizedCountry}, showing all studios`);
-        }
-      }
-      
       // Set studios for display
-      setStudios(filteredStudios);
+      setStudios(studiosWithDistance);
       
-      // Auto-select nearest studio if none selected yet and we haven't already done so
-      if (!selectedStudio && filteredStudios.length > 0 && !hasAutoSelected) {
-        const nearestStudio = filteredStudios[0];
-        console.log('Auto-selecting nearest studio:', nearestStudio.name, 
-          nearestStudio.distance ? `(${nearestStudio.distance.toFixed(1)} km)` : '');
+      // Auto-select nearest studio if none selected yet
+      if (!selectedStudio && studiosWithDistance.length > 0 && !hasAutoSelected) {
+        const nearestStudio = studiosWithDistance[0];
         
         // Call parent handler to select this studio
         if (onStudioSelect) {
@@ -345,96 +273,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
     }
   };
   
-  // Estimate country from coordinates - simplified with better country data
-  const estimateCountryFromCoordinates = (latitude, longitude) => {
-    // Country bounding boxes for major countries
-    const countryBounds = [
-      { code: 'US', minLat: 24.396308, maxLat: 49.384358, minLng: -125.000000, maxLng: -66.934570 },
-      { code: 'CA', minLat: 41.676556, maxLat: 83.110626, minLng: -141.001944, maxLng: -52.636291 },
-      { code: 'GB', minLat: 49.674, maxLat: 61.061, minLng: -8.623, maxLng: 1.759 },
-      { code: 'FR', minLat: 41.333, maxLat: 51.124, minLng: -5.143, maxLng: 9.560 },
-      { code: 'DE', minLat: 47.270, maxLat: 55.058, minLng: 5.866, maxLng: 15.039 },
-      { code: 'IT', minLat: 36.619, maxLat: 47.095, minLng: 6.626, maxLng: 18.520 },
-      { code: 'ES', minLat: 36.000, maxLat: 43.792, minLng: -9.301, maxLng: 3.322 },
-      { code: 'TN', minLat: 30.231, maxLat: 37.543, minLng: 7.524, maxLng: 11.590 },
-      { code: 'JP', minLat: 30.970, maxLat: 45.523, minLng: 129.705, maxLng: 145.817 },
-      { code: 'SG', minLat: 1.236, maxLat: 1.466, minLng: 103.602, maxLng: 104.031 },
-      { code: 'AU', minLat: -43.651, maxLat: -10.584, minLng: 112.911, maxLng: 153.639 },
-      { code: 'RU', minLat: 41.186, maxLat: 81.857, minLng: 19.638, maxLng: 180.000 },
-      { code: 'CN', minLat: 18.155, maxLat: 53.557, minLng: 73.556, maxLng: 134.773 }
-    ];
-  
-    // Check if coordinates are within any country bounds
-    for (const country of countryBounds) {
-      if (
-        latitude >= country.minLat && latitude <= country.maxLat &&
-        longitude >= country.minLng && longitude <= country.maxLng
-      ) {
-        return country.code;
-      }
-    }
-  
-    // Fallback to nearest country center if not in bounds
-    const countryCenters = [
-      { code: 'US', lat: 37.0902, lng: -95.7129 },
-      { code: 'CA', lat: 56.1304, lng: -106.3468 },
-      { code: 'TN', lat: 34.0, lng: 9.0 },
-      { code: 'GB', lat: 55.3781, lng: -3.4360 },
-      { code: 'FR', lat: 46.2276, lng: 2.2137 },
-      { code: 'DE', lat: 51.1657, lng: 10.4515 },
-      { code: 'IT', lat: 41.8719, lng: 12.5674 },
-      { code: 'ES', lat: 40.4637, lng: -3.7492 },
-      { code: 'JP', lat: 36.2048, lng: 138.2529 },
-      { code: 'SG', lat: 1.3521, lng: 103.8198 },
-      { code: 'AU', lat: -25.2744, lng: 133.7751 },
-      { code: 'RU', lat: 61.5240, lng: 105.3188 },
-      { code: 'CN', lat: 35.8617, lng: 104.1954 }
-    ];
-  
-    let closestCountry = null;
-    let minDistance = Infinity;
-  
-    for (const country of countryCenters) {
-      const distance = calculateDistance(
-        latitude, longitude,
-        country.lat, country.lng
-      );
-      
-      if (distance < minDistance) {
-        minDistance = distance;
-        closestCountry = country.code;
-      }
-    }
-    
-    return closestCountry;
-  };
-  
-  // Filter studios by country - more consistent standardization
-  const filterStudiosByCountry = (studios, country) => {
-    if (!country || !studios || studios.length === 0) {
-      return studios;
-    }
-    
-    // Normalize the country code
-    const normalizedUserCountry = normalizeCountryCode(country);
-    
-    if (!normalizedUserCountry) {
-      return studios;
-    }
-    
-    console.log(`Filtering ${studios.length} studios by country: ${normalizedUserCountry}`);
-    
-    // Filter studios by normalized country
-    const filteredStudios = studios.filter(studio => {
-      if (!studio.country) return false;
-      const normalizedStudioCountry = normalizeCountryCode(studio.country);
-      return normalizedStudioCountry === normalizedUserCountry;
-    });
-    
-    console.log(`Found ${filteredStudios.length} studios matching country ${normalizedUserCountry}`);
-    return filteredStudios;
-  };
-  
   // Toggle dropdown
   const toggleDropdown = () => {
     setIsDropdownOpen(prev => !prev);
@@ -443,9 +281,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
   // Studio selection handler
   const handleStudioSelect = (studio) => {
     if (studio && studio._id) {
-      console.log('Studio selected:', studio.name, 'Country:', studio.country, 
-        studio.distance ? `Distance: ${studio.distance.toFixed(1)} km` : '');
-      
       // Call parent handler
       if (onStudioSelect) {
         onStudioSelect(studio);
@@ -460,25 +295,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
       }
       
       setIsDropdownOpen(false);
-    }
-  };
-  
-  // Set filter by country
-  const setCountryFilter = (country) => {
-    if (country === null) {
-      // Show all studios
-      setUserCountry(null);
-      localStorage.removeItem('userCountry');
-      setStudios(allStudios);
-    } else {
-      // Filter by country
-      const normalizedCountry = normalizeCountryCode(country);
-      setUserCountry(normalizedCountry);
-      localStorage.setItem('userCountry', normalizedCountry);
-      
-      // Filter studios
-      const filtered = filterStudiosByCountry(allStudios, normalizedCountry);
-      setStudios(filtered.length > 0 ? filtered : allStudios);
     }
   };
   
@@ -509,15 +325,13 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
               localStorage.setItem('userLocationCache', JSON.stringify(location));
               localStorage.setItem('userLocationTimestamp', Date.now().toString());
               
-              console.log('Updated user location:', location);
-              
               // Now fetch studios with updated location
-              fetchAllStudios(location);
+              fetchStudios(location);
             },
             (error) => {
               console.warn('Could not get updated location:', error);
               // Fetch anyway with existing location
-              fetchAllStudios(locationRef.current);
+              fetchStudios(locationRef.current);
             },
             { 
               enableHighAccuracy: true, 
@@ -527,7 +341,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
           );
         } else {
           // Just refresh studios with existing location
-          fetchAllStudios(locationRef.current);
+          fetchStudios(locationRef.current);
         }
       } catch (err) {
         console.error('Error during refresh:', err);
@@ -543,16 +357,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
   const baseWidth = 250;
   // Calculate dropdown width
   const dropdownWidth = baseWidth * 1.3;
-  
-  // Define available country filters for UI
-  const countryFilters = useMemo(() => [
-    { code: 'CA', name: 'Canada' },
-    { code: 'US', name: 'USA' },
-    { code: 'TN', name: 'Tunisia' },
-    { code: 'GB', name: 'UK' },
-    { code: 'DE', name: 'Germany' },
-    { code: 'FR', name: 'France' }
-  ], []);
 
   return (
     <div className="relative" style={{ width: `${baseWidth}px` }}>
@@ -589,14 +393,10 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
           <div className="p-2">
             <div className="flex justify-between items-center px-3 py-2 border-b">
               <h3 className="font-medium text-sm">
-                {userCountry ? (
-                  <div className="flex items-center">
-                    Studios in {userCountry}
-                    <span className="ml-1 text-xs text-gray-500">
-                      ({studios.length})
-                    </span>
-                  </div>
-                ) : 'Select Pickup Location'}
+                Pick-up Locations
+                <span className="ml-1 text-xs text-gray-500">
+                  ({studios.length})
+                </span>
               </h3>
               <button 
                 onClick={handleRefresh}
@@ -614,34 +414,6 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
               </button>
             </div>
             
-            {/* Country filter buttons */}
-            <div className="flex flex-wrap gap-1 px-3 py-2 border-b">
-              {countryFilters.map(country => (
-                <button 
-                  key={country.code}
-                  onClick={() => setCountryFilter(country.code)}
-                  className={`text-xs px-2 py-1 rounded ${
-                    userCountry?.toUpperCase() === country.code.toUpperCase() 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {country.name}
-                </button>
-              ))}
-              
-              <button 
-                onClick={() => setCountryFilter(null)}
-                className={`text-xs px-2 py-1 rounded ${
-                  !userCountry 
-                    ? 'bg-blue-100 text-blue-800' 
-                    : 'bg-gray-100 text-gray-800'
-                }`}
-              >
-                All
-              </button>
-            </div>
-            
             {/* Studios list */}
             <div className="py-2">
               {error ? (
@@ -654,9 +426,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                 </div>
               ) : studios.length === 0 ? (
                 <p className="px-3 text-sm text-gray-500">
-                  {userCountry 
-                    ? `No studios available in ${userCountry}` 
-                    : 'No studios available'}
+                  No studios available
                 </p>
               ) : (
                 studios.map(studio => (
@@ -676,11 +446,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                         <span className="text-xs bg-green-50 text-green-600 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                           {studio.distance.toFixed(1)} km
                         </span>
-                      ) : (
-                        <span className="text-xs text-gray-500 whitespace-nowrap flex-shrink-0">
-                          {studio.country || '--'}
-                        </span>
-                      )}
+                      ) : null}
                     </div>
                   ) : null
                 ))
