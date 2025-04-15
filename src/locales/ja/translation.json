@@ -211,6 +211,19 @@
       "payNow": "今すぐ支払う",
       "tryAgain": "再試行"
     },
+    "studio": {
+    "select_location": "場所を選択",
+    "loading": "読み込み中...",
+    "failed_to_load": "スタジオの読み込みに失敗しました。もう一度お試しください。",
+    "failed_to_refresh": "更新に失敗しました。もう一度お試しください。",
+    "pickup_locations": "受け取り場所",
+    "refresh": "更新",
+    "no_studios": "利用可能なスタジオがありません",
+    "nearest_location": "最寄りの場所",
+    "all_locations": "すべての場所",
+    "unnamed": "名称未設定のスタジオ",
+    "no_address": "住所なし"
+  },
     "payment": {
       "serverError": "決済サーバーが一時的に利用できません。後でもう一度お試しください。",
       "genericError": "支払い処理中に問題が発生しました。もう一度お試しください。",

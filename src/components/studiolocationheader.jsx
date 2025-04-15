@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapPin, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Simplified StudioLocationHeader that focuses on showing the nearest location
 const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry }) => {
@@ -9,6 +10,9 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
   const [error, setError] = useState(null);
   const [hasAutoSelected, setHasAutoSelected] = useState(false);
   const [nearestStudio, setNearestStudio] = useState(null);
+  
+  // Initialize the translation hook
+  const { t } = useTranslation();
   
   // Use refs to manage state that shouldn't trigger re-renders
   const locationRef = useRef(null);
@@ -207,7 +211,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
       }
     } catch (err) {
       console.error('Error fetching studios:', err);
-      setError('Failed to load studios. Please try again.');
+      setError(t('studio.failed_to_load'));
     } finally {
       setLoading(false);
     }
@@ -351,7 +355,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
         }
       } catch (err) {
         console.error('Error during refresh:', err);
-        setError('Failed to refresh. Please try again.');
+        setError(t('studio.failed_to_refresh'));
         setLoading(false);
       }
     };
@@ -378,9 +382,9 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
               {selectedStudio.name}
             </span>
           ) : loading ? (
-            <span className="text-gray-500 text-sm">Loading...</span>
+            <span className="text-gray-500 text-sm">{t('studio.loading')}</span>
           ) : (
-            <span className="text-gray-500 text-sm">Select location</span>
+            <span className="text-gray-500 text-sm">{t('studio.select_location')}</span>
           )}
         </div>
         {isDropdownOpen ? (
@@ -399,7 +403,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
           <div className="p-2">
             <div className="flex justify-between items-center px-3 py-2 border-b">
               <h3 className="font-medium text-sm">
-                Pick-up Locations
+                {t('studio.pickup_locations')}
                 <span className="ml-1 text-xs text-gray-500">
                   ({studios.length})
                 </span>
@@ -416,11 +420,11 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                   disabled={loading}
                 >
                   {loading ? (
-                    'Loading...'
+                    t('studio.loading')
                   ) : (
                     <>
                       <RefreshCw size={12} className="mr-1" />
-                      Refresh
+                      {t('studio.refresh')}
                     </>
                   )}
                 </button>
@@ -439,14 +443,16 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                 </div>
               ) : studios.length === 0 ? (
                 <p className="px-3 text-sm text-gray-500">
-                  No studios available
+                  {t('studio.no_studios')}
                 </p>
               ) : (
                 <>
                   {/* Nearest studio highlight - always at the top */}
                   {nearestStudio && nearestStudio.distance !== undefined && (
                     <div className="mb-2 px-3 py-1">
-                      <div className="text-xs font-medium text-green-600 uppercase mb-1">Nearest Location:</div>
+                      <div className="text-xs font-medium text-green-600 uppercase mb-1">
+                        {t('studio.nearest_location')}:
+                      </div>
                       <div
                         className={`flex items-center justify-between px-3 py-2 bg-green-50 hover:bg-green-100 cursor-pointer rounded border border-green-200 ${
                           selectedStudio?._id === nearestStudio._id ? 'border-l-4 border-green-500' : ''
@@ -454,8 +460,8 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                         onClick={() => handleStudioSelect(nearestStudio)}
                       >
                         <div className="flex flex-col flex-grow mr-2">
-                          <span className="font-medium text-sm">{nearestStudio.name || 'Unnamed Studio'}</span>
-                          <span className="text-xs text-gray-600 truncate">{nearestStudio.address || 'No address'}</span>
+                          <span className="font-medium text-sm">{nearestStudio.name || t('studio.unnamed')}</span>
+                          <span className="text-xs text-gray-600 truncate">{nearestStudio.address || t('studio.no_address')}</span>
                         </div>
                         <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 font-medium">
                           {nearestStudio.distance.toFixed(1)} km
@@ -467,7 +473,9 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                   {/* Divider between nearest and all locations */}
                   {nearestStudio && (
                     <div className="px-3 py-1">
-                      <div className="text-xs font-medium text-gray-500 uppercase">All Locations:</div>
+                      <div className="text-xs font-medium text-gray-500 uppercase">
+                        {t('studio.all_locations')}:
+                      </div>
                     </div>
                   )}
                   
@@ -482,8 +490,8 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                         onClick={() => handleStudioSelect(studio)}
                       >
                         <div className="flex flex-col flex-grow mr-2">
-                          <span className="font-medium text-sm">{studio.name || 'Unnamed Studio'}</span>
-                          <span className="text-xs text-gray-600 truncate">{studio.address || 'No address'}</span>
+                          <span className="font-medium text-sm">{studio.name || t('studio.unnamed')}</span>
+                          <span className="text-xs text-gray-600 truncate">{studio.address || t('studio.no_address')}</span>
                         </div>
                         {studio.distance !== undefined && studio.distance !== null && studio.distance !== Infinity ? (
                           <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">

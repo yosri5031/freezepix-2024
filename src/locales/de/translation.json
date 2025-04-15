@@ -229,5 +229,18 @@
       "pay_in_store": "Im Geschäft bezahlen",
       "in_store_description": "Zahlen Sie, wenn Sie Ihre Abzüge im Geschäft abholen",
       "credit_pickup_description": "Bezahlen Sie sicher mit Ihrer Kredit- oder Debitkarte für Abholaufträge"
-    }
+    },
+    "studio": {
+    "select_location": "Standort auswählen",
+    "loading": "Wird geladen...",
+    "failed_to_load": "Studios konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "failed_to_refresh": "Aktualisierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+    "pickup_locations": "Abholstellen",
+    "refresh": "Aktualisieren",
+    "no_studios": "Keine Studios verfügbar",
+    "nearest_location": "Nächstgelegener Standort",
+    "all_locations": "Alle Standorte",
+    "unnamed": "Unbenanntes Studio",
+    "no_address": "Keine Adresse"
+  }
   }

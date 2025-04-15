@@ -229,5 +229,18 @@
       "pay_in_store": "Pagar na loja",
       "in_store_description": "Pague quando retirar suas impressões na loja",
       "credit_pickup_description": "Pague com segurança com seu cartão de crédito ou débito para pedidos de retirada"
-    }
+    },
+    "studio": {
+    "select_location": "Selecionar localização",
+    "loading": "Carregando...",
+    "failed_to_load": "Falha ao carregar estúdios. Por favor, tente novamente.",
+    "failed_to_refresh": "Falha ao atualizar. Por favor, tente novamente.",
+    "pickup_locations": "Locais de retirada",
+    "refresh": "Atualizar",
+    "no_studios": "Nenhum estúdio disponível",
+    "nearest_location": "Local mais próximo",
+    "all_locations": "Todos os locais",
+    "unnamed": "Estúdio sem nome",
+    "no_address": "Sem endereço"
+  }
 }

@@ -118,6 +118,19 @@
        "billing_same": "Les informations de facturation sont identiques aux informations d'expédition"
 
     },
+    "studio": {
+      "select_location": "Sélectionner un lieu",
+      "loading": "Chargement...",
+      "failed_to_load": "Échec du chargement des studios. Veuillez réessayer.",
+      "failed_to_refresh": "Échec de l'actualisation. Veuillez réessayer.",
+      "pickup_locations": "Points de retrait",
+      "refresh": "Actualiser",
+      "no_studios": "Aucun studio disponible",
+      "nearest_location": "Lieu le plus proche",
+      "all_locations": "Tous les lieux",
+      "unnamed": "Studio sans nom",
+      "no_address": "Pas d'adresse"
+    },
     "order": {
       "success_message": "Merci pour votre commande !",
       "success_details": "Votre commande a été passée avec succès et sera traitée dans les 48 heures. Un e-mail de confirmation a été envoyé à",

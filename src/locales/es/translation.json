@@ -229,5 +229,18 @@
       "pay_in_store": "Pagar en tienda",
       "in_store_description": "Pague cuando recoja sus impresiones en la tienda",
       "credit_pickup_description": "Pague de forma segura con su tarjeta de crédito o débito para pedidos de recogida"
-    }
+    },
+    "studio": {
+    "select_location": "Seleccionar ubicación",
+    "loading": "Cargando...",
+    "failed_to_load": "Error al cargar estudios. Por favor, inténtelo de nuevo.",
+    "failed_to_refresh": "Error al actualizar. Por favor, inténtelo de nuevo.",
+    "pickup_locations": "Puntos de recogida",
+    "refresh": "Actualizar",
+    "no_studios": "No hay estudios disponibles",
+    "nearest_location": "Ubicación más cercana",
+    "all_locations": "Todas las ubicaciones",
+    "unnamed": "Estudio sin nombre",
+    "no_address": "Sin dirección"
+  }
   }

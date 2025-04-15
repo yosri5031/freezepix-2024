@@ -14,6 +14,19 @@
       "passport": "Passport Photos",
       "passport_desc": "Instant passport photos that meet official requirements"
     },
+    "studio": {
+      "select_location": "Select location",
+      "loading": "Loading...",
+      "failed_to_load": "Failed to load studios. Please try again.",
+      "failed_to_refresh": "Failed to refresh. Please try again.",
+      "pickup_locations": "Pick-up Locations",
+      "refresh": "Refresh",
+      "no_studios": "No studios available",
+      "nearest_location": "Nearest Location",
+      "all_locations": "All Locations",
+      "unnamed": "Unnamed Studio",
+      "no_address": "No address"
+    },
     "features": {
       "quick": "Quick Service",
       "satisfaction": "Satisfaction",

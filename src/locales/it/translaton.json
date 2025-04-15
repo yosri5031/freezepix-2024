@@ -211,6 +211,19 @@
       "payNow": "Paga Ora",
       "tryAgain": "Riprova"
     },
+    "studio": {
+      "select_location": "Seleziona località",
+      "loading": "Caricamento in corso...",
+      "failed_to_load": "Impossibile caricare gli studi. Riprova.",
+      "failed_to_refresh": "Impossibile aggiornare. Riprova.",
+      "pickup_locations": "Punti di ritiro",
+      "refresh": "Aggiorna",
+      "no_studios": "Nessuno studio disponibile",
+      "nearest_location": "Località più vicina",
+      "all_locations": "Tutte le località",
+      "unnamed": "Studio senza nome",
+      "no_address": "Nessun indirizzo"
+    },
     "payment": {
       "serverError": "Il server dei pagamenti è temporaneamente non disponibile. Riprova più tardi.",
       "genericError": "Si è verificato un problema durante l'elaborazione del pagamento. Riprova.",
