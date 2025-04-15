@@ -461,7 +461,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                       >
                         <div className="flex flex-col flex-grow mr-2">
                           <span className="font-medium text-sm">{nearestStudio.name || t('studio.unnamed')}</span>
-                          <span className="text-xs text-gray-600 truncate">{nearestStudio.address || t('studio.no_address')}</span>
+                          <span className="text-xs text-gray-600 break-words">{nearestStudio.address || t('studio.no_address')}</span>
                         </div>
                         <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 font-medium">
                           {nearestStudio.distance.toFixed(1)} km
@@ -491,7 +491,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
                       >
                         <div className="flex flex-col flex-grow mr-2">
                           <span className="font-medium text-sm">{studio.name || t('studio.unnamed')}</span>
-                          <span className="text-xs text-gray-600 truncate">{studio.address || t('studio.no_address')}</span>
+                          <span className="text-xs text-gray-600 break-words">{studio.address || t('studio.no_address')}</span>
                         </div>
                         {studio.distance !== undefined && studio.distance !== null && studio.distance !== Infinity ? (
                           <span className="text-xs bg-gray-100 text-gray-700 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
