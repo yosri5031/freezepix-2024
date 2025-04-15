@@ -3239,6 +3239,7 @@ const handleOrderSuccess = async ({
       orderNumber,
       email: formData.email,
       phone: formData.phone,
+      name: formData.name || '',
       pickupStudio: deliveryMethod === 'pickup' ? {
         id: selectedStudio._id,
         name: selectedStudio.name,
@@ -3804,6 +3805,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
+      name: formData.name || '',
       pickupStudio: deliveryMethod === 'pickup' ? {
         id: selectedStudio._id,
         name: selectedStudio.name,
