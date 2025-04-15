@@ -127,7 +127,7 @@
       "cod": " livraison à domicile",
       "discount" : "Code de réduction",
       "summary": "Résumé de la commande",
-       "shipping_fee": "Frais de port et de manutention",
+       "shipping_fee": "Frais de livraison",
        "delivery_method": "Mode de livraison",
        "studio_pickup": "Récupération en studio",
        "pickup_description": "Récupérez vos tirages dans un studio à proximité. Pas de frais d'expédition.",
