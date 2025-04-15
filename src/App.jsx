@@ -3834,7 +3834,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       orderNote: "",
       paymentMethod: "helcim",
       customerDetails: {
-        name: formData.billingAddress.firstName,
+        name: formData.name,
         country: selectedCountry
       },
       selectedCountry
