@@ -235,14 +235,14 @@
     "insufficientFunds": "Insufficient funds in your account.",
     "incorrectPostalCode": "The postal code doesn't match your card.",
     "credit_card": "Credit Card",
-    "credit_description": "Pay securely with your credit or debit card",
+    "credit_description": "Pay securely with your credit card",
     "cash_on_delivery": "Cash on Delivery",
     "cod_description": "Pay when your prints are delivered",
     "payment_details": "Payment Details",
     "secure_payment": "Your payment is secured with bank-level encryption",
     "pay_in_store": "Pay in Store",
     "in_store_description": "Pay when you pick up your prints at the store",
-    "credit_pickup_description": "Pay securely with your credit or debit card for pickup orders"
+    "credit_pickup_description": "Pay securely with your credit card for pickup orders"
   }
   }
   

@@ -234,14 +234,14 @@
     "insufficientFunds": "Fonds insuffisants sur votre compte.",
     "incorrectPostalCode": "Le code postal ne correspond pas à votre carte.",
     "credit_card": "Carte de crédit",
-    "credit_description": "Payez en toute sécurité avec votre carte de crédit ou de débit",
+    "credit_description": "Payez en toute sécurité avec votre carte de crédit ",
     "cash_on_delivery": "Paiement à la livraison",
     "cod_description": "Payez lorsque vos tirages sont livrés",
     "payment_details": "Détails du paiement",
     "secure_payment": "Votre paiement est sécurisé avec un chiffrement de niveau bancaire",
     "pay_in_store": "Payer en magasin",
     "in_store_description": "Payez lors du retrait de vos tirages en magasin",
-    "credit_pickup_description": "Payez en toute sécurité avec votre carte de crédit ou de débit pour les commandes à retirer"
+    "credit_pickup_description": "Payez en toute sécurité avec votre carte de crédit pour les commandes à retirer"
 
   }
       
