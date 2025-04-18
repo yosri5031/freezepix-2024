@@ -430,16 +430,16 @@ const BookingPopup = ({ onClose }) => {
           </select>
         )}
   
-        <input
-          type="text"
-          inputMode="text"
-          placeholder={data.country === 'USA' 
-            ? t('placeholder.zipCode', 'ZIP Code')
-            : t('placeholder.postalCode', 'Postal Code')}
-          value={data.postalCode || ''}
-          onChange={handleInputChange('postalCode')}
-          className="p-2 border rounded"
-        />
+  <input
+        type="text"
+        inputMode="text"
+        placeholder={(data.country === 'USA' || data.country === 'US') 
+          ? t('placeholder.zipCode', 'ZIP Code')
+          : t('placeholder.postalCode', 'Postal Code')}
+        value={data.postalCode || ''}
+        onChange={handleInputChange('postalCode')}
+        className="p-2 border rounded"
+      />
   
         <div className="col-span-2 p-2 border rounded bg-gray-100">
           {initialCountries.find(c => c.value === data.country)?.name || 
