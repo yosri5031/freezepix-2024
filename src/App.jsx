@@ -717,7 +717,7 @@ const BookingPopup = ({ onClose }) => {
     return null;
   };
   
-  // Function to generate studio slug
+  // Function to generate studio slug - Pickup your photo prints from nearest Studio
   const generateStudioSlug = (studioName) => {
     if (!studioName) return '';
     
@@ -739,6 +739,8 @@ const BookingPopup = ({ onClose }) => {
     // Update browser URL without reloading the page
     window.history.pushState({ studioId: studio._id }, '', newUrl);
   };
+
+  // FreezePIX Printing APP - Order Photo Prints Online from anywhere in Canada And United States
 const FreezePIX = () => {
  
 
@@ -867,6 +869,7 @@ const [formData, setFormData] = useState({
         }
       };
       
+      // shipping coutries for freezepix printing app
       const mapCountryCode = (code) => {
         const countryMap = {
           'USA': 'US',
@@ -1416,7 +1419,8 @@ const [formData, setFormData] = useState({
         
         console.log('Studio selected:', studio.name, 'Country set to:', studioCountry);
       };
-// Enhanced StudioSelector with fixed handleStudioSelection function
+
+      // Enhanced StudioSelector with fixed handleStudioSelection function - select your pickup studio
 const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1799,7 +1803,7 @@ const closeProductDetails = () => {
     setIsProductDetailsOpen(false);
 };
     
-      //Product Details popup
+      //Product Details popup - Custom Photo Printing Size
      const ProductDetailsPopup = ({ isOpen, onClose, selectedCountry }) => {
   const { t, i18n } = useTranslation();
   const [zoomedImage, setZoomedImage] = useState(null);
@@ -4962,7 +4966,7 @@ const renderStepContent = () => {
   }
 };
 
-
+// render photo prints invoice
 
 const renderInvoice = () => {
   const { 
