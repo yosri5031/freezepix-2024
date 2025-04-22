@@ -3242,23 +3242,34 @@ const handleOrderSuccess = async ({
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
     // Construct order data
-    orderData = {
+    const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
-      pickupStudio: deliveryMethod === 'pickup' ? {
-        id: selectedStudio._id || '',
-        name: selectedStudio.name || '',
-        address: selectedStudio.address || '',
-        city: selectedStudio.city || '',
-        country: selectedStudio.country,
-        province: selectedStudio.province || ''
-      } : null,
-      shippingAddress: deliveryMethod === 'shipping' ? formData.shippingAddress : null,
-      billingAddress: isBillingAddressSameAsShipping 
-        ? formData.shippingAddress 
-        : formData.billingAddress,
+      // ONLY include pickupStudio if delivery method is pickup
+      ...(deliveryMethod === 'pickup' && selectedStudio ? {
+        pickupStudio: {
+          studioId: selectedStudio._id,
+          name: selectedStudio.name,
+          address: selectedStudio.address,
+          city: selectedStudio.city,
+          country: selectedStudio.country
+        }
+      } : {}),
+      // Include shipping address only if delivery method is shipping
+      ...(deliveryMethod === 'shipping' ? {
+        shippingAddress: {
+          firstName: formData.shippingAddress.firstName,
+          lastName: formData.shippingAddress.lastName,
+          address: formData.shippingAddress.address,
+          city: formData.shippingAddress.city,
+          postalCode: formData.shippingAddress.postalCode,
+          country: formData.shippingAddress.country,
+          province: formData.shippingAddress.province,
+          state: formData.shippingAddress.state
+        }
+      } : {}),
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -3280,8 +3291,6 @@ const handleOrderSuccess = async ({
       status: finalPaymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
       paymentStatus: finalPaymentMethod === 'helcim' ? 'paid' : 'pending',
       deliveryMethod: deliveryMethod,
-      stripePaymentId: stripePaymentMethod,
-      paymentIntentId: paymentIntent?.id,
       customerDetails: {
         name: formData.name,
         email: formData.email,
@@ -3292,6 +3301,7 @@ const handleOrderSuccess = async ({
       discountCode: discountCode || null,
       createdAt: new Date().toISOString()
     };
+
 
     const subtotalsBySize = selectedPhotos.reduce((acc, photo) => {
       const size = photo.size;
@@ -3813,13 +3823,15 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
-      pickupStudio: deliveryMethod === 'pickup' ? {
-        id: selectedStudio._id,
-        name: selectedStudio.name,
-        address: selectedStudio.address,
-        city: selectedStudio.city,
-        country: selectedStudio.country
-      } : null,
+      ...(deliveryMethod === 'pickup' && selectedStudio ? {
+        pickupStudio: {
+          studioId: selectedStudio._id,
+          name: selectedStudio.name,
+          address: selectedStudio.address,
+          city: selectedStudio.city,
+          country: selectedStudio.country
+        }
+      } : {}),
       shippingAddress: formData.billingAddress,
       billingAddress: formData.billingAddress,
       orderItems: optimizedPhotosWithPrices.map(photo => ({
