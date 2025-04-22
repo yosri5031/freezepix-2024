@@ -2381,18 +2381,49 @@ const sendOrderConfirmationEmail = async (orderData) => {
     const emailOrderData = {
       orderNumber: orderData.orderNumber || 'N/A',
       email: orderData.email || 'N/A',
-      pickupStudio: {
-        name: orderData?.pickupStudio?.name || '',
-        address: orderData?.pickupStudio?.address || '',
-        city: orderData?.pickupStudio?.city || '',
-        country: orderData?.pickupStudio?.country || ''
-      },
+      
+      // Robust handling of pickup studio for pickup orders
+      ...(orderData.deliveryMethod === 'pickup' ? {
+        pickupStudio: {
+          name: orderData?.pickupStudio?.name || 'Unspecified Studio',
+          address: orderData?.pickupStudio?.address || 'Not Specified',
+          city: orderData?.pickupStudio?.city || 'Not Specified',
+          country: orderData?.pickupStudio?.country || orderData.selectedCountry
+        }
+      } : {}),
+      
+      // Robust handling of shipping address for shipping orders
+      ...(orderData.deliveryMethod === 'shipping' ? {
+        shippingAddress: {
+          firstName: orderData?.shippingAddress?.firstName || '',
+          lastName: orderData?.shippingAddress?.lastName || '',
+          address: orderData?.shippingAddress?.address || '',
+          city: orderData?.shippingAddress?.city || '',
+          postalCode: orderData?.shippingAddress?.postalCode || '',
+          country: orderData?.shippingAddress?.country || orderData.selectedCountry,
+          province: orderData?.shippingAddress?.province || '',
+          state: orderData?.shippingAddress?.state || ''
+        }
+      } : {}),
+      
       phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
-      paymentMethod: 'in_store',
-      selectedPhotos: orderData.selectedPhotos || [],
+      
+      // Set payment method based on the order data
+      paymentMethod: orderData.paymentMethod || 'helcim',
+      
+      orderItems: orderData.orderItems || [],
       totalAmount: orderData.totalAmount || 0,
-      currency: orderData.currency || 'USD'
+      currency: orderData.currency || 'USD',
+      
+      // Add delivery method
+      deliveryMethod: orderData.deliveryMethod || 'pickup',
+      
+      // Include additional details
+      subtotal: orderData.subtotal || 0,
+      shippingFee: orderData.shippingFee || 0,
+      taxAmount: orderData.taxAmount || 0,
+      discount: orderData.discount || 0
     };
 
     console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
@@ -5434,16 +5465,14 @@ return (
               <p className="font-medium">{t('order.details')}:</p>
               <p>{t('order.order_number')}: {currentOrderNumber}</p>
               
-              <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-                <p className="font-medium">{t('pickup.location')}:</p>
-                {selectedStudio && (
-                  <>
-                    <p>{selectedStudio.name}</p>
-                    <p>{selectedStudio.address}</p>
-                    <p>{selectedStudio.city}, {selectedStudio.country}</p>
-                  </>
-                )}
-              </div>
+              {deliveryMethod === 'pickup' && selectedStudio && (
+  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+    <p className="font-medium">{t('pickup.location')}:</p>
+    <p>{selectedStudio.name}</p>
+    <p>{selectedStudio.address}</p>
+    <p>{selectedStudio.city}, {selectedStudio.country}</p>
+  </div>
+)}
             </div>
             
             <button
