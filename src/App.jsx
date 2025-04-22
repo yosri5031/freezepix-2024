@@ -2548,15 +2548,18 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
   try {
     const { orderItems } = orderData;
     
-    // Prepare the base order data with required fields
     const baseOrderData = {
       ...orderData,
       shippingFee: orderData.shippingFee || 0,
       shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
       deliveryMethod: orderData.deliveryMethod || 'pickup',
       status: paymentMethod === 'helcim' ? 'Processing' : 'Waiting for CSR approval',
-      paymentMethod: paymentMethod, // Ensure payment method is passed through
-      paymentStatus: paymentMethod === 'helcim' ? 'paid' : 'pending'
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === 'helcim' ? 'paid' : 'pending',
+      // Only include pickupStudio if it's a pickup order
+      ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
+        ? { pickupStudio: orderData.pickupStudio } 
+        : { pickupStudio: null })
     };
     // Process items
     const processedItems = await Promise.all(orderItems.map(async (item) => {
@@ -3245,10 +3248,10 @@ const handleOrderSuccess = async ({
       phone: formData.phone,
       name: formData.name || '',
       pickupStudio: deliveryMethod === 'pickup' ? {
-        id: selectedStudio._id,
-        name: selectedStudio.name,
-        address: selectedStudio.address,
-        city: selectedStudio.city,
+        id: selectedStudio._id || '',
+        name: selectedStudio.name || '',
+        address: selectedStudio.address || '',
+        city: selectedStudio.city || '',
         country: selectedStudio.country,
         province: selectedStudio.province || ''
       } : null,
