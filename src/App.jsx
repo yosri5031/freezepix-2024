@@ -3248,28 +3248,36 @@ const handleOrderSuccess = async ({
       phone: formData.phone,
       name: formData.name || '',
       // ONLY include pickupStudio if delivery method is pickup
-      ...(deliveryMethod === 'pickup' && selectedStudio ? {
-        pickupStudio: {
-          studioId: selectedStudio._id,
-          name: selectedStudio.name,
-          address: selectedStudio.address,
-          city: selectedStudio.city,
-          country: selectedStudio.country
-        }
-      } : {}),
-      // Include shipping address only if delivery method is shipping
-      ...(deliveryMethod === 'shipping' ? {
-        shippingAddress: {
-          firstName: formData.shippingAddress.firstName,
-          lastName: formData.shippingAddress.lastName,
-          address: formData.shippingAddress.address,
-          city: formData.shippingAddress.city,
-          postalCode: formData.shippingAddress.postalCode,
-          country: formData.shippingAddress.country,
-          province: formData.shippingAddress.province,
-          state: formData.shippingAddress.state
-        }
-      } : {}),
+   // Always include pickupStudio for pickup orders, with robust fallback
+   ...(deliveryMethod === 'pickup' ? {
+    pickupStudio: selectedStudio ? {
+      studioId: selectedStudio._id || null,
+      name: selectedStudio.name || 'Unspecified Studio',
+      address: selectedStudio.address || 'Not Specified',
+      city: selectedStudio.city || 'Not Specified',
+      country: selectedStudio.country || selectedCountry
+    } : {
+      studioId: null,
+      name: 'Unspecified Studio',
+      address: 'Not Specified',
+      city: 'Not Specified',
+      country: selectedCountry
+    }
+  } : {}),
+  
+  // Always include shipping address for shipping orders, with robust fallback
+  ...(deliveryMethod === 'shipping' ? {
+    shippingAddress: {
+      firstName: formData.shippingAddress.firstName || formData.billingAddress.firstName || '',
+      lastName: formData.shippingAddress.lastName || formData.billingAddress.lastName ||'',
+      address: formData.shippingAddress.address || formData.billingAddress.address || '',
+      city: formData.shippingAddress.city || formData.billingAddress.city || '',
+      postalCode: formData.shippingAddress.postalCode || formData.billingAddress.postalCode ||'',
+      country: formData.shippingAddress.country || formData.billingAddress.country || selectedCountry,
+      province: formData.shippingAddress.province || formData.billingAddress.province || '',
+      state: formData.shippingAddress.state || formData.billingAddress.state || ''
+    }
+  } : {}),
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -3823,17 +3831,50 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
-      ...(deliveryMethod === 'pickup' && selectedStudio ? {
-        pickupStudio: {
-          studioId: selectedStudio._id,
-          name: selectedStudio.name,
-          address: selectedStudio.address,
-          city: selectedStudio.city,
-          country: selectedStudio.country
+      
+      // Robust handling of pickup studio for pickup orders
+      ...(deliveryMethod === 'pickup' ? {
+        pickupStudio: selectedStudio ? {
+          studioId: selectedStudio._id || null,
+          name: selectedStudio.name || 'Unspecified Studio',
+          address: selectedStudio.address || 'Not Specified',
+          city: selectedStudio.city || 'Not Specified',
+          country: selectedStudio.country || selectedCountry
+        } : {
+          studioId: null,
+          name: 'Unspecified Studio',
+          address: 'Not Specified',
+          city: 'Not Specified',
+          country: selectedCountry
         }
       } : {}),
-      shippingAddress: formData.billingAddress,
-      billingAddress: formData.billingAddress,
+      
+      // Robust handling of shipping address for shipping orders
+      ...(deliveryMethod === 'shipping' ? {
+        shippingAddress: {
+          firstName: formData.shippingAddress.firstName || formData.billingAddress.firstName || '',
+          lastName: formData.shippingAddress.lastName || formData.billingAddress.lastName || '',
+          address: formData.shippingAddress.address || formData.billingAddress.address || '',
+          city: formData.shippingAddress.city || formData.billingAddress.city || '',
+          postalCode: formData.shippingAddress.postalCode || formData.billingAddress.postalCode || '',
+          country: formData.shippingAddress.country || formData.billingAddress.country || selectedCountry,
+          province: formData.shippingAddress.province || formData.billingAddress.province || '',
+          state: formData.shippingAddress.state || formData.billingAddress.state || ''
+        }
+      } : {}),
+      
+      // Fallback to billing address if no specific shipping address
+      billingAddress: {
+        firstName: formData.billingAddress.firstName || '',
+        lastName: formData.billingAddress.lastName || '',
+        address: formData.billingAddress.address || '',
+        city: formData.billingAddress.city || '',
+        postalCode: formData.billingAddress.postalCode || '',
+        country: formData.billingAddress.country || selectedCountry,
+        province: formData.billingAddress.province || '',
+        state: formData.billingAddress.state || ''
+      },
+      
       orderItems: optimizedPhotosWithPrices.map(photo => ({
         ...photo,
         file: photo.file,
@@ -3844,19 +3885,24 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
         price: photo.price,
         productType: photo.productType
       })),
+      
       totalAmount: Number(paymentData.amount) || 0,
       subtotal: Number(paymentData.amount) - (paymentData.amount > 69.99 ? 0 : 20),
-      shippingFee: Number(shippingFee) || 0, //shipping Same as invoice
-      taxAmount: Number(taxAmount), // tax same as invoice
+      shippingFee: Number(shippingFee) || 0,
+      taxAmount: Number(taxAmount) || 0,
       discount: 0,
       currency: paymentData.currency,
       orderNote: "",
       paymentMethod: "helcim",
+      deliveryMethod: deliveryMethod || 'pickup',
       customerDetails: {
-        name: formData.name,
+        name: formData.name || '',
+        email: formData.email,
+        phone: formData.phone,
         country: selectedCountry
       },
-      selectedCountry
+      selectedCountry,
+      createdAt: new Date().toISOString()
     };
 
     // Add timestamp to ensure uniqueness
