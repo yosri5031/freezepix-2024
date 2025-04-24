@@ -7,22 +7,22 @@ const MetaTagsManager = () => {
   const metaTranslations = {
     default: {
       title: "Freezepix Printing App",
-      description: "Order photo prints and personalized photo gifts like keychains and 3D crystals with Freezepix. Create memorable keepsakes with our easy-to-use printing app.",
-      keywords: "Freezepix, printing app, order photo prints, photo gifts, keychain, 3D crystal, custom printing, personalized gifts",
+      description: "Order photo prints and personalized photo gifts for every occasion (wedding,graduation,Christmas,etc..) with Freezepix. Create memorable keepsakes with our easy-to-use printing app.",
+      keywords: "Freezepix, printing app, order photo prints, photo gifts, wedding photo, Photo Printing Online, custom printing, personalized gifts",
       lang: "en",
       dir: "ltr"
     },
     fr: {
       title: "Application d'impression Freezepix",
-      description: "Commandez des tirages photo et des cadeaux photo personnalisés comme des porte-clés et des cristaux 3D avec Freezepix. Créez des souvenirs mémorables avec notre application d'impression facile à utiliser.",
-      keywords: "Freezepix, application d'impression, commander des tirages photo, cadeaux photo, porte-clés, cristal 3D, impression personnalisée, cadeaux personnalisés",
+      description: "Commandez des tirages photo et des cadeaux photo personnalisés pour toutes les occasions (mariage, remise de diplôme, Noël, etc.) avec Freezepix. Créez des souvenirs inoubliables grâce à notre application d'impression facile à utiliser.",
+      keywords: "Freezepix, application d'impression, commande de tirages photo, cadeaux photo, photo de mariage, impression photo en ligne, impression personnalisée, cadeaux personnalisés",
       lang: "fr",
       dir: "ltr"
     },
     ar: {
       title: "تطبيق Freezepix للطباعة",
-      description: "اطلب مطبوعات الصور والهدايا المخصصة مثل سلاسل المفاتيح والكريستال ثلاثي الأبعاد مع Freezepix. قم بإنشاء تذكارات لا تنسى مع تطبيق الطباعة سهل الاستخدام.",
-      keywords: "Freezepix، تطبيق طباعة، طلب مطبوعات صور، هدايا صور، سلسلة مفاتيح، كريستال ثلاثي الأبعاد، طباعة مخصصة، هدايا مخصصة",
+      description: "اطلب مطبوعات الصور وهدايا الصور الشخصية لجميع المناسبات (حفلات الزفاف، التخرج، عيد الميلاد، إلخ) مع Freezepix. أنشئ ذكريات لا تُنسى مع تطبيق الطباعة سهل الاستخدام.",
+      keywords: "Freezepix، تطبيق طباعة، طلب مطبوعات الصور، هدايا الصور، صور زفاف، طباعة الصور عبر الإنترنت، طباعة مخصصة، هدايا شخصيةFreezepix، تطبيق طباعة، طلب مطبوعات صور، هدايا صور، سلسلة مفاتيح، كريستال ثلاثي الأبعاد، طباعة مخصصة، هدايا مخصصة",
       lang: "ar",
       dir: "rtl"
     }
