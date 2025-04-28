@@ -4221,34 +4221,20 @@ const handleDiscountCode = (value) => {
       
       console.log('Found discount rule:', matchingRule);
       
-      // Now that we have a matchingRule, we can safely validate it
+      // Now validate the dates on the matching rule
       const now = new Date();
+      const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
+      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
       
-      // Safely parse dates, handling both naming conventions
-      let startDate = null;
-      let endDate = null;
-      
-      try {
-        // Try both property naming styles
-        if (matchingRule.startsAt) {
-          startDate = new Date(matchingRule.startsAt);
-        } else if (matchingRule.starts_at) {
-          startDate = new Date(matchingRule.starts_at);
-        }
-        
-        if (matchingRule.endsAt) {
-          endDate = new Date(matchingRule.endsAt);
-        } else if (matchingRule.ends_at) {
-          endDate = new Date(matchingRule.ends_at);
-        }
-      } catch (error) {
-        console.error('Error parsing discount dates:', error);
-      }
-      
-      console.log('Dates:', {
+      console.log('Date validation:', {
         now: now.toISOString(),
-        startDate: startDate ? startDate.toISOString() : null, 
-        endDate: endDate ? endDate.toISOString() : null
+        nowTimestamp: now.getTime(),
+        startDate: startDate ? startDate.toISOString() : null,
+        startTimestamp: startDate ? startDate.getTime() : null,
+        endDate: endDate ? endDate.toISOString() : null,
+        endTimestamp: endDate ? endDate.getTime() : null,
+        isBeforeStart: startDate ? now < startDate : false,
+        isAfterEnd: endDate ? now > endDate : false
       });
       
       // Check if the discount is active based on dates
@@ -4288,6 +4274,7 @@ const handleDiscountCode = (value) => {
 
 
 
+
 // Add this helper function
 const safelyParseDate = (dateString) => {
   if (!dateString) return null;
@@ -4306,21 +4293,6 @@ const safelyParseDate = (dateString) => {
   }
 };
 
-// Then update your validation code
-const now = new Date();
-const startDate = safelyParseDate(discountRule.startsAt || discountRule.starts_at);
-const endDate = safelyParseDate(discountRule.endsAt || discountRule.ends_at);
-
-console.log('Date validation:', {
-  now: now.toISOString(),
-  nowTimestamp: now.getTime(),
-  startDate: startDate ? startDate.toISOString() : null,
-  startTimestamp: startDate ? startDate.getTime() : null,
-  endDate: endDate ? endDate.toISOString() : null,
-  endTimestamp: endDate ? endDate.getTime() : null,
-  isBeforeStart: startDate ? now < startDate : false,
-  isAfterEnd: endDate ? now > endDate : false
-});
 
 const isDiscountApplicable = (code) => {
   if (!code || availableDiscounts.length === 0) return false;
