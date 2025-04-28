@@ -4124,31 +4124,28 @@ const validateDiscountCode = (code) => {
 };
 
 const getDiscountDisplay = () => {
-  // Only proceed if we have a discount code and available discounts
   if (!discountCode || availableDiscounts.length === 0) {
     return '';
   }
   
-  // Find the matching discount rule
   const discountRule = availableDiscounts.find(
     discount => discount.title && discount.title.toUpperCase() === discountCode.toUpperCase()
   );
 
-  // Only proceed if we found a matching rule
   if (!discountRule) {
     return '';
   }
 
-  // Handle both naming conventions
-  const valueType = discountRule.valueType || discountRule.value_type;
+  // Make sure to use valueType (not value_type) to match API response
+  const valueType = discountRule.valueType;
   const value = discountRule.value;
 
   if (valueType === 'percentage') {
-    return `${Math.abs(parseFloat(value))}% off`;
+    return `${Math.abs(parseFloat(value))}%`;  // Display as percentage
   } else {
-    return `${Math.abs(parseFloat(value))} ${country?.currency} off`;
+    return `${Math.abs(parseFloat(value))} ${country?.currency}`;  // Display as fixed amount
   }
-};
+}
 
 const initializeDiscounts = async () => {
   if (availableDiscounts.length === 0) {
@@ -4226,17 +4223,6 @@ const handleDiscountCode = (value) => {
       const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
       const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
       
-      console.log('Date validation:', {
-        now: now.toISOString(),
-        nowTimestamp: now.getTime(),
-        startDate: startDate ? startDate.toISOString() : null,
-        startTimestamp: startDate ? startDate.getTime() : null,
-        endDate: endDate ? endDate.toISOString() : null,
-        endTimestamp: endDate ? endDate.getTime() : null,
-        isBeforeStart: startDate ? now < startDate : false,
-        isAfterEnd: endDate ? now > endDate : false
-      });
-      
       // Check if the discount is active based on dates
       if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
         setDiscountError('This discount code is not active yet');
@@ -4244,20 +4230,13 @@ const handleDiscountCode = (value) => {
         return;
       }
       
-      if (endDate && !isNaN(endDate.getTime()) && now > endDate) {
-        setDiscountError('This discount code has expired');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Check status (handle both naming conventions)
-      const status = matchingRule.status;
-      console.log('Discount status:', status);
-      
-      if (status !== 'active') {
-        setDiscountError('This discount code is not active');
-        setIsLoading(false);
-        return;
+      // MODIFY THIS SECTION - Change end date validation
+      if (endDate) {  // Only check end date if it exists
+        if (!isNaN(endDate.getTime()) && now > endDate) {
+          setDiscountError('This discount code has expired');
+          setIsLoading(false);
+          return;
+        }
       }
       
       // If we made it here, the discount is valid
@@ -4270,7 +4249,7 @@ const handleDiscountCode = (value) => {
       setDiscountError('Unable to validate discount code');
       setIsLoading(false);
     });
-};
+}
 
 
 
@@ -5428,17 +5407,17 @@ const renderInvoice = () => {
         {/* Discount - Now positioned AFTER subtotal and shipping */}
         {discount > 0 && discountDetails && (
     <div className="flex justify-between py-2 text-green-600">
-      <span>
-        {t('order.discount')} (
-        {discountDetails.value_type === 'percentage' 
-          ? `${Math.abs(parseFloat(discountDetails.value))}%` 
-          : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
-        })
-        {discountDetails.title && ` - ${discountDetails.title}`}
-      </span>
-      <span>
-        -{Math.abs(discount).toFixed(2)} {country?.currency}
-      </span>
+   <span>
+    {t('order.discount')} (
+    {discountDetails.valueType === 'percentage'  // Changed from value_type to valueType to match API
+      ? `${Math.abs(parseFloat(discountDetails.value))}%` 
+      : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
+    })
+    {discountDetails.title && ` - ${discountDetails.title}`}
+  </span>
+  <span>
+    -{Math.abs(discount).toFixed(2)} {country?.currency}
+  </span>
     </div>
   )}
 
