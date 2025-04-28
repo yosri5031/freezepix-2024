@@ -4286,74 +4286,7 @@ const handleDiscountCode = (value) => {
     });
 };
 
-// Helper function to validate and apply discount code
-const validateAndApplyDiscountCode = (code, discounts) => {
-  console.log('Validating code:', code);
-  console.log('Against discounts:', discounts);
 
-  // Find the matching discount rule first
-  const discountRule = discounts.find(
-    discount => discount.title && discount.title.toUpperCase() === code.toUpperCase()
-  );
-  
-  console.log('Found discount rule:', discountRule);
-  
-  // Check if we found a matching discount rule
-  if (!discountRule) {
-    console.log('No matching discount found');
-    setDiscountError('Invalid discount code');
-    return;
-  }
-  
-  // Now that we have a discountRule defined, we can safely use it
-  const now = new Date();
-  
-  // Fix property names to match what the backend sends
-  const startDate = discountRule.startsAt 
-    ? new Date(discountRule.startsAt) 
-    : discountRule.starts_at 
-      ? new Date(discountRule.starts_at)
-      : null;
-      
-  const endDate = discountRule.endsAt 
-    ? new Date(discountRule.endsAt) 
-    : discountRule.ends_at 
-      ? new Date(discountRule.ends_at)
-      : null;
-  
-  console.log('Date validation:', {
-    now,
-    startDate,
-    endDate,
-    isBeforeStart: startDate && now < startDate,
-    isAfterEnd: endDate && now > endDate
-  });
-  
-  // Validate date range
-  if (startDate && now < startDate) {
-    console.log('Discount not active yet');
-    setDiscountError('This discount code is not active yet');
-    return;
-  }
-  
-  if (endDate && now > endDate) {
-    console.log('Discount expired');
-    setDiscountError('This discount code has expired');
-    return;
-  }
-  
-  // Validate status
-  console.log('Discount status:', discountRule.status);
-  if (discountRule.status !== 'active') {
-    console.log('Discount inactive');
-    setDiscountError('This discount code is not active');
-    return;
-  }
-  
-  // Valid discount code - calculations happen in calculateTotals
-  console.log('Discount valid!');
-  setDiscountError('');
-};
 
 // Add this helper function
 const safelyParseDate = (dateString) => {
