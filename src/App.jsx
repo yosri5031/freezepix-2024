@@ -4207,21 +4207,21 @@ const handleDiscountCode = (value) => {
       setAvailableDiscounts(priceRules);
       
       // Find matching rule
-      const discountRule = priceRules.find(
+      const matchingRule = priceRules.find(
         rule => rule.title && rule.title.toUpperCase() === upperValue
       );
       
       // If no matching rule found
-      if (!discountRule) {
+      if (!matchingRule) {
         console.log('No matching discount found for:', upperValue);
         setDiscountError('Invalid discount code');
         setIsLoading(false);
         return;
       }
       
-      console.log('Found discount rule:', discountRule);
+      console.log('Found discount rule:', matchingRule);
       
-      // Now that we have a discountRule, let's validate it
+      // Now that we have a matchingRule, we can safely validate it
       const now = new Date();
       
       // Safely parse dates, handling both naming conventions
@@ -4230,16 +4230,16 @@ const handleDiscountCode = (value) => {
       
       try {
         // Try both property naming styles
-        if (discountRule.startsAt) {
-          startDate = new Date(discountRule.startsAt);
-        } else if (discountRule.starts_at) {
-          startDate = new Date(discountRule.starts_at);
+        if (matchingRule.startsAt) {
+          startDate = new Date(matchingRule.startsAt);
+        } else if (matchingRule.starts_at) {
+          startDate = new Date(matchingRule.starts_at);
         }
         
-        if (discountRule.endsAt) {
-          endDate = new Date(discountRule.endsAt);
-        } else if (discountRule.ends_at) {
-          endDate = new Date(discountRule.ends_at);
+        if (matchingRule.endsAt) {
+          endDate = new Date(matchingRule.endsAt);
+        } else if (matchingRule.ends_at) {
+          endDate = new Date(matchingRule.ends_at);
         }
       } catch (error) {
         console.error('Error parsing discount dates:', error);
@@ -4265,7 +4265,7 @@ const handleDiscountCode = (value) => {
       }
       
       // Check status (handle both naming conventions)
-      const status = discountRule.status;
+      const status = matchingRule.status;
       console.log('Discount status:', status);
       
       if (status !== 'active') {
@@ -4291,36 +4291,46 @@ const validateAndApplyDiscountCode = (code, discounts) => {
   console.log('Validating code:', code);
   console.log('Against discounts:', discounts);
 
+  // Find the matching discount rule first
   const discountRule = discounts.find(
-    discount => discount.title.toUpperCase() === code.toUpperCase()
+    discount => discount.title && discount.title.toUpperCase() === code.toUpperCase()
   );
   
   console.log('Found discount rule:', discountRule);
   
+  // Check if we found a matching discount rule
   if (!discountRule) {
     console.log('No matching discount found');
     setDiscountError('Invalid discount code');
     return;
-
   }
   
+  // Now that we have a discountRule defined, we can safely use it
   const now = new Date();
+  
   // Fix property names to match what the backend sends
-  const startDate = new Date(discountRule.startsAt || discountRule.starts_at);
-  const endDate = discountRule.endsAt ? new Date(discountRule.endsAt) 
-               : discountRule.ends_at ? new Date(discountRule.ends_at)
-               : null;
+  const startDate = discountRule.startsAt 
+    ? new Date(discountRule.startsAt) 
+    : discountRule.starts_at 
+      ? new Date(discountRule.starts_at)
+      : null;
+      
+  const endDate = discountRule.endsAt 
+    ? new Date(discountRule.endsAt) 
+    : discountRule.ends_at 
+      ? new Date(discountRule.ends_at)
+      : null;
   
   console.log('Date validation:', {
     now,
     startDate,
     endDate,
-    isBeforeStart: now < startDate,
+    isBeforeStart: startDate && now < startDate,
     isAfterEnd: endDate && now > endDate
   });
   
   // Validate date range
-  if (now < startDate) {
+  if (startDate && now < startDate) {
     console.log('Discount not active yet');
     setDiscountError('This discount code is not active yet');
     return;
