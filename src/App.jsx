@@ -1049,31 +1049,59 @@ const [formData, setFormData] = useState({
         }));
       }, [selectedCountry]);
 
-      useEffect(() => {
-        const fetchDiscountCodes = async () => {
-          setIsLoading(true);
-          try {
-            const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/discount-codes');
-            // Filter only active discounts and check dates
-            const activeDiscounts = response.data.filter(discount => {
-              const now = new Date();
-              const startDate = new Date(discount.startDate);
-              const endDate = discount.endDate ? new Date(discount.endDate) : null;
-              
-              return discount.isActive && 
-                     (!endDate || endDate > now) && 
-                     startDate <= now;
-            });
-            setAvailableDiscounts(activeDiscounts);
-          } catch (error) {
-            console.error('Error fetching discount codes:', error);
-          } finally {
-            setIsLoading(false);
+      const fetchShopifyPriceRules = async () => {
+        try {
+          // Call your backend API instead of Shopify directly
+          const response = await axios.get('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/price-rules');
+          
+          if (response.data.price_rules && response.data.price_rules.length > 0) {
+            return response.data.price_rules;
+          } else {
+            console.log('No price rules found.');
+            return [];
           }
-        };
-    
-        fetchDiscountCodes();
-      }, []);
+        } catch (error) {
+          console.error('Error fetching price rules:', error);
+          return [];
+        }
+      };
+
+//  useEffect that fetches discount codes
+useEffect(() => {
+  const fetchDiscountCodes = async () => {
+    setIsLoading(true);
+    try {
+      // Fetch price rules from Shopify API instead of database
+      const priceRules = await fetchShopifyPriceRules();
+      
+      // Transform price rules into the format your application expects
+      const activeDiscounts = priceRules.map(rule => ({
+        code: rule.title,
+        isActive: rule.status === 'active',
+        valueType: rule.value_type === 'percentage' ? 'percentage' : 'fixed_amount',
+        value: Math.abs(parseFloat(rule.value)),
+        startDate: rule.starts_at,
+        endDate: rule.ends_at
+      })).filter(discount => {
+        const now = new Date();
+        const startDate = new Date(discount.startDate);
+        const endDate = discount.endDate ? new Date(discount.endDate) : null;
+        
+        return discount.isActive && 
+               (!endDate || endDate > now) && 
+               startDate <= now;
+      });
+      
+      setAvailableDiscounts(activeDiscounts);
+    } catch (error) {
+      console.error('Error fetching discount codes:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  fetchDiscountCodes();
+}, []);
 
       const ensurePhotoPrices = (photos, countryCode) => {
         if (!photos || !photos.length || !countryCode) return photos;
@@ -1324,20 +1352,20 @@ const [formData, setFormData] = useState({
       }
     }, []); // Runs only once when the component mounts
 
-     const calculateDiscountValue = (code) => {
+    const calculateDiscountValue = (code) => {
       const discountRule = availableDiscounts.find(
         discount => discount.code.toUpperCase() === code.toUpperCase()
       );
-  
+    
       if (!discountRule) return 0;
-  
+    
       let discountValue = 0;
       if (discountRule.valueType === 'percentage') {
         discountValue = Math.abs(parseFloat(discountRule.value)) / 100;
       } else if (discountRule.valueType === 'fixed_amount') {
         discountValue = Math.abs(parseFloat(discountRule.value));
       }
-  
+    
       return discountValue;
     };
       
@@ -4089,34 +4117,144 @@ const validateDiscountCode = (code) => {
 
 const getDiscountDisplay = () => {
   const discountRule = availableDiscounts.find(
-    discount => discount.code.toUpperCase() === discountCode.toUpperCase()
+    discount => discount.title.toUpperCase() === discountCode.toUpperCase()
   );
 
   if (!discountRule) return '0%';
 
-  if (discountRule.valueType === 'percentage') {
-    return `${discountRule.value}%`;
+  if (discountRule.value_type === 'percentage') {
+    return `${Math.abs(parseFloat(discountRule.value))}% off`;
   } else {
-    return `${discountRule.value} ${country?.currency}`;
+    return `${Math.abs(parseFloat(discountRule.value))} ${country?.currency} off`;
   }
 };
 
-
+const initializeDiscounts = async () => {
+  if (availableDiscounts.length === 0) {
+    setIsLoading(true);
+    try {
+      const priceRules = await fetchShopifyPriceRules();
+      
+      const activeDiscounts = priceRules.map(rule => ({
+        code: rule.title,
+        isActive: rule.status === 'active',
+        valueType: rule.value_type === 'percentage' ? 'percentage' : 'fixed_amount',
+        value: Math.abs(parseFloat(rule.value)),
+        startDate: rule.starts_at,
+        endDate: rule.ends_at
+      })).filter(discount => {
+        const now = new Date();
+        const startDate = new Date(discount.startDate);
+        const endDate = discount.endDate ? new Date(discount.endDate) : null;
+        
+        return discount.isActive && 
+               (!endDate || endDate > now) && 
+               startDate <= now;
+      });
+      
+      setAvailableDiscounts(activeDiscounts);
+      
+      // Log available discounts for debugging
+      console.log('Available discount codes:', activeDiscounts);
+    } catch (error) {
+      console.error('Error initializing discounts:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+};
     
 const handleDiscountCode = (value) => {
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
+  setDiscountError('');
   
-  if (upperValue) {
-    const isValid = validateDiscountCode(upperValue);
-    const discountAmount = isValid ? 
-      (discountCode ? subtotal * calculateDiscountValue(upperValue) : 0) : 
-      0;
-    onDiscountChange(discountAmount);
-  } else {
-    setDiscountError('');
-    onDiscountChange(0);
+  if (!upperValue) {
+    return;
   }
+  
+  // First check if discount data is loaded
+  if (availableDiscounts.length === 0) {
+    setIsLoading(true);
+    
+    // Fetch discounts if not already loaded
+    fetchShopifyPriceRules().then(priceRules => {
+      const formattedDiscounts = priceRules.map(rule => ({
+        title: rule.title,
+        value_type: rule.value_type,
+        value: rule.value,
+        status: rule.status,
+        starts_at: rule.starts_at,
+        ends_at: rule.ends_at
+      }));
+      
+      setAvailableDiscounts(formattedDiscounts);
+      validateAndApplyDiscountCode(upperValue, formattedDiscounts);
+      setIsLoading(false);
+    }).catch(error => {
+      console.error('Error fetching discounts:', error);
+      setDiscountError('Unable to verify discount code at this time');
+      setIsLoading(false);
+    });
+  } else {
+    // Discounts already loaded, just validate
+    validateAndApplyDiscountCode(upperValue, availableDiscounts);
+  }
+};
+
+// Helper function to validate and apply discount code
+const validateAndApplyDiscountCode = (code, discounts) => {
+  const discountRule = discounts.find(
+    discount => discount.title.toUpperCase() === code.toUpperCase()
+  );
+  
+  if (!discountRule) {
+    setDiscountError('Invalid discount code');
+    return;
+  }
+  
+  const now = new Date();
+  const startDate = new Date(discountRule.starts_at);
+  const endDate = discountRule.ends_at ? new Date(discountRule.ends_at) : null;
+  
+  // Validate date range
+  if (now < startDate) {
+    setDiscountError('This discount code is not active yet');
+    return;
+  }
+  
+  if (endDate && now > endDate) {
+    setDiscountError('This discount code has expired');
+    return;
+  }
+  
+  // Validate status
+  if (discountRule.status !== 'active') {
+    setDiscountError('This discount code is not active');
+    return;
+  }
+  
+  // Valid discount code - calculations happen in calculateTotals
+  setDiscountError('');
+};
+
+const isDiscountApplicable = (code) => {
+  if (!code || availableDiscounts.length === 0) return false;
+  
+  const upperCode = code.toUpperCase();
+  const discountRule = availableDiscounts.find(discount => 
+    discount.title.toUpperCase() === upperCode
+  );
+  
+  if (!discountRule) return false;
+  
+  const now = new Date();
+  const startDate = new Date(discountRule.starts_at);
+  const endDate = discountRule.ends_at ? new Date(discountRule.ends_at) : null;
+  
+  return discountRule.status === 'active' && 
+         now >= startDate && 
+         (!endDate || now <= endDate);
 };
     
       const handleBack = () => {
@@ -4583,7 +4721,23 @@ const calculateTotals = () => {
   const preDiscountTotal = subtotal + shippingFee;
   
   // Calculate discount if applicable (now applies to subtotal + shipping)
-  const discount = discountCode ? preDiscountTotal * calculateDiscountValue(discountCode) : 0;
+  let discount = 0;
+  if (discountCode) {
+    const discountRule = availableDiscounts.find(
+      rule => rule.title.toUpperCase() === discountCode.toUpperCase()
+    );
+    
+    if (discountRule) {
+      if (discountRule.value_type === 'percentage') {
+        // Convert percentage to decimal (e.g., -30.0 becomes 0.3)
+        const percentageValue = Math.abs(parseFloat(discountRule.value)) / 100;
+        discount = preDiscountTotal * percentageValue;
+      } else if (discountRule.value_type === 'fixed_amount') {
+        // Use the fixed amount directly
+        discount = Math.abs(parseFloat(discountRule.value));
+      }
+    }
+  }
 
   // Calculate taxable amount AFTER discount is applied
   const taxableAmount = preDiscountTotal - discount;
@@ -4662,7 +4816,10 @@ const calculateTotals = () => {
     discount,
     preDiscountTotal,
     appliedProvince,
-    appliedTaxRates
+    appliedTaxRates,
+    discountDetails: discountCode ? availableDiscounts.find(
+      rule => rule.title.toUpperCase() === discountCode.toUpperCase()
+    ) : null
   };
 };
 
@@ -5071,29 +5228,42 @@ const renderInvoice = () => {
     taxAmount, 
     preDiscountTotal,
     appliedProvince, 
-    appliedTaxRates 
+    appliedTaxRates,
+    discountDetails
   } = calculateTotals();
   
   const country = initialCountries.find(c => c.value === selectedCountry);
   
   return (
     <div className="space-y-6">
-      {/* Discount Code Section - Moved to top before summary as requested */}
-      <div className="border rounded-lg p-4">
-        <h3 className="font-medium mb-3">{t('order.discount')}</h3>
-        <div className="space-y-2">
-          <input
-            type="text"
-            placeholder="xxxx"
-            value={discountCode}
-            onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-            className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-          />
-          {discountError && (
-            <p className="text-red-500 text-sm">{discountError}</p>
-          )}
+     {/* Discount Code Section - Simplified */}
+<div className="border rounded-lg p-4">
+  <h3 className="font-medium mb-3">{t('order.discount')}</h3>
+  <div className="space-y-2">
+    <div className="flex space-x-2">
+      <input
+        type="text"
+        placeholder="Enter discount code"
+        value={discountCode}
+        onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+        className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+      />
+      {isLoading && (
+        <div className="flex items-center px-2">
+          <Loader size={20} className="animate-spin text-yellow-400" />
         </div>
-      </div>
+      )}
+    </div>
+    {discountError && (
+      <p className="text-red-500 text-sm">{discountError}</p>
+    )}
+    {discountCode && !discountError && discount > 0 && (
+      <p className="text-green-500 text-sm">
+        Discount applied: {getDiscountDisplay()}
+      </p>
+    )}
+  </div>
+</div>
       
       {/* Order Summary */}
       <div className="border rounded-lg p-4">
@@ -5187,17 +5357,22 @@ const renderInvoice = () => {
         </div>
         
         {/* Discount - Now positioned AFTER subtotal and shipping */}
-        {discount > 0 && (
-          <div className="flex justify-between py-2 text-green-600">
-            <span>
-              {t('order.discount')} ({getDiscountDisplay()})
-             
-            </span>
-            <span>
-              -{Math.abs(discount).toFixed(2)} {country?.currency}
-            </span>
-          </div>
-        )}
+        {discount > 0 && discountDetails && (
+    <div className="flex justify-between py-2 text-green-600">
+      <span>
+        {t('order.discount')} (
+        {discountDetails.value_type === 'percentage' 
+          ? `${Math.abs(parseFloat(discountDetails.value))}%` 
+          : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
+        })
+        {discountDetails.title && ` - ${discountDetails.title}`}
+      </span>
+      <span>
+        -{Math.abs(discount).toFixed(2)} {country?.currency}
+      </span>
+    </div>
+  )}
+
 
         {/* Tax for applicable regions - Now calculated based on (subtotal + shipping - discount) */}
         {/* Tunisia tax */}
