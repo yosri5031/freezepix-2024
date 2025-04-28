@@ -3359,7 +3359,12 @@ const handleOrderSuccess = async ({
       subtotal: Number(subtotal) || 0,
       shippingFee: Number(shippingFee) || 0,
       taxAmount: Number(taxAmount) || 0,
-      discount: Number(discount) || 0,
+      discount: calculateTotals().discount || 0,
+      discountCode: discountCode || null,
+      discountAmount: calculateTotals().discount || 0,
+      discountDetails: discountCode ? availableDiscounts.find(
+        rule => rule.title.toUpperCase() === discountCode.toUpperCase()
+      ) : null,
       currency: country.currency,
       orderNote: orderNote || '',
       paymentMethod: 'helcim',
@@ -3954,10 +3959,15 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       })),
       
       totalAmount: Number(paymentData.amount) || 0,
-      subtotal: Number(paymentData.amount) - (paymentData.amount > 69.99 ? 0 : 20),
+      subtotal: Number(paymentData.amount) || 0,
       shippingFee: Number(shippingFee) || 0,
       taxAmount: Number(taxAmount) || 0,
-      discount: 0,
+      discount: calculateTotals().discount || 0,
+      discountCode: discountCode || null,
+      discountAmount: calculateTotals().discount || 0,
+      discountDetails: discountCode ? availableDiscounts.find(
+        rule => rule.title.toUpperCase() === discountCode.toUpperCase()
+      ) : null,
       currency: paymentData.currency,
       orderNote: "",
       paymentMethod: "helcim",
