@@ -4221,7 +4221,6 @@ const handleDiscountCode = (value) => {
       // If no matching rule found
       if (!matchingRule) {
         console.log('No matching discount found for:', upperValue);
-        setDiscountError('Invalid discount code');
         setIsLoading(false);
         return;
       }
