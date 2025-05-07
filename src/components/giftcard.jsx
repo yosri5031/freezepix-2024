@@ -79,7 +79,7 @@ const GiftCardInput = ({
             type="text"
             placeholder="Enter gift card code"
             value={giftCardCode}
-            onChange={(e) => setGiftCardCode(e.target.value.toUpperCase())}
+            onChange={(e) => setGiftCardCode(e.target.value)}
             className={`w-full p-2 border rounded ${error ? 'border-red-500' : ''}`}
           />
           <button
