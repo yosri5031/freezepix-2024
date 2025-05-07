@@ -7,7 +7,6 @@ const GiftCardInput = ({
     onGiftCardRemoved,
     isLoading, 
     error,
-    setError, // Make sure to pass this prop from parent
     appliedGiftCard 
   }) => {
     const [giftCardCode, setGiftCardCode] = useState('');
@@ -15,9 +14,6 @@ const GiftCardInput = ({
   
     const handleApplyGiftCard = async () => {
       if (!giftCardCode || giftCardCode.trim() === '') return;
-      
-      // Clear any previous errors
-      if (setError) setError('');
       
       setValidating(true);
       
@@ -36,27 +32,16 @@ const GiftCardInput = ({
             id: response.data.id
           });
         } else {
-          // Pass the specific error message from the API
-          if (setError && response.data.error) {
-            setError(response.data.error);
-          } else {
-            setError('Invalid gift card');
-          }
-          onGiftCardApplied(null);
+          // Pass the specific error message from the API to the parent
+          const errorMessage = response.data.error || 'Invalid gift card';
+          onGiftCardApplied(null, errorMessage);
         }
       } catch (error) {
         console.error('Gift card validation error:', error);
         
         // Handle network or server errors
-        if (setError) {
-          if (error.response?.data?.error) {
-            setError(error.response.data.error);
-          } else {
-            setError('Failed to validate gift card. Please try again.');
-          }
-        }
-        
-        onGiftCardApplied(null);
+        const errorMessage = error.response?.data?.error || 'Failed to validate gift card';
+        onGiftCardApplied(null, errorMessage);
       } finally {
         setValidating(false);
         setGiftCardCode('');
@@ -66,8 +51,6 @@ const GiftCardInput = ({
     const handleRemoveGiftCard = () => {
       onGiftCardRemoved();
       setGiftCardCode('');
-      // Clear any errors when removing a gift card
-      if (setError) setError('');
     };
   
     if (appliedGiftCard) {

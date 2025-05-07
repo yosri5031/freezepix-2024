@@ -1081,13 +1081,9 @@ const fetchShopifyPriceRules = async () => {
   }
 };
 
-const handleGiftCardApplied = (giftCard) => {
-  if (giftCard) {
-    setAppliedGiftCard(giftCard);
-    setGiftCardError('');
-  } else {
-    setGiftCardError('Invalid gift card');
-  }
+const handleGiftCardApplied = (giftCard, errorMsg = '') => {
+  setAppliedGiftCard(giftCard);
+  setGiftCardError(errorMsg); // Set the error message from the API
 };
 
 const handleGiftCardRemoved = () => {
