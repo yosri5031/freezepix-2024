@@ -89,7 +89,9 @@
     "Contact Information": "Contact Information",
     "Shipping Address": "Shipping Address",
     "Billing Address": "Billing Address",
-    "Billing address same as shipping": "Billing address same as shipping"
+    "Billing address same as shipping": "Billing address same as shipping",
+    "gift_card": "Enter gift card code"
+
     },
     "buttons": {
       "start_printing": "Start Printing",
@@ -146,12 +148,35 @@
     "shipping_to_address": "Ship to Address",
     "shipping_description": "Have your prints delivered to your door.",
     "details": "Order Details",
-    "pickup_fee": "Pickup Fee"
+    "pickup_fee": "Pickup Fee",
+    "gift_card": "Gift Card",
+    "gift_card_code": "Gift Card Code",
+    "gift_card_balance": "Gift Card Balance",
+    "gift_card_applied": "Gift Card Applied",
+    "gift_card_removed": "Gift Card Removed",
+    "gift_card_error": "Invalid gift card",
+    "gift_card_expired": "This gift card has expired",
+    "gift_card_disabled": "This gift card is disabled",
+    "gift_card_zero_balance": "This gift card has no balance",
+    "gift_card_not_found": "Gift card not found",
+    "gift_card_validation_error": "Unable to validate gift card",
+    "fully_paid_gift_card": "Order fully paid with gift card",
+    "partial_paid_gift_card": "Partially paid with gift card",
+    "remaining_balance": "Remaining Balance",
+    "original_total": "Original Total",
+    "apply_gift_card": "Apply Gift Card",
+    "enter_gift_card": "Enter gift card code",
+    "payment_options": "Payment Options",
+    "discount_code": "Discount Code",
+    "gift_card_payment_method": "Gift Card",
+    "helcim_gift_card_payment_method": "Credit Card + Gift Card"
     },
     "validation": {
       "contact_info": "Contact Information",
       "complete_fields": "Please complete all required fields before proceeding",
-      "select_photos": "Please select at least one photo"
+      "select_photos": "Please select at least one photo",
+        "gift_card_required": "Gift card code is required",
+  "gift_card_invalid": "Invalid gift card code"
     },
     "produits": {
         "photo_print": "Photo Print",
@@ -242,7 +267,9 @@
     "secure_payment": "Your payment is secured with bank-level encryption",
     "pay_in_store": "Pay in Store",
     "in_store_description": "Pay when you pick up your prints at the store",
-    "credit_pickup_description": "Pay securely with your credit card for pickup orders"
+    "credit_pickup_description": "Pay securely with your credit card for pickup orders",
+      "gift_card": "Gift Card",
+  "gift_card_description": "Pay with a Shopify gift card"
   }
   }
   

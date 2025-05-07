@@ -77,7 +77,9 @@
       "Contact Information": "Kontaktinformationen",
       "Shipping Address": "Lieferadresse",
       "Billing Address": "Rechnungsadresse",
-      "Billing address same as shipping": "Rechnungsadresse ist identisch mit Lieferadresse"
+      "Billing address same as shipping": "Rechnungsadresse ist identisch mit Lieferadresse",
+      "gift_card": "Geschenkkarten-Code eingeben"
+
     },
     "buttons": {
       "start_printing": "Mit Drucken beginnen",
@@ -134,12 +136,35 @@
       "shipping_to_address": "Lieferung an Adresse",
       "shipping_description": "Lassen Sie Ihre Abzüge direkt an Ihre Tür liefern.",
       "details": "Bestelldetails",
-      "pickup_fee": "Abholgebühr"
+      "pickup_fee": "Abholgebühr",
+      "gift_card": "Geschenkkarte",
+      "gift_card_code": "Geschenkkarten-Code",
+      "gift_card_balance": "Geschenkkarten-Guthaben",
+      "gift_card_applied": "Geschenkkarte angewendet",
+      "gift_card_removed": "Geschenkkarte entfernt",
+      "gift_card_error": "Ungültige Geschenkkarte",
+      "gift_card_expired": "Diese Geschenkkarte ist abgelaufen",
+      "gift_card_disabled": "Diese Geschenkkarte ist deaktiviert",
+      "gift_card_zero_balance": "Diese Geschenkkarte hat kein Guthaben",
+      "gift_card_not_found": "Geschenkkarte nicht gefunden",
+      "gift_card_validation_error": "Geschenkkarte konnte nicht validiert werden",
+      "fully_paid_gift_card": "Bestellung vollständig mit Geschenkkarte bezahlt",
+      "partial_paid_gift_card": "Teilweise mit Geschenkkarte bezahlt",
+      "remaining_balance": "Verbleibendes Guthaben",
+      "original_total": "Ursprünglicher Gesamtbetrag",
+      "apply_gift_card": "Geschenkkarte anwenden",
+      "enter_gift_card": "Geschenkkarten-Code eingeben",
+      "payment_options": "Zahlungsoptionen",
+      "discount_code": "Rabattcode",
+      "gift_card_payment_method": "Geschenkkarte",
+      "helcim_gift_card_payment_method": "Kreditkarte + Geschenkkarte"
     },
     "validation": {
       "contact_info": "Kontaktinformationen",
       "complete_fields": "Bitte füllen Sie alle erforderlichen Felder aus, bevor Sie fortfahren",
-      "select_photos": "Bitte wählen Sie mindestens ein Foto aus"
+      "select_photos": "Bitte wählen Sie mindestens ein Foto aus",
+       "gift_card_required": "Geschenkkarten-Code ist erforderlich",
+  "gift_card_invalid": "Ungültiger Geschenkkarten-Code"
     },
     "produits": {
       "photo_print": "Fotoabzug",
@@ -228,7 +253,9 @@
       "secure_payment": "Ihre Zahlung ist mit Bankniveau-Verschlüsselung gesichert",
       "pay_in_store": "Im Geschäft bezahlen",
       "in_store_description": "Zahlen Sie, wenn Sie Ihre Abzüge im Geschäft abholen",
-      "credit_pickup_description": "Bezahlen Sie sicher mit Ihrer Kredit- oder Debitkarte für Abholaufträge"
+      "credit_pickup_description": "Bezahlen Sie sicher mit Ihrer Kredit- oder Debitkarte für Abholaufträge",
+        "gift_card": "Geschenkkarte",
+  "gift_card_description": "Mit einer Shopify-Geschenkkarte bezahlen"
     },
     "studio": {
     "select_location": "Standort auswählen",

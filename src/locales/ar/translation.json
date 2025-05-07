@@ -77,7 +77,9 @@
     "Contact Information": "معلومات الاتصال",
     "Shipping Address": "عنوان الشحن",
     "Billing Address": "عنوان الفواتير",
-    "Billing address same as shipping": "عنوان الفواتير هو نفس عنوان الشحن"
+    "Billing address same as shipping": "عنوان الفواتير هو نفس عنوان الشحن",
+    "gift_card": "أدخل رمز بطاقة الهدية"
+
   },
   "buttons": {
   "start_printing": "ابدأ الطباعة",
@@ -134,12 +136,35 @@
   "shipping_to_address": "الشحن إلى العنوان",
   "shipping_description": "استلم صورك مباشرة عند باب منزلك.",
   "details": "تفاصيل الطلب",
-  "pickup_fee": "رسوم الاستلام"
+  "pickup_fee": "رسوم الاستلام",
+  "gift_card": "بطاقة هدية",
+  "gift_card_code": "رمز بطاقة الهدية",
+  "gift_card_balance": "رصيد بطاقة الهدية",
+  "gift_card_applied": "تم تطبيق بطاقة الهدية",
+  "gift_card_removed": "تمت إزالة بطاقة الهدية",
+  "gift_card_error": "بطاقة هدية غير صالحة",
+  "gift_card_expired": "انتهت صلاحية بطاقة الهدية هذه",
+  "gift_card_disabled": "تم تعطيل بطاقة الهدية هذه",
+  "gift_card_zero_balance": "لا يوجد رصيد في بطاقة الهدية",
+  "gift_card_not_found": "لم يتم العثور على بطاقة الهدية",
+  "gift_card_validation_error": "تعذر التحقق من صحة بطاقة الهدية",
+  "fully_paid_gift_card": "تم دفع الطلب بالكامل ببطاقة الهدية",
+  "partial_paid_gift_card": "تم الدفع جزئيًا ببطاقة الهدية",
+  "remaining_balance": "الرصيد المتبقي",
+  "original_total": "المجموع الأصلي",
+  "apply_gift_card": "تطبيق بطاقة الهدية",
+  "enter_gift_card": "أدخل رمز بطاقة الهدية",
+  "payment_options": "خيارات الدفع",
+  "discount_code": "رمز الخصم",
+  "gift_card_payment_method": "بطاقة هدية",
+  "helcim_gift_card_payment_method": "بطاقة ائتمان + بطاقة هدية"
   },
   "validation": {
   "contact_info": "معلومات الاتصال",
   "complete_fields": "يرجى إكمال جميع الحقول المطلوبة قبل المتابعة",
-  "select_photos": "يرجى اختيار صورة واحدة على الأقل"
+  "select_photos": "يرجى اختيار صورة واحدة على الأقل",
+  "gift_card_required": "رمز بطاقة الهدية مطلوب",
+  "gift_card_invalid": "رمز بطاقة الهدية غير صالح"
   },
   "produits": {
   "photo_print": "طباعة صور",
@@ -241,6 +266,8 @@
     "secure_payment": "دفعتك مؤمنة بتشفير مستوى البنك",
     "pay_in_store": "الدفع في المتجر",
     "in_store_description": "ادفع عند استلام المطبوعات في المتجر",
-    "credit_pickup_description": "ادفع بأمان باستخدام بطاقة الائتمان أو الخصم الخاصة بك لطلبات الاستلام"
+    "credit_pickup_description": "ادفع بأمان باستخدام بطاقة الائتمان أو الخصم الخاصة بك لطلبات الاستلام",
+      "gift_card": "بطاقة هدية",
+  "gift_card_description": "الدفع ببطاقة هدية من Shopify"
   }
   }

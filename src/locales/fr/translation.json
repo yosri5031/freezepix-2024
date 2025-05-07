@@ -77,7 +77,8 @@
     "Contact Information": "Informations de contact",
     "Shipping Address": "Adresse de livraison",
     "Billing Address": "Adresse de facturation", 
-    "Billing address same as shipping": "L'adresse de facturation est identique à l'adresse de livraison"
+    "Billing address same as shipping": "L'adresse de facturation est identique à l'adresse de livraison",
+    "gift_card": "Entrez le code de la carte cadeau"
     },
     "buttons": {
       "start_printing": "Commencer l'impression",
@@ -147,12 +148,35 @@
        "shipping_to_address": "Livraison à domicile",
        "shipping_description": "Faites-vous livrer vos tirages directement chez vous.",
        "details": "Détails de la commande",
-       "pickup_fee": "Frais de récupération"
+       "pickup_fee": "Frais de récupération",
+       "gift_card": "Carte Cadeau",
+  "gift_card_code": "Code de la Carte Cadeau",
+  "gift_card_balance": "Solde de la Carte Cadeau",
+  "gift_card_applied": "Carte Cadeau Appliquée",
+  "gift_card_removed": "Carte Cadeau Retirée",
+  "gift_card_error": "Carte cadeau invalide",
+  "gift_card_expired": "Cette carte cadeau a expiré",
+  "gift_card_disabled": "Cette carte cadeau est désactivée",
+  "gift_card_zero_balance": "Cette carte cadeau n'a pas de solde",
+  "gift_card_not_found": "Carte cadeau introuvable",
+  "gift_card_validation_error": "Impossible de valider la carte cadeau",
+  "fully_paid_gift_card": "Commande entièrement payée avec la carte cadeau",
+  "partial_paid_gift_card": "Partiellement payée avec la carte cadeau",
+  "remaining_balance": "Solde Restant",
+  "original_total": "Total Original",
+  "apply_gift_card": "Appliquer la Carte Cadeau",
+  "enter_gift_card": "Entrez le code de la carte cadeau",
+  "payment_options": "Options de Paiement",
+  "discount_code": "Code de Réduction",
+  "gift_card_payment_method": "Carte Cadeau",
+  "helcim_gift_card_payment_method": "Carte de Crédit + Carte Cadeau"
     },
     "validation": {
         "contact_info": "Coordonnées",
       "complete_fields": "Veuillez compléter tous les champs requis avant de continuer",
-      "select_photos": "Veuillez sélectionner au moins une photo"
+      "select_photos": "Veuillez sélectionner au moins une photo",
+       "gift_card_required": "Le code de la carte cadeau est requis",
+  "gift_card_invalid": "Code de carte cadeau invalide"
     },
     "produits": {
        
@@ -241,7 +265,9 @@
     "secure_payment": "Votre paiement est sécurisé avec un chiffrement de niveau bancaire",
     "pay_in_store": "Payer en magasin",
     "in_store_description": "Payez lors du retrait de vos tirages en magasin",
-    "credit_pickup_description": "Payez en toute sécurité avec votre carte de crédit pour les commandes à retirer"
+    "credit_pickup_description": "Payez en toute sécurité avec votre carte de crédit pour les commandes à retirer",
+     "gift_card": "Carte Cadeau",
+  "gift_card_description": "Payez avec une carte cadeau Shopify"
 
   }
       

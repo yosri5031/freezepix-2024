@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -22,6 +22,7 @@ import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
 import {ShareUrl} from './StudioUrlShare';
 import StudioLocationHeader from './components/studiolocationheader';
+import GiftCardInput from './components/giftcard';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
@@ -740,6 +741,7 @@ const BookingPopup = ({ onClose }) => {
     window.history.pushState({ studioId: studio._id }, '', newUrl);
   };
 
+
   // FreezePIX Printing APP - Order Photo Prints Online from anywhere in Canada And United States
 const FreezePIX = () => {
  
@@ -767,6 +769,11 @@ const FreezePIX = () => {
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
     const [deliveryMethod, setDeliveryMethod] = useState('pickup'); // 'pickup' or 'shipping'
+    const [activePaymentTab, setActivePaymentTab] = useState('discount');
+
+const [appliedGiftCard, setAppliedGiftCard] = useState(null);
+const [giftCardError, setGiftCardError] = useState('');
+const [isGiftCardLoading, setIsGiftCardLoading] = useState(false);
 
 const [interacReference, setInteracReference] = useState('');
 const [formData, setFormData] = useState({
@@ -1072,6 +1079,20 @@ const fetchShopifyPriceRules = async () => {
     }
     return [];
   }
+};
+
+const handleGiftCardApplied = (giftCard) => {
+  if (giftCard) {
+    setAppliedGiftCard(giftCard);
+    setGiftCardError('');
+  } else {
+    setGiftCardError('Invalid gift card');
+  }
+};
+
+const handleGiftCardRemoved = () => {
+  setAppliedGiftCard(null);
+  setGiftCardError('');
 };
 
 //  useEffect that fetches discount codes
@@ -3269,16 +3290,24 @@ const handleOrderSuccess = async ({
     setCurrentOrderNumber(orderNumber);
     
     // Calculate order totals
-    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+    const { 
+      total, 
+      originalTotal,
+      currency, 
+      subtotal, 
+      shippingFee, 
+      taxAmount, 
+      discount,
+      giftCardAmount,
+      remainingGiftCardBalance,
+      paymentMethod: calculatedPaymentMethod
+    } = calculateTotalsWithGiftCard();
+
     const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Determine the payment method based on delivery and selected payment option
-    let finalPaymentMethod;
-    if (deliveryMethod === 'pickup') {
-      finalPaymentMethod = paymentMethod === 'helcim' ? 'helcim' : 'in_store';
-    } else {
-      finalPaymentMethod = paymentMethod;
-    }
+       let finalPaymentMethod = calculatedPaymentMethod;
+
 
     // Process photos with improved batch processing and error handling
     const processPhotosWithProgress = async () => {
@@ -3314,6 +3343,13 @@ const handleOrderSuccess = async ({
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
+        // Add gift card information
+        giftCard: appliedGiftCard ? {
+          id: appliedGiftCard.id,
+          code: appliedGiftCard.code,
+          amountUsed: giftCardAmount,
+          remainingBalance: remainingGiftCardBalance
+        } : null,
       // ONLY include pickupStudio if delivery method is pickup
    // Always include pickupStudio for pickup orders, with robust fallback
    ...(deliveryMethod === 'pickup' ? {
@@ -3359,6 +3395,7 @@ const handleOrderSuccess = async ({
       subtotal: Number(subtotal) || 0,
       shippingFee: Number(shippingFee) || 0,
       taxAmount: Number(taxAmount) || 0,
+      giftCardAmount: giftCardAmount || 0,
       discount: calculateTotals().discount || 0,
       discountCode: discountCode || null,
       discountAmount: calculateTotals().discount || 0,
@@ -3390,336 +3427,444 @@ const handleOrderSuccess = async ({
       return acc;
     }, {});
 
-    // If this is a Helcim payment but doesn't have token/transaction data
-    // We should not submit the order directly as it will be submitted after successful payment
-    if (finalPaymentMethod === 'helcim' && !helcimPaymentData?.transactionId) {
-      console.log('Preparing Helcim payment, order will be submitted after payment completion');
-      setIsProcessingOrder(false);
-      return orderData; // Return order data for Helcim processing
-    }
+   // If this is a Helcim payment but doesn't have token/transaction data
+// We should not submit the order directly as it will be submitted after successful payment
+if (finalPaymentMethod === 'helcim' && !helcimPaymentData?.transactionId) {
+  console.log('Preparing Helcim payment, order will be submitted after payment completion');
+  setIsProcessingOrder(false);
+  return orderData; // Return order data for Helcim processing
+}
 
-    if (paymentMethod === 'helcim') {
-      try {
-        // Initialize Helcim payment
-        const helcimResponse = await initializeHelcimPayCheckout({
-          formData,
-          selectedCountry,
-          total,
-          subtotalsBySize,
-          selectedStudio
-        });
-
-        if (!helcimResponse?.checkoutToken) {
-          throw new Error('Failed to initialize Helcim payment');
+// Handle gift card payment scenario
+if (appliedGiftCard) {
+  const giftCardAmount = Math.min(appliedGiftCard.balance, originalTotal);
+  const remainingBalance = Math.max(0, originalTotal - giftCardAmount);
+  
+  console.log('Processing order with gift card payment:', {
+    giftCardCode: appliedGiftCard.code,
+    giftCardAmount,
+    originalTotal,
+    remainingBalance
+  });
+  
+  // Update order data with gift card information
+  orderData = {
+    ...orderData,
+    giftCard: {
+      id: appliedGiftCard.id,
+      code: appliedGiftCard.code,
+      amountUsed: giftCardAmount,
+      remainingBalance: appliedGiftCard.balance - giftCardAmount,
+      currencyCode: appliedGiftCard.currencyCode
+    },
+    originalTotal: originalTotal
+  };
+  
+  // If fully covered by gift card, no need for additional payment
+  if (remainingBalance === 0) {
+    console.log('Order fully covered by gift card, updating gift card balance');
+    
+    try {
+      // Update gift card balance on Shopify
+      const giftCardUpdateResponse = await axios.post(
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/update-gift-card',
+        {
+          giftCardId: appliedGiftCard.id,
+          amountUsed: giftCardAmount,
+          orderNumber: orderData.orderNumber
         }
-
-        // Store Helcim payment data
-        orderData = {
-          ...orderData,
-          paymentMethod: 'helcim',
-          helcimPaymentId: helcimResponse.checkoutToken,
-          paymentStatus: helcimPaymentData?.success ? 'paid' : 'pending'
-        };
-
-        // If payment was successful, proceed with order processing
-        if (helcimPaymentData?.success) {
-          // Validate Helcim payment response
-          const isValid = await validateHelcimPayment(helcimPaymentData, helcimResponse.secretToken);
-          if (!isValid) {
-            throw new Error('Invalid Helcim payment validation');
-          }
-        } else {
-          throw new Error('Helcim payment not completed');
+      );
+      
+      if (giftCardUpdateResponse.data.success) {
+        console.log('Gift card updated successfully:', giftCardUpdateResponse.data);
+        
+        // Store transaction ID from Shopify response
+        if (giftCardUpdateResponse.data.transaction?.id) {
+          orderData.giftCard.transactionId = giftCardUpdateResponse.data.transaction.id;
         }
-
-      } catch (helcimError) {
-        console.error('Helcim payment error:', helcimError);
-        throw new Error(`Helcim payment failed: ${helcimError.message}`);
+        
+        // Set payment method and status for gift card only payment
+        orderData.paymentMethod = 'gift_card';
+        orderData.paymentStatus = 'paid';
+        orderData.status = 'Processing';
+      } else {
+        console.error('Failed to update gift card:', giftCardUpdateResponse.data);
+        throw new Error('Gift card update failed');
       }
+    } catch (giftCardError) {
+      console.error('Gift card update error:', giftCardError);
+      throw new Error(`Gift card update failed: ${giftCardError.message}`);
     }
+  }
+}
 
-    if (paymentMethod === 'credit') {
-      let checkoutSession = null;
-  
-      try {
-        console.log('Discount Code:', discountCode);
-        console.log('Tax Amount:', taxAmount);
-        const getStripeCouponId = (code) => {
-          const coupons = {
-            'MOHAMED': 'promo_1QOzC2KmwKMSxU2Dzexmr58J',
-            'B2B': 'promo_1QOz9yKmwKMSxU2Duc7WtDlu',
-            'MCF99': 'promo_1QOzCvKmwKMSxU2D0ItOujrd'
-          };
-          return coupons[code?.toUpperCase()];
-        };
-        
-        const stripeOrderData = {
-          ...orderData,
-          line_items: [
-            // Regular items
-            ...orderData.orderItems.map(item => ({
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: `Photo Print - ${item.size}`,
-                },
-                unit_amount: Math.round(item.price * 100), // Convert to cents
-              },
-              quantity: item.quantity,
-            })),
-            
-            // Shipping fee (if applicable)
-            ...(shippingFee > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: 'Shipping Fee',
-                },
-                unit_amount: Math.round(shippingFee * 100), // Convert to cents
-              },
-              quantity: 1,
-            }] : []),
-            
-            // Tax (explicitly added)
-            ...(taxAmount > 0 ? [{
-              price_data: {
-                currency: orderData.currency.toLowerCase(),
-                product_data: {
-                  name: 'Sales Tax',
-                },
-                unit_amount: Math.round(taxAmount * 100), // Convert to cents
-              },
-              quantity: 1,
-            }] : []),
-          ],
-          
-          mode: 'payment',
-          customer_email: formData.email,
-          
-          // Comprehensive metadata
-          metadata: {
-            orderNumber: orderNumber,
-            discountCode: discountCode || 'none',
-            discount: discount || 0,
-            taxAmount: taxAmount || 0,
-            shippingFee: shippingFee || 0,
-            totalAmount: total
-          },
-          
-          // Success and cancel URLs
-          success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${window.location.origin}/order-cancel`,
-        };
-      
-        console.log('Stripe Order Data:', stripeOrderData);
-      
-        checkoutSession = await createStripeCheckoutSession(stripeOrderData);
-        
-        if (!checkoutSession?.url) {
-          //throw new Error('Invalid checkout session response: Missing URL');
+// Continue with regular payment methods if needed
+if (total > 0) {
+  if (paymentMethod === 'helcim') {
+    try {
+      // Initialize Helcim payment
+      const helcimResponse = await initializeHelcimPayCheckout({
+        formData,
+        selectedCountry,
+        total, // This is now the remaining amount after gift card
+        subtotalsBySize,
+        selectedStudio,
+        // Pass gift card info for display in Helcim checkout
+        giftCard: appliedGiftCard ? {
+          code: appliedGiftCard.code,
+          amountApplied: giftCardAmount,
+          originalTotal: originalTotal
+        } : null
+      });
+
+      if (!helcimResponse?.checkoutToken) {
+        throw new Error('Failed to initialize Helcim payment');
+      }
+
+      // Store Helcim payment data
+      orderData = {
+        ...orderData,
+        paymentMethod: appliedGiftCard ? 'helcim+gift_card' : 'helcim',
+        helcimPaymentId: helcimResponse.checkoutToken,
+        paymentStatus: helcimPaymentData?.success ? 'paid' : 'pending'
+      };
+
+      // If payment was successful, proceed with order processing
+      if (helcimPaymentData?.success) {
+        // Validate Helcim payment response
+        const isValid = await validateHelcimPayment(helcimPaymentData, helcimResponse.secretToken);
+        if (!isValid) {
+          throw new Error('Invalid Helcim payment validation');
         }
-  
-        // Save order data to session storage before redirect
-        sessionStorage.setItem('pendingOrder', JSON.stringify({
-          orderNumber: orderData.orderNumber,
-          orderData: orderData
-        }));
-        sessionStorage.setItem('stripeSessionId', checkoutSession.id);
         
-        // Enhanced iframe detection and redirect handling
-        const handleRedirect = (url) => {
-          return new Promise((resolve, reject) => {
-            // Set a timeout for redirect failure
-            const timeoutId = setTimeout(() => {
-              reject(new Error('Redirect timeout after 5000ms'));
-            }, 5000);
-  
-            try {
-              // Check if we're in an iframe
-              const isInIframe = window.self !== window.top;
+        // If gift card was used, update its balance on Shopify after successful Helcim payment
+        if (appliedGiftCard && giftCardAmount > 0) {
+          try {
+            const giftCardUpdateResponse = await axios.post(
+              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/update-gift-card',
+              {
+                giftCardId: appliedGiftCard.id,
+                amountUsed: giftCardAmount,
+                orderNumber: orderData.orderNumber
+              }
+            );
+            
+            if (giftCardUpdateResponse.data.success) {
+              console.log('Gift card updated successfully after Helcim payment:', giftCardUpdateResponse.data);
               
-              if (isInIframe) {
-                // First try: Direct parent redirect with try-catch
-                try {
-                  window.parent.location.href = url;
-                  clearTimeout(timeoutId);
-                  resolve(true);
-                } catch (directRedirectError) {
-                  console.warn('Direct parent redirect failed, attempting postMessage:', directRedirectError);
-                  
-                  // Second try: postMessage with confirmation
-                  const messageHandler = (event) => {
-                    if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
-                      window.removeEventListener('message', messageHandler);
-                      clearTimeout(timeoutId);
-                      resolve(true);
-                    }
-                  };
-  
-                  window.addEventListener('message', messageHandler);
-                  
-                  // Send message to parent with all necessary data
-                  window.parent.postMessage({
-                    type: 'STRIPE_REDIRECT',
-                    url: url,
-                    sessionId: checkoutSession.id,
-                    orderNumber: orderData.orderNumber
-                  }, '*');
-  
-                  // Don't resolve here - wait for confirmation or timeout
-                }
-              } else {
-                // Not in iframe, do regular redirect
-                window.location.href = url;
+              // Store transaction ID from Shopify response
+              if (giftCardUpdateResponse.data.transaction?.id) {
+                orderData.giftCard.transactionId = giftCardUpdateResponse.data.transaction.id;
+              }
+            } else {
+              console.error('Failed to update gift card after Helcim payment:', giftCardUpdateResponse.data);
+              // Log error but continue with order processing
+            }
+          } catch (giftCardError) {
+            console.error('Gift card update error after Helcim payment:', giftCardError);
+            // Log error but continue with order processing
+          }
+        }
+      } else {
+        throw new Error('Helcim payment not completed');
+      }
+
+    } catch (helcimError) {
+      console.error('Helcim payment error:', helcimError);
+      throw new Error(`Helcim payment failed: ${helcimError.message}`);
+    }
+  }
+
+  if (paymentMethod === 'credit') {
+    let checkoutSession = null;
+
+    try {
+      console.log('Discount Code:', discountCode);
+      console.log('Tax Amount:', taxAmount);
+      const getStripeCouponId = (code) => {
+        const coupons = {
+          'MOHAMED': 'promo_1QOzC2KmwKMSxU2Dzexmr58J',
+          'B2B': 'promo_1QOz9yKmwKMSxU2Duc7WtDlu',
+          'MCF99': 'promo_1QOzCvKmwKMSxU2D0ItOujrd'
+        };
+        return coupons[code?.toUpperCase()];
+      };
+      
+      const stripeOrderData = {
+        ...orderData,
+        line_items: [
+          // Regular items
+          ...orderData.orderItems.map(item => ({
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: {
+                name: `Photo Print - ${item.size}`,
+              },
+              unit_amount: Math.round(item.price * 100), // Convert to cents
+            },
+            quantity: item.quantity,
+          })),
+          
+          // Shipping fee (if applicable)
+          ...(shippingFee > 0 ? [{
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: {
+                name: 'Shipping Fee',
+              },
+              unit_amount: Math.round(shippingFee * 100), // Convert to cents
+            },
+            quantity: 1,
+          }] : []),
+          
+          // Tax (explicitly added)
+          ...(taxAmount > 0 ? [{
+            price_data: {
+              currency: orderData.currency.toLowerCase(),
+              product_data: {
+                name: 'Sales Tax',
+              },
+              unit_amount: Math.round(taxAmount * 100), // Convert to cents
+            },
+            quantity: 1,
+          }] : []),
+        ],
+        
+        mode: 'payment',
+        customer_email: formData.email,
+        
+        // Comprehensive metadata - now includes gift card info
+        metadata: {
+          orderNumber: orderNumber,
+          discountCode: discountCode || 'none',
+          discount: discount || 0,
+          taxAmount: taxAmount || 0,
+          shippingFee: shippingFee || 0,
+          totalAmount: total,
+          originalAmount: originalTotal || total,
+          giftCardApplied: appliedGiftCard ? appliedGiftCard.code : 'none',
+          giftCardAmount: giftCardAmount || 0
+        },
+        
+        // Success and cancel URLs
+        success_url: `${window.location.origin}/order-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${window.location.origin}/order-cancel`,
+      };
+    
+      console.log('Stripe Order Data:', stripeOrderData);
+    
+      checkoutSession = await createStripeCheckoutSession(stripeOrderData);
+      
+      if (!checkoutSession?.url) {
+        //throw new Error('Invalid checkout session response: Missing URL');
+      }
+
+      // Save order data to session storage before redirect
+      sessionStorage.setItem('pendingOrder', JSON.stringify({
+        orderNumber: orderData.orderNumber,
+        orderData: orderData,
+        giftCardId: appliedGiftCard?.id,
+        giftCardAmount: giftCardAmount || 0
+      }));
+      sessionStorage.setItem('stripeSessionId', checkoutSession.id);
+      
+      // Enhanced iframe detection and redirect handling
+      const handleRedirect = (url) => {
+        return new Promise((resolve, reject) => {
+          // Set a timeout for redirect failure
+          const timeoutId = setTimeout(() => {
+            reject(new Error('Redirect timeout after 5000ms'));
+          }, 5000);
+
+          try {
+            // Check if we're in an iframe
+            const isInIframe = window.self !== window.top;
+            
+            if (isInIframe) {
+              // First try: Direct parent redirect with try-catch
+              try {
+                window.parent.location.href = url;
                 clearTimeout(timeoutId);
                 resolve(true);
+              } catch (directRedirectError) {
+                console.warn('Direct parent redirect failed, attempting postMessage:', directRedirectError);
+                
+                // Second try: postMessage with confirmation
+                const messageHandler = (event) => {
+                  if (event.data?.type === 'STRIPE_REDIRECT_CONFIRMED') {
+                    window.removeEventListener('message', messageHandler);
+                    clearTimeout(timeoutId);
+                    resolve(true);
+                  }
+                };
+
+                window.addEventListener('message', messageHandler);
+                
+                // Send message to parent with all necessary data
+                window.parent.postMessage({
+                  type: 'STRIPE_REDIRECT',
+                  url: url,
+                  sessionId: checkoutSession.id,
+                  orderNumber: orderData.orderNumber,
+                  hasGiftCard: !!appliedGiftCard
+                }, '*');
+
+                // Don't resolve here - wait for confirmation or timeout
               }
-            } catch (error) {
+            } else {
+              // Not in iframe, do regular redirect
+              window.location.href = url;
               clearTimeout(timeoutId);
-              reject(new Error(`Redirect failed: ${error.message}`));
+              resolve(true);
             }
-          });
-        };
-  
-        try {
-          await handleRedirect(checkoutSession.url);
-          return; // Successful redirect
-        } catch (redirectError) {
-          console.error('Redirect failed:', redirectError);
-          throw new Error(`Failed to redirect to payment page: ${redirectError.message}`);
-        }
-  
-      } catch (stripeError) {
-        console.error('Stripe checkout error:', stripeError);
-        
-        // Enhanced error logging with null check for checkoutSession
-        const errorDetails = {
-          message: stripeError.message,
-          isInIframe: window.self !== window.top,
-          sessionData: checkoutSession || 'Session creation failed',
-          timestamp: new Date().toISOString(),
-          orderNumber: orderData.orderNumber,
-          paymentMethod: paymentMethod,
-          country: selectedCountry
-        };
-        
-        console.error('Detailed checkout error:', errorDetails);
-        
-        // Save error state for recovery with more context
-        try {
-          await saveStateWithCleanup({
-            checkoutError: errorDetails,
-            recoveryData: {
-              orderNumber: orderData.orderNumber,
-              timestamp: new Date().toISOString(),
-              lastAttemptedStep: checkoutSession ? 'redirect' : 'session_creation'
-            }
-          });
-        } catch (storageError) {
-          console.warn('Failed to save checkout error state:', storageError);
-        }
-        
-        // Set more specific error message based on the failure point
-        const errorMessage = checkoutSession 
-          ? 'Payment redirect failed. Please try again.'
-          : 'Unable to initialize payment. Please try again.';
-        
-        setError(errorMessage);
-        throw stripeError;
-      }
-    }
-
-    // Helper function to validate Helcim payment
-    const validateHelcimPayment = async (paymentData, secretToken) => {
-      try {
-        // Generate hash for validation
-        const generateHash = (data, secretToken) => {
-          const jsonData = JSON.stringify(data);
-          return window.crypto.subtle.digest(
-            'SHA-256', 
-            new TextEncoder().encode(jsonData + secretToken)
-          );
-        };
-
-        const localHash = await generateHash(paymentData.data, secretToken);
-        const remoteHash = paymentData.hash;
-
-        return localHash === remoteHash;
-      } catch (error) {
-        console.error('Payment validation error:', error);
-        return false;
-      }
-    };
-
-    // Helper function to cancel Helcim payment
-    const cancelHelcimPayment = async (paymentId) => {
-      try {
-        await axios.post(
-          `${HELCIM_API_URL}/cancel`,
-          { paymentId },
-          {
-            headers: {
-              'accept': 'application/json',
-              'api-token': API_TOKEN,
-              'content-type': 'application/json'
-            }
+          } catch (error) {
+            clearTimeout(timeoutId);
+            reject(new Error(`Redirect failed: ${error.message}`));
           }
-        );
-      } catch (error) {
-        console.error('Failed to cancel Helcim payment:', error);
-        throw error;
+        });
+      };
+
+      try {
+        await handleRedirect(checkoutSession.url);
+        return; // Successful redirect
+      } catch (redirectError) {
+        console.error('Redirect failed:', redirectError);
+        throw new Error(`Failed to redirect to payment page: ${redirectError.message}`);
       }
+
+    } catch (stripeError) {
+      console.error('Stripe checkout error:', stripeError);
+      
+      // Enhanced error logging with null check for checkoutSession
+      const errorDetails = {
+        message: stripeError.message,
+        isInIframe: window.self !== window.top,
+        sessionData: checkoutSession || 'Session creation failed',
+        timestamp: new Date().toISOString(),
+        orderNumber: orderData.orderNumber,
+        paymentMethod: paymentMethod,
+        country: selectedCountry,
+        hasGiftCard: !!appliedGiftCard
+      };
+      
+      console.error('Detailed checkout error:', errorDetails);
+      
+      // Save error state for recovery with more context
+      try {
+        await saveStateWithCleanup({
+          checkoutError: errorDetails,
+          recoveryData: {
+            orderNumber: orderData.orderNumber,
+            timestamp: new Date().toISOString(),
+            lastAttemptedStep: checkoutSession ? 'redirect' : 'session_creation'
+          }
+        });
+      } catch (storageError) {
+        console.warn('Failed to save checkout error state:', storageError);
+      }
+      
+      // Set more specific error message based on the failure point
+      const errorMessage = checkoutSession 
+        ? 'Payment redirect failed. Please try again.'
+        : 'Unable to initialize payment. Please try again.';
+      
+      setError(errorMessage);
+      throw stripeError;
+    }
+  }
+}
+
+// Helper function to validate Helcim payment
+const validateHelcimPayment = async (paymentData, secretToken) => {
+  try {
+    // Generate hash for validation
+    const generateHash = (data, secretToken) => {
+      const jsonData = JSON.stringify(data);
+      return window.crypto.subtle.digest(
+        'SHA-256', 
+        new TextEncoder().encode(jsonData + secretToken)
+      );
     };
 
-    // Submit order with retry mechanism
-    const maxRetries = 3;
-    let retryCount = 0;
-    let responses;
+    const localHash = await generateHash(paymentData.data, secretToken);
+    const remoteHash = paymentData.hash;
 
-    while (retryCount < maxRetries) {
-      try {
-        responses = await submitOrderWithOptimizedChunking(orderData);
-        if (responses && responses.length > 0) {
-          break;
+    return localHash === remoteHash;
+  } catch (error) {
+    console.error('Payment validation error:', error);
+    return false;
+  }
+};
+
+// Helper function to cancel Helcim payment
+const cancelHelcimPayment = async (paymentId) => {
+  try {
+    await axios.post(
+      `${HELCIM_API_URL}/cancel`,
+      { paymentId },
+      {
+        headers: {
+          'accept': 'application/json',
+          'api-token': API_TOKEN,
+          'content-type': 'application/json'
         }
-        throw new Error('Empty response received');
-      } catch (submitError) {
-        retryCount++;
-        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
-        
-        if (retryCount === maxRetries) {
-          throw new Error(t('errors.orderSubmissionFailed'));
-        }
-        // Exponential backoff
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
       }
-    }
+    );
+  } catch (error) {
+    console.error('Failed to cancel Helcim payment:', error);
+    throw error;
+  }
+};
 
-    // Send confirmation email with retry
-    let emailSent = false;
-    retryCount = 0;
+// Submit order with retry mechanism
+const maxRetries = 3;
+let retryCount = 0;
+let responses;
+
+while (retryCount < maxRetries) {
+  try {
+    responses = await submitOrderWithOptimizedChunking(orderData);
+    if (responses && responses.length > 0) {
+      break;
+    }
+    throw new Error('Empty response received');
+  } catch (submitError) {
+    retryCount++;
+    console.error(`Order submission attempt ${retryCount} failed:`, submitError);
     
-    while (retryCount < maxRetries && !emailSent) {
-      try {
-        await sendOrderConfirmationEmail({
-          ...orderData,
-          orderItems: orderData.orderItems.map(item => ({
-            ...item,
-            file: undefined,
-            thumbnail: item.thumbnail
-          }))
-        });
-        emailSent = true;
-      } catch (emailError) {
-        retryCount++;
-        console.error(`Email sending attempt ${retryCount} failed:`, emailError);
-        if (retryCount < maxRetries) {
-          await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
-        }
-      }
+    if (retryCount === maxRetries) {
+      throw new Error(t('errors.orderSubmissionFailed'));
     }
+    // Exponential backoff
+    await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+  }
+}
 
-    setOrderSuccess(true);
+// Send confirmation email with retry
+let emailSent = false;
+retryCount = 0;
+
+while (retryCount < maxRetries && !emailSent) {
+  try {
+    await sendOrderConfirmationEmail({
+      ...orderData,
+      orderItems: orderData.orderItems.map(item => ({
+        ...item,
+        file: undefined,
+        thumbnail: item.thumbnail
+      }))
+    });
+    emailSent = true;
+  } catch (emailError) {
+    retryCount++;
+    console.error(`Email sending attempt ${retryCount} failed:`, emailError);
+    if (retryCount < maxRetries) {
+      await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+    }
+  }
+}
+
+setOrderSuccess(true);
     console.log('Order created successfully:', {
       orderNumber,
       totalItems: orderData.orderItems.length,
@@ -4880,6 +5025,53 @@ if (discountCode && availableDiscounts.length > 0) {
   };
 };
 
+const calculateTotalsWithGiftCard = () => {
+  const country = initialCountries.find(c => c.value === selectedCountry);
+  // Keep existing calculation code
+  const { 
+    subtotalsBySize, 
+    subtotal, 
+    shippingFee, 
+    total: originalTotal, 
+    quantities, 
+    discount, 
+    taxAmount, 
+    preDiscountTotal,
+    appliedProvince, 
+    appliedTaxRates 
+  } = calculateTotals();
+
+  // Calculate gift card application
+  let giftCardAmount = 0;
+  let remainingBalance = 0;
+  let finalTotal = originalTotal;
+
+  if (appliedGiftCard) {
+    giftCardAmount = Math.min(appliedGiftCard.balance, originalTotal);
+    finalTotal = Math.max(0, originalTotal - giftCardAmount);
+    remainingBalance = appliedGiftCard.balance - giftCardAmount;
+  }
+
+  return {
+    subtotalsBySize,
+    subtotal,
+    taxAmount,
+    shippingFee,
+    total: finalTotal,
+    originalTotal,
+    quantities,
+    discount,
+    preDiscountTotal,
+    appliedProvince,
+    appliedTaxRates,
+    giftCardAmount,
+    remainingGiftCardBalance: remainingBalance,
+    paymentMethod: finalTotal === 0 ? 'gift_card' : 'helcim+gift_card'
+  };
+};
+
+
+
 //..
 const renderStepContent = () => {
   const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
@@ -5293,34 +5485,65 @@ const renderInvoice = () => {
   
   return (
     <div className="space-y-6">
-     {/* Discount Code Section - Simplified */}
-<div className="border rounded-lg p-4">
-  <h3 className="font-medium mb-3">{t('order.discount')}</h3>
-  <div className="space-y-2">
-    <div className="flex space-x-2">
-      <input
-        type="text"
-        placeholder="Enter discount code"
-        value={discountCode}
-        onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-        className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-      />
-      {isLoading && (
-        <div className="flex items-center px-2">
-          <Loader size={20} className="animate-spin text-yellow-400" />
+     {/* Discount Code Section + gift cards */}
+     <div className="border rounded-lg p-4">
+      <h3 className="font-medium mb-3">{t('order.payment_options')}</h3>
+      
+      {/* Tabs for Discount and Gift Card */}
+      <div className="flex border-b mb-4">
+        <button 
+          className={`px-4 py-2 ${activePaymentTab === 'discount' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
+          onClick={() => setActivePaymentTab('discount')}
+        >
+          {t('order.discount_code')}
+        </button>
+        <button 
+          className={`px-4 py-2 ${activePaymentTab === 'giftcard' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
+          onClick={() => setActivePaymentTab('giftcard')}
+        >
+          {t('order.gift_card')}
+        </button>
+      </div>
+      
+      {/* Discount Code Form */}
+      {activePaymentTab === 'discount' && (
+        <div className="space-y-2">
+          <div className="flex space-x-2">
+            <input
+              type="text"
+              placeholder="Enter discount code"
+              value={discountCode}
+              onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+            />
+            {isLoading && (
+              <div className="flex items-center px-2">
+                <Loader size={20} className="animate-spin text-yellow-400" />
+              </div>
+            )}
+          </div>
+          {discountError && (
+            <p className="text-red-500 text-sm">{discountError}</p>
+          )}
+          {discountCode && !discountError && discount > 0 && (
+            <p className="text-green-500 text-sm">
+              Discount applied: {getDiscountDisplay()}
+            </p>
+          )}
         </div>
       )}
+      
+      {/* Gift Card Form */}
+      {activePaymentTab === 'giftcard' && (
+        <GiftCardInput 
+          onGiftCardApplied={handleGiftCardApplied}
+          onGiftCardRemoved={handleGiftCardRemoved}
+          isLoading={isGiftCardLoading}
+          error={giftCardError}
+          appliedGiftCard={appliedGiftCard}
+        />
+      )}
     </div>
-    {discountError && (
-      <p className="text-red-500 text-sm">{discountError}</p>
-    )}
-    {discountCode && !discountError && discount > 0 && (
-      <p className="text-green-500 text-sm">
-        Discount applied: {getDiscountDisplay()}
-      </p>
-    )}
-  </div>
-</div>
       
       {/* Order Summary */}
       <div className="border rounded-lg p-4">
@@ -5494,11 +5717,31 @@ const renderInvoice = () => {
           </div>
         )}
 
+ {/* Gift Card Section - New */}
+ {appliedGiftCard && giftCardAmount > 0 && (
+          <div className="flex justify-between py-2 text-emerald-600">
+            <span>
+              {t('order.gift_card')} ({appliedGiftCard.code})
+            </span>
+            <span>
+              -{giftCardAmount.toFixed(2)} {country?.currency}
+            </span>
+          </div>
+        )}
+
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
           <span>{t('produits.total')}</span>
           <span>{total.toFixed(2)} {country?.currency}</span>
         </div>
+
+          {/* Payment Method Indicator - New */}
+          {total === 0 && appliedGiftCard && (
+          <div className="mt-2 p-2 bg-emerald-50 text-emerald-700 rounded text-sm">
+            {t('order.fully_paid_gift_card')}
+          </div>
+        )}
+        
       </div>
     </div>
   );
