@@ -31,7 +31,9 @@ const GiftCardInput = ({
         // Call your backend to validate the gift card with Shopify
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/validate-gift-card',
-          { code: giftCardCode.trim() }
+          { code: giftCardCode.trim(),
+            autoEnable: true
+           }
         );
         
         // Save debug info regardless of success/failure
