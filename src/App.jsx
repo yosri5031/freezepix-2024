@@ -5535,13 +5535,14 @@ const renderInvoice = () => {
       
       {/* Gift Card Form */}
       {activePaymentTab === 'giftcard' && (
-        <GiftCardInput 
-          onGiftCardApplied={handleGiftCardApplied}
-          onGiftCardRemoved={handleGiftCardRemoved}
-          isLoading={isGiftCardLoading}
-          error={giftCardError}
-          appliedGiftCard={appliedGiftCard}
-        />
+        <GiftCardInput
+        onGiftCardApplied={handleGiftCardApplied}
+        onGiftCardRemoved={handleGiftCardRemoved}
+        isLoading={false}
+        error={giftCardError}
+        setError={setGiftCardError}
+        appliedGiftCard={appliedGiftCard}
+      />
       )}
     </div>
       
@@ -5741,7 +5742,7 @@ const renderInvoice = () => {
             {t('order.fully_paid_gift_card')}
           </div>
         )}
-        
+
       </div>
     </div>
   );
