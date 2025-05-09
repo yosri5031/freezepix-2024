@@ -4021,6 +4021,7 @@ setOrderSuccess(true);
 };
 
 // Add this function to handle orders paid entirely with gift cards
+// Add better error handling to the gift card order function
 const handleGiftCardOnlyOrder = async () => {
   try {
     setIsProcessingOrder(true);
@@ -4050,26 +4051,50 @@ const handleGiftCardOnlyOrder = async () => {
     // Get country info
     const country = initialCountries.find(c => c.value === selectedCountry);
     
-    // Process photos - using the existing function
-    const processPhotosWithProgress = async () => {
-      try {
-        const optimizedPhotosWithPrices = await processImagesInBatches(
-          selectedPhotos.map(photo => ({
-            ...photo,
-            price: photo.price || calculateItemPrice(photo, country)
-          })),
-          (progress) => {
-            setUploadProgress(Math.round(progress));
-          }
-        );
-        return optimizedPhotosWithPrices;
-      } catch (processError) {
-        console.error('Photo processing error:', processError);
-        throw new Error(t('errors.photoProcessingFailed'));
+    // Process photos
+    const optimizedPhotosWithPrices = await processImagesInBatches(
+      selectedPhotos.map(photo => ({
+        ...photo,
+        price: photo.price || calculateItemPrice(photo, country)
+      })),
+      (progress) => {
+        setUploadProgress(Math.round(progress));
       }
-    };
-
-    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+    );
+    
+    // IMPORTANT: Update gift card balance on Shopify FIRST, before creating order
+    let giftCardUpdateResult = null;
+    try {
+      console.log('Updating gift card balance:', {
+        giftCardId: appliedGiftCard.id,
+        amountUsed: giftCardAmount,
+        orderNumber
+      });
+      
+      const giftCardUpdateResponse = await axios.post(
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/update-gift-card',
+        {
+          giftCardId: appliedGiftCard.id,
+          amountUsed: giftCardAmount,
+          orderNumber
+        }
+      );
+      
+      console.log('Gift card update response:', giftCardUpdateResponse.data);
+      
+      if (!giftCardUpdateResponse.data.success) {
+        throw new Error(giftCardUpdateResponse.data.error || t('errors.gift_card_update_failed'));
+      }
+      
+      giftCardUpdateResult = giftCardUpdateResponse.data;
+    } catch (giftCardError) {
+      console.error('Gift card update error:', giftCardError);
+      throw new Error(
+        giftCardError.response?.data?.error || 
+        giftCardError.message || 
+        t('errors.gift_card_update_failed')
+      );
+    }
     
     // Construct order data
     const orderData = {
@@ -4078,12 +4103,13 @@ const handleGiftCardOnlyOrder = async () => {
       phone: formData.phone,
       name: formData.name || '',
       
-      // Add gift card information
+      // Add gift card information with additional details from update response
       giftCard: {
         id: appliedGiftCard.id,
         code: appliedGiftCard.code,
         amountUsed: giftCardAmount,
-        remainingBalance: Math.max(0, appliedGiftCard.balance - giftCardAmount),
+        remainingBalance: giftCardUpdateResult?.remainingBalance || 0,
+        transaction: giftCardUpdateResult?.transaction || null,
         currencyCode: appliedGiftCard.currencyCode
       },
       
@@ -4145,30 +4171,6 @@ const handleGiftCardOnlyOrder = async () => {
       createdAt: new Date().toISOString()
     };
     
-    // Update gift card balance on Shopify
-    try {
-      const giftCardUpdateResponse = await axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/update-gift-card',
-        {
-          giftCardId: appliedGiftCard.id,
-          amountUsed: giftCardAmount,
-          orderNumber
-        }
-      );
-      
-      if (!giftCardUpdateResponse.data.success) {
-        throw new Error(t('errors.gift_card_update_failed'));
-      }
-      
-      // Store transaction ID if available
-      if (giftCardUpdateResponse.data.transaction?.id) {
-        orderData.giftCard.transactionId = giftCardUpdateResponse.data.transaction.id;
-      }
-    } catch (giftCardError) {
-      console.error('Gift card update error:', giftCardError);
-      throw new Error(t('errors.gift_card_update_failed'));
-    }
-    
     // Submit order with retry mechanism - reusing your existing function
     const maxRetries = 3;
     let retryCount = 0;
@@ -4220,7 +4222,19 @@ const handleGiftCardOnlyOrder = async () => {
     
   } catch (error) {
     console.error('Gift card order error:', error);
-    setError(error.message || t('errors.gift_card_order_failed'));
+    
+    // More descriptive error message
+    let errorMessage = '';
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+      if (error.response.data.details?.message) {
+        errorMessage += ': ' + error.response.data.details.message;
+      }
+    } else {
+      errorMessage = error.message || t('errors.gift_card_order_failed');
+    }
+    
+    setError(errorMessage);
     setOrderSuccess(false);
   } finally {
     setIsProcessingOrder(false);
