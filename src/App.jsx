@@ -5474,9 +5474,10 @@ const renderInvoice = () => {
     preDiscountTotal,
     appliedProvince, 
     appliedTaxRates,
-    discountDetails
-  } = calculateTotals();
-  
+    discountDetails,
+    giftCardAmount = 0, // Provide a default value
+    originalTotal
+  } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
   
   return (
