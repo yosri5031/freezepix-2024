@@ -6,6 +6,12 @@
       "choose_location": "Choose your location to start printing your memories",
       "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
     },
+    "errors": {
+  "gift_card_insufficient": "Gift card balance is insufficient to cover the order",
+  "gift_card_update_failed": "Failed to update gift card balance",
+  "gift_card_order_failed": "Failed to process gift card order",
+  "photoProcessingFailed": "Failed to process photos"
+},
     "services": {
       "studio": "Photography Studio",
       "studio_desc": "Professional studio sessions with expert photographers",
@@ -169,7 +175,11 @@
     "payment_options": "Payment Options",
     "discount_code": "Discount Code",
     "gift_card_payment_method": "Gift Card",
-    "helcim_gift_card_payment_method": "Credit Card + Gift Card"
+    "helcim_gift_card_payment_method": "Credit Card + Gift Card",
+    "covered_by_gift_card": "Your order is fully covered by your gift card",
+  "no_additional_payment": "No additional payment is required",
+  "place_order": "Place Order",
+  "processing": "Processing..."
     },
     "validation": {
       "contact_info": "Contact Information",

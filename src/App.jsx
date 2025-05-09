@@ -2279,6 +2279,10 @@ useEffect(() => {
 const renderNavigationButtons = () => {
   const isStepValid = validateStep();
   
+  // Calculate the correct total and check if gift card fully covers it
+  const { total: calculatedTotal } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
+  const isGiftCardFullyCovering = appliedGiftCard && calculatedTotal <= 0;
+  
   return (
     <div className="flex justify-between mt-8">
       {activeStep > 0 ? (
@@ -2293,22 +2297,101 @@ const renderNavigationButtons = () => {
         <div></div> // Empty div for layout consistency
       )}
       
-      {/* Conditional rendering for payment button */}
-      {activeStep === 1 && paymentMethod === 'helcim' ? (
-        <div className="helcim-payment-wrapper">
-         <HelcimPayButton 
-      onPaymentSuccess={handleHelcimPaymentSuccess}
-      isProcessing={isProcessingOrder}
-      disabled={!validatePaymentForm()} // Use the new validation function here
-      selectedCountry={selectedCountry}
-      total={calculateTotals().total}
-      setOrderSuccess={setOrderSuccess}
-      setError={setError}
-      setIsProcessingOrder={setIsProcessingOrder}
-      onSecretTokenReceived={handleSecretTokenReceived}
-    />
-        </div>
+      {/* Conditional rendering for payment button - now with gift card handling */}
+      {activeStep === 1 ? (
+        isGiftCardFullyCovering ? (
+          // Gift card fully covers order - show direct "Place Order" button
+          <button
+            onClick={handleGiftCardOnlyOrder}
+            disabled={isProcessingOrder || !validatePaymentForm()}
+            className={`px-6 py-2 rounded relative overflow-hidden transition-all duration-300 ${
+              isProcessingOrder || !validatePaymentForm()
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-emerald-500 hover:bg-emerald-600 text-white'
+            }`}
+            type="button"
+          >
+            <div className="flex items-center justify-center gap-2 relative z-10">
+              {isProcessingOrder ? (
+                <Loader size={18} className="animate-spin" />
+              ) : (
+                <Check size={18} />
+              )}
+              <span className="font-bold tracking-wide">
+                {isProcessingOrder ? t('order.processing') : t('order.place_order')}
+              </span>
+            </div>
+          </button>
+        ) : paymentMethod === 'helcim' ? (
+          // Regular Helcim payment flow
+          <div className="helcim-payment-wrapper">
+            <HelcimPayButton 
+              onPaymentSuccess={handleHelcimPaymentSuccess}
+              isProcessing={isProcessingOrder}
+              disabled={!validatePaymentForm()} 
+              selectedCountry={selectedCountry}
+              total={calculatedTotal}  
+              setOrderSuccess={setOrderSuccess}
+              setError={setError}
+              setIsProcessingOrder={setIsProcessingOrder}
+              onSecretTokenReceived={handleSecretTokenReceived}
+            />
+          </div>
+        ) : (
+          // Regular "Next/Print" button for other cases
+          <button
+            onClick={handleNext}
+            disabled={!isStepValid}
+            className={`px-6 py-2 rounded relative overflow-hidden transition-all duration-300 ${
+              isStepValid
+                ? 'bg-yellow-400 hover:bg-yellow-500'
+                : 'bg-gray-200 cursor-not-allowed'
+            }`}
+            type="button"
+          >
+            <div className="flex items-center justify-center gap-2 relative z-10">
+              <span className="text-black font-bold tracking-wide">Print</span>
+              <div className="relative">
+                {/* FreezeFIX custom printer icon */}
+                <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  {/* Main printer body - black like "freeze" */}
+                  <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
+                  
+                  {/* Paper input tray */}
+                  <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
+                  
+                  {/* Paper output */}
+                  <rect 
+                    x="7" 
+                    y="16" 
+                    width="14" 
+                    height="6"
+                    fill="white" 
+                  />
+                  
+                  {/* FreezeFIX-style pixels on printer in yellow like "FIX" */}
+                  <rect x="18" y="8" width="2" height="2" fill="#FFCC00" />
+                  <rect x="20" y="8" width="2" height="2" fill="#FFCC00" />
+                  <rect x="20" y="10" width="2" height="2" fill="#FFCC00" />
+                  
+                  {/* Printer controls */}
+                  <rect x="8" y="9" width="2" height="2" fill="#444" />
+                  <rect x="11" y="9" width="3" height="2" fill="#444" />
+                  
+                  {/* Yellow pixel pattern on printed paper */}
+                  <rect x="9" y="17" width="2" height="2" fill="#FFCC00" />
+                  <rect x="11" y="17" width="2" height="2" fill="#FFCC00" />
+                  <rect x="9" y="19" width="2" height="2" fill="#FFCC00" />
+                  <rect x="16" y="18" width="2" height="2" fill="#FFCC00" />
+                  <rect x="18" y="18" width="1" height="1" fill="#FFCC00" />
+                  <rect x="16" y="20" width="1" height="1" fill="#FFCC00" />
+                </svg>
+              </div>
+            </div>
+          </button>
+        )
       ) : (
+        // Not on checkout step - show standard button
         <button
           onClick={handleNext}
           disabled={!isStepValid}
@@ -2324,31 +2407,15 @@ const renderNavigationButtons = () => {
             <div className="relative">
               {/* FreezeFIX custom printer icon */}
               <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Main printer body - black like "freeze" */}
+                {/* Printer icon SVG content (same as above) */}
                 <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
-                
-                {/* Paper input tray */}
                 <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
-                
-                {/* Paper output */}
-                <rect 
-                  x="7" 
-                  y="16" 
-                  width="14" 
-                  height="6"
-                  fill="white" 
-                />
-                
-                {/* FreezeFIX-style pixels on printer in yellow like "FIX" */}
+                <rect x="7" y="16" width="14" height="6" fill="white" />
                 <rect x="18" y="8" width="2" height="2" fill="#FFCC00" />
                 <rect x="20" y="8" width="2" height="2" fill="#FFCC00" />
                 <rect x="20" y="10" width="2" height="2" fill="#FFCC00" />
-                
-                {/* Printer controls */}
                 <rect x="8" y="9" width="2" height="2" fill="#444" />
                 <rect x="11" y="9" width="3" height="2" fill="#444" />
-                
-                {/* Yellow pixel pattern on printed paper */}
                 <rect x="9" y="17" width="2" height="2" fill="#FFCC00" />
                 <rect x="11" y="17" width="2" height="2" fill="#FFCC00" />
                 <rect x="9" y="19" width="2" height="2" fill="#FFCC00" />
@@ -3950,6 +4017,214 @@ setOrderSuccess(true);
     if (orderSuccess) {
       clearStateStorage();
     }
+  }
+};
+
+// Add this function to handle orders paid entirely with gift cards
+const handleGiftCardOnlyOrder = async () => {
+  try {
+    setIsProcessingOrder(true);
+    setOrderSuccess(false);
+    setError(null);
+    
+    // Get order calculations with gift card applied
+    const { 
+      subtotal, 
+      taxAmount, 
+      shippingFee, 
+      discount, 
+      total, 
+      originalTotal,
+      giftCardAmount 
+    } = calculateTotalsWithGiftCard();
+    
+    // Verify gift card covers entire purchase
+    if (total > 0) {
+      throw new Error(t('errors.gift_card_insufficient'));
+    }
+    
+    // Generate order number
+    const orderNumber = generateOrderNumber();
+    setCurrentOrderNumber(orderNumber);
+    
+    // Get country info
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    
+    // Process photos - using the existing function
+    const processPhotosWithProgress = async () => {
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
+            ...photo,
+            price: photo.price || calculateItemPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+          }
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error(t('errors.photoProcessingFailed'));
+      }
+    };
+
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+    
+    // Construct order data
+    const orderData = {
+      orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      name: formData.name || '',
+      
+      // Add gift card information
+      giftCard: {
+        id: appliedGiftCard.id,
+        code: appliedGiftCard.code,
+        amountUsed: giftCardAmount,
+        remainingBalance: Math.max(0, appliedGiftCard.balance - giftCardAmount),
+        currencyCode: appliedGiftCard.currencyCode
+      },
+      
+      // Handle pickup or shipping based on delivery method
+      ...(deliveryMethod === 'pickup' ? {
+        pickupStudio: selectedStudio ? {
+          studioId: selectedStudio._id || null,
+          name: selectedStudio.name || 'Unspecified Studio',
+          address: selectedStudio.address || 'Not Specified',
+          city: selectedStudio.city || 'Not Specified',
+          country: selectedStudio.country || selectedCountry
+        } : null
+      } : {
+        shippingAddress: {
+          firstName: formData.shippingAddress.firstName || '',
+          lastName: formData.shippingAddress.lastName || '',
+          address: formData.shippingAddress.address || '',
+          city: formData.shippingAddress.city || '',
+          postalCode: formData.shippingAddress.postalCode || '',
+          country: formData.shippingAddress.country || selectedCountry,
+          province: formData.shippingAddress.province || '',
+          state: formData.shippingAddress.state || ''
+        }
+      }),
+      
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
+        id: photo.id,
+        quantity: photo.quantity,
+        size: photo.size,
+        price: photo.price,
+        productType: photo.productType
+      })),
+      
+      totalAmount: originalTotal,
+      subtotal,
+      shippingFee,
+      taxAmount,
+      giftCardAmount,
+      discount,
+      discountCode: discountCode || null,
+      currency: country.currency,
+      orderNote: orderNote || '',
+      
+      paymentMethod: 'gift_card', // Set payment method to gift_card
+      paymentStatus: 'paid',      // Order is already paid in full
+      status: 'Processing',       // Set initial status
+      
+      deliveryMethod,
+      customerDetails: {
+        name: formData.name || '',
+        email: formData.email,
+        phone: formData.phone,
+        country: selectedCountry
+      },
+      selectedCountry,
+      createdAt: new Date().toISOString()
+    };
+    
+    // Update gift card balance on Shopify
+    try {
+      const giftCardUpdateResponse = await axios.post(
+        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/update-gift-card',
+        {
+          giftCardId: appliedGiftCard.id,
+          amountUsed: giftCardAmount,
+          orderNumber
+        }
+      );
+      
+      if (!giftCardUpdateResponse.data.success) {
+        throw new Error(t('errors.gift_card_update_failed'));
+      }
+      
+      // Store transaction ID if available
+      if (giftCardUpdateResponse.data.transaction?.id) {
+        orderData.giftCard.transactionId = giftCardUpdateResponse.data.transaction.id;
+      }
+    } catch (giftCardError) {
+      console.error('Gift card update error:', giftCardError);
+      throw new Error(t('errors.gift_card_update_failed'));
+    }
+    
+    // Submit order with retry mechanism - reusing your existing function
+    const maxRetries = 3;
+    let retryCount = 0;
+    let responses;
+
+    while (retryCount < maxRetries) {
+      try {
+        responses = await submitOrderWithOptimizedChunking(orderData);
+        if (responses && responses.length > 0) {
+          break;
+        }
+        throw new Error('Empty response received');
+      } catch (submitError) {
+        retryCount++;
+        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+        
+        if (retryCount === maxRetries) {
+          throw new Error(t('errors.orderSubmissionFailed'));
+        }
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmationEmail({
+        ...orderData,
+        orderItems: orderData.orderItems.map(item => ({
+          ...item,
+          file: undefined,
+          thumbnail: item.thumbnail
+        }))
+      });
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Continue with success flow even if email fails
+    }
+
+    // Update UI
+    setOrderSuccess(true);
+    setSelectedPhotos([]);
+    clearStateStorage();
+    console.log('Gift card order created successfully:', {
+      orderNumber,
+      totalItems: orderData.orderItems.length,
+      giftCardAmount
+    });
+    
+  } catch (error) {
+    console.error('Gift card order error:', error);
+    setError(error.message || t('errors.gift_card_order_failed'));
+    setOrderSuccess(false);
+  } finally {
+    setIsProcessingOrder(false);
+    setUploadProgress(0);
   }
 };
 
