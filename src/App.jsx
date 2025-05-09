@@ -5773,7 +5773,6 @@ const renderInvoice = () => {
     <div className="space-y-6">
      {/* Discount Code Section + gift cards */}
      <div className="border rounded-lg p-4">
-      <h3 className="font-medium mb-3">{t('order.payment_options')}</h3>
       
       {/* Tabs for Discount and Gift Card */}
       <div className="flex border-b mb-4">
@@ -5783,12 +5782,7 @@ const renderInvoice = () => {
         >
           {t('order.discount_code')}
         </button>
-        <button 
-          className={`px-4 py-2 ${activePaymentTab === 'giftcard' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
-          onClick={() => setActivePaymentTab('giftcard')}
-        >
-          {t('order.gift_card')}
-        </button>
+       
       </div>
       
       {/* Discount Code Form */}
