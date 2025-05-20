@@ -218,39 +218,65 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
   };
   
   // Calculate distances between user and studios
-  const calculateDistances = (studios, userLocation) => {
-    if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
-      return studios;
+// Modified calculateDistances function for studiolocationheader.jsx
+
+const calculateDistances = (studios, userLocation) => {
+  if (!userLocation || !userLocation.latitude || !userLocation.longitude) {
+    return studios;
+  }
+  
+  return studios.map(studio => {
+    // Enhanced coordinate extraction that handles both formats
+    const studioLat = getStudioLatitude(studio);
+    const studioLng = getStudioLongitude(studio);
+    
+    // Skip distance calculation if coordinates are missing
+    if (!studioLat || !studioLng) {
+      return { ...studio, distance: Infinity };
     }
     
-    return studios.map(studio => {
-      if (!studio.coordinates || 
-          typeof studio.coordinates.latitude === 'undefined' || 
-          typeof studio.coordinates.longitude === 'undefined' || typeof studio.latitude === 'undefined' || typeof studio.longitude === 'undefined' ) {
-        return { ...studio, distance: Infinity };
-      }
+    try {
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        studioLat,
+        studioLng
+      );
       
-      try {
-        const distance = calculateDistance(
-          userLocation.latitude,
-          userLocation.longitude,
-          studio.coordinates.latitude || studio.latitude,
-          studio.coordinates.longitude || studio.longitude
-        );
-        
-        return {
-          ...studio,
-          distance: (distance !== null && !isNaN(distance) && isFinite(distance)) 
-            ? distance 
-            : Infinity
-        };
-      } catch (error) {
-        console.error('Error calculating distance for studio:', studio.name, error);
-        return { ...studio, distance: Infinity };
-      }
-    });
-  };
+      return {
+        ...studio,
+        distance: (distance !== null && !isNaN(distance) && isFinite(distance)) 
+          ? distance 
+          : Infinity
+      };
+    } catch (error) {
+      console.error('Error calculating distance for studio:', studio.name, error);
+      return { ...studio, distance: Infinity };
+    }
+  });
+};
+
+// Helper functions for coordinate extraction
+const getStudioLatitude = (studio) => {
+  if (!studio) return null;
   
+  // Try all possible coordinate formats
+  return studio.coordinates?.latitude || 
+         studio.locationData?.latitude || 
+         studio.latitude || 
+         null;
+};
+
+const getStudioLongitude = (studio) => {
+  if (!studio) return null;
+  
+  // Try all possible coordinate formats
+  return studio.coordinates?.longitude || 
+         studio.locationData?.longitude || 
+         studio.longitude || 
+         null;
+};
+
   // Calculate distance between coordinates (Haversine formula)
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
     try {
