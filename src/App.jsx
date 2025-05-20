@@ -1584,8 +1584,8 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
             distance: calculateDistance(
               userLocation.latitude,
               userLocation.longitude,
-              studio.coordinates?.latitude || 0,
-              studio.coordinates?.longitude || 0
+              studio.coordinates?.latitude || studio.latitude || 0,
+              studio.coordinates?.longitude || studio.longitude || 0
             )
           }));
 

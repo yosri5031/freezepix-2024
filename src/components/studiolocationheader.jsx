@@ -226,7 +226,7 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
     return studios.map(studio => {
       if (!studio.coordinates || 
           typeof studio.coordinates.latitude === 'undefined' || 
-          typeof studio.coordinates.longitude === 'undefined') {
+          typeof studio.coordinates.longitude === 'undefined' || typeof studio.latitude === 'undefined' || typeof studio.longitude === 'undefined' ) {
         return { ...studio, distance: Infinity };
       }
       
@@ -234,8 +234,8 @@ const StudioLocationHeader = ({ selectedStudio, onStudioSelect, selectedCountry 
         const distance = calculateDistance(
           userLocation.latitude,
           userLocation.longitude,
-          studio.coordinates.latitude,
-          studio.coordinates.longitude
+          studio.coordinates.latitude || studio.latitude,
+          studio.coordinates.longitude || studio.longitude
         );
         
         return {
