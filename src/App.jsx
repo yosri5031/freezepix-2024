@@ -5548,10 +5548,8 @@ const renderStepContent = () => {
           className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
         />
         <div>
-          <p className="font-medium">{t('order.shipping_to_address')}</p>
-          <p className="text-sm text-gray-600">
-            <strong>Ship to Address:</strong> Have your prints delivered to your door.
-          </p>
+        <p className="font-medium">{t('order.shipping_to_address')}</p>
+        <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
         </div>
       </label>
     )}
