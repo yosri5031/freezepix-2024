@@ -5534,10 +5534,7 @@ const renderStepContent = () => {
       </div>
     </label>
     
-    {/* Only show shipping option if the selected studio is Freezepix Montreal */}
-    {selectedStudio && 
-     selectedStudio.name && 
-     selectedStudio.name.toLowerCase().includes('freezepix montreal') && (
+    
       <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
         <input
           type="radio"
@@ -5552,7 +5549,7 @@ const renderStepContent = () => {
         <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
         </div>
       </label>
-    )}
+      
   </div>
 </div>
       
