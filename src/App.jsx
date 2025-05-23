@@ -2745,6 +2745,7 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
       chunks.push(processedItems.slice(i, i + CHUNK_SIZE));
     }
 
+    // HERE WE MUST ntegrate order notif to studio owner...
     const results = await Promise.all(chunks.map(async (chunk) => {
       try {
         const response = await axios.post(
@@ -5549,7 +5550,7 @@ const renderStepContent = () => {
         <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
         </div>
       </label>
-      
+
   </div>
 </div>
       

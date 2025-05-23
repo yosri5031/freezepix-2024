@@ -19,6 +19,7 @@ const HelcimPayButton = ({
   const [loading, setLoading] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
   const [localProcessing, setLocalProcessing] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false); // NEW STATE
   const secretTokenRef = useRef(null);
   const scriptRef = useRef(null);
   const processingTimeoutRef = useRef(null);
@@ -28,6 +29,7 @@ const HelcimPayButton = ({
     setLocalProcessing(false);
     setIsProcessingOrder(false);
     setLoading(false);
+    setShowSuccessMessage(false); // RESET SUCCESS MESSAGE
     if (processingTimeoutRef.current) {
       clearTimeout(processingTimeoutRef.current);
     }
@@ -104,7 +106,7 @@ const HelcimPayButton = ({
   useEffect(() => {
     const handleHelcimResponse = async (event) => {
       // Handle mobile-specific data structure
-  const eventData = event.data.eventStatus ? event.data : JSON.parse(event.data);
+      const eventData = event.data.eventStatus ? event.data : JSON.parse(event.data);
       console.log('Received Helcim response:', event.data);
 
       if (event.data.eventStatus === 'ABORTED') {
@@ -129,6 +131,14 @@ const HelcimPayButton = ({
 
       if (eventData.eventStatus === 'SUCCESS') {
         try {
+          // IMMEDIATELY SHOW SUCCESS MESSAGE
+          setShowSuccessMessage(true);
+          setPaymentStatus({
+            success: true,
+            message: 'Payment Successful!',
+            details: 'Please wait for order confirmation...'
+          });
+
           let parsedEventMessage;
           try {
             parsedEventMessage = typeof eventData.eventMessage === 'string' 
@@ -162,12 +172,19 @@ const HelcimPayButton = ({
             };
       
             console.log('Payment approved, proceeding with success handler:', paymentDetails);
+            
+            // Close the payment iframe
+            if (window.removeHelcimPayIframe) {
+              try {
+                window.removeHelcimPayIframe();
+              } catch (error) {
+                console.error('Error removing Helcim iframe:', error);
+              }
+            }
+            
+            // Call the success handler
             await onPaymentSuccess(paymentDetails);
-            setPaymentStatus({
-              success: true,
-              message: 'Payment Successful',
-              details: paymentDetails
-            });
+            
           } else {
             resetStates();
             throw new Error('Transaction not approved');
@@ -175,6 +192,7 @@ const HelcimPayButton = ({
         } catch (error) {
           console.error('Error processing payment success:', error);
           setError(error.message || 'Failed to process payment');
+          setShowSuccessMessage(false);
           resetStates();
         }
       }
@@ -189,6 +207,7 @@ const HelcimPayButton = ({
     setLoading(true);
     setIsProcessingOrder(true);
     setError(null);
+    setShowSuccessMessage(false); // RESET SUCCESS MESSAGE
     
     try {
       // Check for mobile browser
@@ -268,7 +287,31 @@ const HelcimPayButton = ({
         {buttonText}
       </button>
 
-      {paymentStatus && (
+      {/* SIMPLE SUCCESS MESSAGE */}
+      {showSuccessMessage && (
+        <div className="mt-3 p-3 bg-green-100 border border-green-400 rounded-lg">
+          <div className="flex items-center">
+            <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center mr-3">
+              <span className="text-white text-sm font-bold">✓</span>
+            </div>
+            <div>
+              <p className="text-green-800 font-medium">Payment Successful!</p>
+              <p className="text-green-700 text-sm">Please wait for order confirmation...</p>
+            </div>
+            <div className="ml-auto">
+              {/* Loading dots animation */}
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* KEEP EXISTING ERROR MESSAGES */}
+      {paymentStatus && !showSuccessMessage && (
         <div 
           className={`
             mt-4 p-3 rounded 
