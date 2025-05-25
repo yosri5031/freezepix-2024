@@ -2945,28 +2945,52 @@ const sendOrderConfirmationEmail = async (orderData) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json'
       },
-      body: JSON.stringify(emailOrderData)
+      body: JSON.stringify(emailOrderData),
+      // Add timeout to prevent hanging
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
     const responseData = await response.json().catch(e => null);
     
     if (!response.ok) {
+      // Enhanced error classification
+      const errorType = response.status === 500 ? 'SERVER_ERROR' : 
+                       response.status === 403 ? 'AUTH_ERROR' : 
+                       response.status === 429 ? 'RATE_LIMIT' : 'UNKNOWN';
+      
       throw {
         message: `Email service error: ${responseData?.message || response.statusText}`,
         status: response.status,
-        response: responseData
+        type: errorType,
+        response: responseData,
+        isEmailError: true // Flag to identify email-specific errors
       };
     }
 
+    console.log('Email sent successfully:', responseData);
     return responseData;
+
   } catch (error) {
-    console.error('Detailed email service error:', {
+    // Enhanced error logging with classification
+    const errorDetails = {
       message: error.message,
       status: error.status,
+      type: error.type || 'UNKNOWN',
       response: error.response,
-      stack: error.stack
-    });
-    throw error;
+      stack: error.stack,
+      isEmailError: error.isEmailError || false,
+      timestamp: new Date().toISOString()
+    };
+    
+    console.error('Detailed email service error:', errorDetails);
+    
+    // Don't throw the error - just log it and continue with order success
+    // The order was already created successfully
+    return {
+      success: false,
+      error: error.message,
+      shouldRetry: error.status >= 500 && error.status < 600 // Retry on 5xx errors
+    };
   }
 };
 
