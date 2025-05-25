@@ -771,8 +771,7 @@ const FreezePIX = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [deliveryMethod, setDeliveryMethod] = useState('pickup'); // 'pickup' or 'shipping'
     const [activePaymentTab, setActivePaymentTab] = useState('discount');
-    const [urlDiscountApplied, setUrlDiscountApplied] = useState(false);
-    const [isUrlProcessing, setIsUrlProcessing] = useState(false);
+
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
 const [giftCardError, setGiftCardError] = useState('');
 const [isGiftCardLoading, setIsGiftCardLoading] = useState(false);
