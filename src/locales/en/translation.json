@@ -178,8 +178,9 @@
     "helcim_gift_card_payment_method": "Credit Card + Gift Card",
     "covered_by_gift_card": "Your order is fully covered by your gift card",
   "no_additional_payment": "No additional payment is required",
-  "place_order": "Place Order",
-  "processing": "Processing..."
+  "place_cod_order": "Place Order (COD)",
+  "processing": "Processing...",
+  "place_order": "Place Order"
     },
     "validation": {
       "contact_info": "Contact Information",

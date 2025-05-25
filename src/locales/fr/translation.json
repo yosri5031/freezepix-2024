@@ -169,7 +169,9 @@
   "payment_options": "Options de Paiement",
   "discount_code": "Code de Réduction",
   "gift_card_payment_method": "Carte Cadeau",
-  "helcim_gift_card_payment_method": "Carte de Crédit + Carte Cadeau"
+  "helcim_gift_card_payment_method": "Carte de Crédit + Carte Cadeau",
+  "place_cod_order": "Passer la commande (COD)"
+
     },
     "validation": {
         "contact_info": "Coordonnées",

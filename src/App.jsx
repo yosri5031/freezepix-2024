@@ -2443,12 +2443,15 @@ const renderNavigationButtons = () => {
                 <Check size={18} />
               )}
               <span className="font-bold tracking-wide">
-                {isProcessingOrder ? t('order.processing') : t('order.place_order')}
+                {isProcessingOrder 
+                  ? (t('order.processing') || 'Processing...') 
+                  : (t('order.place_order') || 'Place Order')
+                }
               </span>
             </div>
           </button>
         ) : isTunisia ? (
-          // Tunisia COD - Direct order placement without Helcim
+          // Tunisia COD - Direct order placement without Helcim - ADDED FALLBACK TEXT
           <button
             onClick={handleTunisiaCODOrder}
             disabled={isProcessingOrder || !validatePaymentForm()}
@@ -2466,7 +2469,11 @@ const renderNavigationButtons = () => {
                 <Package size={18} />
               )}
               <span className="text-black font-bold tracking-wide">
-                {isProcessingOrder ? t('order.processing') : t('order.place_cod_order')}
+                {/* FIXED: Added fallback text for missing translation */}
+                {isProcessingOrder 
+                  ? (t('order.processing') || 'Processing...') 
+                  : (t('order.place_cod_order') || 'Place Order (COD)')
+                }
               </span>
             </div>
           </button>
@@ -2560,7 +2567,6 @@ const renderNavigationButtons = () => {
     </div>
   );
 };
-
 // Add this new function to handle Tunisia COD orders
 const handleTunisiaCODOrder = async () => {
   try {
@@ -5930,28 +5936,48 @@ const renderStepContent = () => {
                         </div>
                       </div>
                       
-                      {/* Payment Method for Pickup - NEW ADDITION */}
-                      {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
-  <div className="mt-4 border-t pt-4">
-    <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
-    <div className="space-y-3">
-      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-        <input
-          type="radio"
-          name="pickupPaymentMethod"
-          value="helcim"
-          checked={paymentMethod === 'helcim'}
-          onChange={() => setPaymentMethod('helcim')}
-          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-        />
-        <div>
-          <p className="font-medium">{t('payment.credit_card')}</p>
-          <p className="text-sm text-gray-600">{t('payment.credit_pickup_description')}</p>
-        </div>
-      </label>
-    </div>
-  </div>
-)}
+                 
+                      {/* Payment Method for Pickup - FIXED FOR TUNISIA */}
+                      {(selectedCountry !== 'TUN' || selectedCountry !== 'TN') && (
+                        <div className="mt-4 border-t pt-4">
+                          <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
+                          <div className="space-y-3">
+                            <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="pickupPaymentMethod"
+                                value="helcim"
+                                checked={paymentMethod === 'helcim'}
+                                onChange={() => setPaymentMethod('helcim')}
+                                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+                              />
+                              <div>
+                                <p className="font-medium">{t('payment.credit_card') || 'Credit Card'}</p>
+                                <p className="text-sm text-gray-600">{t('payment.credit_pickup_description') || 'Pay securely with your credit card'}</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* FOR TUNISIA - Show COD notice instead */}
+                      {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
+                        <div className="mt-4 border-t pt-4">
+                          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                            <div className="flex items-center gap-2">
+                              <Package size={20} className="text-yellow-600" />
+                              <div>
+                                <p className="font-medium text-yellow-800">
+                                  {t('payment.cash_on_delivery') || 'Cash on Delivery'}
+                                </p>
+                                <p className="text-sm text-yellow-700">
+                                  {t('payment.cod_description') || 'Pay when you receive your order'}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       
                      
                     </div>
