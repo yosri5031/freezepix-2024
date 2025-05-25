@@ -5838,16 +5838,13 @@ const renderInvoice = () => {
             {/* Discount Code Input */}
             <div className="space-y-2">
               <div className="flex space-x-2">
-              <input
-  type="text"
-  placeholder="Enter discount code"
-  value={discountCode}
-  onChange={(e) => {
-    handleDiscountCode(e.target.value.toUpperCase());
-    setTimeout(() => setSelectedPhotos(prev => [...prev]), 50);
-  }}
-  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-/>
+                <input
+                  type="text"
+                  placeholder="Enter discount code"
+                  value={discountCode}
+                  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+                  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+                />
                 {isLoading && (
                   <div className="flex items-center px-2">
                     <Loader size={20} className="animate-spin text-yellow-400" />
