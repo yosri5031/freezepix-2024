@@ -147,7 +147,7 @@ const DiscountLinkGenerator = ({
         </div>
       </div>
 
-      {/* Preview of what happens when link is clicked */}
+      {/* Preview of what happens when link is clicked 
       <div className="text-xs text-gray-600 bg-gray-50 rounded p-2">
         <strong>When someone clicks this link:</strong>
         <ul className="mt-1 ml-4 list-disc space-y-1">
@@ -157,7 +157,7 @@ const DiscountLinkGenerator = ({
           )}
           <li>They can immediately start uploading photos with the discount active</li>
         </ul>
-      </div>
+      </div>*/}
     </div>
   );
 };
