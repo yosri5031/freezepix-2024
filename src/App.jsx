@@ -986,7 +986,7 @@ const [formData, setFormData] = useState({
           setSelectedPhotos(prev => [...prev]);
         }
       }, [availableDiscounts, discountCode]);
-
+      
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
         const setInitialCountryAndLanguage = async () => {
@@ -4693,24 +4693,11 @@ const handleDiscountCode = (value) => {
     .then(priceRules => {
       console.log('Fetched price rules:', priceRules);
       
-      // Transform price rules to match the expected format
-      const transformedDiscounts = priceRules.map(rule => ({
-        code: rule.title,
-        title: rule.title,
-        isActive: rule.status === 'active',
-        valueType: rule.value_type === 'percentage' ? 'percentage' : 'fixed_amount',
-        value: Math.abs(parseFloat(rule.value)),
-        startDate: rule.starts_at,
-        endDate: rule.ends_at,
-        starts_at: rule.starts_at,
-        ends_at: rule.ends_at
-      }));
-      
-      // Update available discounts with transformed data
-      setAvailableDiscounts(transformedDiscounts);
+      // Update available discounts
+      setAvailableDiscounts(priceRules);
       
       // Find matching rule
-      const matchingRule = transformedDiscounts.find(
+      const matchingRule = priceRules.find(
         rule => rule.title && rule.title.toUpperCase() === upperValue
       );
       
@@ -4726,8 +4713,8 @@ const handleDiscountCode = (value) => {
       
       // Now validate the dates on the matching rule
       const now = new Date();
-      const startDate = safelyParseDate(matchingRule.startDate || matchingRule.starts_at);
-      const endDate = safelyParseDate(matchingRule.endDate || matchingRule.ends_at);
+      const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
+      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
       
       // Check if the discount is active based on dates
       if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
@@ -4746,34 +4733,15 @@ const handleDiscountCode = (value) => {
       }
       
       // If we made it here, the discount is valid
-      console.log('Discount code is valid and will be applied:', upperValue);
+      console.log('Discount code is valid:', upperValue);
       setDiscountError('');
       setIsLoading(false);
-      
-      // FORCE UI UPDATE by triggering state change
-      setTimeout(() => {
-        setSelectedPhotos(prev => [...prev]); // This triggers recalculation
-      }, 100);
     })
     .catch(error => {
       console.error('Error validating discount code:', error);
       setDiscountError('Unable to validate discount code');
       setIsLoading(false);
     });
-};
-
-// Modified discount input onChange handler
-const handleDiscountInputChange = (value) => {
-  const upperValue = value.toUpperCase();
-  setDiscountCode(upperValue);
-  
-  // Clear error immediately when typing
-  setDiscountError('');
-  
-  // Debounce the discount validation
-  if (upperValue.length >= 3) {
-    handleDiscountCode(upperValue);
-  }
 };
 
 
@@ -5879,17 +5847,13 @@ const renderInvoice = () => {
             {/* Discount Code Input */}
             <div className="space-y-2">
               <div className="flex space-x-2">
-              <input
-  type="text"
-  placeholder="Enter discount code"
-  value={discountCode}
-  onChange={(e) => {
-    handleDiscountInputChange(e.target.value);
-    // Force immediate recalculation
-    setTimeout(() => setSelectedPhotos(prev => [...prev]), 50);
-  }}
-  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-/>
+                <input
+                  type="text"
+                  placeholder="Enter discount code"
+                  value={discountCode}
+                  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+                  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+                />
                 {isLoading && (
                   <div className="flex items-center px-2">
                     <Loader size={20} className="animate-spin text-yellow-400" />
