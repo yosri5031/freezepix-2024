@@ -4726,8 +4726,8 @@ const handleDiscountCode = (value) => {
       
       // Now validate the dates on the matching rule
       const now = new Date();
-      const startDate = safelyParseDate(matchingRule.startDate || matchingRule.starts_at);
-      const endDate = safelyParseDate(matchingRule.endDate || matchingRule.ends_at);
+      const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
+      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
       
       // Check if the discount is active based on dates
       if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
