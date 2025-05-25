@@ -1181,134 +1181,205 @@ useEffect(() => {
   fetchDiscountCodes();
 }, []);
 
-      const ensurePhotoPrices = (photos, countryCode) => {
-        if (!photos || !photos.length || !countryCode) return photos;
-        
-        const country = initialCountries.find(c => c.value === countryCode);
-        if (!country) return photos;
-        
-        return photos.map(photo => {
-          // Calculate the correct price if it's missing
-          if (!photo.price) {
-            let price = 0;
-            if (photo.productType === 'photo_print') {
-              switch (photo.size) {
-                case '4x6': price = country.size4x6; break;
-                case '5x7': price = country.size5x7; break;
-                case '8x10': price = country.size8x10; break;
-                case '4x4': price = country.size4x4; break;
-                case '10x15': price = country.size10x15 || country.size4x6; break;
-                case '15x22': price = country.size15x22 || country.size5x7; break;
-                case '3.5x4.5': price = country.size35x45; break;
-                default: price = country.size4x6; // Default to 4x6 price
-              }
-            } else if (photo.productType === '3d_frame') {
-              price = country.crystal3d;
-            } else if (photo.productType === 'keychain') {
-              price = country.keychain;
-            } else if (photo.productType === 'keyring_magnet') {
-              price = country.keyring_magnet;
-            }
-            
-            return {...photo, price};
+const ensurePhotoPrices = (photos, countryCode) => {
+  if (!photos || !photos.length || !countryCode) return photos;
+  
+  const country = initialCountries.find(c => c.value === countryCode);
+  if (!country) return photos;
+  
+  return photos.map(photo => {
+    // Calculate the correct price if it's missing or incorrect
+    if (!photo.price || photo.price === 0) {
+      let price = 0;
+      if (photo.productType === 'photo_print') {
+        // Special handling for Tunisia
+        if (countryCode === 'TN' || countryCode === 'TUN') {
+          switch (photo.size) {
+            case '10x15': price = country.size10x15 || 3.00; break;
+            case '15x22': price = country.size15x22 || 5.00; break;
+            case '3.5x4.5': price = country.size35x45 || 1.25; break;
+            default: 
+              price = country.size10x15 || 3.00; // Default to 10x15 for Tunisia
+              photo.size = '10x15'; // Fix the size if it's wrong
           }
-          
-          return photo;
-        });
-      };
+        } else {
+          // Handle other countries
+          switch (photo.size) {
+            case '4x6': price = country.size4x6; break;
+            case '5x7': price = country.size5x7; break;
+            case '8x10': price = country.size8x10; break;
+            case '4x4': price = country.size4x4; break;
+            default: price = country.size4x6; // Default to 4x6 price
+          }
+        }
+      } else if (photo.productType === '3d_frame') {
+        price = country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+        price = country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+        price = country.keyring_magnet;
+      }
+      
+      return {...photo, price};
+    }
+    
+    return photo;
+  });
+};
 
       useEffect(() => {
-  // Check if we should restore from uploadedPhotos or freezepixState
-  const uploadedPhotos = localStorage.getItem('uploadedPhotos');
-  const savedState = localStorage.getItem('freezepixState');
-  
-  // First try to restore from uploadedPhotos
-  if (uploadedPhotos) {
-    try {
-      const parsedPhotos = JSON.parse(uploadedPhotos);
-      if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
-        console.log('Restoring photos from previous session:', parsedPhotos.length);
-        const restoredPhotos = parsedPhotos.map(photo => {
-          // Skip invalid entries
-          if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-            return null;
-          }
+        const loadAndFixCachedPhotos = async () => {
+          // Check if we should restore from uploadedPhotos or freezepixState
+          const uploadedPhotos = localStorage.getItem('uploadedPhotos');
+          const savedState = localStorage.getItem('freezepixState');
           
-          // Try to reconstruct file
-          let fileObj = null;
-          try {
-            if (photo.fileName && photo.base64) {
-              fileObj = base64ToFile(photo.base64, photo.fileName);
+          // First try to restore from uploadedPhotos
+          if (uploadedPhotos) {
+            try {
+              const parsedPhotos = JSON.parse(uploadedPhotos);
+              if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+                console.log('Restoring photos from previous session:', parsedPhotos.length);
+                const restoredPhotos = parsedPhotos.map(photo => {
+                  // Skip invalid entries
+                  if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+                    return null;
+                  }
+                  
+                  // Try to reconstruct file
+                  let fileObj = null;
+                  try {
+                    if (photo.fileName && photo.base64) {
+                      fileObj = base64ToFile(photo.base64, photo.fileName);
+                    }
+                  } catch (e) {
+                    console.warn('Could not convert base64 to file:', e);
+                  }
+                  
+                  // IMPORTANT: Fix prices for Tunisia when loading from cache
+                  let fixedPhoto = {
+                    ...photo,
+                    file: fileObj,
+                    preview: photo.base64
+                  };
+                  
+                  // Recalculate price based on current country selection
+                  if (selectedCountry === 'TN' || selectedCountry === 'TUN') {
+                    const country = initialCountries.find(c => c.value === selectedCountry);
+                    if (country) {
+                      let newPrice = 0;
+                      switch (fixedPhoto.size) {
+                        case '10x15': 
+                          newPrice = country.size10x15 || 3.00; 
+                          break;
+                        case '15x22': 
+                          newPrice = country.size15x22 || 5.00; 
+                          break;
+                        case '3.5x4.5': 
+                          newPrice = country.size35x45 || 1.25; 
+                          break;
+                        default: 
+                          newPrice = country.size10x15 || 3.00; // Default to 10x15 for Tunisia
+                          fixedPhoto.size = '10x15'; // Ensure correct default size
+                      }
+                      fixedPhoto.price = newPrice;
+                      
+                      // Also ensure correct product type and quantity
+                      fixedPhoto.productType = fixedPhoto.productType || 'photo_print';
+                      fixedPhoto.quantity = fixedPhoto.quantity || 1;
+                    }
+                  }
+                  
+                  return fixedPhoto;
+                }).filter(Boolean);
+                
+                if (restoredPhotos.length > 0) {
+                  console.log('Setting restored photos with fixed prices for Tunisia');
+                  setSelectedPhotos(restoredPhotos);
+                }
+              }
+            } catch (error) {
+              console.error('Error restoring uploaded photos:', error);
             }
-          } catch (e) {
-            console.warn('Could not convert base64 to file:', e);
           }
-          
-          return {
-            ...photo,
-            file: fileObj,
-            preview: photo.base64
-          };
-        }).filter(Boolean);
-        
-        if (restoredPhotos.length > 0) {
-          // Apply price fixing to ensure all prices are set correctly
-          const photosWithPrices = ensurePhotoPrices(restoredPhotos, selectedCountry);
-          setSelectedPhotos(photosWithPrices);
-        }
-      }
-    } catch (error) {
-      console.error('Error restoring uploaded photos:', error);
-    }
-  }
-  // Then try freezepixState as fallback
-  else if (savedState) {
-    try {
-      const parsedState = JSON.parse(savedState);
-      if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
-        console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
-        
-        // Process photos from freezepixState
-        const restoredPhotos = parsedState.selectedPhotos.map(photo => {
-          // Skip invalid entries
-          if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-            return null;
-          }
-          
-          // Try to reconstruct file
-          let fileObj = null;
-          try {
-            if (photo.fileName && photo.base64) {
-              fileObj = base64ToFile(photo.base64, photo.fileName);
+          // Then try freezepixState as fallback
+          else if (savedState) {
+            try {
+              const parsedState = JSON.parse(savedState);
+              if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
+                console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
+                
+                // Process photos from freezepixState with Tunisia price fixing
+                const restoredPhotos = parsedState.selectedPhotos.map(photo => {
+                  // Skip invalid entries
+                  if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+                    return null;
+                  }
+                  
+                  // Try to reconstruct file
+                  let fileObj = null;
+                  try {
+                    if (photo.fileName && photo.base64) {
+                      fileObj = base64ToFile(photo.base64, photo.fileName);
+                    }
+                  } catch (e) {
+                    console.warn('Could not convert base64 to file:', e);
+                  }
+                  
+                  let fixedPhoto = {
+                    ...photo,
+                    file: fileObj,
+                    preview: photo.base64
+                  };
+                  
+                  // Apply Tunisia price fixing
+                  const countryToUse = parsedState.selectedCountry || selectedCountry;
+                  if (countryToUse === 'TN' || countryToUse === 'TUN') {
+                    const country = initialCountries.find(c => c.value === countryToUse);
+                    if (country) {
+                      let newPrice = 0;
+                      switch (fixedPhoto.size) {
+                        case '10x15': 
+                          newPrice = country.size10x15 || 3.00; 
+                          break;
+                        case '15x22': 
+                          newPrice = country.size15x22 || 5.00; 
+                          break;
+                        case '3.5x4.5': 
+                          newPrice = country.size35x45 || 1.25; 
+                          break;
+                        default: 
+                          newPrice = country.size10x15 || 3.00;
+                          fixedPhoto.size = '10x15';
+                      }
+                      fixedPhoto.price = newPrice;
+                      fixedPhoto.productType = fixedPhoto.productType || 'photo_print';
+                      fixedPhoto.quantity = fixedPhoto.quantity || 1;
+                    }
+                  }
+                  
+                  return fixedPhoto;
+                }).filter(Boolean);
+                
+                if (restoredPhotos.length > 0) {
+                  setSelectedPhotos(restoredPhotos);
+                  
+                  // Also restore other state if needed
+                  if (parsedState.selectedCountry) {
+                    setSelectedCountry(parsedState.selectedCountry);
+                  }
+                }
+              }
+            } catch (error) {
+              console.error('Error restoring from freezepixState:', error);
             }
-          } catch (e) {
-            console.warn('Could not convert base64 to file:', e);
           }
-          
-          return {
-            ...photo,
-            file: fileObj,
-            preview: photo.base64
-          };
-        }).filter(Boolean);
-        
-        if (restoredPhotos.length > 0) {
-          // Apply price fixing before setting state
-          const countryToUse = parsedState.selectedCountry || selectedCountry;
-          const photosWithPrices = ensurePhotoPrices(restoredPhotos, countryToUse);
-          setSelectedPhotos(photosWithPrices);
-          
-          // Also restore other state if needed
-          if (parsedState.selectedCountry) {
-            setSelectedCountry(parsedState.selectedCountry);
-          }
+        };
+      
+        // Only run this effect when selectedCountry is available
+        if (selectedCountry) {
+          loadAndFixCachedPhotos();
         }
-      }
-    } catch (error) {
-      console.error('Error restoring from freezepixState:', error);
-    }
-  }
-}, [selectedCountry]);
+      }, [selectedCountry]); // Add selectedCountry as dependency
 
       // Add this useEffect in your component to handle the return from Stripe
       useEffect(() => {
@@ -5745,6 +5816,7 @@ const renderStepContent = () => {
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
                   <div className="space-y-3">
+                  {(selectedCountry !== 'TUN' || selectedCountry !== 'TN') && (
                     <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                       <input
                         type="radio"
@@ -5759,7 +5831,8 @@ const renderStepContent = () => {
                         <p className="text-sm text-gray-600">{t('payment.credit_description')}</p>
                       </div>
                     </label>
-                    
+                                        )}
+
                     {/* Only show COD option for Tunisia */}
                     {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
                       <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
