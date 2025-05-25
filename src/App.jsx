@@ -2402,6 +2402,7 @@ useEffect(() => {
 
 const renderNavigationButtons = () => {
   const isStepValid = validateStep();
+  const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
   
   // Calculate the correct total and check if gift card fully covers it
   const { total: calculatedTotal } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
@@ -2421,7 +2422,7 @@ const renderNavigationButtons = () => {
         <div></div> // Empty div for layout consistency
       )}
       
-      {/* Conditional rendering for payment button - now with gift card handling */}
+      {/* Conditional rendering for payment button */}
       {activeStep === 1 ? (
         isGiftCardFullyCovering ? (
           // Gift card fully covers order - show direct "Place Order" button
@@ -2446,8 +2447,31 @@ const renderNavigationButtons = () => {
               </span>
             </div>
           </button>
+        ) : isTunisia ? (
+          // Tunisia COD - Direct order placement without Helcim
+          <button
+            onClick={handleTunisiaCODOrder}
+            disabled={isProcessingOrder || !validatePaymentForm()}
+            className={`px-6 py-2 rounded relative overflow-hidden transition-all duration-300 ${
+              isProcessingOrder || !validatePaymentForm()
+                ? 'bg-gray-200 cursor-not-allowed'
+                : 'bg-yellow-400 hover:bg-yellow-500'
+            }`}
+            type="button"
+          >
+            <div className="flex items-center justify-center gap-2 relative z-10">
+              {isProcessingOrder ? (
+                <Loader size={18} className="animate-spin" />
+              ) : (
+                <Package size={18} />
+              )}
+              <span className="text-black font-bold tracking-wide">
+                {isProcessingOrder ? t('order.processing') : t('order.place_cod_order')}
+              </span>
+            </div>
+          </button>
         ) : paymentMethod === 'helcim' ? (
-          // Regular Helcim payment flow
+          // Regular Helcim payment flow for other countries
           <div className="helcim-payment-wrapper">
             <HelcimPayButton 
               onPaymentSuccess={handleHelcimPaymentSuccess}
@@ -2478,31 +2502,14 @@ const renderNavigationButtons = () => {
               <div className="relative">
                 {/* FreezeFIX custom printer icon */}
                 <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  {/* Main printer body - black like "freeze" */}
                   <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
-                  
-                  {/* Paper input tray */}
                   <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
-                  
-                  {/* Paper output */}
-                  <rect 
-                    x="7" 
-                    y="16" 
-                    width="14" 
-                    height="6"
-                    fill="white" 
-                  />
-                  
-                  {/* FreezeFIX-style pixels on printer in yellow like "FIX" */}
+                  <rect x="7" y="16" width="14" height="6" fill="white" />
                   <rect x="18" y="8" width="2" height="2" fill="#FFCC00" />
                   <rect x="20" y="8" width="2" height="2" fill="#FFCC00" />
                   <rect x="20" y="10" width="2" height="2" fill="#FFCC00" />
-                  
-                  {/* Printer controls */}
                   <rect x="8" y="9" width="2" height="2" fill="#444" />
                   <rect x="11" y="9" width="3" height="2" fill="#444" />
-                  
-                  {/* Yellow pixel pattern on printed paper */}
                   <rect x="9" y="17" width="2" height="2" fill="#FFCC00" />
                   <rect x="11" y="17" width="2" height="2" fill="#FFCC00" />
                   <rect x="9" y="19" width="2" height="2" fill="#FFCC00" />
@@ -2529,9 +2536,8 @@ const renderNavigationButtons = () => {
           <div className="flex items-center justify-center gap-2 relative z-10">
             <span className="text-black font-bold tracking-wide">Print</span>
             <div className="relative">
-              {/* FreezeFIX custom printer icon */}
+              {/* FreezeFIX custom printer icon (same as above) */}
               <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Printer icon SVG content (same as above) */}
                 <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
                 <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
                 <rect x="7" y="16" width="14" height="6" fill="white" />
@@ -2553,6 +2559,196 @@ const renderNavigationButtons = () => {
       )}
     </div>
   );
+};
+
+// Add this new function to handle Tunisia COD orders
+const handleTunisiaCODOrder = async () => {
+  try {
+    setIsProcessingOrder(true);
+    setOrderSuccess(false);
+    setError(null);
+    setUploadProgress(0);
+
+    // Validate required fields for Tunisia
+    if (!formData?.email || !formData?.phone || !formData?.name) {
+      throw new Error('Please fill in all required contact information');
+    }
+
+    // For Tunisia, delivery method should be pickup (or handle shipping if needed)
+    if (deliveryMethod === 'pickup' && !selectedStudio) {
+      throw new Error('Please select a pickup location');
+    }
+
+    // Generate order number
+    const orderNumber = generateOrderNumber();
+    setCurrentOrderNumber(orderNumber);
+    
+    // Calculate order totals
+    const { 
+      total, 
+      currency, 
+      subtotal, 
+      shippingFee, 
+      taxAmount, 
+      discount 
+    } = calculateTotals();
+    
+    const country = initialCountries.find(c => c.value === selectedCountry);
+
+    // Process photos with progress tracking
+    const processPhotosWithProgress = async () => {
+      try {
+        const optimizedPhotosWithPrices = await processImagesInBatches(
+          selectedPhotos.map(photo => ({
+            ...photo,
+            price: photo.price || calculateItemPrice(photo, country)
+          })),
+          (progress) => {
+            setUploadProgress(Math.round(progress));
+          }
+        );
+        return optimizedPhotosWithPrices;
+      } catch (processError) {
+        console.error('Photo processing error:', processError);
+        throw new Error('Failed to process photos');
+      }
+    };
+
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
+    // Construct order data for Tunisia COD
+    const orderData = {
+      orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      name: formData.name || '',
+      
+      // Handle pickup or shipping for Tunisia
+      ...(deliveryMethod === 'pickup' ? {
+        pickupStudio: selectedStudio ? {
+          studioId: selectedStudio._id || null,
+          name: selectedStudio.name || 'Unspecified Studio',
+          address: selectedStudio.address || 'Not Specified',
+          city: selectedStudio.city || 'Not Specified',
+          country: selectedStudio.country || selectedCountry
+        } : null
+      } : {
+        shippingAddress: {
+          firstName: formData.shippingAddress.firstName || '',
+          lastName: formData.shippingAddress.lastName || '',
+          address: formData.shippingAddress.address || '',
+          city: formData.shippingAddress.city || '',
+          postalCode: formData.shippingAddress.postalCode || '',
+          country: formData.shippingAddress.country || selectedCountry,
+          province: formData.shippingAddress.province || '',
+          state: formData.shippingAddress.state || ''
+        }
+      }),
+      
+      orderItems: optimizedPhotosWithPrices.map(photo => ({
+        ...photo,
+        file: photo.file,
+        thumbnail: photo.thumbnail,
+        id: photo.id,
+        quantity: photo.quantity,
+        size: photo.size,
+        price: photo.price,
+        productType: photo.productType
+      })),
+      
+      totalAmount: Number(total) || 0,
+      subtotal: Number(subtotal) || 0,
+      shippingFee: Number(shippingFee) || 0,
+      taxAmount: Number(taxAmount) || 0,
+      discount: discount || 0,
+      discountCode: discountCode || null,
+      currency: country.currency,
+      orderNote: orderNote || '',
+      
+      // IMPORTANT: Set COD payment method for Tunisia
+      paymentMethod: 'cod',
+      paymentStatus: 'pending', // COD orders are pending payment
+      status: 'Waiting for CSR approval', // Tunisia orders need approval
+      
+      deliveryMethod,
+      customerDetails: {
+        name: formData.name || '',
+        email: formData.email,
+        phone: formData.phone,
+        country: selectedCountry
+      },
+      selectedCountry,
+      createdAt: new Date().toISOString()
+    };
+
+    console.log('Submitting Tunisia COD order:', orderData);
+
+    // Submit order with retry mechanism
+    const maxRetries = 3;
+    let retryCount = 0;
+    let responses;
+
+    while (retryCount < maxRetries) {
+      try {
+        responses = await submitOrderWithOptimizedChunking(orderData);
+        if (responses && responses.length > 0) {
+          break;
+        }
+        throw new Error('Empty response received');
+      } catch (submitError) {
+        retryCount++;
+        console.error(`Order submission attempt ${retryCount} failed:`, submitError);
+        
+        if (retryCount === maxRetries) {
+          throw new Error('Order submission failed');
+        }
+        // Exponential backoff
+        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+      }
+    }
+
+    // Send confirmation email
+    try {
+      await sendOrderConfirmationEmail({
+        ...orderData,
+        orderItems: orderData.orderItems.map(item => ({
+          ...item,
+          file: undefined,
+          thumbnail: item.thumbnail
+        }))
+      });
+    } catch (emailError) {
+      console.error('Failed to send confirmation email:', emailError);
+      // Continue with success flow even if email fails
+    }
+
+    // Success!
+    setOrderSuccess(true);
+    setSelectedPhotos([]);
+    clearStateStorage();
+    
+    console.log('Tunisia COD order created successfully:', {
+      orderNumber,
+      totalItems: orderData.orderItems.length,
+      paymentMethod: 'cod'
+    });
+
+  } catch (error) {
+    console.error('Tunisia COD order error:', error);
+    
+    let errorMessage = 'Failed to place order';
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setError(errorMessage);
+    setOrderSuccess(false);
+  } finally {
+    setIsProcessingOrder(false);
+    setUploadProgress(0);
+  }
 };
 
       const updateStandardSize = (photoId, standardSize) => {
@@ -5736,28 +5932,26 @@ const renderStepContent = () => {
                       
                       {/* Payment Method for Pickup - NEW ADDITION */}
                       {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
-                        <div className="mt-4 border-t pt-4">
-                          <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
-                          <div className="space-y-3">
-                           
-                            
-                            <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="pickupPaymentMethod"
-                                value="helcim"
-                                checked={paymentMethod === 'helcim'}
-                                onChange={() => setPaymentMethod('helcim')}
-                                className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-                              />
-                              <div>
-                                <p className="font-medium">{t('payment.credit_card')}</p>
-                                <p className="text-sm text-gray-600">{t('payment.credit_pickup_description')}</p>
-                              </div>
-                            </label>
-                          </div>
-                        </div>
-                      )}
+  <div className="mt-4 border-t pt-4">
+    <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
+    <div className="space-y-3">
+      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+        <input
+          type="radio"
+          name="pickupPaymentMethod"
+          value="helcim"
+          checked={paymentMethod === 'helcim'}
+          onChange={() => setPaymentMethod('helcim')}
+          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+        />
+        <div>
+          <p className="font-medium">{t('payment.credit_card')}</p>
+          <p className="text-sm text-gray-600">{t('payment.credit_pickup_description')}</p>
+        </div>
+      </label>
+    </div>
+  </div>
+)}
                       
                      
                     </div>
