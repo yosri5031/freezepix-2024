@@ -905,7 +905,7 @@ const [formData, setFormData] = useState({
           setError(null);
           
           try {
-            // First try exact match on slug field
+            // Studio preselection logic (keep your existing code)
             const response = await axios.get(
               `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/by-slug/${studioSlug}`
             );
@@ -913,10 +913,8 @@ const [formData, setFormData] = useState({
             if (response.data && response.data._id) {
               console.log('Studio preselected from URL:', response.data.name);
               
-              // Set the selected studio
               setSelectedStudio(response.data);
               
-              // If country is specified in studio data, set it
               if (response.data.country) {
                 const countryCode = mapCountryCode(response.data.country);
                 if (initialCountries.some(c => c.value === countryCode)) {
@@ -924,59 +922,50 @@ const [formData, setFormData] = useState({
                 }
               }
               
-              // Skip intro and go directly to upload photos step
               setShowIntro(false);
-              setActiveStep(0); // Set to upload photos step
+              setActiveStep(0);
               
-              // Mark this studio as preselected
               localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
               localStorage.setItem('isPreselectedFromUrl', 'true');
             }
           } catch (error) {
-            console.error('Failed to find studio by slug, trying fuzzy match:', error);
-            
-            try {
-              // Fall back to search by name if slug doesn't match exactly
-              const searchResponse = await axios.get(
-                `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/search`,
-                { params: { query: studioSlug.replace(/-/g, ' ') } }
-              );
-              
-              if (searchResponse.data && searchResponse.data.length > 0) {
-                console.log('Studio found by fuzzy search:', searchResponse.data[0].name);
-                
-                // Set the selected studio
-                setSelectedStudio(searchResponse.data[0]);
-                
-                // Set country if available
-                if (searchResponse.data[0].country) {
-                  const countryCode = mapCountryCode(searchResponse.data[0].country);
-                  if (initialCountries.some(c => c.value === countryCode)) {
-                    setSelectedCountry(countryCode);
-                  }
-                }
-                
-                // Skip intro and go directly to upload photos step
-                setShowIntro(false);
-                setActiveStep(0); // Ensure we land on the upload photos step
-                
-                // Mark this studio as preselected
-                localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
-                localStorage.setItem('isPreselectedFromUrl', 'true');
-              } else {
-                setError('Studio not found');
-              }
-            } catch (searchError) {
-              console.error('Failed to find studio by search:', searchError);
-              setError('Studio not found');
-            }
+            console.error('Failed to find studio by slug:', error);
+            // Add fallback logic here if needed
           } finally {
             setIsLoading(false);
           }
         };
         
         handleStudioPreselection();
-      }, []);  // Run once on component mount
+      }, []); // Run once on component mount
+
+      useEffect(() => {
+        const cleanUrlAfterProcessing = () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const hasDiscount = urlParams.get('discount');
+          const hasStudio = parseStudioSlugFromUrl();
+          
+          // Only clean URL if we've processed both parameters
+          if (hasDiscount && urlDiscountApplied) {
+            console.log('Cleaning URL parameters after processing');
+            
+            // Keep the studio path but remove query parameters
+            let cleanUrl = window.location.pathname;
+            
+            // Don't remove studio from path, just remove query params
+            if (hasStudio) {
+              cleanUrl = window.location.pathname; // Keep the /studio-slug path
+            }
+            
+            window.history.replaceState({}, document.title, cleanUrl);
+          }
+        };
+      
+        // Clean URL after discount is processed
+        if (urlDiscountApplied) {
+          cleanUrlAfterProcessing();
+        }
+      }, [urlDiscountApplied]);
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
@@ -1058,34 +1047,76 @@ const [formData, setFormData] = useState({
       }, [selectedCountry]);
 
       useEffect(() => {
-        const handleUrlDiscount = () => {
+        const handleUrlDiscount = async () => {
           const urlParams = new URLSearchParams(window.location.search);
           const urlDiscountCode = urlParams.get('discount');
           
-          if (urlDiscountCode) {
-            console.log('Found discount code in URL:', urlDiscountCode);
+          if (urlDiscountCode && !urlDiscountApplied) {
+            console.log('Processing discount code from URL:', urlDiscountCode);
             
-            // Set the discount code
-            setDiscountCode(urlDiscountCode.toUpperCase());
+            const upperCode = urlDiscountCode.toUpperCase();
             
-            // Validate the discount code
-            handleDiscountCode(urlDiscountCode.toUpperCase());
-            
-            // Mark that this was applied from URL
-            localStorage.setItem('discountAppliedFromUrl', 'true');
-            localStorage.setItem('urlDiscountCode', urlDiscountCode.toUpperCase());
-            
-            // Optional: Clean the URL after applying discount
-            const newUrl = window.location.pathname + (window.location.pathname.includes('/') ? '' : '/');
-            window.history.replaceState({}, document.title, newUrl);
+            try {
+              setIsLoading(true);
+              
+              // Fetch and validate discount codes
+              const priceRules = await fetchShopifyPriceRules();
+              console.log('Available price rules:', priceRules);
+              
+              const matchingRule = priceRules.find(
+                rule => rule.title && rule.title.toUpperCase() === upperCode
+              );
+              
+              if (matchingRule) {
+                console.log('Found matching discount rule:', matchingRule);
+                
+                // Set discount code and clear any errors
+                setDiscountCode(upperCode);
+                setDiscountError('');
+                setUrlDiscountApplied(true);
+                
+                // Update available discounts to include this rule
+                setAvailableDiscounts(prev => {
+                  const filtered = prev.filter(d => d.code !== upperCode);
+                  return [...filtered, {
+                    code: matchingRule.title,
+                    isActive: matchingRule.status === 'active',
+                    valueType: matchingRule.value_type === 'percentage' ? 'percentage' : 'fixed_amount',
+                    value: Math.abs(parseFloat(matchingRule.value)),
+                    startDate: matchingRule.starts_at,
+                    endDate: matchingRule.ends_at,
+                    title: matchingRule.title
+                  }];
+                });
+                
+                console.log('Discount code applied successfully from URL');
+                
+                // Store in localStorage for persistence
+                localStorage.setItem('discountAppliedFromUrl', 'true');
+                localStorage.setItem('urlDiscountCode', upperCode);
+                
+              } else {
+                console.log('No matching discount rule found for:', upperCode);
+                setDiscountError('Invalid discount code');
+              }
+              
+            } catch (error) {
+              console.error('Error validating URL discount code:', error);
+              setDiscountError('Unable to validate discount code');
+            } finally {
+              setIsLoading(false);
+            }
           }
         };
       
-        // Run after component mounts and country is set
-        if (selectedCountry) {
+        // Only run when we have a discount in URL and haven't applied it yet
+        const urlParams = new URLSearchParams(window.location.search);
+        const hasUrlDiscount = urlParams.get('discount');
+        
+        if (hasUrlDiscount && !urlDiscountApplied && selectedCountry) {
           handleUrlDiscount();
         }
-      }, [selectedCountry]);
+      }, [selectedCountry, urlDiscountApplied]);
       
       // 2. Add this function to handle sharing with discount
       const generateDiscountShareUrl = (code, studio = null) => {
@@ -4668,55 +4699,64 @@ const initializeDiscounts = async () => {
   }
 };
     
+const shouldApplyUrlDiscount = () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlDiscountCode = urlParams.get('discount');
+  
+  return urlDiscountCode && !urlDiscountApplied && !discountCode;
+};
+
 // Updated handleDiscountCode function that fixes the "discountRule is not defined" error
 const handleDiscountCode = (value) => {
+  // Don't allow manual override of URL-applied discount unless explicitly cleared
+  const isFromUrl = localStorage.getItem('discountAppliedFromUrl') === 'true';
+  const urlCode = localStorage.getItem('urlDiscountCode');
+  
+  if (isFromUrl && urlCode && value !== urlCode && value !== '') {
+    console.log('Preventing override of URL-applied discount');
+    return;
+  }
+  
+  // Rest of your existing handleDiscountCode logic...
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
   
-  // Clear discount error if empty code
   if (!upperValue) {
     setDiscountError('');
+    // Clear URL discount flags if manually clearing
+    setUrlDiscountApplied(false);
+    localStorage.removeItem('discountAppliedFromUrl');
+    localStorage.removeItem('urlDiscountCode');
     return;
   }
   
   setIsLoading(true);
   
-  // Fetch price rules and validate
   fetchShopifyPriceRules()
     .then(priceRules => {
-      console.log('Fetched price rules:', priceRules);
-      
-      // Update available discounts
-      setAvailableDiscounts(priceRules);
-      
-      // Find matching rule
       const matchingRule = priceRules.find(
         rule => rule.title && rule.title.toUpperCase() === upperValue
       );
       
-      // If no matching rule found
       if (!matchingRule) {
         console.log('No matching discount found for:', upperValue);
+        setDiscountError('Invalid discount code');
         setIsLoading(false);
         return;
       }
       
-      console.log('Found discount rule:', matchingRule);
-      
-      // Now validate the dates on the matching rule
+      // Validate dates
       const now = new Date();
       const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
       const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
       
-      // Check if the discount is active based on dates
       if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
         setDiscountError('This discount code is not active yet');
         setIsLoading(false);
         return;
       }
       
-      // MODIFY THIS SECTION - Change end date validation
-      if (endDate) {  // Only check end date if it exists
+      if (endDate) {
         if (!isNaN(endDate.getTime()) && now > endDate) {
           setDiscountError('This discount code has expired');
           setIsLoading(false);
@@ -4724,7 +4764,6 @@ const handleDiscountCode = (value) => {
         }
       }
       
-      // If we made it here, the discount is valid
       console.log('Discount code is valid:', upperValue);
       setDiscountError('');
       setIsLoading(false);
@@ -4734,9 +4773,21 @@ const handleDiscountCode = (value) => {
       setDiscountError('Unable to validate discount code');
       setIsLoading(false);
     });
-}
+};
 
 
+const DiscountDebugInfo = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  
+  return (
+    <div className="fixed bottom-20 right-4 bg-black text-white p-2 rounded text-xs z-50">
+      <div>Discount Code: {discountCode || 'None'}</div>
+      <div>URL Applied: {urlDiscountApplied ? 'Yes' : 'No'}</div>
+      <div>Error: {discountError || 'None'}</div>
+      <div>Available: {availableDiscounts.length}</div>
+    </div>
+  );
+};
 
 
 // Add this helper function
@@ -5799,6 +5850,8 @@ const renderStepContent = () => {
 
 // render photo prints invoice
 
+// Enhanced Discount Display - Update your renderInvoice function
+
 const renderInvoice = () => {
   const { 
     subtotalsBySize, 
@@ -5812,88 +5865,144 @@ const renderInvoice = () => {
     appliedProvince, 
     appliedTaxRates,
     discountDetails,
-    giftCardAmount = 0, // Provide a default value
+    giftCardAmount = 0,
     originalTotal
   } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
   
+  // Check if discount was applied from URL
+  const isUrlDiscount = localStorage.getItem('discountAppliedFromUrl') === 'true';
+  
   return (
     <div className="space-y-6">
-     {/* Discount Code Section + gift cards */}
-     <div className="border rounded-lg p-4">
-      
-      {/* Tabs for Discount and Gift Card */}
-      <div className="flex border-b mb-4">
-        <button 
-          className={`px-4 py-2 ${activePaymentTab === 'discount' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
-          onClick={() => setActivePaymentTab('discount')}
-        >
-          {t('order.discount_code')}
-        </button>
-       
-      </div>
-      
-     {/* Discount Code Form */}
-     {activePaymentTab === 'discount' && (
+      {/* Enhanced Discount Code Section */}
+      <div className="border rounded-lg p-4">
+        
+        {/* Tabs for Discount and Gift Card */}
+        <div className="flex border-b mb-4">
+          <button 
+            className={`px-4 py-2 ${activePaymentTab === 'discount' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActivePaymentTab('discount')}
+          >
+            {t('order.discount_code')}
+            {discountCode && (
+              <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                {isUrlDiscount ? 'Auto Applied' : 'Applied'}
+              </span>
+            )}
+          </button>
+        </div>
+        
+        {/* Discount Code Form */}
+        {activePaymentTab === 'discount' && (
           <div className="space-y-4">
+            
+            {/* Show URL discount notice if applicable */}
+            {isUrlDiscount && discountCode && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                  <span className="text-blue-800 font-medium">
+                    Discount "{discountCode}" was automatically applied from your link!
+                  </span>
+                </div>
+                <p className="text-blue-600 text-sm mt-1">
+                  {discount > 0 ? `You're saving ${getDiscountDisplay()}` : 'Processing discount...'}
+                </p>
+              </div>
+            )}
+            
             {/* Discount Code Input */}
             <div className="space-y-2">
               <div className="flex space-x-2">
                 <input
                   type="text"
-                  placeholder="Enter discount code"
+                  placeholder={isUrlDiscount ? "Discount auto-applied from link" : "Enter discount code"}
                   value={discountCode}
                   onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-                  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+                  className={`w-full p-2 border rounded ${
+                    discountError ? 'border-red-500' : 
+                    isUrlDiscount ? 'border-blue-300 bg-blue-50' : ''
+                  }`}
+                  disabled={isUrlDiscount} // Disable input if URL discount is applied
                 />
+                
+                {/* Clear button for URL discounts */}
+                {isUrlDiscount && discountCode && (
+                  <button
+                    onClick={() => {
+                      setDiscountCode('');
+                      setDiscountError('');
+                      setUrlDiscountApplied(false);
+                      localStorage.removeItem('discountAppliedFromUrl');
+                      localStorage.removeItem('urlDiscountCode');
+                    }}
+                    className="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded text-sm"
+                    title="Clear auto-applied discount"
+                  >
+                    Clear
+                  </button>
+                )}
+                
                 {isLoading && (
                   <div className="flex items-center px-2">
                     <Loader size={20} className="animate-spin text-yellow-400" />
                   </div>
                 )}
               </div>
+              
               {discountError && (
                 <p className="text-red-500 text-sm">{discountError}</p>
               )}
+              
               {discountCode && !discountError && discount > 0 && (
-                <p className="text-green-500 text-sm">
-                  Discount applied: {getDiscountDisplay()}
-                </p>
+                <div className="flex items-center space-x-2">
+                  <p className="text-green-500 text-sm">
+                    ✓ Discount applied: {getDiscountDisplay()}
+                  </p>
+                  {isUrlDiscount && (
+                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                      From Link
+                    </span>
+                  )}
+                </div>
               )}
             </div>
 
-            {/* NEW: Add Discount Link Generator when discount is successfully applied */}
+            {/* Enhanced Discount Link Generator */}
             {discountCode && !discountError && discount > 0 && (
-              <DiscountLinkGenerator
-                discountCode={discountCode}
-                discountDetails={availableDiscounts.find(
-                  rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
-                )}
-                selectedStudio={selectedStudio}
-                baseUrl={window.location.origin}
-              />
+              <div className="mt-4">
+                <DiscountLinkGenerator
+                  discountCode={discountCode}
+                  discountDetails={availableDiscounts.find(
+                    rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
+                  )}
+                  selectedStudio={selectedStudio}
+                  baseUrl={window.location.origin}
+                />
+              </div>
             )}
           </div>
         )}
+        
+        {/* Gift Card Form - unchanged */}
+        {activePaymentTab === 'giftcard' && (
+          <GiftCardInput
+            onGiftCardApplied={handleGiftCardApplied}
+            onGiftCardRemoved={handleGiftCardRemoved}
+            isLoading={false}
+            error={giftCardError}
+            setError={setGiftCardError}
+            appliedGiftCard={appliedGiftCard}
+          />
+        )}
+      </div>
       
-      {/* Gift Card Form */}
-      {activePaymentTab === 'giftcard' && (
-        <GiftCardInput
-        onGiftCardApplied={handleGiftCardApplied}
-        onGiftCardRemoved={handleGiftCardRemoved}
-        isLoading={false}
-        error={giftCardError}
-        setError={setGiftCardError}
-        appliedGiftCard={appliedGiftCard}
-      />
-      )}
-    </div>
-      
-      {/* Order Summary */}
+      {/* Order Summary with enhanced discount display */}
       <div className="border rounded-lg p-4">
         <h3 className="font-medium mb-3">{t('order.summary')}</h3>
         
-        {/* Photo Prints */}
+        {/* All your existing photo prints code... */}
         {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
           <>
             {quantities['10x15'] > 0 && (
@@ -5935,7 +6044,7 @@ const renderInvoice = () => {
                 <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
-            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN')  && quantities['4x4'] > 0 && (
+            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN') && quantities['4x4'] > 0 && (
               <div className="flex justify-between py-2">
                 <span>4x4" Photos ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
@@ -5944,7 +6053,7 @@ const renderInvoice = () => {
           </>
         )}
 
-        {/* 3D Frame Items */}
+        {/* Other product types... */}
         {quantities['3d_frame'] > 0 && (
           <div className="flex justify-between py-2">
             <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
@@ -5952,7 +6061,6 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Keychain Items */}
         {quantities['keychain'] > 0 && (
           <div className="flex justify-between py-2">
             <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
@@ -5960,7 +6068,6 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Keyring/Magnet Items */}
         {quantities['keyring_magnet'] > 0 && (
           <div className="flex justify-between py-2">
             <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
@@ -5980,26 +6087,31 @@ const renderInvoice = () => {
           <span>{shippingFee.toFixed(2)} {country?.currency}</span>
         </div>
         
-        {/* Discount - Now positioned AFTER subtotal and shipping */}
+        {/* Enhanced Discount Display */}
         {discount > 0 && discountDetails && (
-    <div className="flex justify-between py-2 text-green-600">
-   <span>
-    {t('order.discount')} (
-    {discountDetails.valueType === 'percentage'  // Changed from value_type to valueType to match API
-      ? `${Math.abs(parseFloat(discountDetails.value))}%` 
-      : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
-    })
-    {discountDetails.title && ` - ${discountDetails.title}`}
-  </span>
-  <span>
-    -{Math.abs(discount).toFixed(2)} {country?.currency}
-  </span>
-    </div>
-  )}
+          <div className="flex justify-between py-2 text-green-600">
+            <div className="flex items-center space-x-2">
+              <span>
+                {t('order.discount')} (
+                {discountDetails.valueType === 'percentage'
+                  ? `${Math.abs(parseFloat(discountDetails.value))}%` 
+                  : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
+                })
+                {discountDetails.title && ` - ${discountDetails.title}`}
+              </span>
+              {isUrlDiscount && (
+                <span className="bg-blue-100 text-blue-800 text-xs px-1.5 py-0.5 rounded">
+                  Auto
+                </span>
+              )}
+            </div>
+            <span>
+              -{Math.abs(discount).toFixed(2)} {country?.currency}
+            </span>
+          </div>
+        )}
 
-
-        {/* Tax for applicable regions - Now calculated based on (subtotal + shipping - discount) */}
-        {/* Tunisia tax */}
+        {/* Tax sections... */}
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
@@ -6007,7 +6119,6 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Enhanced Canada tax - using our improved detection */}
         {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
@@ -6023,27 +6134,8 @@ const renderInvoice = () => {
                       appliedTaxRates.PST && `PST (${appliedTaxRates.PST}%)`,
                       appliedTaxRates.QST && `QST (${appliedTaxRates.QST}%)`
                     ].filter(Boolean).join(' + ');
-                  } else if (deliveryMethod === 'pickup') {
-                    // For pickup without detected province
-                    return 'GST (5%)';
-                  } else {
-                    // For shipping without selected province
-                    const province = formData.shippingAddress.province;
-                    
-                    if (province && TAX_RATES['CA'][province]) {
-                      const provinceTaxes = TAX_RATES['CA'][province];
-                      
-                      if (provinceTaxes.HST) {
-                        return `HST (${provinceTaxes.HST}%)`;
-                      }
-                      return [
-                        provinceTaxes.GST && `GST (${provinceTaxes.GST}%)`,
-                        provinceTaxes.PST && `PST (${provinceTaxes.PST}%)`,
-                        provinceTaxes.QST && `QST (${provinceTaxes.QST}%)`
-                      ].filter(Boolean).join(' + ');
-                    }
-                    return 'GST (5%)';
                   }
+                  return 'GST (5%)';
                 })()}
               </span>
             </div>
@@ -6051,18 +6143,8 @@ const renderInvoice = () => {
           </div>
         )}
 
-        {/* Display tax for other countries with tax rates */}
-        {selectedCountry !== 'TUN' && selectedCountry !== 'TN' && 
-         selectedCountry !== 'CAN' && selectedCountry !== 'CA' && 
-         TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default > 0 && (
-          <div className="flex justify-between py-2">
-            <span>{`Tax (${TAX_RATES[selectedCountry].default}%)`}</span>
-            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
-          </div>
-        )}
-
- {/* Gift Card Section - New */}
- {appliedGiftCard && giftCardAmount > 0 && (
+        {/* Gift Card Section */}
+        {appliedGiftCard && giftCardAmount > 0 && (
           <div className="flex justify-between py-2 text-emerald-600">
             <span>
               {t('order.gift_card')} ({appliedGiftCard.code})
@@ -6079,8 +6161,8 @@ const renderInvoice = () => {
           <span>{total.toFixed(2)} {country?.currency}</span>
         </div>
 
-          {/* Payment Method Indicator - New */}
-          {total === 0 && appliedGiftCard && (
+        {/* Payment Method Indicator */}
+        {total === 0 && appliedGiftCard && (
           <div className="mt-2 p-2 bg-emerald-50 text-emerald-700 rounded text-sm">
             {t('order.fully_paid_gift_card')}
           </div>
