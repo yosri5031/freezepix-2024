@@ -1065,10 +1065,10 @@ const [formData, setFormData] = useState({
           if (urlDiscountCode) {
             console.log('Found discount code in URL:', urlDiscountCode);
             
-            // Set the discount code
+            // Set the discount code immediately
             setDiscountCode(urlDiscountCode.toUpperCase());
             
-            // Validate the discount code
+            // Apply the discount code - don't wait for country
             handleDiscountCode(urlDiscountCode.toUpperCase());
             
             // Mark that this was applied from URL
@@ -1081,11 +1081,9 @@ const [formData, setFormData] = useState({
           }
         };
       
-        // Run after component mounts and country is set
-        if (selectedCountry) {
-          handleUrlDiscount();
-        }
-      }, [selectedCountry]);
+        // Run immediately when component mounts, don't wait for selectedCountry
+        handleUrlDiscount();
+      }, []); // Remove selectedCountry dependency
       
       // 2. Add this function to handle sharing with discount
       const generateDiscountShareUrl = (code, studio = null) => {
@@ -4697,6 +4695,7 @@ const handleDiscountCode = (value) => {
       // If no matching rule found
       if (!matchingRule) {
         console.log('No matching discount found for:', upperValue);
+        setDiscountError('Invalid discount code');
         setIsLoading(false);
         return;
       }
@@ -4715,8 +4714,8 @@ const handleDiscountCode = (value) => {
         return;
       }
       
-      // MODIFY THIS SECTION - Change end date validation
-      if (endDate) {  // Only check end date if it exists
+      // Check end date validation
+      if (endDate) {
         if (!isNaN(endDate.getTime()) && now > endDate) {
           setDiscountError('This discount code has expired');
           setIsLoading(false);
@@ -4734,7 +4733,7 @@ const handleDiscountCode = (value) => {
       setDiscountError('Unable to validate discount code');
       setIsLoading(false);
     });
-}
+};
 
 
 
