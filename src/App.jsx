@@ -1084,6 +1084,16 @@ const [formData, setFormData] = useState({
         // Run immediately when component mounts, don't wait for selectedCountry
         handleUrlDiscount();
       }, []); // Remove selectedCountry dependency
+
+      useEffect(() => {
+        if (discountCode && availableDiscounts.length > 0) {
+          const { discount } = calculateTotals();
+          if (discount > 0) {
+            // Discount is working, clear any error
+            setDiscountError('');
+          }
+        }
+      }, [discountCode, availableDiscounts, selectedPhotos, selectedCountry]);
       
       // 2. Add this function to handle sharing with discount
       const generateDiscountShareUrl = (code, studio = null) => {
