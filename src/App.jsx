@@ -978,15 +978,6 @@ const [formData, setFormData] = useState({
         handleStudioPreselection();
       }, []);  // Run once on component mount
 
-      useEffect(() => {
-        // Force component re-render when availableDiscounts is updated and we have a discount code
-        if (discountCode && availableDiscounts.length > 0) {
-          console.log('Discount data loaded, forcing recalculation');
-          // This will trigger a re-render and recalculate totals
-          setSelectedPhotos(prev => [...prev]);
-        }
-      }, [availableDiscounts, discountCode]);
-      
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
         const setInitialCountryAndLanguage = async () => {
