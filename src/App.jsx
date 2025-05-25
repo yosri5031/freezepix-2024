@@ -34,6 +34,7 @@ import {
 } from './imageHandlingUtils';
 import CryptoJS from 'crypto-js';
 import { useLanguage } from './contexts/LanguageContext'; // Adjust the import depending on your file structure
+import DiscountLinkGenerator from './DiscountLinkGenerator';
 const stripe = new Stripe('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', {
   apiVersion: 'latest' // Recommended to specify version
 });
@@ -1055,6 +1056,50 @@ const [formData, setFormData] = useState({
           }
         }));
       }, [selectedCountry]);
+
+      useEffect(() => {
+        const handleUrlDiscount = () => {
+          const urlParams = new URLSearchParams(window.location.search);
+          const urlDiscountCode = urlParams.get('discount');
+          
+          if (urlDiscountCode) {
+            console.log('Found discount code in URL:', urlDiscountCode);
+            
+            // Set the discount code
+            setDiscountCode(urlDiscountCode.toUpperCase());
+            
+            // Validate the discount code
+            handleDiscountCode(urlDiscountCode.toUpperCase());
+            
+            // Mark that this was applied from URL
+            localStorage.setItem('discountAppliedFromUrl', 'true');
+            localStorage.setItem('urlDiscountCode', urlDiscountCode.toUpperCase());
+            
+            // Optional: Clean the URL after applying discount
+            const newUrl = window.location.pathname + (window.location.pathname.includes('/') ? '' : '/');
+            window.history.replaceState({}, document.title, newUrl);
+          }
+        };
+      
+        // Run after component mounts and country is set
+        if (selectedCountry) {
+          handleUrlDiscount();
+        }
+      }, [selectedCountry]);
+      
+      // 2. Add this function to handle sharing with discount
+      const generateDiscountShareUrl = (code, studio = null) => {
+        const baseUrl = window.location.origin;
+        const params = new URLSearchParams();
+        params.set('discount', code);
+        
+        if (studio) {
+          const studioSlug = studio.slug || generateStudioSlug(studio.name);
+          return `${baseUrl}/${studioSlug}?${params.toString()}`;
+        } else {
+          return `${baseUrl}?${params.toString()}`;
+        }
+      };
 
    // In your fetchShopifyPriceRules function
 const fetchShopifyPriceRules = async () => {
@@ -5788,33 +5833,48 @@ const renderInvoice = () => {
        
       </div>
       
-      {/* Discount Code Form */}
-      {activePaymentTab === 'discount' && (
-        <div className="space-y-2">
-          <div className="flex space-x-2">
-            <input
-              type="text"
-              placeholder="Enter discount code"
-              value={discountCode}
-              onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
-              className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
-            />
-            {isLoading && (
-              <div className="flex items-center px-2">
-                <Loader size={20} className="animate-spin text-yellow-400" />
+     {/* Discount Code Form */}
+     {activePaymentTab === 'discount' && (
+          <div className="space-y-4">
+            {/* Discount Code Input */}
+            <div className="space-y-2">
+              <div className="flex space-x-2">
+                <input
+                  type="text"
+                  placeholder="Enter discount code"
+                  value={discountCode}
+                  onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
+                  className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}
+                />
+                {isLoading && (
+                  <div className="flex items-center px-2">
+                    <Loader size={20} className="animate-spin text-yellow-400" />
+                  </div>
+                )}
               </div>
+              {discountError && (
+                <p className="text-red-500 text-sm">{discountError}</p>
+              )}
+              {discountCode && !discountError && discount > 0 && (
+                <p className="text-green-500 text-sm">
+                  Discount applied: {getDiscountDisplay()}
+                </p>
+              )}
+            </div>
+
+            {/* NEW: Add Discount Link Generator when discount is successfully applied */}
+            {discountCode && !discountError && discount > 0 && (
+              <DiscountLinkGenerator
+                discountCode={discountCode}
+                discountDetails={availableDiscounts.find(
+                  rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
+                )}
+                selectedStudio={selectedStudio}
+                baseUrl={window.location.origin}
+              />
             )}
           </div>
-          {discountError && (
-            <p className="text-red-500 text-sm">{discountError}</p>
-          )}
-          {discountCode && !discountError && discount > 0 && (
-            <p className="text-green-500 text-sm">
-              Discount applied: {getDiscountDisplay()}
-            </p>
-          )}
-        </div>
-      )}
+        )}
       
       {/* Gift Card Form */}
       {activePaymentTab === 'giftcard' && (
@@ -6030,6 +6090,8 @@ const renderInvoice = () => {
     </div>
   );
 };
+
+
 
   // ... (Keep remaining component code) ...
   const handleShippingAddressChange = (field, value) => {
