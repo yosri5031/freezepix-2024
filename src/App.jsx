@@ -5474,10 +5474,10 @@ const calculateTotals = () => {
           subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
         } else if (photo.size === '5x7') {
           subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-        } else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '8x10') {
+        } else if ((selectedCountry !== 'TUN' && selectedCountry !== 'TN') && photo.size === '8x10') {
           subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
         }
-        else if ((selectedCountry !== 'TUN' || selectedCountry !== 'TN') && photo.size === '4x4') {
+        else if ((selectedCountry !== 'TUN' && selectedCountry !== 'TN') && photo.size === '4x4') {
           subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
         }
       }
@@ -5938,7 +5938,7 @@ const renderStepContent = () => {
                       
                  
                       {/* Payment Method for Pickup - FIXED FOR TUNISIA */}
-                      {(selectedCountry !== 'TUN' || selectedCountry !== 'TN') && (
+                      {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
                         <div className="mt-4 border-t pt-4">
                           <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
                           <div className="space-y-3">
@@ -6036,7 +6036,7 @@ const renderStepContent = () => {
                 <div className="mt-6">
                   <h3 className="font-medium mb-3">{t('order.payment_method')}</h3>
                   <div className="space-y-3">
-                  {(selectedCountry !== 'TUN' || selectedCountry !== 'TN') && (
+                  {(selectedCountry !== 'TUN' && selectedCountry !== 'TN') && (
                     <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
                       <input
                         type="radio"
