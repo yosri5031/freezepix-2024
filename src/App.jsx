@@ -2569,13 +2569,17 @@ const renderNavigationButtons = () => {
 };
 // Add this new function to handle Tunisia COD orders
 const handleTunisiaCODOrder = async () => {
+  const startTime = Date.now();
+  
   try {
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
 
-    // Quick validation
+    console.log('Tunisia SPEED: Starting lightning fast processing...');
+
+    // ULTRA-FAST validation
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please fill in all required contact information');
     }
@@ -2590,46 +2594,7 @@ const handleTunisiaCODOrder = async () => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // TUNISIA: HIGH QUALITY compression - keep good quality but optimize for speed
-    const processPhotosWithProgress = async () => {
-      try {
-        const compressedPhotos = await Promise.all(
-          selectedPhotos.map(async (photo, index) => {
-            const progress = ((index + 1) / selectedPhotos.length) * 20; // Faster processing
-            setUploadProgress(Math.round(progress));
-
-            let imageData;
-            if (photo.base64) {
-              imageData = photo.base64;
-            } else if (photo.file) {
-              // TUNISIA: Better balance - good quality but faster processing
-              const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.8, // Better quality
-                maxWidthOrHeight: 1200, // Keep resolution
-                useWebWorker: true,
-                fileType: 'image/jpeg',
-                initialQuality: 0.8 // Higher quality
-              });
-              imageData = await convertImageToBase64(compressedFile);
-            }
-
-            return {
-              ...photo,
-              file: imageData,
-              price: photo.price || calculateItemPrice(photo, country),
-              productType: photo.productType || 'photo_print',
-              size: photo.size || '10x15',
-              quantity: photo.quantity || 1
-            };
-          })
-        );
-        return compressedPhotos;
-      } catch (processError) {
-        console.error('Photo processing error:', processError);
-        throw new Error('Failed to process photos');
-      }
-    };
-
+    // LIGHTNING FAST photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
     const orderData = {
@@ -2682,44 +2647,38 @@ const handleTunisiaCODOrder = async () => {
       createdAt: new Date().toISOString()
     };
 
-    // TUNISIA: Use BIGGER CHUNKS for faster processing
+    // LIGHTNING FAST order submission
+    console.log('Tunisia SPEED: Submitting order...');
     const responses = await submitTunisiaBiggerChunks(orderData);
 
-    // TUNISIA: Fast email with shorter timeout
-    try {
-      const emailPromise = sendOrderConfirmationEmail({
-        ...orderData,
-        orderItems: orderData.orderItems.map(item => ({
-          ...item,
-          file: undefined,
-          thumbnail: item.thumbnail
-        }))
-      });
-      
-      // 15 second timeout for emails
-      await Promise.race([
-        emailPromise,
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Email timeout')), 15000)
-        )
-      ]);
-    } catch (emailError) {
-      console.error('Failed to send confirmation email:', emailError);
-      // Continue with success - email failure shouldn't fail the order
-    }
+    // FIRE-AND-FORGET email (don't wait for it)
+    sendOrderConfirmationEmail({
+      ...orderData,
+      orderItems: orderData.orderItems.map(item => ({
+        ...item,
+        file: undefined,
+        thumbnail: item.thumbnail
+      }))
+    }).catch(emailError => {
+      console.warn('Tunisia SPEED: Email failed but order succeeded:', emailError.message);
+    });
+
+    const totalTime = Date.now() - startTime;
+    console.log(`Tunisia SPEED: TOTAL TIME: ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
 
     setOrderSuccess(true);
     setSelectedPhotos([]);
     clearStateStorage();
     
-    console.log('Tunisia COD order created successfully:', {
+    console.log('Tunisia SPEED: Order completed successfully:', {
       orderNumber,
       totalItems: orderData.orderItems.length,
-      paymentMethod: 'cod'
+      totalTime: `${(totalTime/1000).toFixed(1)}s`
     });
 
   } catch (error) {
-    console.error('Tunisia COD order error:', error);
+    const totalTime = Date.now() - startTime;
+    console.error(`Tunisia SPEED: Order failed after ${totalTime}ms:`, error);
     
     let errorMessage = 'Failed to place order';
     if (error.response?.data?.error) {
@@ -2739,9 +2698,10 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  // BIGGER CHUNKS for faster processing
-  const TUNISIA_CHUNK_SIZE = 6; // Increased from 2 to 6
-  const TUNISIA_TIMEOUT = 240000; // 4 minutes
+  // LIGHTNING FAST settings
+  const TUNISIA_CHUNK_SIZE = 10; // BIGGER: 10 items per chunk!
+  const TUNISIA_TIMEOUT = 45000; // SHORT: 45 seconds max per chunk
+  const CHUNK_DELAY = 500; // MINIMAL: 0.5 second delay
   
   const baseOrderData = {
     ...orderData,
@@ -2751,6 +2711,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     status: 'Waiting for CSR approval',
     paymentMethod: 'cod',
     paymentStatus: 'pending',
+    tunisiaSpeedMode: true, // Server optimization flag
     ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
       ? { pickupStudio: orderData.pickupStudio } 
       : { pickupStudio: null })
@@ -2762,21 +2723,24 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
   }
 
-  console.log(`Tunisia: Submitting ${chunks.length} BIGGER chunks of ${TUNISIA_CHUNK_SIZE} items each`);
+  console.log(`Tunisia SPEED: ${chunks.length} chunks of ${TUNISIA_CHUNK_SIZE} items - Target: 15 seconds`);
 
-  // SEQUENTIAL processing (no parallel to avoid CORS issues)
+  // FAST sequential processing
   const results = [];
+  const startTime = Date.now();
+
   for (let i = 0; i < chunks.length; i++) {
+    const chunkStartTime = Date.now();
     const chunk = chunks[i];
     const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
 
     let retryCount = 0;
-    const maxRetries = 3;
+    const maxRetries = 1; // MINIMAL retries for speed
 
     while (retryCount <= maxRetries) {
       try {
-        console.log(`Tunisia: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        console.log(`Tunisia SPEED: Chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
         
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
@@ -2789,40 +2753,42 @@ const submitTunisiaBiggerChunks = async (orderData) => {
             timeout: TUNISIA_TIMEOUT,
             headers: {
               'Content-Type': 'application/json'
-              // REMOVED ALL CUSTOM HEADERS - ONLY STANDARD ONES
             }
           }
         );
 
+        const chunkTime = Date.now() - chunkStartTime;
         results.push(response.data);
-        console.log(`Tunisia: Chunk ${i + 1} uploaded successfully`);
+        console.log(`Tunisia SPEED: Chunk ${i + 1} done in ${chunkTime}ms`);
         
-        // Delay between chunks
+        // MINIMAL delay for speed
         if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 750));
+          await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
         }
         
         break;
         
       } catch (error) {
         retryCount++;
-        console.error(`Tunisia: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
+        console.error(`Tunisia SPEED: Chunk ${i + 1} failed:`, error.message);
         
         if (retryCount <= maxRetries) {
-          const backoffDelay = 3000 * retryCount;
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          // FAST retry - no long waits
+          await new Promise(resolve => setTimeout(resolve, 1000));
         } else {
-          throw new Error(`Tunisia: Failed chunk ${i + 1} after ${maxRetries + 1} attempts: ${error.message}`);
+          throw new Error(`Tunisia SPEED: Chunk ${i + 1} failed: ${error.message}`);
         }
       }
     }
   }
 
+  const totalTime = Date.now() - startTime;
+  console.log(`Tunisia SPEED: Completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
+
   if (results.length !== chunks.length) {
-    throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks uploaded`);
+    throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks`);
   }
 
-  console.log(`Tunisia: Order completed: ${results.length} chunks uploaded`);
   return results;
 };
 
@@ -3103,7 +3069,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
       },
       body: JSON.stringify(emailOrderData),
       // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(30000) // 30 second timeout
+      signal: AbortSignal.timeout(90000) // 30 second timeout
     });
 
     const responseData = await response.json().catch(e => null);
@@ -3483,26 +3449,41 @@ const handleCheckout = async (paymentMethod) => {
     // Process photos with improved batch processing and error handling
     const processPhotosWithProgress = async () => {
       try {
-        const optimizedPhotosWithPrices = await processImagesInBatches(
-          selectedPhotos.map(photo => ({
-            ...photo,
-            price: photo.price || calculateItemPrice(photo, country)
-          })),
-          (progress) => {
+        const compressedPhotos = await Promise.all(
+          selectedPhotos.map(async (photo, index) => {
+            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
             setUploadProgress(Math.round(progress));
-            if (progress % 20 === 0) {
-              saveStateWithCleanup({
-                orderNumber,
-                progress,
-                timestamp: new Date().toISOString()
+    
+            let imageData;
+            if (photo.base64) {
+              imageData = photo.base64;
+            } else if (photo.file) {
+              // LIGHTNING FAST compression
+              const compressedFile = await imageCompression(photo.file, {
+                maxSizeMB: 0.5, // Balanced size for speed
+                maxWidthOrHeight: 1000, // Slightly smaller for speed
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.75, // Good quality but fast
+                alwaysKeepResolution: false
               });
+              imageData = await convertImageToBase64(compressedFile);
             }
-          }
+    
+            return {
+              ...photo,
+              file: imageData,
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '10x15',
+              quantity: photo.quantity || 1
+            };
+          })
         );
-        return optimizedPhotosWithPrices;
+        return compressedPhotos;
       } catch (processError) {
-        console.error('Photo processing error:', processError);
-        throw new Error(t('errors.photoProcessingFailed'));
+        console.error('Tunisia SPEED: Photo processing error:', processError);
+        throw new Error('Failed to process photos');
       }
     };
 
