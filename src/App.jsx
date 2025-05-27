@@ -2612,7 +2612,7 @@ const handleTunisiaCODOrder = async () => {
                 maxWidthOrHeight: 1000, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.75, // Good quality but fast
+                initialQuality: 0.55, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
@@ -2739,10 +2739,10 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  // LIGHTNING FAST settings
-  const TUNISIA_CHUNK_SIZE = 10; // BIGGER: 10 items per chunk!
-  const TUNISIA_TIMEOUT = 45000; // SHORT: 45 seconds max per chunk
-  const CHUNK_DELAY = 500; // MINIMAL: 0.5 second delay
+  // MASSIVE CHUNKS for 24 images
+  const TUNISIA_CHUNK_SIZE = 24; // ALL 24 images in 1 chunk!
+  const TUNISIA_TIMEOUT = 180000; // 3 minutes timeout for big chunk
+  const CHUNK_DELAY = 1000; // 1 second delay
   
   const baseOrderData = {
     ...orderData,
@@ -2752,21 +2752,21 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     status: 'Waiting for CSR approval',
     paymentMethod: 'cod',
     paymentStatus: 'pending',
-    tunisiaSpeedMode: true, // Server optimization flag
+    tunisiaSpeedMode: true,
+    massiveChunk: true, // Flag for server to handle big chunks
     ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
       ? { pickupStudio: orderData.pickupStudio } 
       : { pickupStudio: null })
   };
 
-  // Split into BIGGER chunks
+  // Split into MASSIVE chunks (probably just 1 chunk for 24 images)
   const chunks = [];
   for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
     chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
   }
 
-  console.log(`Tunisia SPEED: ${chunks.length} chunks of ${TUNISIA_CHUNK_SIZE} items - Target: 15 seconds`);
+  console.log(`Tunisia MASSIVE: ${chunks.length} chunks of up to ${TUNISIA_CHUNK_SIZE} items`);
 
-  // FAST sequential processing
   const results = [];
   const startTime = Date.now();
 
@@ -2777,11 +2777,11 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     setUploadProgress(Math.round(chunkProgress));
 
     let retryCount = 0;
-    const maxRetries = 1; // MINIMAL retries for speed
+    const maxRetries = 2; // More retries for massive chunks
 
     while (retryCount <= maxRetries) {
       try {
-        console.log(`Tunisia SPEED: Chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        console.log(`Tunisia MASSIVE: Uploading chunk ${i + 1}/${chunks.length} with ${chunk.length} items, attempt ${retryCount + 1}`);
         
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
@@ -2800,9 +2800,9 @@ const submitTunisiaBiggerChunks = async (orderData) => {
 
         const chunkTime = Date.now() - chunkStartTime;
         results.push(response.data);
-        console.log(`Tunisia SPEED: Chunk ${i + 1} done in ${chunkTime}ms`);
+        console.log(`Tunisia MASSIVE: Chunk ${i + 1} with ${chunk.length} items completed in ${chunkTime}ms`);
         
-        // MINIMAL delay for speed
+        // Small delay between massive chunks
         if (i < chunks.length - 1) {
           await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
         }
@@ -2811,20 +2811,22 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         
       } catch (error) {
         retryCount++;
-        console.error(`Tunisia SPEED: Chunk ${i + 1} failed:`, error.message);
+        const chunkTime = Date.now() - chunkStartTime;
+        console.error(`Tunisia MASSIVE: Chunk ${i + 1} failed after ${chunkTime}ms:`, error.message);
         
         if (retryCount <= maxRetries) {
-          // FAST retry - no long waits
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          // Shorter wait for retry
+          console.log(`Tunisia MASSIVE: Retrying chunk ${i + 1} after 2 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
         } else {
-          throw new Error(`Tunisia SPEED: Chunk ${i + 1} failed: ${error.message}`);
+          throw new Error(`Tunisia MASSIVE: Chunk ${i + 1} failed after ${maxRetries + 1} attempts: ${error.message}`);
         }
       }
     }
   }
 
   const totalTime = Date.now() - startTime;
-  console.log(`Tunisia SPEED: Completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
+  console.log(`Tunisia MASSIVE: All ${orderItems.length} items completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
 
   if (results.length !== chunks.length) {
     throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks`);
