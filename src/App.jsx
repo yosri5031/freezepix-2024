@@ -2604,12 +2604,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // TUNISIA: Better balance - good quality but faster processing
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.8, // Increased from 0.15 to 0.8 - MUCH better quality
-                maxWidthOrHeight: 1200, // Back to 1200px - full quality
+                maxSizeMB: 0.8, // Better quality
+                maxWidthOrHeight: 1200, // Keep resolution
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.8, // Increased from 0.3 to 0.8 - high quality
-                alwaysKeepResolution: false
+                initialQuality: 0.8 // Higher quality
               });
               imageData = await convertImageToBase64(compressedFile);
             }
@@ -2740,10 +2739,9 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  // TUNISIA: BIGGER CHUNKS for faster processing
-  const TUNISIA_CHUNK_SIZE = 6; // Increased from 2 to 6 items per chunk!
-  const TUNISIA_TIMEOUT = 240000; // 4 minutes timeout
-  const CHUNK_DELAY = 2000; // Shorter delay since we have fewer chunks
+  // BIGGER CHUNKS for faster processing
+  const TUNISIA_CHUNK_SIZE = 6; // Increased from 2 to 6
+  const TUNISIA_TIMEOUT = 240000; // 4 minutes
   
   const baseOrderData = {
     ...orderData,
@@ -2764,22 +2762,21 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
   }
 
-  console.log(`Tunisia: Submitting order in ${chunks.length} BIGGER chunks of ${TUNISIA_CHUNK_SIZE} items each`);
+  console.log(`Tunisia: Submitting ${chunks.length} BIGGER chunks of ${TUNISIA_CHUNK_SIZE} items each`);
 
-  // TUNISIA: Submit BIGGER chunks with PARALLEL processing for speed
+  // SEQUENTIAL processing (no parallel to avoid CORS issues)
   const results = [];
-  
-  // Process chunks in PARALLEL for maximum speed
-  const chunkPromises = chunks.map(async (chunk, i) => {
-    const chunkProgress = 20 + ((i + 1) / chunks.length) * 70; // 20-90%
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
 
     let retryCount = 0;
-    const maxRetries = 3; // More retries since chunks are bigger
+    const maxRetries = 3;
 
     while (retryCount <= maxRetries) {
       try {
-        console.log(`Tunisia: Uploading BIGGER chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        console.log(`Tunisia: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
         
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
@@ -2791,74 +2788,32 @@ const submitTunisiaBiggerChunks = async (orderData) => {
             withCredentials: true,
             timeout: TUNISIA_TIMEOUT,
             headers: {
-              'Content-Type': 'application/json',
-              'X-Country': 'TN',
-              'X-Chunk-Size': TUNISIA_CHUNK_SIZE.toString(),
-              'X-Chunk-Info': `${i + 1}/${chunks.length}`,
-              'X-Tunisia-Fast-Mode': 'true'
-            }
-          }
-        );
-
-        console.log(`Tunisia: BIGGER chunk ${i + 1} uploaded successfully`);
-        return response.data;
-        
-      } catch (error) {
-        retryCount++;
-        console.error(`Tunisia: BIGGER chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
-        
-        if (retryCount <= maxRetries) {
-          // Shorter backoff since we want speed
-          const backoffDelay = Math.min(3000 * retryCount, 10000);
-          console.log(`Tunisia: Retrying BIGGER chunk ${i + 1} after ${backoffDelay}ms delay...`);
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
-        } else {
-          throw new Error(`Tunisia: Failed to upload BIGGER chunk ${i + 1} after ${maxRetries + 1} attempts: ${error.message}`);
-        }
-      }
-    }
-  });
-
-  // Wait for ALL chunks to complete in PARALLEL
-  try {
-    const parallelResults = await Promise.all(chunkPromises);
-    results.push(...parallelResults);
-  } catch (parallelError) {
-    console.error('Parallel chunk processing failed, falling back to sequential');
-    
-    // FALLBACK: If parallel fails, try sequential processing
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      
-      try {
-        const response = await axios.post(
-          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-          {
-            ...baseOrderData,
-            orderItems: chunk
-          },
-          {
-            withCredentials: true,
-            timeout: TUNISIA_TIMEOUT,
-            headers: {
-              'Content-Type': 'application/json',
-              'X-Country': 'TN',
-              'X-Fallback-Mode': 'true',
-              'X-Chunk-Info': `${i + 1}/${chunks.length}`
+              'Content-Type': 'application/json'
+              // REMOVED ALL CUSTOM HEADERS - ONLY STANDARD ONES
             }
           }
         );
 
         results.push(response.data);
-        console.log(`Tunisia: Fallback chunk ${i + 1} uploaded successfully`);
+        console.log(`Tunisia: Chunk ${i + 1} uploaded successfully`);
         
-        // Small delay between fallback chunks
+        // Delay between chunks
         if (i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+          await new Promise(resolve => setTimeout(resolve, 750));
         }
         
-      } catch (fallbackError) {
-        throw new Error(`Tunisia: Fallback upload failed for chunk ${i + 1}: ${fallbackError.message}`);
+        break;
+        
+      } catch (error) {
+        retryCount++;
+        console.error(`Tunisia: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
+        
+        if (retryCount <= maxRetries) {
+          const backoffDelay = 3000 * retryCount;
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        } else {
+          throw new Error(`Tunisia: Failed chunk ${i + 1} after ${maxRetries + 1} attempts: ${error.message}`);
+        }
       }
     }
   }
@@ -2867,7 +2822,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks uploaded`);
   }
 
-  console.log(`Tunisia: Order upload completed successfully: ${results.length} BIGGER chunks uploaded`);
+  console.log(`Tunisia: Order completed: ${results.length} chunks uploaded`);
   return results;
 };
 
