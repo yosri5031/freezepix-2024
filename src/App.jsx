@@ -2594,7 +2594,48 @@ const handleTunisiaCODOrder = async () => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // LIGHTNING FAST photo processing
+    // LIGHTNING FAST photo processing - DEFINED HERE
+    const processPhotosWithProgress = async () => {
+      try {
+        const compressedPhotos = await Promise.all(
+          selectedPhotos.map(async (photo, index) => {
+            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
+            setUploadProgress(Math.round(progress));
+
+            let imageData;
+            if (photo.base64) {
+              imageData = photo.base64;
+            } else if (photo.file) {
+              // LIGHTNING FAST compression
+              const compressedFile = await imageCompression(photo.file, {
+                maxSizeMB: 0.5, // Balanced size for speed
+                maxWidthOrHeight: 1000, // Slightly smaller for speed
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.75, // Good quality but fast
+                alwaysKeepResolution: false
+              });
+              imageData = await convertImageToBase64(compressedFile);
+            }
+
+            return {
+              ...photo,
+              file: imageData,
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '10x15',
+              quantity: photo.quantity || 1
+            };
+          })
+        );
+        return compressedPhotos;
+      } catch (processError) {
+        console.error('Tunisia SPEED: Photo processing error:', processError);
+        throw new Error('Failed to process photos');
+      }
+    };
+
+    // CALL the photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
     const orderData = {
