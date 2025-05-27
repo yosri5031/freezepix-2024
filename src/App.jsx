@@ -903,16 +903,14 @@ const [formData, setFormData] = useState({
 
       useEffect(() => {
         if (activeStep === 1 && (selectedCountry === 'TN' || selectedCountry === 'TUN')) {
-          // Start background upload when user has some form data
-          if (formData.email || formData.phone || formData.name) {
-            const timer = setTimeout(() => {
-              startBackgroundUpload();
-            }, 2000); // 2 second delay
+          // Start background upload after a short delay
+          const timer = setTimeout(() => {
+            startBackgroundUpload();
+          }, 2000); // 2 second delay
       
-            return () => clearTimeout(timer);
-          }
+          return () => clearTimeout(timer);
         }
-      }, [activeStep, selectedCountry, selectedPhotos, formData.email, formData.phone, formData.name]);
+      }, [activeStep, selectedCountry, selectedPhotos]);
 
       useEffect(() => {
         const handleStudioPreselection = async () => {
@@ -2600,13 +2598,7 @@ const startBackgroundUpload = async () => {
     return;
   }
 
-  // WAIT for user to start filling form (so we have some real data)
-  if (!formData.email && !formData.phone && !formData.name) {
-    console.log('Tunisia BACKGROUND: Waiting for user to start filling form...');
-    return;
-  }
-
-  console.log('Tunisia BACKGROUND: Starting background upload with REAL data for', selectedPhotos.length, 'images');
+  console.log('Tunisia BACKGROUND: Starting background upload for', selectedPhotos.length, 'images');
   
   const tempOrderNumber = `TEMP-${Date.now()}`;
   
@@ -2652,7 +2644,7 @@ const startBackgroundUpload = async () => {
       })
     );
 
-    // Upload using EXISTING endpoint with REAL data
+    // Upload using EXISTING chunk endpoint with temporary data
     await uploadToExistingChunkEndpoint(tempOrderNumber, processedPhotos, country);
 
     setBackgroundUploadStatus(prev => ({
@@ -2662,7 +2654,7 @@ const startBackgroundUpload = async () => {
       progress: 100
     }));
 
-    console.log('Tunisia BACKGROUND: Upload completed with REAL data!');
+    console.log('Tunisia BACKGROUND: Upload completed successfully!');
 
   } catch (error) {
     console.error('Tunisia BACKGROUND: Upload failed:', error);
@@ -2680,71 +2672,27 @@ const uploadToExistingChunkEndpoint = async (tempOrderNumber, processedPhotos, c
   const CHUNK_SIZE = 12; // Big chunks for background
   const TIMEOUT = 90000; // 90 seconds
   
-  // GET REAL ORDER DATA from current form state
-  const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
-  
-  // Create REAL order data (not temp!)
-  const realOrderData = {
-    orderNumber: tempOrderNumber, // Keep temp number for now
-    
-    // REAL customer data (from form)
-    email: formData.email || 'processing@freezepix.com', // Use real email if available
-    phone: formData.phone || 'processing',
-    name: formData.name || 'Processing Order',
-    
-    // REAL order totals
-    totalAmount: Number(total) || 0,
-    subtotal: Number(subtotal) || 0,
-    taxAmount: Number(taxAmount) || 0,
-    shippingFee: Number(shippingFee) || 0,
-    discount: discount || 0,
-    discountCode: discountCode || null,
+  // Create temporary order data
+  const tempOrderData = {
+    orderNumber: tempOrderNumber,
+    email: 'temp@background.upload', // Temporary email
+    phone: 'temp-phone',
+    name: 'Background Upload',
+    orderItems: [], // Will be filled per chunk
+    totalAmount: 0, // Temporary
+    subtotal: 0,
+    taxAmount: 0,
+    shippingFee: 0,
+    discount: 0,
     currency: country.currency,
-    orderNote: orderNote || 'Background upload order',
-    
-    // REAL payment and delivery info
+    orderNote: 'Background upload - will be updated',
     paymentMethod: 'cod',
-    deliveryMethod: deliveryMethod || 'pickup',
-    
-    // REAL studio data (if pickup)
-    ...(deliveryMethod === 'pickup' && selectedStudio ? {
-      pickupStudio: {
-        studioId: selectedStudio._id || null,
-        name: selectedStudio.name || 'Unspecified Studio',
-        address: selectedStudio.address || 'Not Specified',
-        city: selectedStudio.city || 'Not Specified',
-        country: selectedStudio.country || selectedCountry
-      }
-    } : {}),
-    
-    // REAL shipping address (if shipping)
-    ...(deliveryMethod === 'shipping' && formData.shippingAddress ? {
-      shippingAddress: {
-        firstName: formData.shippingAddress.firstName || '',
-        lastName: formData.shippingAddress.lastName || '',
-        address: formData.shippingAddress.address || '',
-        city: formData.shippingAddress.city || '',
-        postalCode: formData.shippingAddress.postalCode || '',
-        country: formData.shippingAddress.country || selectedCountry,
-        province: formData.shippingAddress.province || '',
-        state: formData.shippingAddress.state || ''
-      }
-    } : {}),
-    
-    // REAL customer details
-    customerDetails: {
-      name: formData.name || 'Processing',
-      email: formData.email || 'processing@freezepix.com',
-      phone: formData.phone || 'processing',
-      country: selectedCountry
-    },
-    
+    deliveryMethod: 'pickup',
+    customerDetails: { country: selectedCountry },
     selectedCountry: selectedCountry,
-    
-    // Mark as background upload but with real data
+    // Mark as background upload
     isBackgroundUpload: true,
-    backgroundUploadFlag: true,
-    hasRealData: true // Flag to indicate this has real data
+    backgroundUploadFlag: true
   };
 
   // Split into chunks
@@ -2753,14 +2701,9 @@ const uploadToExistingChunkEndpoint = async (tempOrderNumber, processedPhotos, c
     chunks.push(processedPhotos.slice(i, i + CHUNK_SIZE));
   }
 
-  console.log(`Tunisia BACKGROUND: Uploading ${chunks.length} chunks with REAL order data:`, {
-    email: realOrderData.email,
-    phone: realOrderData.phone,
-    total: realOrderData.totalAmount,
-    studio: realOrderData.pickupStudio?.name || 'N/A'
-  });
+  console.log(`Tunisia BACKGROUND: Uploading ${chunks.length} chunks using existing endpoint`);
 
-  // Upload each chunk to existing endpoint with REAL data
+  // Upload each chunk to existing endpoint
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     const progress = 40 + ((i + 1) / chunks.length) * 60; // 40-100%
@@ -2771,7 +2714,7 @@ const uploadToExistingChunkEndpoint = async (tempOrderNumber, processedPhotos, c
       await axios.post(
         'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
         {
-          ...realOrderData, // Use REAL data, not temp
+          ...tempOrderData,
           orderItems: chunk
         },
         {
@@ -2783,7 +2726,7 @@ const uploadToExistingChunkEndpoint = async (tempOrderNumber, processedPhotos, c
         }
       );
 
-      console.log(`Tunisia BACKGROUND: Chunk ${i + 1}/${chunks.length} uploaded with REAL data`);
+      console.log(`Tunisia BACKGROUND: Chunk ${i + 1}/${chunks.length} uploaded to existing endpoint`);
 
     } catch (error) {
       console.warn(`Tunisia BACKGROUND: Chunk ${i + 1} failed:`, error.message);
@@ -2863,29 +2806,29 @@ const handleTunisiaCODOrder = async () => {
       throw new Error('Please select a pickup location');
     }
 
-    // Generate FINAL order number
-    const finalOrderNumber = generateOrderNumber();
-    setCurrentOrderNumber(finalOrderNumber);
+    const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
+    const country = initialCountries.find(c => c.value === selectedCountry);
 
     // Check if background upload completed
     if (backgroundUploadStatus.isComplete && backgroundUploadStatus.tempOrderNumber) {
-      console.log('Tunisia FAST: Background upload ready! Just updating order number...');
+      console.log('Tunisia FAST: Using background upload, updating existing order');
       
-      // SIMPLE: Just change the order number from TEMP to final
-      await updateOrderNumber(backgroundUploadStatus.tempOrderNumber, finalOrderNumber);
+      // UPDATE existing background order with real customer data
+      const finalOrderNumber = generateOrderNumber();
+      await updateBackgroundOrder(finalOrderNumber);
       
-      setUploadProgress(90); // Almost done!
+      setCurrentOrderNumber(finalOrderNumber);
       
     } else {
       console.log('Tunisia FAST: Background not ready, processing normally');
       
-      // Normal processing (your existing code)
-      const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
-      const country = initialCountries.find(c => c.value === selectedCountry);
+      // Normal processing (existing code)
+      const orderNumber = generateOrderNumber();
+      setCurrentOrderNumber(orderNumber);
       
       const optimizedPhotosWithPrices = await Promise.all(
         selectedPhotos.map(async (photo, index) => {
-          const progress = ((index + 1) / selectedPhotos.length) * 60;
+          const progress = ((index + 1) / selectedPhotos.length) * 60; // 60% for processing
           setUploadProgress(Math.round(progress));
 
           let imageData;
@@ -2913,8 +2856,9 @@ const handleTunisiaCODOrder = async () => {
         })
       );
 
+      // Upload normally
       const orderData = {
-        orderNumber: finalOrderNumber,
+        orderNumber,
         email: formData.email,
         phone: formData.phone,
         name: formData.name || '',
@@ -2968,12 +2912,12 @@ const handleTunisiaCODOrder = async () => {
 
     // Fire-and-forget email
     sendOrderConfirmationEmail({
-      orderNumber: finalOrderNumber, // Use final order number
+      orderNumber: currentOrderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name,
-      totalAmount: calculateTotals().total,
-      currency: initialCountries.find(c => c.value === selectedCountry).currency,
+      totalAmount: total,
+      currency: country.currency,
       paymentMethod: 'cod',
       deliveryMethod: deliveryMethod,
       ...(deliveryMethod === 'pickup' && selectedStudio && {
@@ -2983,9 +2927,6 @@ const handleTunisiaCODOrder = async () => {
           city: selectedStudio.city,
           country: selectedStudio.country
         }
-      }),
-      ...(deliveryMethod === 'shipping' && formData.shippingAddress && {
-        shippingAddress: formData.shippingAddress
       })
     }).catch(emailError => {
       console.warn('Tunisia FAST: Email failed but order succeeded:', emailError.message);
@@ -3016,36 +2957,6 @@ const handleTunisiaCODOrder = async () => {
   } finally {
     setIsProcessingOrder(false);
     setUploadProgress(0);
-  }
-};
-
-const updateOrderNumber = async (tempOrderNumber, finalOrderNumber) => {
-  try {
-    console.log('Tunisia FAST: Updating order number:', tempOrderNumber, '→', finalOrderNumber);
-    
-    // Send minimal update to change order number
-    await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-      {
-        orderNumber: tempOrderNumber, // Find this order
-        newOrderNumber: finalOrderNumber, // Change to this number
-        isOrderNumberUpdate: true, // Special flag
-        orderItems: [] // Empty array (no new items)
-      },
-      {
-        withCredentials: true,
-        timeout: 15000, // Quick timeout
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    console.log('Tunisia FAST: Order number updated successfully');
-    
-  } catch (error) {
-    console.error('Tunisia FAST: Failed to update order number:', error);
-    throw error;
   }
 };
 
