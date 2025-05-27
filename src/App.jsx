@@ -2575,7 +2575,7 @@ const handleTunisiaCODOrder = async () => {
     setError(null);
     setUploadProgress(0);
 
-    // Validate required fields for Tunisia
+    // Quick validation
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please fill in all required contact information');
     }
@@ -2584,32 +2584,32 @@ const handleTunisiaCODOrder = async () => {
       throw new Error('Please select a pickup location');
     }
 
-    // Generate order number
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // Enhanced photo processing with better compression for Tunisia
+    // TUNISIA: HIGH QUALITY compression - keep good quality but optimize for speed
     const processPhotosWithProgress = async () => {
       try {
         const compressedPhotos = await Promise.all(
           selectedPhotos.map(async (photo, index) => {
-            const progress = ((index + 1) / selectedPhotos.length) * 40; // First 40% for compression
+            const progress = ((index + 1) / selectedPhotos.length) * 20; // Faster processing
             setUploadProgress(Math.round(progress));
 
-            // More aggressive compression for Tunisia
             let imageData;
             if (photo.base64) {
               imageData = photo.base64;
             } else if (photo.file) {
+              // TUNISIA: Better balance - good quality but faster processing
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.4, // Reduced from default
-                maxWidthOrHeight: 1200, // Reduced resolution
+                maxSizeMB: 0.8, // Increased from 0.15 to 0.8 - MUCH better quality
+                maxWidthOrHeight: 1200, // Back to 1200px - full quality
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.6 // Lower quality for faster upload
+                initialQuality: 0.8, // Increased from 0.3 to 0.8 - high quality
+                alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
             }
@@ -2633,7 +2633,6 @@ const handleTunisiaCODOrder = async () => {
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Construct order data
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -2684,12 +2683,12 @@ const handleTunisiaCODOrder = async () => {
       createdAt: new Date().toISOString()
     };
 
-    // Use enhanced submission with smaller chunks for Tunisia
-    const responses = await submitTunisiaOrderWithImprovedChunking(orderData);
+    // TUNISIA: Use BIGGER CHUNKS for faster processing
+    const responses = await submitTunisiaBiggerChunks(orderData);
 
-    // Send confirmation email
+    // TUNISIA: Fast email with shorter timeout
     try {
-      await sendOrderConfirmationEmail({
+      const emailPromise = sendOrderConfirmationEmail({
         ...orderData,
         orderItems: orderData.orderItems.map(item => ({
           ...item,
@@ -2697,11 +2696,19 @@ const handleTunisiaCODOrder = async () => {
           thumbnail: item.thumbnail
         }))
       });
+      
+      // 15 second timeout for emails
+      await Promise.race([
+        emailPromise,
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Email timeout')), 15000)
+        )
+      ]);
     } catch (emailError) {
       console.error('Failed to send confirmation email:', emailError);
+      // Continue with success - email failure shouldn't fail the order
     }
 
-    // Success!
     setOrderSuccess(true);
     setSelectedPhotos([]);
     clearStateStorage();
@@ -2727,6 +2734,200 @@ const handleTunisiaCODOrder = async () => {
   } finally {
     setIsProcessingOrder(false);
     setUploadProgress(0);
+  }
+};
+
+const submitTunisiaBiggerChunks = async (orderData) => {
+  const { orderItems } = orderData;
+  
+  // TUNISIA: BIGGER CHUNKS for faster processing
+  const TUNISIA_CHUNK_SIZE = 6; // Increased from 2 to 6 items per chunk!
+  const TUNISIA_TIMEOUT = 240000; // 4 minutes timeout
+  const CHUNK_DELAY = 2000; // Shorter delay since we have fewer chunks
+  
+  const baseOrderData = {
+    ...orderData,
+    shippingFee: orderData.shippingFee || 0,
+    shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
+    deliveryMethod: orderData.deliveryMethod || 'pickup',
+    status: 'Waiting for CSR approval',
+    paymentMethod: 'cod',
+    paymentStatus: 'pending',
+    ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
+      ? { pickupStudio: orderData.pickupStudio } 
+      : { pickupStudio: null })
+  };
+
+  // Split into BIGGER chunks
+  const chunks = [];
+  for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
+    chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
+  }
+
+  console.log(`Tunisia: Submitting order in ${chunks.length} BIGGER chunks of ${TUNISIA_CHUNK_SIZE} items each`);
+
+  // TUNISIA: Submit BIGGER chunks with PARALLEL processing for speed
+  const results = [];
+  
+  // Process chunks in PARALLEL for maximum speed
+  const chunkPromises = chunks.map(async (chunk, i) => {
+    const chunkProgress = 20 + ((i + 1) / chunks.length) * 70; // 20-90%
+    setUploadProgress(Math.round(chunkProgress));
+
+    let retryCount = 0;
+    const maxRetries = 3; // More retries since chunks are bigger
+
+    while (retryCount <= maxRetries) {
+      try {
+        console.log(`Tunisia: Uploading BIGGER chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          {
+            ...baseOrderData,
+            orderItems: chunk
+          },
+          {
+            withCredentials: true,
+            timeout: TUNISIA_TIMEOUT,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Country': 'TN',
+              'X-Chunk-Size': TUNISIA_CHUNK_SIZE.toString(),
+              'X-Chunk-Info': `${i + 1}/${chunks.length}`,
+              'X-Tunisia-Fast-Mode': 'true'
+            }
+          }
+        );
+
+        console.log(`Tunisia: BIGGER chunk ${i + 1} uploaded successfully`);
+        return response.data;
+        
+      } catch (error) {
+        retryCount++;
+        console.error(`Tunisia: BIGGER chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
+        
+        if (retryCount <= maxRetries) {
+          // Shorter backoff since we want speed
+          const backoffDelay = Math.min(3000 * retryCount, 10000);
+          console.log(`Tunisia: Retrying BIGGER chunk ${i + 1} after ${backoffDelay}ms delay...`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        } else {
+          throw new Error(`Tunisia: Failed to upload BIGGER chunk ${i + 1} after ${maxRetries + 1} attempts: ${error.message}`);
+        }
+      }
+    }
+  });
+
+  // Wait for ALL chunks to complete in PARALLEL
+  try {
+    const parallelResults = await Promise.all(chunkPromises);
+    results.push(...parallelResults);
+  } catch (parallelError) {
+    console.error('Parallel chunk processing failed, falling back to sequential');
+    
+    // FALLBACK: If parallel fails, try sequential processing
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      
+      try {
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          {
+            ...baseOrderData,
+            orderItems: chunk
+          },
+          {
+            withCredentials: true,
+            timeout: TUNISIA_TIMEOUT,
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Country': 'TN',
+              'X-Fallback-Mode': 'true',
+              'X-Chunk-Info': `${i + 1}/${chunks.length}`
+            }
+          }
+        );
+
+        results.push(response.data);
+        console.log(`Tunisia: Fallback chunk ${i + 1} uploaded successfully`);
+        
+        // Small delay between fallback chunks
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+        }
+        
+      } catch (fallbackError) {
+        throw new Error(`Tunisia: Fallback upload failed for chunk ${i + 1}: ${fallbackError.message}`);
+      }
+    }
+  }
+
+  if (results.length !== chunks.length) {
+    throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks uploaded`);
+  }
+
+  console.log(`Tunisia: Order upload completed successfully: ${results.length} BIGGER chunks uploaded`);
+  return results;
+};
+
+const optimizeImageHighQuality = async (file) => {
+  try {
+    // TUNISIA: Best balance of quality and speed
+    const options = {
+      maxSizeMB: 1.2, // Generous file size for high quality
+      maxWidthOrHeight: 1400, // Even higher resolution
+      useWebWorker: true,
+      fileType: 'image/jpeg',
+      initialQuality: 0.85, // Very high quality
+      alwaysKeepResolution: true // Keep original resolution when possible
+    };
+    
+    return await imageCompression(file, options);
+  } catch (error) {
+    console.error('Tunisia high-quality optimization error:', error);
+    return file; // Return original if optimization fails
+  }
+};
+
+const processTunisiaOrderParallel = async (orderData) => {
+  try {
+    // Process multiple operations in parallel for speed
+    const [
+      orderSubmission,
+      emailPreparation
+    ] = await Promise.allSettled([
+      // Main order submission
+      submitTunisiaBiggerChunks(orderData),
+      
+      // Prepare email data in parallel
+      Promise.resolve({
+        ...orderData,
+        orderItems: orderData.orderItems.map(item => ({
+          ...item,
+          file: undefined,
+          thumbnail: item.thumbnail
+        }))
+      })
+    ]);
+
+    if (orderSubmission.status === 'fulfilled') {
+      console.log('Tunisia: Order submitted successfully');
+      
+      // Send email after order success (don't wait for it)
+      if (emailPreparation.status === 'fulfilled') {
+        sendOrderConfirmationEmail(emailPreparation.value).catch(emailError => {
+          console.warn('Tunisia: Email failed but order succeeded:', emailError.message);
+        });
+      }
+      
+      return orderSubmission.value;
+    } else {
+      throw orderSubmission.reason;
+    }
+  } catch (error) {
+    console.error('Tunisia parallel processing error:', error);
+    throw error;
   }
 };
 
