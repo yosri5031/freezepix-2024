@@ -2754,6 +2754,7 @@ const uploadBackgroundUltraFast = async (realOrderNumber, processedPhotos, count
         timeout: ULTRA_TIMEOUT,
         headers: {
           'Content-Type': 'application/json',
+          'X-Background-Ultra-Fast': 'true'
         }
       }
     );
