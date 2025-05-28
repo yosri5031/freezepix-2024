@@ -2598,7 +2598,7 @@ const startBackgroundUpload = async () => {
     return;
   }
 
-  console.log('Tunisia BACKGROUND: Starting with REAL data for', selectedPhotos.length, 'images');
+  console.log('Tunisia BACKGROUND ULTRA-FAST: Starting with', selectedPhotos.length, 'images');
   
   // Generate REAL order number from the start
   const realOrderNumber = generateOrderNumber();
@@ -2606,7 +2606,7 @@ const startBackgroundUpload = async () => {
   setBackgroundUploadStatus({
     isUploading: true,
     isComplete: false,
-    realOrderNumber: realOrderNumber, // Store real order number
+    realOrderNumber: realOrderNumber,
     error: null,
     progress: 0
   });
@@ -2615,39 +2615,41 @@ const startBackgroundUpload = async () => {
     const country = initialCountries.find(c => c.value === selectedCountry);
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
 
-    // Process photos in memory only (no storage)
-    const processedPhotos = [];
-    for (let i = 0; i < selectedPhotos.length; i++) {
-      const photo = selectedPhotos[i];
-      const progress = ((i + 1) / selectedPhotos.length) * 30; // First 30%
-      setBackgroundUploadStatus(prev => ({ ...prev, progress: Math.round(progress) }));
+    // ULTRA-FAST: Process all photos in parallel with minimal compression
+    const processedPhotos = await Promise.all(
+      selectedPhotos.map(async (photo, index) => {
+        const progress = ((index + 1) / selectedPhotos.length) * 50; // First 50%
+        setBackgroundUploadStatus(prev => ({ ...prev, progress: Math.round(progress) }));
 
-      let imageData;
-      if (photo.base64) {
-        imageData = photo.base64;
-      } else if (photo.file) {
-        const compressedFile = await imageCompression(photo.file, {
-          maxSizeMB: 0.6,
-          maxWidthOrHeight: 1000,
-          useWebWorker: true,
-          fileType: 'image/jpeg',
-          initialQuality: 0.75
-        });
-        imageData = await convertImageToBase64(compressedFile);
-      }
+        let imageData;
+        if (photo.base64) {
+          imageData = photo.base64;
+        } else if (photo.file) {
+          // ULTRA-FAST COMPRESSION - Even more aggressive speed optimization
+          const compressedFile = await imageCompression(photo.file, {
+            maxSizeMB: 3.0,          // Even larger allowance
+            maxWidthOrHeight: 1800,  // Higher resolution
+            useWebWorker: true,
+            fileType: 'image/jpeg',
+            initialQuality: 0.9,     // Very high quality = minimal processing
+            alwaysKeepResolution: true // Skip resizing when possible
+          });
+          imageData = await convertImageToBase64(compressedFile);
+        }
 
-      processedPhotos.push({
-        ...photo,
-        file: imageData,
-        price: photo.price || calculateItemPrice(photo, country),
-        productType: photo.productType || 'photo_print',
-        size: photo.size || '10x15',
-        quantity: photo.quantity || 1
-      });
-    }
+        return {
+          ...photo,
+          file: imageData,
+          price: photo.price || calculateItemPrice(photo, country),
+          productType: photo.productType || 'photo_print',
+          size: photo.size || '10x15',
+          quantity: photo.quantity || 1
+        };
+      })
+    );
 
-    // Upload with REAL order data immediately
-    await uploadBackgroundWithRealData(realOrderNumber, processedPhotos, country, {
+    // ULTRA-FAST: Single massive upload with all data
+    await uploadBackgroundUltraFast(realOrderNumber, processedPhotos, country, {
       total, currency, subtotal, shippingFee, taxAmount, discount
     });
 
@@ -2658,10 +2660,10 @@ const startBackgroundUpload = async () => {
       progress: 100
     }));
 
-    console.log('Tunisia BACKGROUND: Completed successfully with REAL order number:', realOrderNumber);
+    console.log('Tunisia BACKGROUND ULTRA-FAST: Completed with order number:', realOrderNumber);
 
   } catch (error) {
-    console.error('Tunisia BACKGROUND: Failed:', error);
+    console.error('Tunisia BACKGROUND ULTRA-FAST: Failed:', error);
     setBackgroundUploadStatus({
       isUploading: false,
       isComplete: false,
@@ -2671,6 +2673,120 @@ const startBackgroundUpload = async () => {
     });
   }
 };
+const uploadBackgroundUltraFast = async (realOrderNumber, processedPhotos, country, totals) => {
+  const ULTRA_TIMEOUT = 90000; // 90 seconds max
+  
+  // Create complete order data in single request
+  const completeOrderData = {
+    orderNumber: realOrderNumber,
+    
+    // Use current form data (whatever is available)
+    email: formData.email || `order-${realOrderNumber}@freezepix.com`,
+    phone: formData.phone || 'pending',
+    name: formData.name || 'Tunisia Background Order',
+    
+    // Complete totals
+    totalAmount: Number(totals.total) || 0,
+    subtotal: Number(totals.subtotal) || 0,
+    taxAmount: Number(totals.taxAmount) || 0,
+    shippingFee: Number(totals.shippingFee) || 0,
+    discount: totals.discount || 0,
+    discountCode: discountCode || null,
+    currency: country.currency,
+    orderNote: orderNote || 'Background upload order',
+    
+    // Payment and delivery settings
+    paymentMethod: 'cod',
+    paymentStatus: 'background_processing',
+    status: 'Background Processing',
+    deliveryMethod: deliveryMethod || 'pickup',
+    
+    // Studio data (if available)
+    ...(selectedStudio ? {
+      pickupStudio: {
+        studioId: selectedStudio._id || null,
+        name: selectedStudio.name || 'Selected Studio',
+        address: selectedStudio.address || 'Studio Address',
+        city: selectedStudio.city || 'Studio City',
+        country: selectedStudio.country || selectedCountry
+      }
+    } : {}),
+    
+    // Shipping address (if available)
+    ...(deliveryMethod === 'shipping' && formData.shippingAddress ? {
+      shippingAddress: {
+        firstName: formData.shippingAddress.firstName || 'Processing',
+        lastName: formData.shippingAddress.lastName || 'Order',
+        address: formData.shippingAddress.address || 'Pending Address',
+        city: formData.shippingAddress.city || 'Pending City',
+        postalCode: formData.shippingAddress.postalCode || '00000',
+        country: formData.shippingAddress.country || selectedCountry,
+        province: formData.shippingAddress.province || '',
+        state: formData.shippingAddress.state || ''
+      }
+    } : {}),
+    
+    customerDetails: {
+      name: formData.name || 'Tunisia Customer',
+      email: formData.email || `order-${realOrderNumber}@freezepix.com`,
+      phone: formData.phone || 'pending',
+      country: selectedCountry
+    },
+    
+    selectedCountry: selectedCountry,
+    isBackgroundUpload: true,
+    ultraFastBackground: true, // New flag for server optimization
+    
+    // ALL PHOTOS IN SINGLE REQUEST
+    orderItems: processedPhotos
+  };
+
+  console.log(`Tunisia BACKGROUND ULTRA-FAST: Uploading ALL ${processedPhotos.length} items in single request`);
+
+  try {
+    setBackgroundUploadStatus(prev => ({ ...prev, progress: 75 }));
+    
+    const response = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+      completeOrderData,
+      {
+        withCredentials: true,
+        timeout: ULTRA_TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Background-Ultra-Fast': 'true'
+        }
+      }
+    );
+
+    console.log(`Tunisia BACKGROUND ULTRA-FAST: Complete order uploaded for ${realOrderNumber}`);
+    return response.data;
+
+  } catch (error) {
+    console.error(`Tunisia BACKGROUND ULTRA-FAST: Upload failed:`, error.message);
+    throw error;
+  }
+};
+
+const optimizeImageUltraFast = async (file) => {
+  try {
+    // For Tunisia background uploads, prioritize speed over file size
+    const options = {
+      maxSizeMB: 4.0,             // Very generous file size
+      maxWidthOrHeight: 2000,     // Keep high resolution
+      useWebWorker: true,
+      fileType: 'image/jpeg',
+      initialQuality: 0.92,       // Very high quality = less processing
+      alwaysKeepResolution: true  // Skip resizing when possible
+    };
+    
+    return await imageCompression(file, options);
+  } catch (error) {
+    console.error('Ultra-fast optimization error:', error);
+    return file; // Return original if optimization fails
+  }
+};
+
 
 // 3. FIXED: Upload with REAL data from the start
 const uploadBackgroundWithRealData = async (realOrderNumber, processedPhotos, country, totals) => {
@@ -2789,9 +2905,9 @@ const handleTunisiaCODOrder = async () => {
     setError(null);
     setUploadProgress(0);
 
-    console.log('Tunisia FAST: Starting order finalization...');
+    console.log('Tunisia ULTRA-FAST: Starting optimized processing...');
 
-    // Validation
+    // Validation (keep existing)
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please fill in all required contact information');
     }
@@ -2802,59 +2918,60 @@ const handleTunisiaCODOrder = async () => {
 
     let finalOrderNumber;
 
-    // Check if background upload completed
+    // Check background upload status
     if (backgroundUploadStatus.isComplete && backgroundUploadStatus.realOrderNumber) {
-      console.log('Tunisia FAST: Background upload ready! Using order:', backgroundUploadStatus.realOrderNumber);
+      console.log('Tunisia ULTRA-FAST: Using background order:', backgroundUploadStatus.realOrderNumber);
       
       finalOrderNumber = backgroundUploadStatus.realOrderNumber;
       setCurrentOrderNumber(finalOrderNumber);
       
-      // SIMPLE: Just update the order status and final customer data
-      await finalizeBackgroundOrder(finalOrderNumber);
-      
-      setUploadProgress(95); // Almost done!
+      // ULTRA-FAST: Just finalize existing order
+      await finalizeBackgroundOrderFast(finalOrderNumber);
       
     } else {
-      console.log('Tunisia FAST: Background not ready, processing normally');
+      console.log('Tunisia ULTRA-FAST: Processing with parallel optimization');
       
-      // Generate new order number for normal processing
       finalOrderNumber = generateOrderNumber();
       setCurrentOrderNumber(finalOrderNumber);
       
-      // Normal processing (your existing working code)
+      // PARALLEL PROCESSING - Process all photos at once
       const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
       const country = initialCountries.find(c => c.value === selectedCountry);
       
-      const optimizedPhotosWithPrices = await Promise.all(
-        selectedPhotos.map(async (photo, index) => {
-          const progress = ((index + 1) / selectedPhotos.length) * 70;
-          setUploadProgress(Math.round(progress));
+      // ULTRA-FAST: Process all photos in parallel with minimal compression
+      const optimizedPhotosPromises = selectedPhotos.map(async (photo, index) => {
+        const progress = ((index + 1) / selectedPhotos.length) * 40; // Only 40% for processing
+        setUploadProgress(Math.round(progress));
 
-          let imageData;
-          if (photo.base64) {
-            imageData = photo.base64;
-          } else if (photo.file) {
-            const compressedFile = await imageCompression(photo.file, {
-              maxSizeMB: 0.6,
-              maxWidthOrHeight: 1000,
-              useWebWorker: true,
-              fileType: 'image/jpeg',
-              initialQuality: 0.75
-            });
-            imageData = await convertImageToBase64(compressedFile);
-          }
+        let imageData;
+        if (photo.base64) {
+          imageData = photo.base64;
+        } else if (photo.file) {
+          // ULTRA-FAST COMPRESSION - Minimal processing
+          const compressedFile = await imageCompression(photo.file, {
+            maxSizeMB: 2.5,          // Much larger allowance
+            maxWidthOrHeight: 1600,  // Higher resolution
+            useWebWorker: true,
+            fileType: 'image/jpeg',
+            initialQuality: 0.88,    // Higher quality = less processing
+            alwaysKeepResolution: false
+          });
+          imageData = await convertImageToBase64(compressedFile);
+        }
 
-          return {
-            ...photo,
-            file: imageData,
-            price: photo.price || calculateItemPrice(photo, country),
-            productType: photo.productType || 'photo_print',
-            size: photo.size || '10x15',
-            quantity: photo.quantity || 1
-          };
-        })
-      );
+        return {
+          ...photo,
+          file: imageData,
+          price: photo.price || calculateItemPrice(photo, country),
+          productType: photo.productType || 'photo_print',
+          size: photo.size || '10x15',
+          quantity: photo.quantity || 1
+        };
+      });
 
+      // Wait for all photos to process in parallel
+      const optimizedPhotosWithPrices = await Promise.all(optimizedPhotosPromises);
+      
       const orderData = {
         orderNumber: finalOrderNumber,
         email: formData.email,
@@ -2905,36 +3022,15 @@ const handleTunisiaCODOrder = async () => {
         createdAt: new Date().toISOString()
       };
 
-      await submitTunisiaBiggerChunks(orderData);
+      // ULTRA-FAST: Single giant chunk with no delays
+      await submitTunisiaUltraFast(orderData);
     }
 
-    // Send email with REAL order data
-    sendOrderConfirmationEmail({
-      orderNumber: finalOrderNumber,
-      email: formData.email,
-      phone: formData.phone,
-      name: formData.name,
-      totalAmount: calculateTotals().total,
-      currency: initialCountries.find(c => c.value === selectedCountry).currency,
-      paymentMethod: 'cod',
-      deliveryMethod: deliveryMethod,
-      ...(deliveryMethod === 'pickup' && selectedStudio && {
-        pickupStudio: {
-          name: selectedStudio.name,
-          address: selectedStudio.address,
-          city: selectedStudio.city,
-          country: selectedStudio.country
-        }
-      }),
-      ...(deliveryMethod === 'shipping' && formData.shippingAddress && {
-        shippingAddress: formData.shippingAddress
-      })
-    }).catch(emailError => {
-      console.warn('Tunisia FAST: Email failed but order succeeded:', emailError.message);
-    });
+    // PARALLEL: Send email without waiting
+    sendOrderConfirmationEmailAsync(finalOrderNumber);
 
     const totalTime = Date.now() - startTime;
-    console.log(`Tunisia FAST: Order completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
+    console.log(`Tunisia ULTRA-FAST: Completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
 
     // Clear background status
     setBackgroundUploadStatus({
@@ -2946,10 +3042,8 @@ const handleTunisiaCODOrder = async () => {
     });
 
     setOrderSuccess(true);
-    // DON'T clear photos from state, just mark success
-    // setSelectedPhotos([]); // Remove this to avoid storage operations
     
-    // Clear only localStorage items that exist
+    // Skip localStorage operations for speed
     try {
       localStorage.removeItem('freezepixState');
       localStorage.removeItem('uploadedPhotos');
@@ -2959,7 +3053,7 @@ const handleTunisiaCODOrder = async () => {
 
   } catch (error) {
     const totalTime = Date.now() - startTime;
-    console.error(`Tunisia FAST: Order failed after ${totalTime}ms:`, error);
+    console.error(`Tunisia ULTRA-FAST: Failed after ${totalTime}ms:`, error);
     
     setError(error.message || 'Failed to place order');
     setOrderSuccess(false);
@@ -2969,17 +3063,17 @@ const handleTunisiaCODOrder = async () => {
   }
 };
 
-const finalizeBackgroundOrder = async (orderNumber) => {
+const finalizeBackgroundOrderFast = async (orderNumber) => {
   try {
     console.log('Tunisia FAST: Finalizing background order:', orderNumber);
     
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     
-    // Send final update with complete customer data
+    // Use existing /api/orders/chunk - it handles existing order updates perfectly
     await axios.post(
       'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
       {
-        orderNumber: orderNumber, // Use the REAL order number
+        orderNumber: orderNumber, // Existing order number
         
         // Final customer data
         email: formData.email,
@@ -2993,12 +3087,12 @@ const finalizeBackgroundOrder = async (orderNumber) => {
         shippingFee: Number(shippingFee) || 0,
         discount: discount || 0,
         discountCode: discountCode || null,
+        currency: initialCountries.find(c => c.value === selectedCountry).currency,
         orderNote: orderNote || '',
         
         // Update status to final
-        paymentStatus: 'pending',
-        status: 'Waiting for CSR approval',
         paymentMethod: 'cod',
+        paymentStatus: 'pending',
         deliveryMethod: deliveryMethod,
         
         // Final studio data
@@ -3024,11 +3118,10 @@ const finalizeBackgroundOrder = async (orderNumber) => {
           country: selectedCountry
         },
         
-        // Empty orderItems (already uploaded)
-        orderItems: [],
+        selectedCountry: selectedCountry,
         
-        // Flag to indicate this is a finalization
-        isBackgroundFinalization: true
+        // Empty orderItems since they're already uploaded in background
+        orderItems: []
       },
       {
         withCredentials: true,
@@ -3039,12 +3132,157 @@ const finalizeBackgroundOrder = async (orderNumber) => {
       }
     );
 
-    console.log('Tunisia FAST: Background order finalized successfully');
+    console.log('Tunisia FAST: Background order finalized successfully using chunk endpoint');
     
   } catch (error) {
     console.error('Tunisia FAST: Failed to finalize background order:', error);
     throw error;
   }
+};
+
+const submitTunisiaUltraFast = async (orderData) => {
+  const { orderItems } = orderData;
+  
+  // ULTRA-FAST: Single chunk for ALL items
+  const ULTRA_TIMEOUT = 60000;  // 1 minute max
+  
+  // ========== PRESERVE ORIGINAL DATA STRUCTURE ==========
+  const baseOrderData = {
+    // Core order info (original structure)
+    orderNumber: orderData.orderNumber,
+    email: orderData.email,
+    phone: orderData.phone,
+    name: orderData.name,
+    
+    // Order items (all at once for speed)
+    orderItems: orderItems,
+    
+    // Financial data (preserve original validation)
+    totalAmount: Number(orderData.totalAmount) || 0,
+    subtotal: Number(orderData.subtotal) || 0,
+    taxAmount: Number(orderData.taxAmount) || 0,
+    shippingFee: Number(orderData.shippingFee) || 0,
+    discount: orderData.discount || 0,
+    currency: orderData.currency || 'TND',
+    
+    // Order details (preserve original)
+    orderNote: orderData.orderNote || '',
+    discountCode: orderData.discountCode || '',
+    paymentMethod: orderData.paymentMethod || 'cod',
+    deliveryMethod: orderData.deliveryMethod || 'pickup',
+    
+    // Customer details (preserve original)
+    customerDetails: orderData.customerDetails || {
+      name: orderData.name || '',
+      email: orderData.email,
+      phone: orderData.phone,
+      country: orderData.selectedCountry
+    },
+    selectedCountry: orderData.selectedCountry,
+    
+    // ========== CRITICAL: PRESERVE PICKUP STUDIO STRUCTURE ==========
+    ...(orderData.deliveryMethod === 'pickup' && orderData.pickupStudio ? {
+      pickupStudio: {
+        studioId: orderData.pickupStudio.studioId || null, // CRITICAL for notifications
+        name: orderData.pickupStudio.name || 'Unspecified Studio',
+        address: orderData.pickupStudio.address || 'Not Specified',
+        city: orderData.pickupStudio.city || 'Not Specified',
+        country: orderData.pickupStudio.country || orderData.selectedCountry
+      }
+    } : {}),
+    
+    // ========== PRESERVE SHIPPING ADDRESS STRUCTURE ==========
+    ...(orderData.deliveryMethod === 'shipping' && orderData.shippingAddress ? {
+      shippingAddress: {
+        firstName: orderData.shippingAddress.firstName || '',
+        lastName: orderData.shippingAddress.lastName || '',
+        address: orderData.shippingAddress.address || '',
+        city: orderData.shippingAddress.city || '',
+        postalCode: orderData.shippingAddress.postalCode || '',
+        country: orderData.shippingAddress.country || orderData.selectedCountry,
+        province: orderData.shippingAddress.province || '',
+        state: orderData.shippingAddress.state || ''
+      }
+    } : {}),
+    
+    // Speed optimization flags
+    ultraFastMode: true,
+    singleChunk: true
+  };
+
+  console.log(`Tunisia ULTRA-FAST: Uploading ALL ${orderItems.length} items in single chunk`);
+  console.log('Tunisia ULTRA-FAST: Order data structure:', {
+    orderNumber: baseOrderData.orderNumber,
+    deliveryMethod: baseOrderData.deliveryMethod,
+    hasPickupStudio: !!baseOrderData.pickupStudio,
+    studioId: baseOrderData.pickupStudio?.studioId,
+    hasShippingAddress: !!baseOrderData.shippingAddress,
+    itemCount: orderItems.length,
+    totalAmount: baseOrderData.totalAmount
+  });
+
+  try {
+    setUploadProgress(60);
+    
+    const response = await axios.post(
+      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+      baseOrderData,
+      {
+        withCredentials: true,
+        timeout: ULTRA_TIMEOUT,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Ultra-Fast': 'true'
+        }
+      }
+    );
+
+    setUploadProgress(90);
+    console.log(`Tunisia ULTRA-FAST: ${orderItems.length} items uploaded successfully`);
+    console.log('Tunisia ULTRA-FAST: Server response:', {
+      message: response.data.message,
+      orderNumber: response.data.orderNumber,
+      processedItems: response.data.processedItems,
+      studioNotificationReady: response.data.studioNotificationReady,
+      processingTime: response.data.processingTime
+    });
+    
+    return [response.data];
+    
+  } catch (error) {
+    console.error('Tunisia ULTRA-FAST: Upload failed:', error.response?.data || error.message);
+    throw new Error(`Ultra-fast upload failed: ${error.response?.data?.details || error.message}`);
+  }
+};
+
+// NEW: Async email sending (don't wait for it)
+const sendOrderConfirmationEmailAsync = (orderNumber) => {
+  // Fire and forget - don't wait for email
+  setTimeout(() => {
+    sendOrderConfirmationEmail({
+      orderNumber: orderNumber,
+      email: formData.email,
+      phone: formData.phone,
+      name: formData.name,
+      totalAmount: calculateTotals().total,
+      currency: initialCountries.find(c => c.value === selectedCountry).currency,
+      paymentMethod: 'cod',
+      deliveryMethod: deliveryMethod,
+      ...(deliveryMethod === 'pickup' && selectedStudio && {
+        pickupStudio: {
+          name: selectedStudio.name,
+          address: selectedStudio.address,
+          city: selectedStudio.city,
+          country: selectedStudio.country
+        }
+      }),
+      ...(deliveryMethod === 'shipping' && formData.shippingAddress && {
+        shippingAddress: formData.shippingAddress
+      })
+    }).catch(emailError => {
+      console.warn('Email failed but order succeeded:', emailError.message);
+    });
+  }, 100); // Send after 100ms, don't block order completion
 };
 
 const submitTunisiaBiggerChunks = async (orderData) => {
