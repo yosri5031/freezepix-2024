@@ -4840,7 +4840,10 @@ const handleSecretTokenReceived = (token) => {
   setSecretToken(token);
 };
 
+// Replace the processPhotosWithProgress function in handleHelcimPaymentSuccess
+
 const handleHelcimPaymentSuccess = async (paymentData) => {
+  // Generate order number with verification (keep existing code)
   const generateOrderNumber = () => {
     const timestamp = Date.now().toString();
     const random = Math.floor(Math.random() * 999999).toString().padStart(6, '0');
@@ -4848,7 +4851,6 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     return `FPX-${prefix}-${timestamp.slice(-6)}${random}`;
   };
 
-  // Add verification before proceeding
   const verifyOrderNumber = async (orderNum) => {
     try {
       const response = await axios.get(
@@ -4861,7 +4863,6 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     }
   };
 
-  // Generate and verify order number
   let orderNumber;
   let isUnique = false;
   let attempts = 0;
@@ -4876,7 +4877,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       console.error('Verification attempt failed:', error);
     }
     attempts++;
-    await new Promise(resolve => setTimeout(resolve, 100)); // Small delay between attempts
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   if (!isUnique) {
@@ -4886,38 +4887,142 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
 
   const country = initialCountries.find(c => c.value === selectedCountry);
 
-  // Rest of your existing code...
+  // IMPROVED PHOTO PROCESSING FOR CANADA
   const processPhotosWithProgress = async () => {
     try {
-      const optimizedPhotosWithPrices = await processImagesInBatches(
-        selectedPhotos.map(photo => ({
-          ...photo,
-          price: photo.price || calculateItemPrice(photo, country)
-        })),
-        (progress) => {
-          setUploadProgress(Math.round(progress));
-          if (progress % 20 === 0) {
-            saveStateWithCleanup({
-              orderNumber,
-              progress,
-              timestamp: new Date().toISOString()
-            });
+      console.log('Starting photo processing for Canada...');
+      
+      // Canada-specific processing settings
+      const isCanada = selectedCountry === 'CA' || selectedCountry === 'CAN';
+      
+      const optimizedPhotosWithPrices = await Promise.all(
+        selectedPhotos.map(async (photo, index) => {
+          try {
+            const progress = ((index + 1) / selectedPhotos.length) * 30; // 30% for processing
+            setUploadProgress(Math.round(progress));
+            
+            console.log(`Processing photo ${index + 1}/${selectedPhotos.length} for Canada`);
+            
+            let imageData;
+            
+            if (photo.base64) {
+              // Already base64, use as-is
+              imageData = photo.base64;
+              console.log(`Photo ${index + 1}: Using existing base64 data`);
+            } else if (photo.file) {
+              // Need to process the file
+              console.log(`Photo ${index + 1}: Processing file for Canada`);
+              
+              // Canada-optimized compression settings
+              const compressionOptions = isCanada ? {
+                maxSizeMB: 2.0,        // Larger file size for better quality
+                maxWidthOrHeight: 1800, // Higher resolution for Canada
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.85,   // Higher quality for Canada
+                alwaysKeepResolution: false
+              } : {
+                maxSizeMB: 1.0,
+                maxWidthOrHeight: 1200,
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.75,
+                alwaysKeepResolution: false
+              };
+              
+              try {
+                // Compress with retry logic for Canada
+                let compressedFile;
+                let compressionAttempts = 0;
+                const maxCompressionAttempts = 3;
+                
+                while (compressionAttempts < maxCompressionAttempts) {
+                  try {
+                    compressedFile = await imageCompression(photo.file, compressionOptions);
+                    console.log(`Photo ${index + 1}: Compression successful on attempt ${compressionAttempts + 1}`);
+                    break;
+                  } catch (compressionError) {
+                    compressionAttempts++;
+                    console.warn(`Photo ${index + 1}: Compression attempt ${compressionAttempts} failed:`, compressionError);
+                    
+                    if (compressionAttempts === maxCompressionAttempts) {
+                      // Use original file if compression fails
+                      console.log(`Photo ${index + 1}: Using original file after compression failures`);
+                      compressedFile = photo.file;
+                    } else {
+                      // Reduce quality for retry
+                      compressionOptions.initialQuality = Math.max(0.5, compressionOptions.initialQuality - 0.1);
+                      compressionOptions.maxSizeMB = Math.min(compressionOptions.maxSizeMB + 0.5, 3.0);
+                    }
+                  }
+                }
+                
+                // Convert to base64
+                imageData = await convertImageToBase64(compressedFile);
+                console.log(`Photo ${index + 1}: Successfully converted to base64`);
+                
+              } catch (processingError) {
+                console.error(`Photo ${index + 1}: Processing failed, using original:`, processingError);
+                // Fallback: try to use original file
+                imageData = await convertImageToBase64(photo.file);
+              }
+            } else {
+              throw new Error(`Photo ${index + 1}: No valid image data found`);
+            }
+
+            const processedPhoto = {
+              ...photo,
+              file: imageData,
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '4x6',
+              quantity: photo.quantity || 1
+            };
+            
+            console.log(`Photo ${index + 1}: Processing completed successfully`);
+            return processedPhoto;
+            
+          } catch (photoError) {
+            console.error(`Error processing photo ${index + 1}:`, photoError);
+            // Don't throw error for individual photo, continue with others
+            return {
+              ...photo,
+              file: photo.base64 || null, // Use existing base64 if available
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '4x6',
+              quantity: photo.quantity || 1,
+              processingError: true
+            };
           }
-        }
+        })
       );
-      return optimizedPhotosWithPrices;
+      
+      // Filter out photos that failed completely
+      const validPhotos = optimizedPhotosWithPrices.filter(photo => photo.file !== null);
+      
+      if (validPhotos.length === 0) {
+        throw new Error('No photos could be processed successfully');
+      }
+      
+      if (validPhotos.length < selectedPhotos.length) {
+        console.warn(`Warning: Only ${validPhotos.length} out of ${selectedPhotos.length} photos processed successfully`);
+      }
+      
+      console.log(`Canada photo processing completed: ${validPhotos.length} photos ready`);
+      return validPhotos;
+      
     } catch (processError) {
-      console.error('Photo processing error:', processError);
-      throw new Error(t('errors.photoProcessingFailed'));
+      console.error('Canada photo processing error:', processError);
+      throw new Error(`Photo processing failed: ${processError.message}`);
     }
   };
 
   const optimizedPhotosWithPrices = await processPhotosWithProgress();
-  const { taxAmount,shippingFee } = calculateTotals();
-
+  const { taxAmount, shippingFee } = calculateTotals();
 
   try {
-    console.log('Payment Success Handler - Processing payment:', paymentData);
+    console.log('Payment Success Handler - Processing payment for Canada:', paymentData);
     setIsProcessingOrder(true);
     
     const orderData = {
@@ -5007,19 +5112,31 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     // Add timestamp to ensure uniqueness
     orderData.createdAt = new Date().toISOString();
 
-    console.log('Submitting order with data:', orderData);
+    console.log('Submitting Canada order with data:', orderData);
 
-    // Submit order with optimized chunking
+    // CANADA-SPECIFIC ORDER SUBMISSION with better error handling
     const maxRetries = 3;
     let retryCount = 0;
     let orderSubmitted = false;
 
     while (retryCount < maxRetries && !orderSubmitted) {
       try {
-        const orderResponse = await submitOrderWithOptimizedChunking(orderData);
-        if (orderResponse ) {
+        console.log(`Canada order submission attempt ${retryCount + 1}/${maxRetries}`);
+        
+        // Use optimized chunking specifically for Canada
+        let orderResponse;
+        
+        if (selectedCountry === 'CA' || selectedCountry === 'CAN') {
+          // Canada-specific submission
+          orderResponse = await submitCanadaOrderOptimized(orderData);
+        } else {
+          // Regular submission
+          orderResponse = await submitOrderWithOptimizedChunking(orderData);
+        }
+        
+        if (orderResponse && orderResponse.length > 0) {
           orderSubmitted = true;
-          console.log('Order submitted successfully:', orderResponse);
+          console.log('Canada order submitted successfully:', orderResponse);
           
           // Send confirmation email
           try {
@@ -5030,9 +5147,9 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
                 cardLastFour: paymentData.cardNumber?.slice(-4)
               }
             });
-            console.log('Confirmation email sent successfully');
+            console.log('Canada confirmation email sent successfully');
           } catch (emailError) {
-            console.error('Failed to send confirmation email:', emailError);
+            console.error('Failed to send Canada confirmation email:', emailError);
             // Continue with success flow even if email fails
           }
 
@@ -5040,29 +5157,124 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
           setOrderSuccess(true);
           setSelectedPhotos([]);
           setError(null);
-          window.removeHelcimPayIframe(); // Assuming this function exists
-
           
           // Clear session storage
           clearStateStorage();
           break;
         }
-        throw new Error('Order submission failed');
+        throw new Error('Canada order submission failed - empty response');
       } catch (error) {
-        console.error(`Order submission attempt ${retryCount + 1} failed:`, error);
+        console.error(`Canada order submission attempt ${retryCount + 1} failed:`, error);
         retryCount++;
         if (retryCount === maxRetries) {
-          throw error;
+          throw new Error(`Canada order submission failed after ${maxRetries} attempts: ${error.message}`);
         }
-        await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
+        await new Promise(resolve => setTimeout(resolve, 2000 * Math.pow(2, retryCount)));
       }
     }
   } catch (error) {
-    console.error('Payment processing error:', error);
-    setError(error.response?.data?.error || 'Failed to process payment or submit order');
+    console.error('Canada payment processing error:', error);
+    setError(`Payment processing failed for Canada: ${error.message}`);
     setOrderSuccess(false);
   } finally {
     setIsProcessingOrder(false);
+  }
+};
+
+// ADD this new Canada-specific order submission function
+const submitCanadaOrderOptimized = async (orderData) => {
+  try {
+    const { orderItems } = orderData;
+    
+    // Canada-optimized settings
+    const CANADA_CHUNK_SIZE = 4; // Smaller chunks for Canada
+    const CANADA_TIMEOUT = 120000; // 2 minutes timeout
+    
+    const baseOrderData = {
+      ...orderData,
+      shippingFee: orderData.shippingFee || 0,
+      shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
+      deliveryMethod: orderData.deliveryMethod || 'pickup',
+      status: 'Processing',
+      paymentMethod: 'helcim',
+      paymentStatus: 'paid',
+      canadaOptimized: true, // Flag for server
+      ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
+        ? { pickupStudio: orderData.pickupStudio } 
+        : { pickupStudio: null })
+    };
+
+    // Split into Canada-optimized chunks
+    const chunks = [];
+    for (let i = 0; i < orderItems.length; i += CANADA_CHUNK_SIZE) {
+      chunks.push(orderItems.slice(i, i + CANADA_CHUNK_SIZE));
+    }
+
+    console.log(`Canada: Submitting order in ${chunks.length} chunks of ${CANADA_CHUNK_SIZE} items each`);
+
+    const results = [];
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      const chunkProgress = 40 + ((i + 1) / chunks.length) * 50; // Remaining 50% for upload
+      setUploadProgress(Math.round(chunkProgress));
+
+      let retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount <= maxRetries) {
+        try {
+          console.log(`Canada: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+          
+          const response = await axios.post(
+            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+            {
+              ...baseOrderData,
+              orderItems: chunk
+            },
+            {
+              withCredentials: true,
+              timeout: CANADA_TIMEOUT,
+              headers: {
+                'Content-Type': 'application/json'
+              }
+            }
+          );
+
+          results.push(response.data);
+          console.log(`Canada: Chunk ${i + 1} uploaded successfully`);
+          
+          // Delay between chunks for Canada
+          if (i < chunks.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          
+          break; // Success, exit retry loop
+          
+        } catch (error) {
+          retryCount++;
+          console.error(`Canada: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
+          
+          if (retryCount <= maxRetries) {
+            const backoffDelay = 2000 * Math.pow(2, retryCount - 1);
+            console.log(`Canada: Retrying chunk ${i + 1} after ${backoffDelay}ms delay...`);
+            await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          } else {
+            throw new Error(`Canada: Failed to upload chunk ${i + 1} after ${maxRetries + 1} attempts: ${error.message}`);
+          }
+        }
+      }
+    }
+
+    if (results.length !== chunks.length) {
+      throw new Error(`Canada: Upload incomplete: ${results.length}/${chunks.length} chunks uploaded`);
+    }
+
+    console.log(`Canada: Order upload completed successfully: ${results.length} chunks uploaded`);
+    return results;
+    
+  } catch (error) {
+    console.error('Canada order submission error:', error);
+    throw error;
   }
 };
 
