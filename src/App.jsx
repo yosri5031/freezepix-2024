@@ -3232,6 +3232,7 @@ const submitTunisiaUltraFast = async (orderData) => {
         timeout: ULTRA_TIMEOUT,
         headers: {
           'Content-Type': 'application/json',
+          'X-Ultra-Fast': 'true'
         }
       }
     );
