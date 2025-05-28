@@ -4915,11 +4915,11 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
               
               // Canada-optimized compression settings
               const compressionOptions = isCanada ? {
-                maxSizeMB: 2.0,        // Larger file size for better quality
-                maxWidthOrHeight: 1800, // Higher resolution for Canada
+                maxSizeMB: 1.2,        // Larger file size for better quality
+                maxWidthOrHeight: 1200, // Higher resolution for Canada
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.85,   // Higher quality for Canada
+                initialQuality: 0.75,   // Higher quality for Canada
                 alwaysKeepResolution: false
               } : {
                 maxSizeMB: 1.0,
@@ -5187,7 +5187,7 @@ const submitCanadaOrderOptimized = async (orderData) => {
     const { orderItems } = orderData;
     
     // Canada-optimized settings
-    const CANADA_CHUNK_SIZE = 4; // Smaller chunks for Canada
+    const CANADA_CHUNK_SIZE = 12; // Smaller chunks for Canada
     const CANADA_TIMEOUT = 120000; // 2 minutes timeout
     
     const baseOrderData = {
