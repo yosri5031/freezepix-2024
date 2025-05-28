@@ -5187,8 +5187,8 @@ const submitCanadaOrderOptimized = async (orderData) => {
     const { orderItems } = orderData;
     
     // Canada-optimized settings
-    const CANADA_CHUNK_SIZE = 12; // Smaller chunks for Canada
-    const CANADA_TIMEOUT = 120000; // 2 minutes timeout
+    const CANADA_CHUNK_SIZE = 15; // Smaller chunks for Canada
+    const CANADA_TIMEOUT = 160000; // 2 minutes timeout
     
     const baseOrderData = {
       ...orderData,
