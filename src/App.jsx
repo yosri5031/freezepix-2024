@@ -894,16 +894,12 @@ const [formData, setFormData] = useState({
         };
         return countryMap[code] || code;
       };
+
       useEffect(() => {
         const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
           
-          if (!studioSlug) {
-            // No studio in URL - clear any preselection flags
-            localStorage.removeItem('isPreselectedFromUrl');
-            localStorage.removeItem('preselectedStudio');
-            return;
-          }
+          if (!studioSlug) return;
           
           setIsLoading(true);
           setError(null);
@@ -920,15 +916,10 @@ const [formData, setFormData] = useState({
               // Set the selected studio
               setSelectedStudio(response.data);
               
-              // IMPORTANT: Set preselection flags BEFORE setting country
-              localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
-              localStorage.setItem('isPreselectedFromUrl', 'true');
-              
               // If country is specified in studio data, set it
               if (response.data.country) {
                 const countryCode = mapCountryCode(response.data.country);
                 if (initialCountries.some(c => c.value === countryCode)) {
-                  console.log('Setting country from preselected studio:', countryCode);
                   setSelectedCountry(countryCode);
                 }
               }
@@ -936,6 +927,10 @@ const [formData, setFormData] = useState({
               // Skip intro and go directly to upload photos step
               setShowIntro(false);
               setActiveStep(0); // Set to upload photos step
+              
+              // Mark this studio as preselected
+              localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
+              localStorage.setItem('isPreselectedFromUrl', 'true');
             }
           } catch (error) {
             console.error('Failed to find studio by slug, trying fuzzy match:', error);
@@ -953,15 +948,10 @@ const [formData, setFormData] = useState({
                 // Set the selected studio
                 setSelectedStudio(searchResponse.data[0]);
                 
-                // Set preselection flags
-                localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
-                localStorage.setItem('isPreselectedFromUrl', 'true');
-                
                 // Set country if available
                 if (searchResponse.data[0].country) {
                   const countryCode = mapCountryCode(searchResponse.data[0].country);
                   if (initialCountries.some(c => c.value === countryCode)) {
-                    console.log('Setting country from fuzzy-matched studio:', countryCode);
                     setSelectedCountry(countryCode);
                   }
                 }
@@ -969,18 +959,16 @@ const [formData, setFormData] = useState({
                 // Skip intro and go directly to upload photos step
                 setShowIntro(false);
                 setActiveStep(0); // Ensure we land on the upload photos step
+                
+                // Mark this studio as preselected
+                localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
+                localStorage.setItem('isPreselectedFromUrl', 'true');
               } else {
                 setError('Studio not found');
-                // Clear preselection flags if studio not found
-                localStorage.removeItem('isPreselectedFromUrl');
-                localStorage.removeItem('preselectedStudio');
               }
             } catch (searchError) {
               console.error('Failed to find studio by search:', searchError);
               setError('Studio not found');
-              // Clear preselection flags on error
-              localStorage.removeItem('isPreselectedFromUrl');
-              localStorage.removeItem('preselectedStudio');
             }
           } finally {
             setIsLoading(false);
@@ -988,129 +976,69 @@ const [formData, setFormData] = useState({
         };
         
         handleStudioPreselection();
-      }, []); // Run once on component mount
-      
+      }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
-        useEffect(() => {
-          const setInitialCountryAndLanguage = async () => {
-            try {
-              setIsLoading(true);
+        const setInitialCountryAndLanguage = async () => {
+          try {
+            setIsLoading(true);
+            
+            // Get current language from context
+            const currentLanguage = language || 'en';
+            
+            // Try to detect user location
+            const locationData = await detectUserLocation();
+            console.log('Location detection result:', locationData);
+            
+            if (locationData?.country) {
+              const mappedCountry = mapCountryCode(locationData.country);
               
-              // Get current language from context
-              const currentLanguage = language || 'en';
-              
-              // CHECK IF STUDIO IS PRESELECTED FROM URL - DON'T OVERRIDE
-              const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
-              const preselectedStudio = localStorage.getItem('preselectedStudio');
-              
-              if (isPreselectedFromUrl && preselectedStudio) {
-                console.log('Studio preselected from URL - skipping geolocation override');
+              // Only set country if it's in our supported list
+              if (initialCountries.some(c => c.value === mappedCountry)) {
+                console.log('Setting country based on geolocation:', mappedCountry);
+                setSelectedCountry(mappedCountry);
                 
-                try {
-                  const studio = JSON.parse(preselectedStudio);
-                  // Keep the studio's country, don't change it based on geolocation
-                  if (studio.country) {
-                    const countryCode = mapCountryCode(studio.country);
-                    if (initialCountries.some(c => c.value === countryCode)) {
-                      console.log('Using preselected studio country:', countryCode);
-                      setSelectedCountry(countryCode);
-                      
-                      // Update form data with preselected studio's country
-                      setFormData(prev => ({
-                        ...prev,
-                        shippingAddress: {
-                          ...prev.shippingAddress,
-                          country: countryCode
-                        },
-                        billingAddress: {
-                          ...prev.billingAddress,
-                          country: countryCode
-                        }
-                      }));
-                      
-                      // Set language based on studio's country if needed
-                      if (changeLanguage && !currentLanguage) {
-                        let languageToUse = 'en'; // Default
-                        
-                        if (countryCode === 'TN') {
-                          languageToUse = 'ar';
-                        } else if (countryCode === 'CA' && studio.city && studio.city.toLowerCase().includes('quebec')) {
-                          languageToUse = 'fr';
-                        }
-                        
-                        changeLanguage(languageToUse);
-                      }
-                      
-                      setIsLoading(false);
-                      return; // Exit early - don't run geolocation
-                    }
+                // Update form data with country
+                setFormData(prev => ({
+                  ...prev,
+                  shippingAddress: {
+                    ...prev.shippingAddress,
+                    country: mappedCountry
+                  },
+                  billingAddress: {
+                    ...prev.billingAddress,
+                    country: mappedCountry
                   }
-                } catch (error) {
-                  console.error('Error parsing preselected studio:', error);
-                  // Continue with geolocation as fallback
-                }
-              }
-              
-              // Only run geolocation if NO studio is preselected
-              console.log('No preselected studio - running geolocation detection');
-              
-              // Try to detect user location
-              const locationData = await detectUserLocation();
-              console.log('Location detection result:', locationData);
-              
-              if (locationData?.country) {
-                const mappedCountry = mapCountryCode(locationData.country);
+                }));
                 
-                // Only set country if it's in our supported list
-                if (initialCountries.some(c => c.value === mappedCountry)) {
-                  console.log('Setting country based on geolocation:', mappedCountry);
-                  setSelectedCountry(mappedCountry);
+                // Set language based on country
+                if (changeLanguage && !currentLanguage) {
+                  let languageToUse = 'en'; // Default
                   
-                  // Update form data with country
-                  setFormData(prev => ({
-                    ...prev,
-                    shippingAddress: {
-                      ...prev.shippingAddress,
-                      country: mappedCountry
-                    },
-                    billingAddress: {
-                      ...prev.billingAddress,
-                      country: mappedCountry
-                    }
-                  }));
-                  
-                  // Set language based on country
-                  if (changeLanguage && !currentLanguage) {
-                    let languageToUse = 'en'; // Default
-                    
-                    if (mappedCountry === 'TN') {
-                      languageToUse = 'ar';
-                    } else if (locationData.language === 'fr') {
-                      languageToUse = 'fr';
-                    }
-                    
-                    changeLanguage(languageToUse);
+                  if (mappedCountry === 'TN') {
+                    languageToUse = 'ar';
+                  } else if (locationData.language === 'fr') {
+                    languageToUse = 'fr';
                   }
-                } else {
-                  console.log('Detected country not supported:', mappedCountry);
-                  setSelectedCountry('US'); // Default to US
+                  
+                  changeLanguage(languageToUse);
                 }
               } else {
-                console.log('No country detected, defaulting to US');
-                setSelectedCountry('US');
+                console.log('Detected country not supported:', mappedCountry);
+                setSelectedCountry('US'); // Default to US
               }
-            } catch (error) {
-              console.error('Error in country/language setup:', error);
-              setSelectedCountry('US'); // Default to US on error
-            } finally {
-              setIsLoading(false);
+            } else {
+              console.log('No country detected, defaulting to US');
+              setSelectedCountry('US');
             }
-          };
-        
-          setInitialCountryAndLanguage();
-        }, []); // Keep empty dependency array
+          } catch (error) {
+            console.error('Error in country/language setup:', error);
+            setSelectedCountry('US'); // Default to US on error
+          } finally {
+            setIsLoading(false);
+          }
+        };
       
         setInitialCountryAndLanguage();
       }, []);
@@ -1661,11 +1589,12 @@ const ensurePhotoPrices = (photos, countryCode) => {
         // Store in localStorage for persistence
         localStorage.setItem('selectedStudio', JSON.stringify(studio));
         
-        // IMPORTANT: Clear the URL preselection flag when user manually selects
-        // This allows geolocation to work normally for future visits
-        localStorage.setItem('isPreselectedFromUrl', 'false');
+        // If this is a newly selected studio (not from URL), update flag
+        if (localStorage.getItem('isPreselectedFromUrl') === 'true') {
+          localStorage.setItem('isPreselectedFromUrl', 'false');
+        }
         
-        console.log('Studio manually selected:', studio.name, 'Country set to:', studioCountry);
+        console.log('Studio selected:', studio.name, 'Country set to:', studioCountry);
       };
 
       // Enhanced StudioSelector with fixed handleStudioSelection function - select your pickup studio
