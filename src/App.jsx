@@ -2033,6 +2033,12 @@ const closeProductDetails = () => {
           price: countryInfo.currency === 'TND'
             ? `${countryInfo.size15x22} TND`
             : `${countryInfo.currency} ${countryInfo.size5x7}`
+        },
+        {
+          category: 'Photo Prints',
+          product: '8x10 Size',
+          country: countryInfo.name,
+          price: `${countryInfo.currency} ${countryInfo.size8x10}`
         }
       ];
     } 
@@ -2066,16 +2072,6 @@ const closeProductDetails = () => {
       ];
     } 
   
-    // Add 8x10" size after 5x7" only for USA and Canada
-    if (country !== 'TUN' || country !== 'TN' ) {
-      products.splice(3, 0, {
-        category: 'Photo Prints',
-        product: '8x10 Size',
-        country: countryInfo.name,
-        price: `${countryInfo.currency} ${countryInfo.size8x10}`
-      });
-     
-    }
   
     return products;
   };
