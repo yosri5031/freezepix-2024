@@ -2627,11 +2627,11 @@ const startBackgroundUpload = async () => {
         } else if (photo.file) {
           // ULTRA-FAST COMPRESSION - Even more aggressive speed optimization
           const compressedFile = await imageCompression(photo.file, {
-            maxSizeMB: 3.0,          // Even larger allowance
-            maxWidthOrHeight: 1800,  // Higher resolution
+            maxSizeMB: 0.8,          // Even larger allowance
+            maxWidthOrHeight: 1200,  // Higher resolution
             useWebWorker: true,
             fileType: 'image/jpeg',
-            initialQuality: 0.9,     // Very high quality = minimal processing
+            initialQuality: 0.65,     // Very high quality = minimal processing
             alwaysKeepResolution: true // Skip resizing when possible
           });
           imageData = await convertImageToBase64(compressedFile);
@@ -2751,7 +2751,6 @@ const uploadBackgroundUltraFast = async (realOrderNumber, processedPhotos, count
       completeOrderData,
       {
         withCredentials: true,
-        timeout: ULTRA_TIMEOUT,
         headers: {
           'Content-Type': 'application/json',
         }
@@ -2771,11 +2770,11 @@ const optimizeImageUltraFast = async (file) => {
   try {
     // For Tunisia background uploads, prioritize speed over file size
     const options = {
-      maxSizeMB: 4.0,             // Very generous file size
-      maxWidthOrHeight: 2000,     // Keep high resolution
+      maxSizeMB: 0.8,             // Very generous file size
+      maxWidthOrHeight: 1200,     // Keep high resolution
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.92,       // Very high quality = less processing
+      initialQuality: 0.65,       // Very high quality = less processing
       alwaysKeepResolution: true  // Skip resizing when possible
     };
     
@@ -2789,7 +2788,7 @@ const optimizeImageUltraFast = async (file) => {
 
 // 3. FIXED: Upload with REAL data from the start
 const uploadBackgroundWithRealData = async (realOrderNumber, processedPhotos, country, totals) => {
-  const CHUNK_SIZE = 12; // Reasonable chunk size
+  const CHUNK_SIZE = 6; // Reasonable chunk size
   const TIMEOUT = 120000; // 2 minutes
   
   // Create REAL order data with current form state
@@ -3287,7 +3286,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
   // MASSIVE CHUNKS for 24 images
-  const TUNISIA_CHUNK_SIZE = 24; // ALL 24 images in 1 chunk!
+  const TUNISIA_CHUNK_SIZE = 6; // ALL 24 images in 1 chunk!
   const TUNISIA_TIMEOUT = 180000; // 3 minutes timeout for big chunk
   const CHUNK_DELAY = 1000; // 1 second delay
   
@@ -3386,11 +3385,11 @@ const optimizeImageHighQuality = async (file) => {
   try {
     // TUNISIA: Best balance of quality and speed
     const options = {
-      maxSizeMB: 1.2, // Generous file size for high quality
-      maxWidthOrHeight: 1400, // Even higher resolution
+      maxSizeMB: 0.8, // Generous file size for high quality
+      maxWidthOrHeight: 1200, // Even higher resolution
       useWebWorker: true,
       fileType: 'image/jpeg',
-      initialQuality: 0.85, // Very high quality
+      initialQuality: 0.65, // Very high quality
       alwaysKeepResolution: true // Keep original resolution when possible
     };
     
@@ -3447,7 +3446,7 @@ const submitTunisiaOrderWithImprovedChunking = async (orderData) => {
   const { orderItems } = orderData;
   
   // Smaller chunks and longer timeout for Tunisia
-  const TUNISIA_CHUNK_SIZE = 2; // Much smaller chunks
+  const TUNISIA_CHUNK_SIZE = 8; // Much smaller chunks
   const TUNISIA_TIMEOUT = 90000; // 90 seconds timeout
   
   const baseOrderData = {
