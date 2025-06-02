@@ -69,8 +69,8 @@ const initialCountries = [
     value: 'TN', 
     currency: 'TND', 
     rate: 1, 
-    size10x15: 3.00, 
-    size15x22: 5.00,
+    size10x15: 3.50, 
+    size15x22: 6.00,
     size35x45: 1.25, 
     keychain: 15.00, 
     keyring_magnet: 15.00 },
@@ -239,7 +239,7 @@ const initialCountries = [
 
 const TAX_RATES = {
   'TN': { // Tunisia
-    default: 19.0 // 19% TVA
+    default: 0.0 // 19% TVA
   },
   'CA': { // Canada
     'British Columbia': { GST: 5.0, PST: 7.0 },
@@ -2061,14 +2061,14 @@ const closeProductDetails = () => {
             ? `${countryInfo.size15x22} TND`
             : `${countryInfo.currency} ${countryInfo.size5x7}`
         },
-        {
+        /*{
           category: 'Photo Prints',
           product: 'Format 3.5 x 4.5 cm',
           country: countryInfo.name,
           price: countryInfo.currency === 'TND'
             ? `${countryInfo.size35x45} TND`
             : `${countryInfo.currency} ${countryInfo.size5x7}`
-        }
+        }*/
       ];
     } 
   
@@ -6041,7 +6041,7 @@ if (discountCode && availableDiscounts.length > 0) {
 
   // Apply tax calculation for Tunisia
   if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-    taxAmount = taxableAmount * 0.19; // 19% TVA for Tunisia
+    taxAmount = 0; // 19% TVA for Tunisia
   } 
   // Enhanced tax calculation for Canada - both for pickup and shipping
   else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
@@ -6218,7 +6218,6 @@ const renderStepContent = () => {
                       >
                         {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
                           <>
-                            <option value="3.5x4.5">3.5x4.5 cm</option>
                             <option value="10x15">10x15 cm</option>
                             <option value="15x22">15x23 cm</option>
                           </>
@@ -6778,13 +6777,13 @@ const renderInvoice = () => {
 
 
         {/* Tax for applicable regions - Now calculated based on (subtotal + shipping - discount) */}
-        {/* Tunisia tax */}
+        {/* Tunisia tax 
         {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
           <div className="flex justify-between py-2">
             <span>TVA (19%)</span>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
           </div>
-        )}
+        )}*/}
 
         {/* Enhanced Canada tax - using our improved detection */}
         {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
