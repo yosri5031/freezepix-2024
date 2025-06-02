@@ -5974,24 +5974,57 @@ const calculateTotals = () => {
   
   // Calculate shipping fee based on country and delivery method
   let shippingFee = 0;
-  const isOrderOverThreshold = subtotal >= 50;
-  const isOrderOver999 = subtotal >= 999;
-
+  const isTunisiaFreeShipping = subtotal >= 25;  // Tunisia: Free shipping at 25
+  const isOtherCountriesFreeShipping = subtotal >= 999;  // Other countries: Free shipping at 999
+  
   // Only apply shipping fee if delivery method is 'shipping'
   if (deliveryMethod === 'shipping') {
-    if (isOrderOver999 && (['USA', 'US', 'CAN', 'CA', 'TUN', 'TN'].includes(selectedCountry))) {
-      shippingFee = 0;
-    } else if (!isOrderOverThreshold) {
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        shippingFee = 8;
-      } else if (selectedCountry === 'USA' || selectedCountry === 'US') {
-        shippingFee = 15;
-      } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-        shippingFee = 15;
-      } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-        shippingFee = 20;
-      } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-        shippingFee = 20;
+    
+    // ========== TUNISIA SPECIAL LOGIC ==========
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+      if (isTunisiaFreeShipping) {
+        shippingFee = 0;  // Free shipping for Tunisia if ≥25
+      } else {
+        shippingFee = 8;  // 8 TND shipping fee for Tunisia if <25
+      }
+    }
+    
+    // ========== OTHER COUNTRIES LOGIC ==========
+    else {
+      if (isOtherCountriesFreeShipping) {
+        shippingFee = 0;  // Free shipping for all other countries if ≥999
+      } else {
+        // Apply shipping fees based on country if <999
+        if (selectedCountry === 'USA' || selectedCountry === 'US') {
+          shippingFee = 15;
+        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+          shippingFee = 15;
+        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
+          shippingFee = 20;
+        } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
+          shippingFee = 20;
+        } else if (['AUS', 'AU'].includes(selectedCountry)) {
+          shippingFee = 25;  // Australia
+        } else if (['JPN', 'JP'].includes(selectedCountry)) {
+          shippingFee = 2500;  // Japan (in JPY)
+        } else if (['SGP', 'SG'].includes(selectedCountry)) {
+          shippingFee = 20;  // Singapore
+        } else if (['AE', 'ARE'].includes(selectedCountry)) {
+          shippingFee = 25;  // UAE
+        } else if (['SA', 'SAU'].includes(selectedCountry)) {
+          shippingFee = 30;  // Saudi Arabia
+        } else if (['BR', 'BRA'].includes(selectedCountry)) {
+          shippingFee = 35;  // Brazil
+        } else if (['MX', 'MEX'].includes(selectedCountry)) {
+          shippingFee = 200;  // Mexico (in MXN)
+        } else if (['RU', 'RUS'].includes(selectedCountry)) {
+          shippingFee = 800;  // Russia (in RUB)
+        } else if (['CN', 'CHN'].includes(selectedCountry)) {
+          shippingFee = 60;  // China (in CNY)
+        } else {
+          // Default shipping fee for unlisted countries
+          shippingFee = 25;
+        }
       }
     }
   }
