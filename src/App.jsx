@@ -6853,7 +6853,10 @@ const renderInvoice = () => {
 
         {/* Final Total */}
         <div className="flex justify-between py-2 border-t font-bold">
-          <span>{t('produits.total')}</span>
+        <span>
+  {t('produits.total')}
+  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && ' TTC'}
+</span>
           <span>{total.toFixed(2)} {country?.currency}</span>
         </div>
 
