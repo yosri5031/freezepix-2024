@@ -2564,7 +2564,6 @@ const renderNavigationButtons = () => {
   );
 };
 // Add this new function to handle Tunisia COD orders
-// ========== COMPLETE handleTunisiaCODOrder FUNCTION ==========
 const handleTunisiaCODOrder = async () => {
   const startTime = Date.now();
   
@@ -2574,44 +2573,9 @@ const handleTunisiaCODOrder = async () => {
     setError(null);
     setUploadProgress(0);
 
-    console.log('Tunisia LIGHTNING: Starting super-fast order processing...');
+    console.log('Tunisia SPEED: Starting lightning fast processing...');
 
-    // ========== UPLOAD STATUS CHECK ==========
-    const uploadedPhotos = selectedPhotos.filter(p => p.uploadStatus === 'completed');
-    const failedPhotos = selectedPhotos.filter(p => p.uploadStatus === 'failed');
-    const pendingPhotos = selectedPhotos.filter(p => p.uploadStatus === 'pending' || p.uploadStatus === 'uploading');
-    
-    console.log(`Upload Status: ${uploadedPhotos.length} completed, ${pendingPhotos.length} pending, ${failedPhotos.length} failed`);
-    
-    // ========== WAIT FOR PENDING UPLOADS ==========
-    if (pendingPhotos.length > 0) {
-      console.log('Waiting for remaining uploads...');
-      setUploadProgress(10); // Show some progress
-      await waitForUploads(pendingPhotos, 30000); // 30 second timeout
-    }
-    
-    // ========== RETRY FAILED UPLOADS ==========
-    if (failedPhotos.length > 0) {
-      console.log('Retrying failed uploads...');
-      setUploadProgress(20);
-      await retryFailedUploads(failedPhotos);
-    }
-
-    setUploadProgress(30);
-
-    // ========== FINAL VALIDATION ==========
-    const finalUploadedPhotos = selectedPhotos.filter(p => p.uploadStatus === 'completed');
-    const finalFailedPhotos = selectedPhotos.filter(p => p.uploadStatus === 'failed');
-    
-    if (finalFailedPhotos.length > 0) {
-      throw new Error(`${finalFailedPhotos.length} photos failed to upload. Please try again.`);
-    }
-    
-    if (finalUploadedPhotos.length === 0) {
-      throw new Error('No photos were successfully uploaded. Please try again.');
-    }
-
-    // ========== FORM VALIDATION ==========
+    // ULTRA-FAST validation
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please fill in all required contact information');
     }
@@ -2620,23 +2584,62 @@ const handleTunisiaCODOrder = async () => {
       throw new Error('Please select a pickup location');
     }
 
-    setUploadProgress(40);
-
-    // ========== ORDER DATA PREPARATION ==========
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // ========== CREATE ORDER DATA ==========
+    // LIGHTNING FAST photo processing - DEFINED HERE
+    const processPhotosWithProgress = async () => {
+      try {
+        const compressedPhotos = await Promise.all(
+          selectedPhotos.map(async (photo, index) => {
+            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
+            setUploadProgress(Math.round(progress));
+
+            let imageData;
+            if (photo.base64) {
+              imageData = photo.base64;
+            } else if (photo.file) {
+              // LIGHTNING FAST compression
+              const compressedFile = await imageCompression(photo.file, {
+                maxSizeMB: 0.5, // Balanced size for speed
+                maxWidthOrHeight: 1000, // Slightly smaller for speed
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.55, // Good quality but fast
+                alwaysKeepResolution: false
+              });
+              imageData = await convertImageToBase64(compressedFile);
+            }
+
+            return {
+              ...photo,
+              file: imageData,
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '10x15',
+              quantity: photo.quantity || 1
+            };
+          })
+        );
+        return compressedPhotos;
+      } catch (processError) {
+        console.error('Tunisia SPEED: Photo processing error:', processError);
+        throw new Error('Failed to process photos');
+      }
+    };
+
+    // CALL the photo processing
+    const optimizedPhotosWithPrices = await processPhotosWithProgress();
+
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
       
-      // ========== DELIVERY METHOD HANDLING ==========
       ...(deliveryMethod === 'pickup' ? {
         pickupStudio: selectedStudio ? {
           studioId: selectedStudio._id || null,
@@ -2644,16 +2647,8 @@ const handleTunisiaCODOrder = async () => {
           address: selectedStudio.address || 'Not Specified',
           city: selectedStudio.city || 'Not Specified',
           country: selectedStudio.country || selectedCountry
-        } : {
-          studioId: null,
-          name: 'Unspecified Studio',
-          address: 'Not Specified',
-          city: 'Not Specified',
-          country: selectedCountry
-        }
-      } : {}),
-      
-      ...(deliveryMethod === 'shipping' ? {
+        } : null
+      } : {
         shippingAddress: {
           firstName: formData.shippingAddress.firstName || '',
           lastName: formData.shippingAddress.lastName || '',
@@ -2664,20 +2659,9 @@ const handleTunisiaCODOrder = async () => {
           province: formData.shippingAddress.province || '',
           state: formData.shippingAddress.state || ''
         }
-      } : {}),
+      }),
       
-      // ========== REFERENCE PRE-UPLOADED PHOTOS ==========
-      orderItems: finalUploadedPhotos.map(photo => ({
-        serverId: photo.serverId,        // Reference to pre-uploaded image
-        photoId: photo.id,
-        quantity: photo.quantity || 1,
-        size: photo.size || '10x15',
-        price: photo.price || calculateItemPrice(photo, country),
-        productType: photo.productType || 'photo_print',
-        fileName: photo.fileName || photo.file?.name || 'unknown.jpg'
-      })),
-      
-      // ========== ORDER TOTALS ==========
+      orderItems: optimizedPhotosWithPrices,
       totalAmount: Number(total) || 0,
       subtotal: Number(subtotal) || 0,
       shippingFee: Number(shippingFee) || 0,
@@ -2686,14 +2670,10 @@ const handleTunisiaCODOrder = async () => {
       discountCode: discountCode || null,
       currency: country.currency,
       orderNote: orderNote || '',
-      
-      // ========== PAYMENT & STATUS ==========
       paymentMethod: 'cod',
       paymentStatus: 'pending',
       status: 'Waiting for CSR approval',
       deliveryMethod,
-      
-      // ========== CUSTOMER DETAILS ==========
       customerDetails: {
         name: formData.name || '',
         email: formData.email,
@@ -2704,69 +2684,42 @@ const handleTunisiaCODOrder = async () => {
       createdAt: new Date().toISOString()
     };
 
-    setUploadProgress(60);
+    // LIGHTNING FAST order submission
+    console.log('Tunisia SPEED: Submitting order...');
+    const responses = await submitTunisiaBiggerChunks(orderData);
 
-    console.log('Tunisia LIGHTNING: Order data prepared, creating order...');
-
-    // ========== SUPER FAST ORDER CREATION ==========
-    const response = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/create-with-references',
-      orderData,
-      { 
-        timeout: 15000,
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    setUploadProgress(80);
-
-    if (!response.data.success) {
-      throw new Error(response.data.details || 'Order creation failed');
-    }
-
-    // ========== FIRE-AND-FORGET EMAIL ==========
+    // FIRE-AND-FORGET email (don't wait for it)
     sendOrderConfirmationEmail({
       ...orderData,
       orderItems: orderData.orderItems.map(item => ({
         ...item,
-        thumbnail: finalUploadedPhotos.find(p => p.id === item.photoId)?.thumbnail
+        file: undefined,
+        thumbnail: item.thumbnail
       }))
     }).catch(emailError => {
-      console.warn('Tunisia LIGHTNING: Email failed but order succeeded:', emailError.message);
+      console.warn('Tunisia SPEED: Email failed but order succeeded:', emailError.message);
     });
 
-    setUploadProgress(100);
-
     const totalTime = Date.now() - startTime;
-    console.log(`Tunisia LIGHTNING: Order created in ${totalTime}ms! 🚀`);
+    console.log(`Tunisia SPEED: TOTAL TIME: ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
 
-    // ========== SUCCESS CLEANUP ==========
     setOrderSuccess(true);
     setSelectedPhotos([]);
     clearStateStorage();
     
-    // Optional: Clean up pre-uploaded images on server
-    cleanupPreUploadedImages(finalUploadedPhotos.map(p => p.serverId));
-
-    console.log('Tunisia LIGHTNING: Order completed successfully:', {
+    console.log('Tunisia SPEED: Order completed successfully:', {
       orderNumber,
       totalItems: orderData.orderItems.length,
-      totalTime: `${(totalTime/1000).toFixed(1)}s`,
-      uploadMethod: 'pre-upload-references'
+      totalTime: `${(totalTime/1000).toFixed(1)}s`
     });
 
   } catch (error) {
     const totalTime = Date.now() - startTime;
-    console.error(`Tunisia LIGHTNING: Order failed after ${totalTime}ms:`, error);
+    console.error(`Tunisia SPEED: Order failed after ${totalTime}ms:`, error);
     
     let errorMessage = 'Failed to place order';
     if (error.response?.data?.error) {
       errorMessage = error.response.data.error;
-      if (error.response.data.details) {
-        errorMessage += ': ' + error.response.data.details;
-      }
     } else if (error.message) {
       errorMessage = error.message;
     }
@@ -2777,109 +2730,6 @@ const handleTunisiaCODOrder = async () => {
     setIsProcessingOrder(false);
     setUploadProgress(0);
   }
-};
-
-// ========== WAIT FOR UPLOADS FUNCTION ==========
-const waitForUploads = (pendingPhotos, timeout) => {
-  return new Promise((resolve) => {
-    const startTime = Date.now();
-    
-    console.log(`Waiting for ${pendingPhotos.length} pending uploads...`);
-    
-    const checkInterval = setInterval(() => {
-      // Check current status of pending photos
-      const stillPending = selectedPhotos.filter(p => 
-        pendingPhotos.some(pp => pp.id === p.id) && 
-        (p.uploadStatus === 'pending' || p.uploadStatus === 'uploading')
-      );
-      
-      const timeElapsed = Date.now() - startTime;
-      const progress = Math.min(90, (timeElapsed / timeout) * 100);
-      
-      // Update progress while waiting
-      if (timeElapsed % 1000 < 500) { // Update every second
-        console.log(`Still waiting: ${stillPending.length} pending, ${timeElapsed}ms elapsed`);
-      }
-      
-      // Resolve if all done or timeout reached
-      if (stillPending.length === 0) {
-        clearInterval(checkInterval);
-        console.log('All uploads completed!');
-        resolve();
-      } else if (timeElapsed > timeout) {
-        clearInterval(checkInterval);
-        console.log(`Upload wait timeout reached after ${timeout}ms`);
-        resolve();
-      }
-    }, 500); // Check every 500ms
-  });
-};
-
-// ========== RETRY FAILED UPLOADS FUNCTION ==========
-const retryFailedUploads = async (failedPhotos) => {
-  console.log(`Retrying ${failedPhotos.length} failed uploads...`);
-  
-  const retryPromises = failedPhotos.map(async (photo, index) => {
-    try {
-      console.log(`Retrying upload ${index + 1}/${failedPhotos.length}: ${photo.fileName}`);
-      
-      // Update status to retrying
-      updatePhotoStatus(photo.id, 'uploading', 0);
-      
-      // Retry the upload with more aggressive compression
-      const retryCompression = {
-        maxSizeMB: 0.3,           // Smaller size for retry
-        maxWidthOrHeight: 800,    // Lower resolution
-        useWebWorker: true,
-        fileType: 'image/jpeg',
-        initialQuality: 0.6,      // Lower quality for speed
-        alwaysKeepResolution: false
-      };
-      
-      const compressedFile = await imageCompression(photo.file, retryCompression);
-      const imageData = await convertImageToBase64(compressedFile);
-      
-      // Retry upload to server
-      const response = await axios.post(
-        'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/photos/pre-upload',
-        {
-          photoId: photo.id,
-          imageData: imageData,
-          fileName: photo.fileName,
-          fileType: photo.file.type,
-          productType: photo.productType,
-          size: photo.size,
-          quantity: photo.quantity
-        },
-        {
-          timeout: 30000, // 30 second timeout for retry
-          onUploadProgress: (progressEvent) => {
-            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-            updatePhotoStatus(photo.id, 'uploading', progress);
-          }
-        }
-      );
-      
-      // Mark as completed
-      updatePhotoStatus(photo.id, 'completed', 100, response.data.serverId);
-      console.log(`Retry successful: ${photo.fileName} -> ${response.data.serverId}`);
-      
-    } catch (retryError) {
-      console.error(`Retry failed for ${photo.fileName}:`, retryError);
-      updatePhotoStatus(photo.id, 'failed', 0);
-    }
-  });
-  
-  // Wait for all retries to complete
-  await Promise.allSettled(retryPromises);
-  
-  const retriedPhotos = selectedPhotos.filter(p => 
-    failedPhotos.some(fp => fp.id === p.id)
-  );
-  const stillFailed = retriedPhotos.filter(p => p.uploadStatus === 'failed');
-  const nowSuccessful = retriedPhotos.filter(p => p.uploadStatus === 'completed');
-  
-  console.log(`Retry results: ${nowSuccessful.length} successful, ${stillFailed.length} still failed`);
 };
 
 const submitTunisiaBiggerChunks = async (orderData) => {
@@ -5879,137 +5729,49 @@ const handleFileChange = async (event) => {
     const files = Array.from(event.target.files);
     
     const newPhotos = await Promise.all(files.map(async (file) => {
+      if (!file.type.startsWith('image/')) {
+        throw new Error(`Invalid file type: ${file.type}`);
+      }
+
+      // Generate unique ID
       const photoId = uuidv4();
-      const base64 = await convertImageToBase64(file);
       
-      const photo = {
+      // Create both preview URL and base64 in parallel
+      const [preview, base64] = await Promise.all([
+        // Create object URL for immediate display
+        Promise.resolve(URL.createObjectURL(file)),
+        // Generate base64 for storage
+        convertImageToBase64(file)
+      ]);
+      
+      return {
         id: photoId,
         file: file,
-        base64: base64,
+        base64: base64, // Store base64 for persistence
         fileName: file.name,
+        fileType: file.type,
+        preview: preview, // Use object URL for display
         productType: 'photo_print',
-        size: (selectedCountry === 'TN') ? '10x15' : '4x6',
-        quantity: 1,
-        uploadStatus: 'pending', // NEW: Track upload status
-        uploadProgress: 0,       // NEW: Track individual progress
-        serverId: null          // NEW: Store server response ID
+        size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+        quantity: 1
       };
-      
-      // START BACKGROUND UPLOAD IMMEDIATELY
-      startBackgroundUpload(photo);
-      
-      return photo;
     }));
 
+    // Add new photos to existing ones
     setSelectedPhotos(prev => [...prev, ...newPhotos]);
+    
+    // Reset the file input to allow selecting the same files again
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   } catch (error) {
     console.error('File upload error:', error);
+    setError(error.message);
   }
 };
 
 
-const startBackgroundUpload = async (photo) => {
-  try {
-    // Update status to uploading
-    updatePhotoStatus(photo.id, 'uploading', 0);
-    
-    // Compress image
-    const compressedFile = await imageCompression(photo.file, {
-      maxSizeMB: 0.8,
-      maxWidthOrHeight: 1200,
-      useWebWorker: true,
-      fileType: 'image/jpeg',
-      initialQuality: 0.75,
-      onProgress: (progress) => {
-        updatePhotoStatus(photo.id, 'compressing', progress);
-      }
-    });
-    
-    const imageData = await convertImageToBase64(compressedFile);
-    
-    // Upload to server with progress tracking
-    const response = await axios.post(
-      'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/photos/pre-upload',
-      {
-        photoId: photo.id,
-        imageData: imageData,
-        fileName: photo.fileName,
-        fileType: photo.file.type
-      },
-      {
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-          updatePhotoStatus(photo.id, 'uploading', progress);
-        },
-        timeout: 60000
-      }
-    );
-    
-    // Mark as completed and store server ID
-    updatePhotoStatus(photo.id, 'completed', 100, response.data.serverId);
-    
-  } catch (error) {
-    console.error('Background upload failed:', error);
-    updatePhotoStatus(photo.id, 'failed', 0);
-  }
-};
 
-const updatePhotoStatus = (photoId, status, progress, serverId = null) => {
-  setSelectedPhotos(prev => prev.map(photo =>
-    photo.id === photoId 
-      ? { 
-          ...photo, 
-          uploadStatus: status, 
-          uploadProgress: progress,
-          serverId: serverId || photo.serverId
-        }
-      : photo
-  ));
-};
-
-const PhotoUploadCard = ({ photo, onRemove, onUpdate }) => {
-  const getStatusColor = () => {
-    switch (photo.uploadStatus) {
-      case 'completed': return 'bg-green-100 border-green-300';
-      case 'uploading': return 'bg-blue-100 border-blue-300';
-      case 'failed': return 'bg-red-100 border-red-300';
-      default: return 'bg-gray-100 border-gray-300';
-    }
-  };
-
-  return (
-    <div className={`relative border rounded-lg p-2 ${getStatusColor()}`}>
-      <img src={photo.base64} alt="preview" className="w-full h-40 object-cover rounded" />
-      
-      {/* Upload Progress Bar */}
-      {photo.uploadStatus === 'uploading' && (
-        <div className="absolute bottom-0 left-0 right-0 bg-blue-600 h-1">
-          <div 
-            className="bg-blue-400 h-full transition-all duration-300"
-            style={{ width: `${photo.uploadProgress}%` }}
-          />
-        </div>
-      )}
-      
-      {/* Status Icons */}
-      <div className="absolute top-2 left-2">
-        {photo.uploadStatus === 'completed' && (
-          <Check size={16} className="text-green-600 bg-white rounded-full" />
-        )}
-        {photo.uploadStatus === 'uploading' && (
-          <Loader size={16} className="text-blue-600 animate-spin bg-white rounded-full" />
-        )}
-        {photo.uploadStatus === 'failed' && (
-          <AlertCircle size={16} className="text-red-600 bg-white rounded-full" />
-        )}
-      </div>
-      
-      <button onClick={() => onRemove(photo.id)} className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full">
-        <X size={16} />
-      </button>
-    </div>
-  );
-};
 
 
   const updateProductType = (photoId, newType) => {
