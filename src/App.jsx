@@ -54,7 +54,7 @@ const initialCountries = [
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99,
-    freeShippingThreshold: 200,
+    freeShippingThreshold: 50,
     shippingFee: 15 },
   { name: 'Canada', 
     value: 'CA', 
@@ -67,7 +67,7 @@ const initialCountries = [
     crystal3d: 140, 
     keychain: 29.99, 
     keyring_magnet: 29.99,
-    freeShippingThreshold: 200,
+    freeShippingThreshold: 50,
     shippingFee: 15  },
   { name: 'Tunisia', 
     value: 'TN', 
@@ -6092,7 +6092,7 @@ const calculateTotals = () => {
   // Calculate shipping fee based on country and delivery method
   let shippingFee = 0;
   const isTunisiaFreeShipping = subtotal >= 25;  // Tunisia: Free shipping at 25
-  const isOtherCountriesFreeShipping = subtotal >= 200;  // Other countries: Free shipping at 999
+  const isOtherCountriesFreeShipping = subtotal >= 50;  // Other countries: Free shipping at 999
   
   // Only apply shipping fee if delivery method is 'shipping'
   if (deliveryMethod === 'shipping') {
