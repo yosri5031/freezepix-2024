@@ -170,7 +170,12 @@
   "discount_code": "Code de Réduction",
   "gift_card_payment_method": "Carte Cadeau",
   "helcim_gift_card_payment_method": "Carte de Crédit + Carte Cadeau",
-  "place_cod_order": "Passer la commande (COD)"
+  "place_cod_order": "Passer la commande",
+  "current_total": "Total Actuel",
+      "free_shipping_earned": "Livraison Gratuite!",
+      "until_free_shipping": "jusqu'à la livraison gratuite",
+      "free_shipping_qualified": "Vous bénéficiez de la livraison gratuite!",
+      "free_shipping_at": "Livraison gratuite à partir de"
 
     },
     "validation": {

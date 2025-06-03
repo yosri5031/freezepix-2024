@@ -157,7 +157,12 @@
       "payment_options": "Zahlungsoptionen",
       "discount_code": "Rabattcode",
       "gift_card_payment_method": "Geschenkkarte",
-      "helcim_gift_card_payment_method": "Kreditkarte + Geschenkkarte"
+      "helcim_gift_card_payment_method": "Kreditkarte + Geschenkkarte",
+      "current_total": "Aktueller Betrag",
+      "free_shipping_earned": "Kostenloser Versand!",
+      "until_free_shipping": "bis zum kostenlosen Versand",
+      "free_shipping_qualified": "Sie erhalten kostenlosen Versand!",
+      "free_shipping_at": "Kostenloser Versand ab"
     },
     "validation": {
       "contact_info": "Kontaktinformationen",

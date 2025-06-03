@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store  } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck   } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -53,7 +53,9 @@ const initialCountries = [
     size4x4: 0.55,
     crystal3d: 140, 
     keychain: 29.99, 
-    keyring_magnet: 29.99 },
+    keyring_magnet: 29.99,
+    freeShippingThreshold: 200,
+    shippingFee: 15 },
   { name: 'Canada', 
     value: 'CA', 
     currency: 'CAD', 
@@ -64,7 +66,9 @@ const initialCountries = [
     size4x4: 0.55,
     crystal3d: 140, 
     keychain: 29.99, 
-    keyring_magnet: 29.99  },
+    keyring_magnet: 29.99,
+    freeShippingThreshold: 200,
+    shippingFee: 15  },
   { name: 'Tunisia', 
     value: 'TN', 
     currency: 'TND', 
@@ -73,7 +77,9 @@ const initialCountries = [
     size15x22: 5.00,
     size35x45: 1.25, 
     keychain: 15.00, 
-    keyring_magnet: 15.00 },
+    keyring_magnet: 15.00,
+    freeShippingThreshold: 25,
+    shippingFee: 8 },
   // Added European countries
   { name: 'United Kingdom', 
     value: 'GB', 
@@ -5975,7 +5981,7 @@ const calculateTotals = () => {
   // Calculate shipping fee based on country and delivery method
   let shippingFee = 0;
   const isTunisiaFreeShipping = subtotal >= 25;  // Tunisia: Free shipping at 25
-  const isOtherCountriesFreeShipping = subtotal >= 999;  // Other countries: Free shipping at 999
+  const isOtherCountriesFreeShipping = subtotal >= 200;  // Other countries: Free shipping at 999
   
   // Only apply shipping fee if delivery method is 'shipping'
   if (deliveryMethod === 'shipping') {
@@ -7076,6 +7082,58 @@ return (
           </div>
         </div>
       </div>
+      
+      {/* Shipping Progress Bar */}
+      {selectedPhotos.length > 0 && selectedCountry && (
+        <div className="mb-6 max-w-md mx-auto">
+          {(() => {
+            const { subtotal } = calculateTotals();
+            const country = initialCountries.find(c => c.value === selectedCountry);
+            const freeShippingThreshold = country?.freeShippingThreshold || 200;
+            const currency = country?.currency || 'USD';
+            const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
+            const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+            const hasEarnedFreeShipping = subtotal >= freeShippingThreshold;
+
+            return (
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">
+                    {t('order.current_total', 'Current Total')}: {subtotal.toFixed(2)} {currency}
+                  </span>
+                  {hasEarnedFreeShipping ? (
+                    <span className="text-sm font-medium text-green-600 flex items-center">
+                      <Truck size={16} className="mr-1" />
+                      {t('order.free_shipping_earned', 'Free Shipping!')}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-gray-600">
+                      {remainingForFreeShipping.toFixed(2)} {currency} {t('order.until_free_shipping', 'until free shipping')}
+                    </span>
+                  )}
+                </div>
+                
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div 
+                    className={`h-2 rounded-full transition-all duration-300 ${
+                      hasEarnedFreeShipping ? 'bg-green-500' : 'bg-yellow-400'
+                    }`}
+                    style={{ width: `${progressPercentage}%` }}
+                  ></div>
+                </div>
+                
+                <div className="text-xs text-gray-500 text-center">
+                  {hasEarnedFreeShipping ? (
+                    t('order.free_shipping_qualified', 'You qualify for free shipping!')
+                  ) : (
+                    `${t('order.free_shipping_at', 'Free shipping at')} ${freeShippingThreshold} ${currency}`
+                  )}
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
       
       {/* Render the current step's content */}
 

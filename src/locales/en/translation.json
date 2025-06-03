@@ -178,9 +178,14 @@
     "helcim_gift_card_payment_method": "Credit Card + Gift Card",
     "covered_by_gift_card": "Your order is fully covered by your gift card",
   "no_additional_payment": "No additional payment is required",
-  "place_cod_order": "Place Order (COD)",
+  "place_cod_order": "Place Order ",
   "processing": "Processing...",
-  "place_order": "Place Order"
+  "place_order": "Place Order",
+  "current_total": "Current Total",
+  "free_shipping_earned": "Free Shipping!",
+  "until_free_shipping": "until free shipping",
+  "free_shipping_qualified": "You qualify for free shipping!",
+  "free_shipping_at": "Free shipping at"
     },
     "validation": {
       "contact_info": "Contact Information",

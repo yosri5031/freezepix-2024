@@ -158,7 +158,12 @@
   "payment_options": "خيارات الدفع",
   "discount_code": "رمز الخصم",
   "gift_card_payment_method": "بطاقة هدية",
-  "helcim_gift_card_payment_method": "بطاقة ائتمان + بطاقة هدية"
+  "helcim_gift_card_payment_method": "بطاقة ائتمان + بطاقة هدية",
+  "current_total": "المجموع الحالي",
+  "free_shipping_earned": "شحن مجاني!",
+  "until_free_shipping": "حتى الشحن المجاني",
+  "free_shipping_qualified": "أنت مؤهل للشحن المجاني!",
+  "free_shipping_at": "شحن مجاني عند"
   },
   "validation": {
   "contact_info": "معلومات الاتصال",
