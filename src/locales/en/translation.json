@@ -139,6 +139,7 @@
 
     },
     "order": {
+      "print_button": "Print",
       "success_message": "Thank you for your order!",
       "success_details": "Your order has been successfully placed and will be processed within 48 hours. A confirmation email has been sent to",
       "order_number": "Order Number",

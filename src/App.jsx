@@ -2605,7 +2605,7 @@ const renderNavigationButtons = () => {
             type="button"
           >
             <div className="flex items-center justify-center gap-2 relative z-10">
-              <span className="text-black font-bold tracking-wide">Print</span>
+              <span className="text-black font-bold tracking-wide">{t('order.print_button')}</span>
               <div className="relative">
                 {/* FreezeFIX custom printer icon */}
                 <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -6745,7 +6745,7 @@ const renderInvoice = () => {
               <div className="flex space-x-2">
                 <input
                   type="text"
-                  placeholder="Enter discount code"
+                  placeholder=""
                   value={discountCode}
                   onChange={(e) => handleDiscountCode(e.target.value.toUpperCase())}
                   className={`w-full p-2 border rounded ${discountError ? 'border-red-500' : ''}`}

@@ -133,6 +133,7 @@
       "no_address": "Pas d'adresse"
     },
     "order": {
+      "print_button": "Imprimer",
       "success_message": "Merci pour votre commande !",
       "success_details": "Votre commande a été passée avec succès et sera traitée dans les 48 heures. Un e-mail de confirmation a été envoyé à",
       "order_number": "Numéro de commande",
