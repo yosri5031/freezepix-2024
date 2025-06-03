@@ -7083,8 +7083,8 @@ return (
         </div>
       </div>
       
-      {/* Shipping Progress Bar */}
-      {selectedPhotos.length > 0 && selectedCountry && (
+     {/* Shipping Progress Bar */}
+     {selectedPhotos.length > 0 && selectedCountry && (
         <div className="mb-6 max-w-md mx-auto">
           {(() => {
             const { subtotal } = calculateTotals();
@@ -7096,33 +7096,34 @@ return (
             const hasEarnedFreeShipping = subtotal >= freeShippingThreshold;
 
             return (
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    {t('order.current_total', 'Current Total')}: {subtotal.toFixed(2)} {currency}
+              <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+                {/* Mobile: Stack vertically with proper spacing, Desktop: Side by side */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-2 mb-3">
+                  <span className="text-sm sm:text-sm font-medium text-gray-700 order-1">
+                    {t('order.current_total', 'Current Total')}: <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
                   </span>
                   {hasEarnedFreeShipping ? (
-                    <span className="text-sm font-medium text-green-600 flex items-center">
+                    <span className="text-sm sm:text-sm font-medium text-green-600 flex items-center order-2">
                       <Truck size={16} className="mr-1" />
                       {t('order.free_shipping_earned', 'Free Shipping!')}
                     </span>
                   ) : (
-                    <span className="text-sm text-gray-600">
-                      {remainingForFreeShipping.toFixed(2)} {currency} {t('order.until_free_shipping', 'until free shipping')}
+                    <span className="text-sm sm:text-sm text-gray-600 order-2">
+                      <span className="font-semibold">{remainingForFreeShipping.toFixed(2)} {currency}</span> {t('order.until_free_shipping', 'until free shipping')}
                     </span>
                   )}
                 </div>
                 
-                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                <div className="w-full bg-gray-200 rounded-full h-3 sm:h-2 mb-3 sm:mb-2">
                   <div 
-                    className={`h-2 rounded-full transition-all duration-300 ${
+                    className={`h-3 sm:h-2 rounded-full transition-all duration-300 ${
                       hasEarnedFreeShipping ? 'bg-green-500' : 'bg-yellow-400'
                     }`}
                     style={{ width: `${progressPercentage}%` }}
                   ></div>
                 </div>
                 
-                <div className="text-xs text-gray-500 text-center">
+                <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
                   {hasEarnedFreeShipping ? (
                     t('order.free_shipping_qualified', 'You qualify for free shipping!')
                   ) : (
@@ -7134,7 +7135,7 @@ return (
           })()}
         </div>
       )}
-      
+
       {/* Render the current step's content */}
 
 
