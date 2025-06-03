@@ -1230,7 +1230,12 @@ useEffect(() => {
       }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
-  
+      useEffect(() => {
+        // Auto-change to French when Tunisia is selected (any case)
+        if ((selectedCountry === 'TN' || selectedCountry === 'TUN') && language !== 'fr') {
+          changeLanguage('fr');
+        }
+      }, [selectedCountry]); // Only watch selectedCountry to avoid loops
       
 
       useEffect(() => {
