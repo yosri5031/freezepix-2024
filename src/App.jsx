@@ -1972,9 +1972,9 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
     { value: '15x22', label: '15x23 cm', width: 50, height: 76 }
   ] : [
     { value: '4x4', label: '4x4"', width: 45, height: 45 },
-    { value: '4x6', label: '4x6"', width: 40, height: 60 },
+    { value: '4x6', label: '4x6"', width: 35, height: 50 },
     { value: '5x7', label: '5x7"', width: 45, height: 63 },
-    { value: '8x10', label: '8x10"', width: 50, height: 62 }
+    { value: '8x10', label: '8x10"', width: 55, height: 67 }
   ];
 
   const handleSizeClick = (sizeOption) => {
