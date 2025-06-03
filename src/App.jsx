@@ -1603,6 +1603,7 @@ const ensurePhotoPrices = (photos, countryCode) => {
         console.log('Studio selected:', studio.name, 'Country set to:', studioCountry);
       };
 
+
       // Enhanced StudioSelector with fixed handleStudioSelection function - select your pickup studio
 const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => {
   const [studios, setStudios] = useState([]);
@@ -1944,7 +1945,120 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   );
 };
       
+ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
+  const [showSizePreview, setShowSizePreview] = useState(null);
+  
+  // Define size options based on country
+  const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
+    { value: '10x15', label: '10x15 cm', width: 40, height: 60 },
+    { value: '15x22', label: '15x23 cm', width: 50, height: 76 }
+  ] : [
+    { value: '4x4', label: '4x4"', width: 45, height: 45 },
+    { value: '4x6', label: '4x6"', width: 40, height: 60 },
+    { value: '5x7', label: '5x7"', width: 45, height: 63 },
+    { value: '8x10', label: '8x10"', width: 50, height: 62 }
+  ];
+
+  const handleSizeClick = (sizeOption) => {
+    onSizeChange(photo.id, sizeOption.value);
+    setShowSizePreview(sizeOption);
+    
+    // Auto-hide preview after 2 seconds
+    setTimeout(() => {
+      setShowSizePreview(null);
+    }, 2000);
+  };
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {t('produits.size')}
+      </label>
       
+      {/* Size Preview Overlay */}
+      {showSizePreview && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+          <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
+            <h3 className="text-lg font-medium mb-4">
+              {showSizePreview.label} Preview
+            </h3>
+            <div className="flex justify-center mb-4">
+              <div 
+                className="border-2 border-gray-300 bg-gray-100 flex items-center justify-center"
+                style={{ 
+                  width: `${showSizePreview.width * 2}px`, 
+                  height: `${showSizePreview.height * 2}px`,
+                  maxWidth: '200px',
+                  maxHeight: '200px'
+                }}
+              >
+                <img 
+                  src={photo.preview} 
+                  alt="Size preview"
+                  className="w-full h-full object-cover rounded"
+                />
+              </div>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              Actual size: {showSizePreview.label}
+            </p>
+            <button 
+              onClick={() => setShowSizePreview(null)}
+              className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Size Icons Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        {sizeOptions.map((sizeOption) => (
+          <button
+            key={sizeOption.value}
+            onClick={() => handleSizeClick(sizeOption)}
+            className={`relative p-3 border-2 rounded-lg transition-all hover:shadow-md ${
+              photo.size === sizeOption.value
+                ? 'border-yellow-400 bg-yellow-50'
+                : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            {/* Visual size representation */}
+            <div className="flex justify-center mb-2">
+              <div 
+                className={`border-2 flex items-center justify-center text-xs font-medium ${
+                  photo.size === sizeOption.value
+                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
+                    : 'border-gray-300 bg-gray-50 text-gray-600'
+                }`}
+                style={{ 
+                  width: `${sizeOption.width}px`, 
+                  height: `${sizeOption.height}px` 
+                }}
+              >
+                📷
+              </div>
+            </div>
+            
+            {/* Size label */}
+            <div className="text-xs font-medium text-center">
+              {sizeOption.label}
+            </div>
+            
+            {/* Selected indicator */}
+            {photo.size === sizeOption.value && (
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                <Check size={10} className="text-black" />
+              </div>
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
       const handlePhotoUpload = async (files) => {
         const newPhotos = await Promise.all(
           Array.from(files).map(async (file) => {
@@ -6246,35 +6360,11 @@ const renderStepContent = () => {
                 <div className="mt-2 space-y-2">
                   {/* Size selection for photo prints */}
                   {photo.productType === 'photo_print' && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        {t('produits.size')}
-                      </label>
-                      <select
-                        value={photo.size}
-                        onChange={(e) => updatePhotoSize(photo.id, e.target.value)}
-                        className="w-full p-1 border rounded"
-                      >
-                        {(selectedCountry === 'TUN' || selectedCountry === 'TN') ? (
-                          <>
-                            <option value="10x15">10x15 cm</option>
-                            <option value="15x22">15x23 cm</option>
-                          </>
-                        ) : selectedCountry !== 'TUN' || selectedCountry !== 'TN' ? (
-                          <>
-                            <option value="4x4"> 4x4"</option>
-                            <option value="4x6">4x6"</option>
-                            <option value="5x7">5x7"</option>
-                            <option value="8x10">8x10"</option>
-                          </>
-                        ) : (
-                          <>
-                            <option value="4x6">4x6"</option>
-                            <option value="5x7">5x7"</option>
-                          </>
-                        )}
-                      </select>
-                    </div>
+                   <SizeSelector 
+    photo={photo}
+    onSizeChange={updatePhotoSize}
+    selectedCountry={selectedCountry}
+  />
                   )}
 
                   {/* Quantity selection */}
@@ -6938,14 +7028,14 @@ const renderInvoice = () => {
   };
   const updatePhotoSize = (photoId, newSize) => {
     setSelectedPhotos((selectedPhotos || []).map(photo => 
-        photo.id === photoId ? {
-            ...photo,
-            size: newSize,
-            // If changing to 3.5x4.5 size, adjust quantity to nearest multiple of 4
-            quantity: newSize === '3.5x4.5' ? Math.ceil(photo.quantity / 4) * 4 : photo.quantity
-        } : photo
+      photo.id === photoId ? {
+        ...photo,
+        size: newSize,
+        // If changing to 3.5x4.5 size, adjust quantity to nearest multiple of 4
+        quantity: newSize === '3.5x4.5' ? Math.ceil(photo.quantity / 4) * 4 : photo.quantity
+      } : photo
     ));
-};
+  };
 
   const updatePhotoQuantity = (photoId, newQuantity) => {
     if (newQuantity > 0 && newQuantity <= 99) {
