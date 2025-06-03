@@ -901,6 +901,23 @@ const [formData, setFormData] = useState({
         return countryMap[code] || code;
       };
 
+      const captureSourceUrl = () => {
+        // Get the full source URL where user came from
+        const sourceUrl = document.referrer || window.location.href;
+        
+        // Store it for the session (not localStorage to avoid persistence)
+        if (!sessionStorage.getItem('sourceVisitUrl')) {
+          sessionStorage.setItem('sourceVisitUrl', sourceUrl);
+        }
+        
+        return sessionStorage.getItem('sourceVisitUrl');
+      };
+      
+      // Call this when component mounts
+      useEffect(() => {
+        captureSourceUrl();
+      }, []);
+
       useEffect(() => {
         const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
@@ -4112,12 +4129,18 @@ const handleOrderSuccess = async ({
 
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
+      // ========== CAPTURE SOURCE URL ==========
+      const sourceVisitUrl = captureSourceUrl();
+      console.log('Captured source visit URL:', sourceVisitUrl);
+
     // Construct order data
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
+       // ========== ADD SOURCE URL TO ORDER DATA ==========
+       sourceVisitUrl: sourceVisitUrl, 
         // Add gift card information
         giftCard: appliedGiftCard ? {
           id: appliedGiftCard.id,
@@ -5145,11 +5168,18 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
     console.log('Payment Success Handler - Processing payment for Canada:', paymentData);
     setIsProcessingOrder(true);
     
+      // ========== CAPTURE SOURCE URL ==========
+      const sourceVisitUrl = captureSourceUrl();
+      console.log('Captured source visit URL:', sourceVisitUrl);
+
     const orderData = {
       orderNumber,
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
+
+       // ========== ADD SOURCE URL TO ORDER DATA ==========
+       sourceVisitUrl: sourceVisitUrl, // Add this line
       
       // Robust handling of pickup studio for pickup orders
       ...(deliveryMethod === 'pickup' ? {
