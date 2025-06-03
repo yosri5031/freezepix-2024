@@ -6811,7 +6811,7 @@ const renderInvoice = () => {
             )}
             {quantities['15x22'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>15x22 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
+                <span>15x23 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
