@@ -2641,8 +2641,8 @@ const renderNavigationButtons = () => {
           type="button"
         >
           <div className="flex items-center justify-center gap-2 relative z-10">
-            <span className="text-black font-bold tracking-wide">Print</span>
-            <div className="relative">
+          <span className="text-black font-bold tracking-wide">{t('order.print_button')}</span>
+          <div className="relative">
               {/* FreezeFIX custom printer icon (same as above) */}
               <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
