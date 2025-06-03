@@ -811,7 +811,9 @@ const [formData, setFormData] = useState({
 });
 
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
-
+      const [hasLoadedCache, setHasLoadedCache] = useState(false);
+      const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+      const saveStateTimeoutRef = useRef(null);
       const detectUserLocation = async () => {
         try {
           // First try browser geolocation for the most accurate results
@@ -918,80 +920,232 @@ const [formData, setFormData] = useState({
         captureSourceUrl();
       }, []);
 
-      useEffect(() => {
-        if (!selectedCountry) return; // Don't run if no country selected
-        
-        const country = initialCountries.find(c => c.value === selectedCountry);
-        if (!country) return; // Don't run if country not found
-        
-        // Use a single state update to prevent multiple re-renders
-        setSelectedPhotos(prevPhotos => {
-          // Only update if photos exist and need price updates
-          if (!prevPhotos || prevPhotos.length === 0) return prevPhotos;
-          
-          return prevPhotos.map(photo => {
-            // Calculate the new price based on the product type and size
-            let newPrice = 0;
-            if (photo.productType === 'photo_print') {
-              switch (photo.size) {
-                case '4x6': newPrice = country.size4x6; break;
-                case '5x7': newPrice = country.size5x7; break;
-                case '8x10': newPrice = country.size8x10; break;
-                case '4x4': newPrice = country.size4x4; break;
-                case '10x15': newPrice = country.size10x15 || country.size4x6; break;
-                case '15x22': newPrice = country.size15x22 || country.size5x7; break;
-                case '3.5x4.5': newPrice = country.size35x45; break;
-                default: newPrice = country.size4x6; // Default to 4x6 price
+    // REPLACEMENT 1: Photo price updates (only when needed)
+useEffect(() => {
+  if (!selectedCountry || !selectedPhotos.length) return;
+  
+  const country = initialCountries.find(c => c.value === selectedCountry);
+  if (!country) return;
+  
+  setSelectedPhotos(prevPhotos => {
+    const updatedPhotos = prevPhotos.map(photo => {
+      let newPrice = 0;
+      
+      if (photo.productType === 'photo_print') {
+        switch (photo.size) {
+          case '4x6': newPrice = country.size4x6; break;
+          case '5x7': newPrice = country.size5x7; break;
+          case '8x10': newPrice = country.size8x10; break;
+          case '4x4': newPrice = country.size4x4; break;
+          case '10x15': newPrice = country.size10x15 || country.size4x6; break;
+          case '15x22': newPrice = country.size15x22 || country.size5x7; break;
+          case '3.5x4.5': newPrice = country.size35x45; break;
+          default: newPrice = country.size4x6;
+        }
+      } else if (photo.productType === '3d_frame') {
+        newPrice = country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+        newPrice = country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+        newPrice = country.keyring_magnet;
+      }
+      
+      // Only update if price actually changed
+      if (photo.price !== newPrice) {
+        return { ...photo, price: newPrice, quantity: photo.quantity || 1 };
+      }
+      return photo;
+    });
+    
+    // Only update state if something actually changed
+    const hasChanges = updatedPhotos.some((photo, index) => 
+      photo.price !== prevPhotos[index]?.price
+    );
+    
+    return hasChanges ? updatedPhotos : prevPhotos;
+  });
+}, [selectedCountry, selectedPhotos.length]); // More specific dependency
+
+// REPLACEMENT 2: Form data updates (separate from photos)
+useEffect(() => {
+  if (!selectedCountry) return;
+  
+  setFormData(prev => {
+    // Check if update is actually needed
+    if (prev.shippingAddress.country === selectedCountry && 
+        prev.billingAddress.country === selectedCountry) {
+      return prev;
+    }
+    
+    return {
+      ...prev,
+      shippingAddress: {
+        ...prev.shippingAddress,
+        country: selectedCountry,
+        state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '',
+        province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : ''
+      },
+      billingAddress: {
+        ...prev.billingAddress,
+        country: selectedCountry,
+        state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '',
+        province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : ''
+      },
+      paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
+    };
+  });
+}, [selectedCountry]);
+
+// REPLACEMENT 3: Load cached photos (only once)
+useEffect(() => {
+  const loadAndFixCachedPhotos = async () => {
+    if (hasLoadedCache || !selectedCountry) return;
+    
+    try {
+      const uploadedPhotos = localStorage.getItem('uploadedPhotos');
+      const savedState = localStorage.getItem('freezepixState');
+      
+      if (uploadedPhotos) {
+        const parsedPhotos = JSON.parse(uploadedPhotos);
+        if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
+          const restoredPhotos = parsedPhotos.map(photo => {
+            if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
+              return null;
+            }
+            
+            let fileObj = null;
+            try {
+              if (photo.fileName && photo.base64) {
+                fileObj = base64ToFile(photo.base64, photo.fileName);
               }
-            } else if (photo.productType === '3d_frame') {
-              newPrice = country.crystal3d;
-            } else if (photo.productType === 'keychain') {
-              newPrice = country.keychain;
-            } else if (photo.productType === 'keyring_magnet') {
-              newPrice = country.keyring_magnet;
+            } catch (e) {
+              console.warn('Could not convert base64 to file:', e);
             }
-      
-            // Only update if price actually changed
-            if (photo.price !== newPrice) {
-              return {
-                ...photo,
-                price: newPrice,
-                quantity: photo.quantity || 1
-              };
+            
+            let fixedPhoto = {
+              ...photo,
+              file: fileObj,
+              preview: photo.base64
+            };
+            
+            // Fix prices for current country
+            const country = initialCountries.find(c => c.value === selectedCountry);
+            if (country) {
+              let newPrice = 0;
+              if (selectedCountry === 'TN' || selectedCountry === 'TUN') {
+                switch (fixedPhoto.size) {
+                  case '10x15': newPrice = country.size10x15 || 3.00; break;
+                  case '15x22': newPrice = country.size15x22 || 5.00; break;
+                  case '3.5x4.5': newPrice = country.size35x45 || 1.25; break;
+                  default: 
+                    newPrice = country.size10x15 || 3.00;
+                    fixedPhoto.size = '10x15';
+                }
+              } else {
+                switch (fixedPhoto.size) {
+                  case '4x6': newPrice = country.size4x6; break;
+                  case '5x7': newPrice = country.size5x7; break;
+                  case '8x10': newPrice = country.size8x10; break;
+                  case '4x4': newPrice = country.size4x4; break;
+                  default: newPrice = country.size4x6;
+                }
+              }
+              fixedPhoto.price = newPrice;
+              fixedPhoto.productType = fixedPhoto.productType || 'photo_print';
+              fixedPhoto.quantity = fixedPhoto.quantity || 1;
             }
-            return photo; // Return unchanged if price is same
-          });
-        });
-      
-        // Update form data only if country actually changed
-        setFormData(prev => {
-          // Prevent unnecessary updates if country is already set
-          if (prev.shippingAddress.country === selectedCountry && 
-              prev.billingAddress.country === selectedCountry) {
-            return prev;
-          }
+            
+            return fixedPhoto;
+          }).filter(Boolean);
           
-          return {
-            ...prev,
-            shippingAddress: {
-              ...prev.shippingAddress,
-              country: selectedCountry,
-              // Preserve existing state/province if same country
-              state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '',
-              province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : ''
-            },
-            billingAddress: {
-              ...prev.billingAddress,
-              country: selectedCountry,
-              // Preserve existing state/province if same country  
-              state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '',
-              province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : ''
-            },
-            paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
-          };
-        });
-      }, [selectedCountry]); // Only depend on selectedCountry
+          if (restoredPhotos.length > 0) {
+            setSelectedPhotos(restoredPhotos);
+          }
+        }
+      }
       
+      setHasLoadedCache(true);
+    } catch (error) {
+      console.error('Error loading cached photos:', error);
+      setHasLoadedCache(true);
+    }
+  };
+
+  loadAndFixCachedPhotos();
+}, [selectedCountry, hasLoadedCache]);
+
+// REPLACEMENT 4: Initial country detection (only once)
+useEffect(() => {
+  const setInitialCountryAndLanguage = async () => {
+    if (initialLoadComplete || selectedCountry || isLoading) return;
+    
+    try {
+      setIsLoading(true);
+      setInitialLoadComplete(true);
+      
+      const locationData = await detectUserLocation();
+      
+      if (locationData?.country) {
+        const mappedCountry = mapCountryCode(locationData.country);
+        
+        if (initialCountries.some(c => c.value === mappedCountry)) {
+          setSelectedCountry(mappedCountry);
+        } else {
+          setSelectedCountry('US');
+        }
+      } else {
+        setSelectedCountry('US');
+      }
+    } catch (error) {
+      console.error('Error in country/language setup:', error);
+      setSelectedCountry('US');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  setInitialCountryAndLanguage();
+}, [initialLoadComplete, selectedCountry, isLoading]);
+
+// REPLACEMENT 5: Debounced save state (prevents excessive saves)
+useEffect(() => {
+  if (saveStateTimeoutRef.current) {
+    clearTimeout(saveStateTimeoutRef.current);
+  }
+  
+  saveStateTimeoutRef.current = setTimeout(async () => {
+    try {
+      const photosWithBase64 = await Promise.all(
+        selectedPhotos.map(async (photo) => {
+          if (photo.file && !photo.base64) {
+            const base64 = await convertImageToBase64(photo.file);
+            return { ...photo, base64, fileName: photo.file.name, fileType: photo.file.type };
+          }
+          return photo;
+        })
+      );
+
+      const stateToSave = {
+        showIntro,
+        selectedCountry,
+        selectedPhotos: photosWithBase64,
+        activeStep,
+        formData
+      };
+      
+      localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving state:', error);
+    }
+  }, 1000); // 1 second debounce
+
+  return () => {
+    if (saveStateTimeoutRef.current) {
+      clearTimeout(saveStateTimeoutRef.current);
+    }
+  };
+}, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+
       useEffect(() => {
         const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
@@ -1076,54 +1230,7 @@ const [formData, setFormData] = useState({
       }, []);  // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
-      useEffect(() => {
-        const setInitialCountryAndLanguage = async () => {
-          // Only run if no country is selected and not already loading
-          if (selectedCountry || isLoading) return;
-          
-          try {
-            setIsLoading(true);
-            
-            const currentLanguage = language || 'en';
-            const locationData = await detectUserLocation();
-            console.log('Location detection result:', locationData);
-            
-            if (locationData?.country) {
-              const mappedCountry = mapCountryCode(locationData.country);
-              
-              // Only set country if it's in our supported list AND different from current
-              if (initialCountries.some(c => c.value === mappedCountry) && mappedCountry !== selectedCountry) {
-                console.log('Setting country based on geolocation:', mappedCountry);
-                setSelectedCountry(mappedCountry);
-                
-                // Set language based on country (only if not already set)
-                if (changeLanguage && !currentLanguage) {
-                  let languageToUse = 'en';
-                  if (mappedCountry === 'TN') {
-                    languageToUse = 'ar';
-                  } else if (locationData.language === 'fr') {
-                    languageToUse = 'fr';
-                  }
-                  changeLanguage(languageToUse);
-                }
-              } else {
-                console.log('Detected country not supported or same as current:', mappedCountry);
-                if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
-              }
-            } else {
-              console.log('No country detected, defaulting to US');
-              if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
-            }
-          } catch (error) {
-            console.error('Error in country/language setup:', error);
-            if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
-          } finally {
-            setIsLoading(false);
-          }
-        };
-      
-        setInitialCountryAndLanguage();
-      }, []); 
+  
       
 
       useEffect(() => {
@@ -1296,159 +1403,7 @@ const ensurePhotoPrices = (photos, countryCode) => {
   });
 };
 
-      useEffect(() => {
-        const loadAndFixCachedPhotos = async () => {
-          // Check if we should restore from uploadedPhotos or freezepixState
-          const uploadedPhotos = localStorage.getItem('uploadedPhotos');
-          const savedState = localStorage.getItem('freezepixState');
-          
-          // First try to restore from uploadedPhotos
-          if (uploadedPhotos) {
-            try {
-              const parsedPhotos = JSON.parse(uploadedPhotos);
-              if (Array.isArray(parsedPhotos) && parsedPhotos.length > 0) {
-                console.log('Restoring photos from previous session:', parsedPhotos.length);
-                const restoredPhotos = parsedPhotos.map(photo => {
-                  // Skip invalid entries
-                  if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                    return null;
-                  }
-                  
-                  // Try to reconstruct file
-                  let fileObj = null;
-                  try {
-                    if (photo.fileName && photo.base64) {
-                      fileObj = base64ToFile(photo.base64, photo.fileName);
-                    }
-                  } catch (e) {
-                    console.warn('Could not convert base64 to file:', e);
-                  }
-                  
-                  // IMPORTANT: Fix prices for Tunisia when loading from cache
-                  let fixedPhoto = {
-                    ...photo,
-                    file: fileObj,
-                    preview: photo.base64
-                  };
-                  
-                  // Recalculate price based on current country selection
-                  if (selectedCountry === 'TN' || selectedCountry === 'TUN') {
-                    const country = initialCountries.find(c => c.value === selectedCountry);
-                    if (country) {
-                      let newPrice = 0;
-                      switch (fixedPhoto.size) {
-                        case '10x15': 
-                          newPrice = country.size10x15 || 3.00; 
-                          break;
-                        case '15x22': 
-                          newPrice = country.size15x22 || 5.00; 
-                          break;
-                        case '3.5x4.5': 
-                          newPrice = country.size35x45 || 1.25; 
-                          break;
-                        default: 
-                          newPrice = country.size10x15 || 3.00; // Default to 10x15 for Tunisia
-                          fixedPhoto.size = '10x15'; // Ensure correct default size
-                      }
-                      fixedPhoto.price = newPrice;
-                      
-                      // Also ensure correct product type and quantity
-                      fixedPhoto.productType = fixedPhoto.productType || 'photo_print';
-                      fixedPhoto.quantity = fixedPhoto.quantity || 1;
-                    }
-                  }
-                  
-                  return fixedPhoto;
-                }).filter(Boolean);
-                
-                if (restoredPhotos.length > 0) {
-                  console.log('Setting restored photos with fixed prices for Tunisia');
-                  setSelectedPhotos(restoredPhotos);
-                }
-              }
-            } catch (error) {
-              console.error('Error restoring uploaded photos:', error);
-            }
-          }
-          // Then try freezepixState as fallback
-          else if (savedState) {
-            try {
-              const parsedState = JSON.parse(savedState);
-              if (parsedState.selectedPhotos && Array.isArray(parsedState.selectedPhotos) && parsedState.selectedPhotos.length > 0) {
-                console.log('Restoring photos from saved state:', parsedState.selectedPhotos.length);
-                
-                // Process photos from freezepixState with Tunisia price fixing
-                const restoredPhotos = parsedState.selectedPhotos.map(photo => {
-                  // Skip invalid entries
-                  if (!photo.base64 || !photo.base64.startsWith('data:image/')) {
-                    return null;
-                  }
-                  
-                  // Try to reconstruct file
-                  let fileObj = null;
-                  try {
-                    if (photo.fileName && photo.base64) {
-                      fileObj = base64ToFile(photo.base64, photo.fileName);
-                    }
-                  } catch (e) {
-                    console.warn('Could not convert base64 to file:', e);
-                  }
-                  
-                  let fixedPhoto = {
-                    ...photo,
-                    file: fileObj,
-                    preview: photo.base64
-                  };
-                  
-                  // Apply Tunisia price fixing
-                  const countryToUse = parsedState.selectedCountry || selectedCountry;
-                  if (countryToUse === 'TN' || countryToUse === 'TUN') {
-                    const country = initialCountries.find(c => c.value === countryToUse);
-                    if (country) {
-                      let newPrice = 0;
-                      switch (fixedPhoto.size) {
-                        case '10x15': 
-                          newPrice = country.size10x15 || 3.00; 
-                          break;
-                        case '15x22': 
-                          newPrice = country.size15x22 || 5.00; 
-                          break;
-                        case '3.5x4.5': 
-                          newPrice = country.size35x45 || 1.25; 
-                          break;
-                        default: 
-                          newPrice = country.size10x15 || 3.00;
-                          fixedPhoto.size = '10x15';
-                      }
-                      fixedPhoto.price = newPrice;
-                      fixedPhoto.productType = fixedPhoto.productType || 'photo_print';
-                      fixedPhoto.quantity = fixedPhoto.quantity || 1;
-                    }
-                  }
-                  
-                  return fixedPhoto;
-                }).filter(Boolean);
-                
-                if (restoredPhotos.length > 0) {
-                  setSelectedPhotos(restoredPhotos);
-                  
-                  // Also restore other state if needed
-                  if (parsedState.selectedCountry) {
-                    setSelectedCountry(parsedState.selectedCountry);
-                  }
-                }
-              }
-            } catch (error) {
-              console.error('Error restoring from freezepixState:', error);
-            }
-          }
-        };
-      
-        // Only run this effect when selectedCountry is available
-        if (selectedCountry) {
-          loadAndFixCachedPhotos();
-        }
-      }, [selectedCountry]); // Add selectedCountry as dependency
+  
 
       // Add this useEffect in your component to handle the return from Stripe
       useEffect(() => {
@@ -2431,41 +2386,7 @@ const closeProductDetails = () => {
       }
     };
      
-     // Modify the save state useEffect to handle image conversion
-     useEffect(() => {
-         const saveState = async () => {
-             try {
-                 const photosWithBase64 = await Promise.all(
-                     selectedPhotos.map(async (photo) => {
-                         if (photo.file && !photo.base64) {
-                             const base64 = await convertImageToBase64(photo.file);
-                             return {
-                                 ...photo,
-                                 base64,
-                                 // Store original file properties we need
-                                 fileName: photo.file.name,
-                                 fileType: photo.file.type,
-                             };
-                         }
-                         return photo;
-                     })
-                 );
-     
-                 const stateToSave = {
-                     showIntro,
-                     selectedCountry,
-                     selectedPhotos: photosWithBase64,
-                     activeStep,
-                     formData
-                 };
-                 localStorage.setItem('freezepixState', JSON.stringify(stateToSave));
-             } catch (error) {
-                 console.error('Error saving state:', error);
-             }
-         };
-     
-         saveState();
-     }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
+  
 
    
      // Modify the load state useEffect to handle image reconstruction
