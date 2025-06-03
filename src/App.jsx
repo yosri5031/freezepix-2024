@@ -919,6 +919,80 @@ const [formData, setFormData] = useState({
       }, []);
 
       useEffect(() => {
+        if (!selectedCountry) return; // Don't run if no country selected
+        
+        const country = initialCountries.find(c => c.value === selectedCountry);
+        if (!country) return; // Don't run if country not found
+        
+        // Use a single state update to prevent multiple re-renders
+        setSelectedPhotos(prevPhotos => {
+          // Only update if photos exist and need price updates
+          if (!prevPhotos || prevPhotos.length === 0) return prevPhotos;
+          
+          return prevPhotos.map(photo => {
+            // Calculate the new price based on the product type and size
+            let newPrice = 0;
+            if (photo.productType === 'photo_print') {
+              switch (photo.size) {
+                case '4x6': newPrice = country.size4x6; break;
+                case '5x7': newPrice = country.size5x7; break;
+                case '8x10': newPrice = country.size8x10; break;
+                case '4x4': newPrice = country.size4x4; break;
+                case '10x15': newPrice = country.size10x15 || country.size4x6; break;
+                case '15x22': newPrice = country.size15x22 || country.size5x7; break;
+                case '3.5x4.5': newPrice = country.size35x45; break;
+                default: newPrice = country.size4x6; // Default to 4x6 price
+              }
+            } else if (photo.productType === '3d_frame') {
+              newPrice = country.crystal3d;
+            } else if (photo.productType === 'keychain') {
+              newPrice = country.keychain;
+            } else if (photo.productType === 'keyring_magnet') {
+              newPrice = country.keyring_magnet;
+            }
+      
+            // Only update if price actually changed
+            if (photo.price !== newPrice) {
+              return {
+                ...photo,
+                price: newPrice,
+                quantity: photo.quantity || 1
+              };
+            }
+            return photo; // Return unchanged if price is same
+          });
+        });
+      
+        // Update form data only if country actually changed
+        setFormData(prev => {
+          // Prevent unnecessary updates if country is already set
+          if (prev.shippingAddress.country === selectedCountry && 
+              prev.billingAddress.country === selectedCountry) {
+            return prev;
+          }
+          
+          return {
+            ...prev,
+            shippingAddress: {
+              ...prev.shippingAddress,
+              country: selectedCountry,
+              // Preserve existing state/province if same country
+              state: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.state : '',
+              province: prev.shippingAddress.country === selectedCountry ? prev.shippingAddress.province : ''
+            },
+            billingAddress: {
+              ...prev.billingAddress,
+              country: selectedCountry,
+              // Preserve existing state/province if same country  
+              state: prev.billingAddress.country === selectedCountry ? prev.billingAddress.state : '',
+              province: prev.billingAddress.country === selectedCountry ? prev.billingAddress.province : ''
+            },
+            paymentMethod: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? 'cod' : 'helcim'
+          };
+        });
+      }, [selectedCountry]); // Only depend on selectedCountry
+      
+      useEffect(() => {
         const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
           
@@ -1004,81 +1078,53 @@ const [formData, setFormData] = useState({
       // Add this useEffect in your FreezePIX component
       useEffect(() => {
         const setInitialCountryAndLanguage = async () => {
+          // Only run if no country is selected and not already loading
+          if (selectedCountry || isLoading) return;
+          
           try {
             setIsLoading(true);
             
-            // Get current language from context
             const currentLanguage = language || 'en';
-            
-            // Try to detect user location
             const locationData = await detectUserLocation();
             console.log('Location detection result:', locationData);
             
             if (locationData?.country) {
               const mappedCountry = mapCountryCode(locationData.country);
               
-              // Only set country if it's in our supported list
-              if (initialCountries.some(c => c.value === mappedCountry)) {
+              // Only set country if it's in our supported list AND different from current
+              if (initialCountries.some(c => c.value === mappedCountry) && mappedCountry !== selectedCountry) {
                 console.log('Setting country based on geolocation:', mappedCountry);
                 setSelectedCountry(mappedCountry);
                 
-                // Update form data with country
-                setFormData(prev => ({
-                  ...prev,
-                  shippingAddress: {
-                    ...prev.shippingAddress,
-                    country: mappedCountry
-                  },
-                  billingAddress: {
-                    ...prev.billingAddress,
-                    country: mappedCountry
-                  }
-                }));
-                
-                // Set language based on country
+                // Set language based on country (only if not already set)
                 if (changeLanguage && !currentLanguage) {
-                  let languageToUse = 'en'; // Default
-                  
+                  let languageToUse = 'en';
                   if (mappedCountry === 'TN') {
                     languageToUse = 'ar';
                   } else if (locationData.language === 'fr') {
                     languageToUse = 'fr';
                   }
-                  
                   changeLanguage(languageToUse);
                 }
               } else {
-                console.log('Detected country not supported:', mappedCountry);
-                setSelectedCountry('US'); // Default to US
+                console.log('Detected country not supported or same as current:', mappedCountry);
+                if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
               }
             } else {
               console.log('No country detected, defaulting to US');
-              setSelectedCountry('US');
+              if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
             }
           } catch (error) {
             console.error('Error in country/language setup:', error);
-            setSelectedCountry('US'); // Default to US on error
+            if (!selectedCountry) setSelectedCountry('US'); // Only set default if no country
           } finally {
             setIsLoading(false);
           }
         };
       
         setInitialCountryAndLanguage();
-      }, []);
+      }, []); 
       
-      useEffect(() => {
-        setFormData(prev => ({
-          ...prev,
-          shippingAddress: {
-            ...prev.shippingAddress,
-            country: selectedCountry
-          },
-          billingAddress: {
-            ...prev.billingAddress,
-            country: selectedCountry
-          }
-        }));
-      }, [selectedCountry]);
 
       useEffect(() => {
         const handleUrlDiscount = () => {
