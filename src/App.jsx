@@ -2048,25 +2048,24 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   );
 };
       
+
 const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   const [showSizePreview, setShowSizePreview] = useState(null);
   
-  // Define size options based on country - Good proportions for vertical layout
   const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
-    { value: '10x15', label: '10x15 cm', width: 38, height: 59 },
-    { value: '15x22', label: '15x23 cm', width: 48, height: 77 }
+    { value: '10x15', label: '10x15 cm', width: 35, height: 53 },
+    { value: '15x22', label: '15x23 cm', width: 42, height: 64 }
   ] : [
-    { value: '4x4', label: '4x4"', width: 43, height: 43 },
-    { value: '4x6', label: '4x6"', width: 35, height: 56 },
-    { value: '5x7', label: '5x7"', width: 43, height: 63 },
-    { value: '8x10', label: '8x10"', width: 51, height: 66 }
+    { value: '4x4', label: '4x4"', width: 40, height: 40 },
+    { value: '4x6', label: '4x6"', width: 35, height: 53 },
+    { value: '5x7', label: '5x7"', width: 40, height: 56 },
+    { value: '8x10', label: '8x10"', width: 46, height: 58 }
   ];
 
   const handleSizeClick = (sizeOption) => {
     onSizeChange(photo.id, sizeOption.value);
     setShowSizePreview(sizeOption);
     
-    // Auto-hide preview after 2 seconds
     setTimeout(() => {
       setShowSizePreview(null);
     }, 2000);
@@ -2075,10 +2074,9 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        {t('produits.size')}
+      {t('produits.size')}
       </label>
       
-      {/* Size Preview Overlay */}
       {showSizePreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
           <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
@@ -2089,8 +2087,8 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
               <div 
                 className="border-2 border-gray-300 bg-gray-100 flex items-center justify-center"
                 style={{ 
-                  width: `${showSizePreview.width * 2.5}px`, 
-                  height: `${showSizePreview.height * 2.5}px`,
+                  width: `${showSizePreview.width * 3}px`, 
+                  height: `${showSizePreview.height * 3}px`,
                   maxWidth: '200px',
                   maxHeight: '200px'
                 }}
@@ -2115,46 +2113,45 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
         </div>
       )}
       
-      {/* VERTICAL Size Selection - One under another for better mobile space */}
       <div className="space-y-2">
         {sizeOptions.map((sizeOption) => (
           <button
             key={sizeOption.value}
             onClick={() => handleSizeClick(sizeOption)}
-            className={`w-full p-3 border-2 rounded-lg transition-all hover:shadow-md ${
+            className={`w-full p-2.5 border-2 rounded-lg transition-all hover:shadow-md ${
               photo.size === sizeOption.value
                 ? 'border-yellow-400 bg-yellow-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            {/* Horizontal layout within each button - icon + text side by side */}
-            <div className="flex items-center gap-3">
-              {/* Visual size representation - Good size for mobile */}
-              <div 
-                className={`border-2 flex items-center justify-center text-sm font-bold flex-shrink-0 ${
-                  photo.size === sizeOption.value
-                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
-                    : 'border-gray-300 bg-gray-50 text-gray-600'
-                }`}
-                style={{ 
-                  width: `${sizeOption.width}px`, 
-                  height: `${sizeOption.height}px` 
-                }}
-              >
-                📷
-              </div>
-              
-              {/* Size label and selection indicator */}
-              <div className="flex-1 flex items-center justify-between">
-                <span className="text-sm font-small">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div 
+                  className={`border-2 flex items-center justify-center text-xs font-bold flex-shrink-0 rounded ${
+                    photo.size === sizeOption.value
+                      ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
+                      : 'border-gray-300 bg-gray-50 text-gray-600'
+                  }`}
+                  style={{ 
+                    width: `${sizeOption.width}px`, 
+                    height: `${sizeOption.height}px` 
+                  }}
+                >
+                  📷
+                </div>
+                
+                <span className="text-sm font-medium">
                   {sizeOption.label}
                 </span>
-                
-                {/* Selected indicator */}
-                {photo.size === sizeOption.value && (
+              </div>
+              
+              <div className="flex-shrink-0">
+                {photo.size === sizeOption.value ? (
                   <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <Check size={10} className="text-black font-bold" />
+                    <Check size={12} className="text-black font-bold" />
                   </div>
+                ) : (
+                  <div className="w-5 h-5 border-2 border-gray-300 rounded-full bg-white" />
                 )}
               </div>
             </div>
@@ -2164,6 +2161,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
     </div>
   );
 };
+
 
       const handlePhotoUpload = async (files) => {
         const newPhotos = await Promise.all(
