@@ -7262,7 +7262,7 @@ return (
     {(() => {
       const { subtotal } = calculateTotals();
       const country = initialCountries.find(c => c.value === selectedCountry);
-      const freeShippingThreshold = country?.freeShippingThreshold || 25;
+      const freeShippingThreshold = country?.freeShippingThreshold || 50;
       const currency = country?.currency || 'USD';
       const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
       const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
