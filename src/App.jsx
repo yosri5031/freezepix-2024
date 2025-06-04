@@ -6521,7 +6521,7 @@ const renderStepContent = () => {
                   className="w-full p-2 border rounded"
                 />
                 <input
-                  type="tel"
+                  type="text"
                   placeholder={t('placeholder.phone')}
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
