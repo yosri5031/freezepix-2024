@@ -166,15 +166,6 @@
   "free_shipping_qualified": "أنت مؤهل للشحن المجاني!",
   "free_shipping_at": "شحن مجاني عند"
   },
-  "days": {
-    "sunday": "الأحد",
-    "monday": "الاثنين", 
-    "tuesday": "الثلاثاء",
-    "wednesday": "الأربعاء",
-    "thursday": "الخميس",
-    "friday": "الجمعة",
-    "saturday": "السبت"
-  },
   "validation": {
   "contact_info": "معلومات الاتصال",
   "complete_fields": "يرجى إكمال جميع الحقول المطلوبة قبل المتابعة",
