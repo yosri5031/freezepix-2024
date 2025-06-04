@@ -2048,116 +2048,143 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   );
 };
       
- const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
+const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   const [showSizePreview, setShowSizePreview] = useState(null);
   
-  // Define size options based on country
+  // Define size options based on country - increased sizes for better mobile visibility
   const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
-    { value: '10x15', label: '10x15 cm', width: 40, height: 60 },
-    { value: '15x22', label: '15x23 cm', width: 50, height: 76 }
+    { value: '10x15', label: '10x15 cm', width: 60, height: 90, description: 'Standard' },
+    { value: '15x22', label: '15x23 cm', width: 70, height: 105, description: 'Large' }
   ] : [
-    { value: '4x4', label: '4x4"', width: 45, height: 45 },
-    { value: '4x6', label: '4x6"', width: 35, height: 50 },
-    { value: '5x7', label: '5x7"', width: 45, height: 63 },
-    { value: '8x10', label: '8x10"', width: 55, height: 67 }
+    { value: '4x4', label: '4x4"', width: 60, height: 60, description: 'Square' },
+    { value: '4x6', label: '4x6"', width: 55, height: 80, description: 'Standard' },
+    { value: '5x7', label: '5x7"', width: 65, height: 90, description: 'Medium' },
+    { value: '8x10', label: '8x10"', width: 75, height: 95, description: 'Large' }
   ];
 
   const handleSizeClick = (sizeOption) => {
     onSizeChange(photo.id, sizeOption.value);
     setShowSizePreview(sizeOption);
     
-    // Auto-hide preview after 2 seconds
+    // Auto-hide preview after 2.5 seconds
     setTimeout(() => {
       setShowSizePreview(null);
-    }, 2000);
+    }, 2500);
   };
 
   return (
     <div className="relative">
-      <label className="block text-sm font-medium text-gray-700 mb-2">
-        {t('produits.size')}
+      <label className="block text-sm font-medium text-gray-700 mb-3">
+        {t('produits.size', 'Size')}
       </label>
       
-      {/* Size Preview Overlay */}
+      {/* Size Preview Overlay - Enhanced for mobile */}
       {showSizePreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
-            <h3 className="text-lg font-medium mb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4">
+          <div className="bg-white rounded-xl p-6 max-w-sm w-full text-center shadow-2xl">
+            <h3 className="text-xl font-semibold mb-4 text-gray-800">
               {showSizePreview.label} Preview
             </h3>
             <div className="flex justify-center mb-4">
               <div 
-                className="border-2 border-gray-300 bg-gray-100 flex items-center justify-center"
+                className="border-3 border-yellow-400 bg-gray-100 flex items-center justify-center rounded-lg overflow-hidden shadow-lg"
                 style={{ 
-                  width: `${showSizePreview.width * 2}px`, 
-                  height: `${showSizePreview.height * 2}px`,
-                  maxWidth: '200px',
-                  maxHeight: '200px'
+                  width: `${Math.min(showSizePreview.width * 2.5, 240)}px`, 
+                  height: `${Math.min(showSizePreview.height * 2.5, 240)}px`
                 }}
               >
                 <img 
                   src={photo.preview} 
                   alt="Size preview"
-                  className="w-full h-full object-cover rounded"
+                  className="w-full h-full object-cover"
                 />
               </div>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 mb-2 font-medium">
               Actual size: {showSizePreview.label}
+            </p>
+            <p className="text-xs text-gray-500 mb-4">
+              {showSizePreview.description} format
             </p>
             <button 
               onClick={() => setShowSizePreview(null)}
-              className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
+              className="px-6 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors font-medium"
             >
-              Close
+              Close Preview
             </button>
           </div>
         </div>
       )}
       
-      {/* Size Icons Grid */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Mobile-First Size Selection Grid */}
+      <div className="space-y-3">
         {sizeOptions.map((sizeOption) => (
           <button
             key={sizeOption.value}
             onClick={() => handleSizeClick(sizeOption)}
-            className={`relative p-3 border-2 rounded-lg transition-all hover:shadow-md ${
+            className={`w-full p-4 border-2 rounded-xl transition-all duration-200 ${
               photo.size === sizeOption.value
-                ? 'border-yellow-400 bg-yellow-50'
-                : 'border-gray-200 hover:border-gray-300'
+                ? 'border-yellow-400 bg-yellow-50 shadow-md transform scale-[1.02]'
+                : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
             }`}
           >
-            {/* Visual size representation */}
-            <div className="flex justify-center mb-2">
+            {/* Mobile-optimized horizontal layout */}
+            <div className="flex items-center gap-4">
+              {/* Visual size representation - optimized for mobile */}
               <div 
-                className={`border-2 flex items-center justify-center text-xs font-medium ${
+                className={`border-2 flex items-center justify-center text-sm font-bold rounded-lg flex-shrink-0 ${
                   photo.size === sizeOption.value
-                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
+                    ? 'border-yellow-500 bg-yellow-100 text-yellow-800'
                     : 'border-gray-300 bg-gray-50 text-gray-600'
                 }`}
                 style={{ 
-                  width: `${sizeOption.width}px`, 
-                  height: `${sizeOption.height}px` 
+                  width: `${Math.min(sizeOption.width * 0.8, 55)}px`, 
+                  height: `${Math.min(sizeOption.height * 0.8, 55)}px` 
                 }}
               >
-                📷
+                📸
+              </div>
+              
+              {/* Size information - better typography for mobile */}
+              <div className="flex-1 text-left">
+                <div className="text-base font-semibold text-gray-800">
+                  {sizeOption.label}
+                </div>
+                <div className="text-sm text-gray-500">
+                  {sizeOption.description} format
+                </div>
+              </div>
+              
+              {/* Selection indicator - larger and more visible */}
+              <div className="flex-shrink-0">
+                {photo.size === sizeOption.value ? (
+                  <div className="w-7 h-7 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm">
+                    <Check size={16} className="text-black font-bold" />
+                  </div>
+                ) : (
+                  <div className="w-7 h-7 border-2 border-gray-300 rounded-full bg-white"></div>
+                )}
               </div>
             </div>
             
-            {/* Size label */}
-            <div className="text-xs font-medium text-center">
-              {sizeOption.label}
-            </div>
-            
-            {/* Selected indicator */}
-            {photo.size === sizeOption.value && (
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
-                <Check size={10} className="text-black" />
+            {/* Tap to preview hint - only show for unselected items */}
+            {photo.size !== sizeOption.value && (
+              <div className="mt-2 text-xs text-gray-400 text-center">
+                Tap to preview
               </div>
             )}
           </button>
         ))}
       </div>
+      
+      {/* Selected size confirmation */}
+      {photo.size && (
+        <div className="mt-3 p-2 bg-green-50 border border-green-200 rounded-lg">
+          <p className="text-sm text-green-700 text-center font-medium">
+            ✓ Selected: {sizeOptions.find(opt => opt.value === photo.size)?.label}
+          </p>
+        </div>
+      )}
     </div>
   );
 };
@@ -6425,8 +6452,8 @@ const renderStepContent = () => {
             />
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {(selectedPhotos || []).map(photo => (
+          <div className="space-y-4">
+          {(selectedPhotos || []).map(photo => (
               <div key={photo.id} className="relative border rounded-lg p-2">
                 <img
                   src={photo.preview}
