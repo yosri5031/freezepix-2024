@@ -2053,13 +2053,13 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   
   // Define size options based on country - Good proportions for vertical layout
   const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
-    { value: '10x15', label: '10x15 cm', width: 45, height: 68 },
-    { value: '15x22', label: '15x23 cm', width: 55, height: 84 }
+    { value: '10x15', label: '10x15 cm', width: 38, height: 59 },
+    { value: '15x22', label: '15x23 cm', width: 48, height: 77 }
   ] : [
-    { value: '4x4', label: '4x4"', width: 50, height: 50 },
-    { value: '4x6', label: '4x6"', width: 42, height: 63 },
-    { value: '5x7', label: '5x7"', width: 50, height: 70 },
-    { value: '8x10', label: '8x10"', width: 58, height: 73 }
+    { value: '4x4', label: '4x4"', width: 43, height: 43 },
+    { value: '4x6', label: '4x6"', width: 35, height: 56 },
+    { value: '5x7', label: '5x7"', width: 43, height: 63 },
+    { value: '8x10', label: '8x10"', width: 51, height: 66 }
   ];
 
   const handleSizeClick = (sizeOption) => {
