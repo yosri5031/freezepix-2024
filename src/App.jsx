@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck   } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck, Printer   } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -7296,12 +7296,10 @@ return (
             <div className="flex items-center gap-1 text-sm text-gray-600">
               <Camera size={16} className="text-blue-500" />
               <span className="font-medium">{totalPictures}</span>
-              <span className="text-xs">{totalPictures === 1 ? 'picture' : 'pictures'}</span>
             </div>
             <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Package size={16} className="text-purple-500" />
+              <Printer size={16} className="text-purple-500" />
               <span className="font-medium">{totalPrints}</span>
-              <span className="text-xs">{totalPrints === 1 ? 'print' : 'prints'}</span>
             </div>
           </div>
           
