@@ -1563,9 +1563,15 @@ const ensurePhotoPrices = (photos, countryCode) => {
           }
         }));
       };
-      const getDayName = (day) => {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return days[day];
+      const getDayName = (day, t) => {
+        const dayKeys = [
+          'days.sunday', 'days.monday', 'days.tuesday', 'days.wednesday', 
+          'days.thursday', 'days.friday', 'days.saturday'
+        ];
+        
+        return t(dayKeys[day], {
+          defaultValue: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day]
+        });
       };
 
       // Add this function to your FreezePIX component
@@ -2719,11 +2725,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.5, // Balanced size for speed
+                maxSizeMB: 0.65, // Balanced size for speed
                 maxWidthOrHeight: 1000, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.55, // Good quality but fast
+                initialQuality: 0.65, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
