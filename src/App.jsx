@@ -7288,16 +7288,12 @@ return (
             </div>
             
             {/* Right side: Free shipping status */}
-            {hasEarnedFreeShipping ? (
-              <span className="text-sm font-medium text-green-600 flex items-center order-2">
-                <Truck size={16} className="mr-1" />
-                {t('order.free_shipping_earned', 'Free Shipping!')}
-              </span>
-            ) : (
-              <span className="text-sm text-gray-600 order-2">
-                <span className="font-semibold">{remainingForFreeShipping.toFixed(2)} {currency}</span> {t('order.until_free_shipping', 'until free shipping')}
-              </span>
-            )}
+            {hasEarnedFreeShipping && (
+  <span className="text-sm font-medium text-green-600 flex items-center order-2">
+    <Truck size={16} className="mr-1" />
+    {t('order.free_shipping_earned', 'Free Shipping!')}
+  </span>
+)}
           </div>
           
           {/* Progress bar */}
@@ -7312,9 +7308,7 @@ return (
           
           {/* Bottom text - moved "until free shipping" here, removed threshold text */}
           <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
-            {hasEarnedFreeShipping ? (
-              t('order.free_shipping_qualified', 'You qualify for free shipping!')
-            ) : (
+            {!hasEarnedFreeShipping &&  (
               `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
             )}
           </div>
