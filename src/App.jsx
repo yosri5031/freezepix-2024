@@ -1563,16 +1563,7 @@ const ensurePhotoPrices = (photos, countryCode) => {
           }
         }));
       };
-      const getDayName = (day, t) => {
-        const dayKeys = [
-          'days.sunday', 'days.monday', 'days.tuesday', 'days.wednesday', 
-          'days.thursday', 'days.friday', 'days.saturday'
-        ];
-        
-        return t(dayKeys[day], {
-          defaultValue: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day]
-        });
-      };
+      
 
       // Add this function to your FreezePIX component
       const handleStudioSelect = (studio) => {
@@ -1657,6 +1648,34 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   
   // Number of studios to show initially
   const INITIAL_DISPLAY_COUNT = 4;
+
+  const getDayName = (day) => {
+    // Add safety check for t function
+    if (!t || typeof t !== 'function') {
+      console.error('Translation function not available');
+      const fallbackDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      return fallbackDays[day] || 'Unknown';
+    }
+    
+    const dayKeys = [
+      'days.sunday',    // 0
+      'days.monday',    // 1  
+      'days.tuesday',   // 2
+      'days.wednesday', // 3
+      'days.thursday',  // 4
+      'days.friday',    // 5
+      'days.saturday'   // 6
+    ];
+    
+    const fallbackDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    try {
+      return t(dayKeys[day], { defaultValue: fallbackDays[day] });
+    } catch (error) {
+      console.error('Translation error for day:', day, error);
+      return fallbackDays[day] || 'Unknown';
+    }
+  };
   
   // Calculate distance between two geographical coordinates
   const calculateDistance = (lat1, lon1, lat2, lon2) => {
