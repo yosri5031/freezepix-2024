@@ -138,6 +138,15 @@
       "billing_same": "Billing information is the same as shipping information"
 
     },
+    "days": {
+    "sunday": "Sunday",
+    "monday": "Monday", 
+    "tuesday": "Tuesday",
+    "wednesday": "Wednesday",
+    "thursday": "Thursday",
+    "friday": "Friday",
+    "saturday": "Saturday"
+  },
     "order": {
       "print_button": "Print",
       "success_message": "Thank you for your order!",

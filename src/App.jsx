@@ -1564,8 +1564,22 @@ const ensurePhotoPrices = (photos, countryCode) => {
         }));
       };
       const getDayName = (day) => {
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        return days[day];
+        const { t } = useTranslation(); // Make sure to import useTranslation at the top
+        
+        const dayKeys = [
+          'days.sunday',    // 0
+          'days.monday',    // 1  
+          'days.tuesday',   // 2
+          'days.wednesday', // 3
+          'days.thursday',  // 4
+          'days.friday',    // 5
+          'days.saturday'   // 6
+        ];
+        
+        return t(dayKeys[day], {
+          // Fallback values in case translation is missing
+          defaultValue: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][day]
+        });
       };
 
       // Add this function to your FreezePIX component
@@ -1906,7 +1920,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
                 
                 <div className="flex items-center gap-2">
                   <Phone size={16} />
-                  <span dir="ltr">{studio.phone}</span>
+                  <span >{studio.phone}</span>
                 </div>
                 
                 <div className="flex items-center gap-2">
@@ -2719,11 +2733,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.5, // Balanced size for speed
+                maxSizeMB: 0.65, // Balanced size for speed
                 maxWidthOrHeight: 1000, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.55, // Good quality but fast
+                initialQuality: 0.65, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
@@ -6523,7 +6537,7 @@ const renderStepContent = () => {
       
       <div className="flex items-center gap-2">
         <Phone size={16} />
-        <span dir="ltr">{selectedStudio.phone}</span>
+        <span >{selectedStudio.phone}</span>
       </div>
       <div className="flex items-center gap-2">
         <Mail size={16} />

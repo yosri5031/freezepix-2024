@@ -132,6 +132,15 @@
       "unnamed": "Studio sans nom",
       "no_address": "Pas d'adresse"
     },
+    "days": {
+      "sunday": "Dimanche",
+      "monday": "Lundi", 
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi"
+    },
     "order": {
       "print_button": "Imprimer",
       "success_message": "Merci pour votre commande !",
