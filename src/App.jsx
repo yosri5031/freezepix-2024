@@ -1591,7 +1591,7 @@ const ensurePhotoPrices = (photos, countryCode) => {
           return fallbackDays[day] || 'Unknown';
         }
       };
-      
+
       // Add this function to your FreezePIX component
       const handleStudioSelect = (studio) => {
         // Check if studio is a valid object
@@ -1672,7 +1672,8 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   const studioSlug = parseStudioSlugFromUrl();
   const isPreselectedFromUrl = localStorage.getItem('isPreselectedFromUrl') === 'true';
   const { t } = useTranslation();
-  
+  const { i18n } = useTranslation(); // Add this line
+
   // Number of studios to show initially
   const INITIAL_DISPLAY_COUNT = 4;
 
@@ -1971,18 +1972,39 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
                     <Clock size={16} />
                     <span className="font-medium">{t('pickup.hours')}:</span>
                   </div>
-                  <div className="grid grid-cols-1 gap-1">
-                    {studio.operatingHours
-                      .sort((a, b) => a.day - b.day)
-                      .map(hours => (
-                      <div key={hours.day} className="flex justify-between text-xs">
-                        <span>{getDayName(hours.day)}</span>
-                        <span dir="ltr">
-                          {hours.isClosed ? t('pickup.closed') : `${hours.openTime} - ${hours.closeTime}`}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                 <div className="grid grid-cols-1 gap-1">
+  {selectedStudio.operatingHours
+    ?.sort((a, b) => a.day - b.day)
+    .map(hours => {
+      // Instant day translation without t()
+      const dayNames = {
+        en: ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'],
+        fr: ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
+        ar: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت']
+      };
+      
+      const currentLang = i18n.language || 'en'; // Get current language
+      const dayName = dayNames[currentLang]?.[hours.day] || dayNames.en[hours.day];
+      
+      const closedText = {
+        en: 'Closed',
+        fr: 'Fermé', 
+        ar: 'مغلق'
+      };
+      
+      return (
+        <div key={hours.day} className="flex justify-between text-xs">
+          <span>{dayName}</span>
+          <span dir="ltr">
+            {hours.isClosed ? 
+              (closedText[currentLang] || 'Closed') 
+              : `${hours.openTime} - ${hours.closeTime}`
+            }
+          </span>
+        </div>
+      );
+    })}
+</div>
                 </div>
 
                 <div className="text-xs text-gray-500 mt-2">
