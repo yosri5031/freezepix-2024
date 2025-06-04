@@ -2146,14 +2146,14 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
               
               {/* Size label and selection indicator */}
               <div className="flex-1 flex items-center justify-between">
-                <span className="text-sm font-medium">
+                <span className="text-sm font-small">
                   {sizeOption.label}
                 </span>
                 
                 {/* Selected indicator */}
                 {photo.size === sizeOption.value && (
                   <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <Check size={12} className="text-black font-bold" />
+                    <Check size={10} className="text-black font-bold" />
                   </div>
                 )}
               </div>
