@@ -1564,7 +1564,34 @@ const ensurePhotoPrices = (photos, countryCode) => {
         }));
       };
       
-
+      const getDayName = (day, t = null) => {
+        // Fallback day names in English
+        const fallbackDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        // If no translation function provided, return English fallback
+        if (!t || typeof t !== 'function') {
+          return fallbackDays[day] || 'Unknown';
+        }
+        
+        // Translation keys for each day
+        const dayKeys = [
+          'days.sunday',    // 0
+          'days.monday',    // 1  
+          'days.tuesday',   // 2
+          'days.wednesday', // 3
+          'days.thursday',  // 4
+          'days.friday',    // 5
+          'days.saturday'   // 6
+        ];
+        
+        try {
+          return t(dayKeys[day], { defaultValue: fallbackDays[day] });
+        } catch (error) {
+          console.error('Translation error for day:', day, error);
+          return fallbackDays[day] || 'Unknown';
+        }
+      };
+      
       // Add this function to your FreezePIX component
       const handleStudioSelect = (studio) => {
         // Check if studio is a valid object
