@@ -7262,7 +7262,7 @@ return (
     {(() => {
       const { subtotal } = calculateTotals();
       const country = initialCountries.find(c => c.value === selectedCountry);
-      const freeShippingThreshold = country?.freeShippingThreshold || 50;
+      const freeShippingThreshold = country?.freeShippingThreshold || 200;
       const currency = country?.currency || 'USD';
       const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
       const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
@@ -7274,35 +7274,33 @@ return (
 
       return (
         <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-          {/* Mobile: Stack vertically with proper spacing, Desktop: Side by side */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-2 mb-3">
-            <span className="text-sm sm:text-sm font-medium text-gray-700 order-1">
-              💰 <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
-            </span>
+          {/* Single row with all information inline */}
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
+            {/* Left side: Money, Pictures, and Prints all in one line */}
+            <div className="flex items-center gap-3 sm:gap-4 text-sm order-1">
+              <span className="font-medium text-gray-700">
+                💰 <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
+              </span>
+              <Camera size={16} className="text-blue-500" />
+              <span className="font-medium">{totalPictures}</span>
+              <Printer size={16} className="text-purple-500" />
+              <span className="font-medium">{totalPrints}</span>
+            </div>
+            
+            {/* Right side: Free shipping status */}
             {hasEarnedFreeShipping ? (
-              <span className="text-sm sm:text-sm font-medium text-green-600 flex items-center order-2">
+              <span className="text-sm font-medium text-green-600 flex items-center order-2">
                 <Truck size={16} className="mr-1" />
                 {t('order.free_shipping_earned', 'Free Shipping!')}
               </span>
             ) : (
-              <span className="text-sm sm:text-sm text-gray-600 order-2">
+              <span className="text-sm text-gray-600 order-2">
                 <span className="font-semibold">{remainingForFreeShipping.toFixed(2)} {currency}</span> {t('order.until_free_shipping', 'until free shipping')}
               </span>
             )}
           </div>
           
-          {/* Pictures and Prints Count - New section */}
-          <div className="flex justify-center gap-4 mb-3">
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Camera size={16} className="text-blue-500" />
-              <span className="font-medium">{totalPictures}</span>
-            </div>
-            <div className="flex items-center gap-1 text-sm text-gray-600">
-              <Printer size={16} className="text-purple-500" />
-              <span className="font-medium">{totalPrints}</span>
-            </div>
-          </div>
-          
+          {/* Progress bar */}
           <div className="w-full bg-gray-200 rounded-full h-3 sm:h-2 mb-3 sm:mb-2">
             <div 
               className={`h-3 sm:h-2 rounded-full transition-all duration-300 ${
@@ -7312,11 +7310,12 @@ return (
             ></div>
           </div>
           
+          {/* Bottom text - moved "until free shipping" here, removed threshold text */}
           <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
             {hasEarnedFreeShipping ? (
               t('order.free_shipping_qualified', 'You qualify for free shipping!')
             ) : (
-              `${t('order.free_shipping_at', 'Free shipping at')} ${freeShippingThreshold} ${currency}`
+              `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
             )}
           </div>
         </div>
