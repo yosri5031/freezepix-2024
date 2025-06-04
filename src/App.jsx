@@ -2048,18 +2048,18 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
   );
 };
       
-const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
+ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   const [showSizePreview, setShowSizePreview] = useState(null);
   
-  // Define size options based on country - INCREASED SIZES for better mobile visibility
+  // Define size options based on country
   const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
-    { value: '10x15', label: '10x15 cm', width: 55, height: 83 },
-    { value: '15x22', label: '15x23 cm', width: 65, height: 99 }
+    { value: '10x15', label: '10x15 cm', width: 40, height: 60 },
+    { value: '15x22', label: '15x23 cm', width: 50, height: 76 }
   ] : [
-    { value: '4x4', label: '4x4"', width: 60, height: 60 },
-    { value: '4x6', label: '4x6"', width: 50, height: 75 },
-    { value: '5x7', label: '5x7"', width: 60, height: 84 },
-    { value: '8x10', label: '8x10"', width: 70, height: 87 }
+    { value: '4x4', label: '4x4"', width: 45, height: 45 },
+    { value: '4x6', label: '4x6"', width: 35, height: 50 },
+    { value: '5x7', label: '5x7"', width: 45, height: 63 },
+    { value: '8x10', label: '8x10"', width: 55, height: 67 }
   ];
 
   const handleSizeClick = (sizeOption) => {
@@ -2115,44 +2115,44 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
         </div>
       )}
       
-      {/* Size Icons Grid - IMPROVED for mobile */}
+      {/* Size Icons Grid */}
       <div className="grid grid-cols-2 gap-2">
         {sizeOptions.map((sizeOption) => (
           <button
             key={sizeOption.value}
             onClick={() => handleSizeClick(sizeOption)}
-            className={`relative p-4 border-2 rounded-lg transition-all hover:shadow-md ${
+            className={`relative p-3 border-2 rounded-lg transition-all hover:shadow-md ${
               photo.size === sizeOption.value
                 ? 'border-yellow-400 bg-yellow-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            {/* Visual size representation - BIGGER and more mobile-friendly */}
-            <div className="flex justify-center mb-3">
+            {/* Visual size representation */}
+            <div className="flex justify-center mb-2">
               <div 
-                className={`border-2 flex items-center justify-center text-sm font-bold ${
+                className={`border-2 flex items-center justify-center text-xs font-medium ${
                   photo.size === sizeOption.value
                     ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
                     : 'border-gray-300 bg-gray-50 text-gray-600'
                 }`}
                 style={{ 
-                  width: `${Math.min(sizeOption.width, 70)}px`, 
-                  height: `${Math.min(sizeOption.height, 70)}px` 
+                  width: `${sizeOption.width}px`, 
+                  height: `${sizeOption.height}px` 
                 }}
               >
                 📷
               </div>
             </div>
             
-            {/* Size label - BIGGER text for mobile */}
-            <div className="text-sm font-medium text-center">
+            {/* Size label */}
+            <div className="text-xs font-medium text-center">
               {sizeOption.label}
             </div>
             
-            {/* Selected indicator - BIGGER for mobile */}
+            {/* Selected indicator */}
             {photo.size === sizeOption.value && (
-              <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center shadow-lg">
-                <Check size={14} className="text-black font-bold" />
+              <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-400 rounded-full flex items-center justify-center">
+                <Check size={10} className="text-black" />
               </div>
             )}
           </button>
