@@ -7268,9 +7268,12 @@ return (
       </div>
       
      {/* Shipping Progress Bar */}
-     {/* Shipping Progress Bar - Made Sticky */}
+     {/* Shipping Progress Bar - Sticky only on step 0 (upload images) */}
 {selectedPhotos.length > 0 && selectedCountry && (
-  <div className="sticky top-0 z-40 bg-white shadow-sm border-b mb-6 py-3">
+  <div className={`
+    ${activeStep === 0 ? 'sticky top-0 z-40 bg-white shadow-sm border-b' : ''} 
+    mb-6 py-3 transition-all duration-200
+  `}>
     <div className="max-w-md mx-auto px-4">
       {(() => {
         const { subtotal } = calculateTotals();
@@ -7319,7 +7322,7 @@ return (
               ></div>
             </div>
             
-            {/* Bottom text - moved "until free shipping" here, removed threshold text */}
+            {/* Bottom text */}
             <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
               {!hasEarnedFreeShipping &&  (
                 `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
