@@ -6759,6 +6759,7 @@ const renderStepContent = () => {
                           type="radio"
                           name="paymentMethod"
                           value="cod"
+                          defaultChecked
                           checked={paymentMethod === 'cod'}
                           onChange={() => setPaymentMethod('cod')}
                           className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
