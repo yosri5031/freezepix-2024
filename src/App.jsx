@@ -757,7 +757,7 @@ const FreezePIX = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('helcim'); // Default payment method
+    const [paymentMethod, setPaymentMethod] = useState('cod'); // Default payment method
     const [showPhotoOptions, setShowPhotoOptions] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
@@ -6759,7 +6759,6 @@ const renderStepContent = () => {
                           type="radio"
                           name="paymentMethod"
                           value="cod"
-                          defaultChecked
                           checked={paymentMethod === 'cod'}
                           onChange={() => setPaymentMethod('cod')}
                           className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
