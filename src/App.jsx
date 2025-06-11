@@ -813,6 +813,8 @@ const [formData, setFormData] = useState({
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
       const [hasLoadedCache, setHasLoadedCache] = useState(false);
       const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+      const [isScrolled, setIsScrolled] = useState(false);
+
       const saveStateTimeoutRef = useRef(null);
       const detectUserLocation = async () => {
         try {
@@ -919,6 +921,15 @@ const [formData, setFormData] = useState({
       useEffect(() => {
         captureSourceUrl();
       }, []);
+
+// Add this useEffect for scroll detection
+useEffect(() => {
+  const handleScroll = () => {
+    setIsScrolled(window.scrollY > 100);
+  };
+  window.addEventListener('scroll', handleScroll);
+  return () => window.removeEventListener('scroll', handleScroll);
+}, []);
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
@@ -7257,66 +7268,70 @@ return (
       </div>
       
      {/* Shipping Progress Bar */}
-     {selectedPhotos.length > 0 && selectedCountry && (
-  <div className="mb-6 max-w-md mx-auto">
-    {(() => {
-      const { subtotal } = calculateTotals();
-      const country = initialCountries.find(c => c.value === selectedCountry);
-      const freeShippingThreshold = country?.freeShippingThreshold || 200;
-      const currency = country?.currency || 'USD';
-      const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-      const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
-      const hasEarnedFreeShipping = subtotal >= freeShippingThreshold;
-      
-      // Calculate totals for pictures and prints
-      const totalPictures = selectedPhotos.length;
-      const totalPrints = selectedPhotos.reduce((sum, photo) => sum + (photo.quantity || 1), 0);
+     {/* Shipping Progress Bar - Made Sticky */}
+{selectedPhotos.length > 0 && selectedCountry && (
+  <div className="sticky top-0 z-40 bg-white shadow-sm border-b mb-6 py-3">
+    <div className="max-w-md mx-auto px-4">
+      {(() => {
+        const { subtotal } = calculateTotals();
+        const country = initialCountries.find(c => c.value === selectedCountry);
+        const freeShippingThreshold = country?.freeShippingThreshold || 200;
+        const currency = country?.currency || 'USD';
+        const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
+        const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
+        const hasEarnedFreeShipping = subtotal >= freeShippingThreshold;
+        
+        // Calculate totals for pictures and prints
+        const totalPictures = selectedPhotos.length;
+        const totalPrints = selectedPhotos.reduce((sum, photo) => sum + (photo.quantity || 1), 0);
 
-      return (
-        <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-          {/* Single row with all information inline */}
-          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
-            {/* Left side: Money, Pictures, and Prints all in one line */}
-            <div className="flex items-center gap-3 sm:gap-4 text-sm order-1">
-              <span className="font-medium text-gray-700">
-                💰 <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
-              </span>
-              <Camera size={16} className="text-blue-500" />
-              <span className="font-medium">{totalPictures}</span>
-              <Printer size={16} className="text-purple-500" />
-              <span className="font-medium">{totalPrints}</span>
+        return (
+          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
+            {/* Single row with all information inline */}
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
+              {/* Left side: Money, Pictures, and Prints all in one line */}
+              <div className="flex items-center gap-3 sm:gap-4 text-sm order-1">
+                <span className="font-medium text-gray-700">
+                  💰 <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
+                </span>
+                <Camera size={16} className="text-blue-500" />
+                <span className="font-medium">{totalPictures}</span>
+                <Printer size={16} className="text-purple-500" />
+                <span className="font-medium">{totalPrints}</span>
+              </div>
+              
+              {/* Right side: Free shipping status */}
+              {hasEarnedFreeShipping && (
+                <span className="text-sm font-medium text-green-600 flex items-center order-2">
+                  <Truck size={16} className="mr-1" />
+                  {t('order.free_shipping_earned', 'Free Shipping!')}
+                </span>
+              )}
             </div>
             
-            {/* Right side: Free shipping status */}
-            {hasEarnedFreeShipping && (
-  <span className="text-sm font-medium text-green-600 flex items-center order-2">
-    <Truck size={16} className="mr-1" />
-    {t('order.free_shipping_earned', 'Free Shipping!')}
-  </span>
-)}
+            {/* Progress bar */}
+            <div className="w-full bg-gray-200 rounded-full h-3 sm:h-2 mb-3 sm:mb-2">
+              <div 
+                className={`h-3 sm:h-2 rounded-full transition-all duration-300 ${
+                  hasEarnedFreeShipping ? 'bg-green-500' : 'bg-yellow-400'
+                }`}
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+            
+            {/* Bottom text - moved "until free shipping" here, removed threshold text */}
+            <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
+              {!hasEarnedFreeShipping &&  (
+                `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
+              )}
+            </div>
           </div>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-3 sm:h-2 mb-3 sm:mb-2">
-            <div 
-              className={`h-3 sm:h-2 rounded-full transition-all duration-300 ${
-                hasEarnedFreeShipping ? 'bg-green-500' : 'bg-yellow-400'
-              }`}
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
-          
-          {/* Bottom text - moved "until free shipping" here, removed threshold text */}
-          <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
-            {!hasEarnedFreeShipping &&  (
-              `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
-            )}
-          </div>
-        </div>
-      );
-    })()}
+        );
+      })()}
+    </div>
   </div>
 )}
+
 
       {/* Render the current step's content */}
 
