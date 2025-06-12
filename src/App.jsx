@@ -17,6 +17,7 @@ import magnet from './assets/magnet.jpg';
 import threeDFrame from './assets/3d_frame.jpg';
 import Rectangle from './assets/rectangle.jpg';
 import Heart from './assets/heart.jpg';
+import phototunisia from './assets/phototunisia.jpeg';
 import imageCompression from 'browser-image-compression';
 import { processImagesInBatches } from './imageProcessingUtils';
 import {clearStateStorage} from './stateManagementUtils';
@@ -2462,6 +2463,11 @@ const closeProductDetails = () => {
                               {t('productDetails.pricing')}
                             </div>
                             
+                                   {/* Full-width image for Tunisian users */}
+                    {selectedCountry === 'TN' && (
+                        <img src={phototunisia} alt="Product Banner" className="w-full h-auto" />
+                    )}
+
                             {product.hasPricingTable ? (
                               <div className="bg-gray-50 rounded-lg p-3">
                                 <div className="space-y-2">
