@@ -139,6 +139,15 @@
 
     },
     "order": {
+      "units": "units",
+      "discount_applied": "Discount applied",
+      "per_photo": "per photo",
+      "qty_1_4": "Qty 1-4",
+      "qty_5_24": "Qty 5-24",
+      "qty_25_49": "Qty 25-49",
+      "qty_50_74": "Qty 50-74",
+      "qty_75_plus": "Qty 75+",
+      "tax": "Tax",
       "print_button": "Print",
       "success_message": "Thank you for your order!",
       "success_details": "Your order has been successfully placed and will be processed within 48 hours. A confirmation email has been sent to",
@@ -220,7 +229,15 @@
     "product": "Product",
     "price": "Price",
     "image": "Image",
-    "imagePreview": "Image Preview"},
+    "imagePreview": "Image Preview",
+    "qty_1_4": "1-4 units",
+      "qty_5_24": "5-24 units",
+      "qty_25_49": "25-49 units",
+      "qty_50_74": "50-74 units",
+      "qty_75_plus": "75+ units",
+      "per_photo": "per photo",
+      "bulk_discount_note": "The more you order, the less you pay per photo!"
+  },
 
     "categories": {
       "Photo Prints": "Photo Prints",
@@ -239,7 +256,17 @@
       "3D Frame": "3D Frame",
       "Rectangle 3D Frame" : "Rectangle",
       "Heart 3D Frame" : "Heart",
-      "8x10 Size": "Format 8 x 10 in "
+      "8x10 Size": "Format 8 x 10 in ",
+      "10x15_photos": "10×15 cm Photos",
+      "15x23_photos": "15×23 cm Photos",
+      "35x45_photos": "3.5×4.5 cm Photos",
+      "4x6_photos": "4×6\" Photos",
+      "5x7_photos": "5×7\" Photos",
+      "8x10_photos": "8×10\" Photos",
+      "4x4_photos": "4×4\" Photos",
+      "3d_crystal_frame": "3D Crystal Frame",
+      "keychains": "Keychains",
+      "keyring_magnets": "Keyring/Magnets"
     },
     "canada" : {
       "options": "Payment Options for Canada",

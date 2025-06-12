@@ -133,6 +133,15 @@
       "no_address": "Pas d'adresse"
     },
     "order": {
+      "units": "unités",
+      "discount_applied": "Remise appliquée",
+      "per_photo": "par photo",
+      "qty_1_4": "Qté 1-4",
+      "qty_5_24": "Qté 5-24",
+      "qty_25_49": "Qté 25-49",
+      "qty_50_74": "Qté 50-74",
+      "qty_75_plus": "Qté 75+",
+      "tax": "Taxes",
       "print_button": "Imprimer",
       "success_message": "Merci pour votre commande !",
       "success_details": "Votre commande a été passée avec succès et sera traitée dans les 48 heures. Un e-mail de confirmation a été envoyé à",
@@ -212,7 +221,14 @@
     "product": "Produit",
     "price": "Prix",
     "image": "Image",
-    "imagePreview": "Aperçu de l'image"},
+    "imagePreview": "Aperçu de l'image",
+  "qty_1_4": "1-4 unités",
+      "qty_5_24": "5-24 unités",
+      "qty_25_49": "25-49 unités",
+      "qty_50_74": "50-74 unités",
+      "qty_75_plus": "75+ unités",
+      "per_photo": "par photo",
+      "bulk_discount_note": "Plus vous commandez, moins vous payez par photo !"},
 
     "categories": {
       "Photo Prints": "Impression photo",
@@ -229,7 +245,17 @@
       "3D Frame": "Cadre 3D",
       "Rectangle 3D Frame" : "Rectangle",
       "Heart 3D Frame" : "Coeur",
-      "8x10 Size": "Format 8 x 10 in "
+      "8x10 Size": "Format 8 x 10 in ",
+      "10x15_photos": "Photos 10×15 cm",
+      "15x23_photos": "Photos 15×23 cm",
+      "35x45_photos": "Photos 3,5×4,5 cm",
+      "4x6_photos": "Photos 4×6\"",
+      "5x7_photos": "Photos 5×7\"",
+      "8x10_photos": "Photos 8×10\"",
+      "4x4_photos": "Photos 4×4\"",
+      "3d_crystal_frame": "Cadre Cristal 3D",
+      "keychains": "Porte-clés",
+      "keyring_magnets": "Porte-clés/Aimants"
     },
     "canada" : {
 "options": "Options de paiement pour le Canada",

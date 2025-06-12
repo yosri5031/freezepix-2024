@@ -2255,222 +2255,249 @@ const closeProductDetails = () => {
 };
     
       //Product Details popup - Custom Photo Printing Size
-     const ProductDetailsPopup = ({ isOpen, onClose, selectedCountry }) => {
-  const { t, i18n } = useTranslation();
-  const [zoomedImage, setZoomedImage] = useState(null);
-  
-  const handleImageClick = (imageSrc) => {
-    setZoomedImage(imageSrc);
-  };
-
-  const closeZoom = () => {
-    setZoomedImage(null);
-  };
-
-  const translateCategory = (category) => {
-    // Use the categories mapping from translation.json
-    return t(`categories.${category}`, { defaultValue: category });
-  };
-  
-  const translateProduct = (product) => {
-    // Use the products mapping from translation.json
-    return t(`products.${product}`, { defaultValue: product });
-  };
-
-  // Define product data with price formatting based on country
-  const getProductData = (country) => {
-    const countryInfo = initialCountries.find(c => c.value === country);
-    if (!countryInfo) return [];
-    
-    let products = []; // Define products array outside if statements
-  
-    if (country !== 'TUN' || country !== 'TN') {
-      products = [
-        {
-        category: 'Photo Prints',
-        product: '4x4 Size',
-        country: countryInfo.name,
-        price: `${countryInfo.currency} ${countryInfo.size4x4}`
-        },
-        {
-          category: 'Photo Prints',
-          product: '4x6 Size',
-          country: countryInfo.name,
-          price: countryInfo.currency === 'TND' 
-            ? `${countryInfo.size10x15} TND`
-            : `${countryInfo.currency} ${countryInfo.size4x6}`
-        },
-        {
-          category: 'Photo Prints',
-          product: '5x7 Size',
-          country: countryInfo.name,
-          price: countryInfo.currency === 'TND'
-            ? `${countryInfo.size15x22} TND`
-            : `${countryInfo.currency} ${countryInfo.size5x7}`
-        },
-        {
-          category: 'Photo Prints',
-          product: '8x10 Size',
-          country: countryInfo.name,
-          price: `${countryInfo.currency} ${countryInfo.size8x10}`
-        }
-      ];
-    } 
-  
-    if (country === 'TN') {
-      products = [
-        {
-          category: 'Photo Prints',
-          product: 'Format 10x15 cm',
-          country: countryInfo.name,
-          pricing: '3.00 TND (1-4) • 2.40 TND (5-24) • 2.00 TND (25-49) • 1.50 TND (50-74) • 1.25 TND (75+)'
-
-        },
-        {
-          category: 'Photo Prints',
-          product: 'Format 15x23 cm',
-          country: countryInfo.name,
-          pricing: '5.00 TND (1-4) • 4.00 TND (5-24) • 3.50 TND (25-49) • 2.50 TND (50-74) • 2.00 TND (75+)'
-
-        },
-        /*{
-          category: 'Photo Prints',
-          product: 'Format 3.5 x 4.5 cm',
-          country: countryInfo.name,
-          price: countryInfo.currency === 'TND'
-            ? `${countryInfo.size35x45} TND`
-            : `${countryInfo.currency} ${countryInfo.size5x7}`
-        }*/
-      ];
-    } 
-  
-  
-    return products;
-  };
-
-  const getImageSrc = (product) => {
-    const imageMap = {
-      '4x6 Size': photoprint4x6,
-      'Format 10.16 x 15.24 cm': photoprint4x6,
-      '5x7 Size': photoprint5x7,
-      'Format 12.7 x 17.78 cm': photoprint5x7,
-      '8x10 Size': photoprint8x10,
-      '4x4 Size': photoprint4x4,
-      'Format 3.5 x 4.5 cm': size35x45,
-      'Format 10x15 cm':photoprint4x6,
-      'Format 15x23 cm':photoprint5x7,
-      'Keychain': keychain,
-      'Keychain and Magnet': keychain,
-      'Magnet': magnet,
-      'Rectangle': Rectangle,
-      'Heart' : Heart
-    };
-  
-    return imageMap[product] || '';
-  };
-
-  if (!isOpen) return null;
-
-  const productData = getProductData(selectedCountry);
-
-  return (
-    <>
-      {zoomedImage && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="relative bg-white rounded-lg w-[94%] max-w-xl">
-            <div className="p-4 border-b flex justify-between items-center">
-              <h2 className="text-lg font-bold">{t('productDetails.imagePreview')}</h2>
-              <button
-                onClick={closeZoom}
-                className="p-2 hover:bg-gray-200 rounded-full transition-colors"
-                aria-label="Close zoom"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-4">
-              <img
-                src={zoomedImage}
-                alt={t('productDetails.imagePreview')}
-                className="w-full h-auto rounded-lg"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      const ProductDetailsPopup = ({ isOpen, onClose, selectedCountry }) => {
+        const { t, i18n } = useTranslation();
+        const [zoomedImage, setZoomedImage] = useState(null);
+        
+        const handleImageClick = (imageSrc) => {
+          setZoomedImage(imageSrc);
+        };
       
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-        <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
-          <div className="sticky top-0 bg-white p-4 border-b">
-            <h2 className="text-lg font-bold">
-              {t('productDetails.title')}
-            </h2>
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
-              aria-label="Close"
-            >
-              <X size={24} />
-            </button>
-          </div>
+        const closeZoom = () => {
+          setZoomedImage(null);
+        };
+      
+        const translateCategory = (category) => {
+          // Use the categories mapping from translation.json
+          return t(`categories.${category}`, { defaultValue: category });
+        };
+        
+        const translateProduct = (product) => {
+          // Use the products mapping from translation.json
+          return t(`products.${product}`, { defaultValue: product });
+        };
+      
+        // Define product data with price formatting based on country
+        const getProductData = (country) => {
+          const countryInfo = initialCountries.find(c => c.value === country);
+          if (!countryInfo) return [];
           
-          <div className="p-4">
-  <div className="grid grid-cols-1 gap-4">
-    {productData.map((product, index) => (
-      <div key={index} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
-        <div className="grid grid-cols-2 p-4 items-center">
-          <div className="space-y-4">
-            <div>
-              <div className="text-xs font-medium text-gray-500 uppercase">
-                {t('productDetails.category')}
-              </div>
-              <div className="text-sm">
-                {translateCategory(product.category)}
-              </div>
-            </div>
-            
-            <div>
-              <div className="text-xs font-medium text-gray-500 uppercase">
-                {t('productDetails.product')}
-              </div>
-              <div className="text-sm">
-                {translateProduct(product.product)}
-              </div>
-            </div>
-            <div>
-                  <div className="text-xs font-medium text-gray-500 uppercase">
-                    {t('productDetails.pricing')}
+          let products = []; // Define products array outside if statements
+        
+          if (country !== 'TUN' && country !== 'TN') {
+            products = [
+              {
+              category: 'Photo Prints',
+              product: '4x4 Size',
+              country: countryInfo.name,
+              price: `${countryInfo.currency} ${countryInfo.size4x4}`
+              },
+              {
+                category: 'Photo Prints',
+                product: '4x6 Size',
+                country: countryInfo.name,
+                price: countryInfo.currency === 'TND' 
+                  ? `${countryInfo.size10x15} TND`
+                  : `${countryInfo.currency} ${countryInfo.size4x6}`
+              },
+              {
+                category: 'Photo Prints',
+                product: '5x7 Size',
+                country: countryInfo.name,
+                price: countryInfo.currency === 'TND'
+                  ? `${countryInfo.size15x22} TND`
+                  : `${countryInfo.currency} ${countryInfo.size5x7}`
+              },
+              {
+                category: 'Photo Prints',
+                product: '8x10 Size',
+                country: countryInfo.name,
+                price: `${countryInfo.currency} ${countryInfo.size8x10}`
+              }
+            ];
+          } 
+        
+          if (country === 'TN' || country === 'TUN') {
+            products = [
+              {
+                category: 'Photo Prints',
+                product: 'Format 10x15 cm',
+                country: countryInfo.name,
+                hasPricingTable: true,
+                pricingTiers: [
+                  { range: '1-4', price: '3.00', label: t('productDetails.qty_1_4') },
+                  { range: '5-24', price: '2.40', label: t('productDetails.qty_5_24') },
+                  { range: '25-49', price: '2.00', label: t('productDetails.qty_25_49') },
+                  { range: '50-74', price: '1.50', label: t('productDetails.qty_50_74') },
+                  { range: '75+', price: '1.25', label: t('productDetails.qty_75_plus') }
+                ]
+              },
+              {
+                category: 'Photo Prints',
+                product: 'Format 15x23 cm',
+                country: countryInfo.name,
+                hasPricingTable: true,
+                pricingTiers: [
+                  { range: '1-4', price: '5.00', label: t('productDetails.qty_1_4') },
+                  { range: '5-24', price: '4.00', label: t('productDetails.qty_5_24') },
+                  { range: '25-49', price: '3.50', label: t('productDetails.qty_25_49') },
+                  { range: '50-74', price: '2.50', label: t('productDetails.qty_50_74') },
+                  { range: '75+', price: '2.00', label: t('productDetails.qty_75_plus') }
+                ]
+              }
+            ];
+          } 
+        
+          return products;
+        };
+      
+        const getImageSrc = (product) => {
+          const imageMap = {
+            '4x6 Size': photoprint4x6,
+            'Format 10.16 x 15.24 cm': photoprint4x6,
+            '5x7 Size': photoprint5x7,
+            'Format 12.7 x 17.78 cm': photoprint5x7,
+            '8x10 Size': photoprint8x10,
+            '4x4 Size': photoprint4x4,
+            'Format 3.5 x 4.5 cm': size35x45,
+            'Format 10x15 cm': photoprint4x6,
+            'Format 15x23 cm': photoprint5x7,
+            'Keychain': keychain,
+            'Keychain and Magnet': keychain,
+            'Magnet': magnet,
+            'Rectangle': Rectangle,
+            'Heart': Heart
+          };
+        
+          return imageMap[product] || '';
+        };
+      
+        if (!isOpen) return null;
+      
+        const productData = getProductData(selectedCountry);
+      
+        return (
+          <>
+            {zoomedImage && (
+              <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black bg-opacity-50 p-4">
+                <div className="relative bg-white rounded-lg w-[94%] max-w-xl">
+                  <div className="p-4 border-b flex justify-between items-center">
+                    <h2 className="text-lg font-bold">{t('productDetails.imagePreview')}</h2>
+                    <button
+                      onClick={closeZoom}
+                      className="p-2 hover:bg-gray-200 rounded-full transition-colors"
+                      aria-label="Close zoom"
+                    >
+                      <X size={24} />
+                    </button>
                   </div>
-                  <div className="text-xs text-gray-600 leading-relaxed">
-                    {product.pricing || product.price}
+                  <div className="p-4">
+                    <img
+                      src={zoomedImage}
+                      alt={t('productDetails.imagePreview')}
+                      className="w-full h-auto rounded-lg"
+                    />
                   </div>
                 </div>
-            
-            <div>
-              
-            </div>
-          </div>
-          
-          <div className="justify-self-center">
-            {getImageSrc(product.product) && (
-              <img
-                src={getImageSrc(product.product)}
-                alt={translateProduct(product.product)}
-                className="h-32 w-32 object-cover cursor-pointer rounded-lg"
-                onClick={() => handleImageClick(getImageSrc(product.product))}
-              />
+              </div>
             )}
-          </div>
-        </div>
-      </div>
-    ))}
-  </div>
-</div>
-        </div>
-      </div>
-    </>
-  );
-};
+            
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="relative bg-white rounded-lg w-[94%] max-w-xl h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white p-4 border-b">
+                  <h2 className="text-lg font-bold">
+                    {t('productDetails.title')}
+                  </h2>
+                  <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition-colors"
+                    aria-label="Close"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+                
+                <div className="p-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    {productData.map((product, index) => (
+                      <div key={index} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
+                        <div className="p-4">
+                          {/* Product Header with Image */}
+                          <div className="grid grid-cols-2 items-center mb-4">
+                            <div className="space-y-3">
+                              <div>
+                                <div className="text-xs font-medium text-gray-500 uppercase">
+                                  {t('productDetails.category')}
+                                </div>
+                                <div className="text-sm font-medium">
+                                  {translateCategory(product.category)}
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <div className="text-xs font-medium text-gray-500 uppercase">
+                                  {t('productDetails.product')}
+                                </div>
+                                <div className="text-sm font-medium">
+                                  {translateProduct(product.product)}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="justify-self-center">
+                              {getImageSrc(product.product) && (
+                                <img
+                                  src={getImageSrc(product.product)}
+                                  alt={translateProduct(product.product)}
+                                  className="h-32 w-32 object-cover cursor-pointer rounded-lg"
+                                  onClick={() => handleImageClick(getImageSrc(product.product))}
+                                />
+                              )}
+                            </div>
+                          </div>
+      
+                          {/* Pricing Section */}
+                          <div>
+                            <div className="text-xs font-medium text-gray-500 uppercase mb-2">
+                              {t('productDetails.pricing')}
+                            </div>
+                            
+                            {product.hasPricingTable ? (
+                              <div className="bg-gray-50 rounded-lg p-3">
+                                <div className="space-y-2">
+                                  {product.pricingTiers.map((tier, tierIndex) => (
+                                    <div key={tierIndex} className="flex justify-between items-center py-1">
+                                      <span className="text-sm text-gray-700">
+                                        {tier.label}
+                                      </span>
+                                      <span className="text-sm font-medium text-blue-600">
+                                        {tier.price} TND {t('productDetails.per_photo')}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                  <p className="text-xs text-gray-500">
+                                    {t('productDetails.bulk_discount_note')}
+                                  </p>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-sm text-gray-600">
+                                {product.pricing || product.price}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        );
+      };
      // Add these helper functions at the beginning of your component
      const convertImageToBase64 = async (file) => {
       // If already a base64 string, return it
@@ -6839,11 +6866,11 @@ const renderInvoice = () => {
   const country = initialCountries.find(c => c.value === selectedCountry);
   
   const getPricingTierLabel = (quantity) => {
-    if (quantity <= 4) return 'Qty 1-4';
-    if (quantity <= 24) return 'Qty 5-24';
-    if (quantity <= 49) return 'Qty 25-49';
-    if (quantity <= 74) return 'Qty 50-74';
-    return 'Qty 75+';
+    if (quantity <= 4) return t('order.qty_1_4');
+    if (quantity <= 24) return t('order.qty_5_24');
+    if (quantity <= 49) return t('order.qty_25_49');
+    if (quantity <= 74) return t('order.qty_50_74');
+    return t('order.qty_75_plus');
   }; 
   
   return (
@@ -6885,7 +6912,7 @@ const renderInvoice = () => {
               )}
               {discountCode && !discountError && discount > 0 && (
                 <p className="text-green-500 text-sm">
-                  Discount applied: {getDiscountDisplay()}
+                  {t('order.discount_applied')}: {getDiscountDisplay()}
                 </p>
               )}
             </div>
@@ -6928,12 +6955,12 @@ const renderInvoice = () => {
               <div className="space-y-1 border-b pb-3 mb-3">
                 <div className="flex justify-between">
                   <div className="flex flex-col">
-                    <span className="font-medium">10×15 cm Photos</span>
+                    <span className="font-medium">{t('products.10x15_photos')}</span>
                     <span className="text-sm text-gray-600">
-                      {quantities['10x15']} units • {getPricingTierLabel(quantities['10x15'])}
+                      {quantities['10x15']} {t('order.units')} • {getPricingTierLabel(quantities['10x15'])}
                     </span>
                     <span className="text-sm text-blue-600">
-                      {getTunisiaPricing('10x15', quantities['10x15']).toFixed(2)} TND per photo
+                      {getTunisiaPricing('10x15', quantities['10x15']).toFixed(2)} TND {t('order.per_photo')}
                     </span>
                   </div>
                   <div className="text-right">
@@ -6950,12 +6977,12 @@ const renderInvoice = () => {
               <div className="space-y-1 border-b pb-3 mb-3">
                 <div className="flex justify-between">
                   <div className="flex flex-col">
-                    <span className="font-medium">15×23 cm Photos</span>
+                    <span className="font-medium">{t('products.15x23_photos')}</span>
                     <span className="text-sm text-gray-600">
-                      {quantities['15x22']} units • {getPricingTierLabel(quantities['15x22'])}
+                      {quantities['15x22']} {t('order.units')} • {getPricingTierLabel(quantities['15x22'])}
                     </span>
                     <span className="text-sm text-blue-600">
-                      {getTunisiaPricing('15x22', quantities['15x22']).toFixed(2)} TND per photo
+                      {getTunisiaPricing('15x22', quantities['15x22']).toFixed(2)} TND {t('order.per_photo')}
                     </span>
                   </div>
                   <div className="text-right">
@@ -6971,8 +6998,8 @@ const renderInvoice = () => {
             {quantities['3.5x4.5'] > 0 && (
               <div className="flex justify-between py-2 border-b">
                 <div className="flex flex-col">
-                  <span className="font-medium">3.5×4.5 cm Photos</span>
-                  <span className="text-sm text-gray-600">{quantities['3.5x4.5']} units</span>
+                  <span className="font-medium">{t('products.35x45_photos')}</span>
+                  <span className="text-sm text-gray-600">{quantities['3.5x4.5']} {t('order.units')}</span>
                 </div>
                 <div className="text-right">
                   <div className="font-medium">{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</div>
@@ -6987,25 +7014,25 @@ const renderInvoice = () => {
           <>
             {quantities['4x6'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>4×6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+                <span>{t('products.4x6_photos')} ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
             {quantities['5x7'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>5×7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+                <span>{t('products.5x7_photos')} ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
             {(selectedCountry !== 'TN' && selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>8×10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+                <span>{t('products.8x10_photos')} ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
             {(selectedCountry !== 'TN' && selectedCountry !== 'TUN') && quantities['4x4'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>4×4" Photos ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
+                <span>{t('products.4x4_photos')} ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
@@ -7015,7 +7042,7 @@ const renderInvoice = () => {
         {/* 3D Frame Items */}
         {quantities['3d_frame'] > 0 && (
           <div className="flex justify-between py-2">
-            <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
+            <span>{t('products.3d_crystal_frame')} ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
             <span>{subtotalsBySize['3d_frame'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
@@ -7023,7 +7050,7 @@ const renderInvoice = () => {
         {/* Keychain Items */}
         {quantities['keychain'] > 0 && (
           <div className="flex justify-between py-2">
-            <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
+            <span>{t('products.keychains')} ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
             <span>{subtotalsBySize['keychain'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
@@ -7031,7 +7058,7 @@ const renderInvoice = () => {
         {/* Keyring/Magnet Items */}
         {quantities['keyring_magnet'] > 0 && (
           <div className="flex justify-between py-2">
-            <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
+            <span>{t('products.keyring_magnets')} ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
             <span>{subtotalsBySize['keyring_magnet'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
@@ -7069,7 +7096,7 @@ const renderInvoice = () => {
         {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
           <div className="flex justify-between py-2">
             <div className="flex flex-col">
-              <span>Tax{appliedProvince ? ` (${appliedProvince})` : ''}</span>
+              <span>{t('order.tax')}{appliedProvince ? ` (${appliedProvince})` : ''}</span>
               <span className="text-sm text-gray-600">
                 {(() => {
                   if (appliedTaxRates) {
@@ -7112,7 +7139,7 @@ const renderInvoice = () => {
          selectedCountry !== 'CAN' && selectedCountry !== 'CA' && 
          TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default > 0 && (
           <div className="flex justify-between py-2">
-            <span>{`Tax (${TAX_RATES[selectedCountry].default}%)`}</span>
+            <span>{t('order.tax')} ({TAX_RATES[selectedCountry].default}%)</span>
             <span>{taxAmount.toFixed(2)} {country?.currency}</span>
           </div>
         )}
