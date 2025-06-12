@@ -3358,7 +3358,6 @@ const sendOrderConfirmationEmail = async (orderData) => {
     // Helper function to get Tunisia studios that accept shipping
     const getTunisiaShippingStudios = async () => {
       try {
-        // Use your existing Studio model endpoint - adjust URL as needed
         const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios', {
           method: 'GET',
           headers: {
@@ -3382,6 +3381,208 @@ const sendOrderConfirmationEmail = async (orderData) => {
       } catch (error) {
         console.error('Error fetching Tunisia shipping studios:', error);
         return [];
+      }
+    };
+
+    // Helper function to generate studio owner email content
+    const generateStudioEmailContent = (studio, orderData, isFrench = false) => {
+      const texts = isFrench ? {
+        newOrder: '🔔 Nouvelle commande à préparer',
+        actionRequired: '⚠️ Action requise',
+        prepareOrder: 'Veuillez préparer cette commande pour expédition.',
+        orderDetails: 'Détails de la commande',
+        orderNumber: 'Numéro de commande :',
+        customerEmail: 'Email du client :',
+        customerPhone: 'Téléphone du client :',
+        paymentMethod: 'Méthode de paiement :',
+        deliveryMethod: 'Méthode de livraison :',
+        totalAmount: 'Montant total :',
+        shippingLocation: 'Adresse de livraison',
+        customerNote: 'Note du client',
+        disclaimer: 'Ceci est une notification automatique du système FreezePIX.'
+      } : {
+        newOrder: '🔔 New Shipping Order to Fulfill',
+        actionRequired: '⚠️ Action Required',
+        prepareOrder: 'Please prepare this order for shipping to customer.',
+        orderDetails: 'Order Details',
+        orderNumber: 'Order Number:',
+        customerEmail: 'Customer Email:',
+        customerPhone: 'Customer Phone:',
+        paymentMethod: 'Payment Method:',
+        deliveryMethod: 'Delivery Method:',
+        totalAmount: 'Total Amount:',
+        shippingLocation: 'Shipping Address',
+        customerNote: 'Customer Note',
+        disclaimer: 'This is an automated notification from FreezePIX system.'
+      };
+      
+      const formattedAmount = orderData.totalAmount?.toFixed(2) || '0.00';
+      const currency = orderData.currency || 'USD';
+      const shippingAddress = orderData.shippingAddress || {};
+      
+      return `
+        <div style="max-width: 600px; margin: 0 auto; font-family: Arial, sans-serif; line-height: 1.6;">
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px 10px 0 0;">
+            <h1 style="margin: 0; font-size: 24px;">${texts.newOrder}</h1>
+            <p style="margin: 5px 0 0 0; font-size: 16px;">FreezePIX - ${studio.name}</p>
+          </div>
+          
+          <div style="background-color: white; padding: 20px; border: 1px solid #ddd; border-top: none;">
+            <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107; margin-bottom: 20px;">
+              <h3 style="color: #856404; margin-top: 0; font-size: 18px;">${texts.actionRequired}</h3>
+              <p style="color: #856404; margin-bottom: 0; font-weight: bold;">${texts.prepareOrder}</p>
+            </div>
+            
+            <h3 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">${texts.orderDetails}</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              <tr>
+                <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.orderNumber}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-family: monospace; font-size: 16px; color: #dc3545;">${orderData.orderNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.customerEmail}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><a href="mailto:${orderData.email}" style="color: #007bff;">${orderData.email}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.customerPhone}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;"><a href="tel:${orderData.phone}" style="color: #007bff; font-weight: bold;">${orderData.phone}</a></td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.deliveryMethod}</td>
+                <td style="padding: 10px; border: 1px solid #ddd;">Shipping</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.totalAmount}</td>
+                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #28a745; font-size: 18px;">${formattedAmount} ${currency}</td>
+              </tr>
+            </table>
+            
+            <h3 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">${texts.shippingLocation}</h3>
+            <div style="background-color: #e9ecef; padding: 15px; border-radius: 8px; border: 1px solid #ddd;">
+              <p style="margin: 0; font-size: 16px;">
+                <strong style="color: #495057;">${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}</strong><br>
+                ${shippingAddress.address || ''}<br>
+                ${shippingAddress.city || ''}, ${shippingAddress.postalCode || ''}<br>
+                ${shippingAddress.country || ''}
+              </p>
+            </div>
+            
+            ${orderData.orderNote ? `
+              <h3 style="color: #333; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px;">${texts.customerNote}</h3>
+              <div style="background-color: #fff3cd; padding: 15px; border-radius: 8px; border-left: 4px solid #ffc107;">
+                <p style="margin: 0; font-style: italic; color: #856404;">"${orderData.orderNote}"</p>
+              </div>
+            ` : ''}
+            
+            <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 20px;">
+              <p style="margin: 0; font-size: 12px; color: #6c757d; text-align: center;">
+                ${texts.disclaimer}
+              </p>
+            </div>
+          </div>
+        </div>
+      `;
+    };
+
+    // Helper function to generate plain text version for studio emails
+    const generateStudioPlainTextVersion = (studio, orderData, isFrench = false) => {
+      const texts = isFrench ? {
+        newOrder: 'NOUVELLE COMMANDE À PRÉPARER',
+        actionRequired: 'ACTION REQUISE',
+        orderDetails: 'DÉTAILS DE LA COMMANDE',
+        orderNumber: 'Numéro de commande',
+        customerEmail: 'Email du client',
+        customerPhone: 'Téléphone du client',
+        totalAmount: 'Montant total',
+        shippingAddress: 'Adresse de livraison',
+        customerNote: 'Note du client'
+      } : {
+        newOrder: 'NEW SHIPPING ORDER TO FULFILL',
+        actionRequired: 'ACTION REQUIRED',
+        orderDetails: 'ORDER DETAILS',
+        orderNumber: 'Order Number',
+        customerEmail: 'Customer Email',
+        customerPhone: 'Customer Phone',
+        totalAmount: 'Total Amount',
+        shippingAddress: 'Shipping Address',
+        customerNote: 'Customer Note'
+      };
+      
+      const formattedAmount = orderData.totalAmount?.toFixed(2) || '0.00';
+      const currency = orderData.currency || 'USD';
+      const shippingAddress = orderData.shippingAddress || {};
+      
+      return `
+${texts.newOrder}
+FreezePIX - ${studio.name}
+
+${texts.actionRequired}
+Please prepare this order for shipping to customer.
+
+${texts.orderDetails}
+${texts.orderNumber}: ${orderData.orderNumber}
+${texts.customerEmail}: ${orderData.email}
+${texts.customerPhone}: ${orderData.phone}
+${texts.totalAmount}: ${formattedAmount} ${currency}
+
+${texts.shippingAddress}:
+${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}
+${shippingAddress.address || ''}
+${shippingAddress.city || ''}, ${shippingAddress.postalCode || ''}
+${shippingAddress.country || ''}
+
+${orderData.orderNote ? `${texts.customerNote}: "${orderData.orderNote}"` : ''}
+
+This is an automated notification from FreezePIX system.
+      `.trim();
+    };
+
+    // Helper function to send studio owner notification directly via nodemailer
+    const sendStudioNotification = async (studio, orderData) => {
+      try {
+        const studioInTunisia = studio.country === 'TN';
+        const studioSubjectPrefix = studioInTunisia ? '🚀 Nouvelle Commande Expédition' : '🚀 New Shipping Order';
+        
+        const studioEmailContent = generateStudioEmailContent(studio, orderData, studioInTunisia);
+        const studioPlainText = generateStudioPlainTextVersion(studio, orderData, studioInTunisia);
+
+        // Send directly to studio notification endpoint
+        const studioNotificationData = {
+          studioOwnerEmail: studio.owner.email,
+          studioName: studio.name,
+          orderNumber: orderData.orderNumber,
+          customerEmail: orderData.email,
+          customerPhone: orderData.phone,
+          shippingAddress: orderData.shippingAddress,
+          totalAmount: orderData.totalAmount,
+          currency: orderData.currency,
+          orderNote: orderData.orderNote,
+          emailContent: studioEmailContent,
+          plainTextContent: studioPlainText,
+          subject: `${studioSubjectPrefix} #${orderData.orderNumber} - ${studio.name}`,
+          isStudioNotification: true
+        };
+
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/send-studio-notification', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(studioNotificationData),
+          signal: AbortSignal.timeout(60000)
+        });
+
+        if (response.ok) {
+          return { success: true, studio: studio.name, email: studio.owner.email };
+        } else {
+          const errorData = await response.json().catch(() => null);
+          throw new Error(`HTTP ${response.status}: ${errorData?.message || response.statusText}`);
+        }
+
+      } catch (error) {
+        console.error(`Failed to notify studio ${studio.name}:`, error);
+        return { success: false, studio: studio.name, error: error.message };
       }
     };
 
@@ -3416,18 +3617,11 @@ const sendOrderConfirmationEmail = async (orderData) => {
       
       phone: orderData.phone || 'N/A',
       orderNote: orderData.orderNote || '',
-      
-      // Set payment method based on the order data
       paymentMethod: orderData.paymentMethod || 'helcim',
-      
       orderItems: orderData.orderItems || [],
       totalAmount: orderData.totalAmount || 0,
       currency: orderData.currency || 'USD',
-      
-      // Add delivery method
       deliveryMethod: orderData.deliveryMethod || 'pickup',
-      
-      // Include additional details
       subtotal: orderData.subtotal || 0,
       shippingFee: orderData.shippingFee || 0,
       taxAmount: orderData.taxAmount || 0,
@@ -3488,62 +3682,25 @@ const sendOrderConfirmationEmail = async (orderData) => {
           if (tunisiaStudios.length > 0) {
             console.log(`Found ${tunisiaStudios.length} Tunisia studios that accept shipping`);
             
-            // Send individual emails to each studio owner
-            const studioNotificationPromises = tunisiaStudios.map(async (studio) => {
-              try {
-                const studioEmailData = {
-                  ...emailOrderData,
-                  // Override pickup studio with this shipping studio for email template
-                  pickupStudio: {
-                    name: studio.name,
-                    address: studio.address || 'Not Specified',
-                    city: studio.city || 'Not Specified', 
-                    country: studio.country || 'TN'
-                  },
-                  // Override email to studio owner
-                  email: studio.owner.email,
-                  // Add flag to indicate this is a studio notification
-                  isStudioNotification: true,
-                  originalCustomerEmail: orderData.email
-                };
-
-                const studioResponse = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/send-order-confirmation', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                  },
-                  body: JSON.stringify(studioEmailData),
-                  signal: AbortSignal.timeout(60000)
-                });
-
-                if (studioResponse.ok) {
-                  console.log(`Studio notification sent to: ${studio.owner.email} (${studio.name})`);
-                  return { success: true, studio: studio.name, email: studio.owner.email };
-                } else {
-                  const error = `Failed to notify ${studio.name}: ${studioResponse.statusText}`;
-                  console.error(error);
-                  return { success: false, studio: studio.name, error };
-                }
-              } catch (error) {
-                const errorMsg = `Error notifying ${studio.name}: ${error.message}`;
-                console.error(errorMsg);
-                return { success: false, studio: studio.name, error: errorMsg };
-              }
-            });
+            // Send individual emails to each studio owner using the new method
+            const studioNotificationPromises = tunisiaStudios.map(studio => 
+              sendStudioNotification(studio, emailOrderData)
+            );
 
             // Wait for all studio notifications to complete
             const studioResults = await Promise.allSettled(studioNotificationPromises);
             
             // Process results
-            studioResults.forEach((result, index) => {
+            studioResults.forEach((result) => {
               if (result.status === 'fulfilled' && result.value.success) {
                 tunisiaShippingNotifications.studiosNotified++;
+                console.log(`Studio notification sent to: ${result.value.email} (${result.value.studio})`);
               } else {
                 const errorMsg = result.status === 'rejected' 
-                  ? result.reason 
+                  ? result.reason?.message || result.reason 
                   : result.value.error;
                 tunisiaShippingNotifications.errors.push(errorMsg);
+                console.error(`Failed to notify studio: ${errorMsg}`);
               }
             });
 
