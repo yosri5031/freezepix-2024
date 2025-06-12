@@ -758,7 +758,7 @@ const getTunisiaPricing = (size, quantity) => {
       '50-74': 1.50,
       '75+': 1.25
     },
-    '15x22': { // Note: using 15x22 to match existing code, but display as 15x23
+    '15x22': { // 15x23 cm in display
       '1-4': 5.00,
       '5-24': 4.00,
       '25-49': 3.50,
@@ -777,6 +777,7 @@ const getTunisiaPricing = (size, quantity) => {
   return pricing['75+'];
 };
 
+// Helper function to get pricing tier name for display
 const getTunisiaPricingTier = (quantity) => {
   if (quantity <= 4) return '1-4';
   if (quantity <= 24) return '5-24';
@@ -784,6 +785,8 @@ const getTunisiaPricingTier = (quantity) => {
   if (quantity <= 74) return '50-74';
   return '75+';
 };
+
+
 
   // FreezePIX Printing APP - Order Photo Prints Online from anywhere in Canada And United States
 const FreezePIX = () => {
@@ -6174,249 +6177,210 @@ const handleFileChange = async (event) => {
   
 
 
-const calculateTotals = () => {
-  const country = initialCountries.find(c => c.value === selectedCountry);
-  const quantities = {
-    '4x6': 0,
-    '5x7': 0,
-    '10x15': 0,
-    '15x22': 0,
-    '8x10': 0,
-    '4x4': 0,
-    '3.5x4.5': 0,
-    '3d_frame': 0,
-    'keychain': 0,
-    'keyring_magnet': 0
-  };
-
-  const subtotalsBySize = {
-    '4x6': 0,
-    '5x7': 0,
-    '10x15': 0,
-    '15x22': 0,
-    '8x10': 0,
-    '4x4': 0,
-    '3.5x4.5': 0,
-    '3d_frame': 0,
-    'keychain': 0,
-    'keyring_magnet': 0
-  };
-
-  selectedPhotos.forEach(photo => {
-    if (photo.productType === 'photo_print') {
-      quantities[photo.size] += photo.quantity || 1;
-    }
-  });
+  const calculateTotals = () => {
+    const country = initialCountries.find(c => c.value === selectedCountry);
+    const quantities = {
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '8x10': 0,
+      '4x4': 0,
+      '3.5x4.5': 0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
+    };
   
-  // Count quantities and calculate subtotals for each size/product
-  selectedPhotos.forEach(photo => {
-    if (photo.productType === 'photo_print') {
-      quantities[photo.size] += photo.quantity || 1;
-      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        const totalQuantityForSize = quantities[photo.size];
-        const pricePerUnit = getTunisiaPricing(photo.size, totalQuantityForSize);
-        subtotalsBySize[photo.size] += (photo.quantity || 1) * pricePerUnit;
-      } else {
-        if (photo.size === '4x6') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
-        } else if (photo.size === '5x7') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
-        } else if ((selectedCountry !== 'TUN' && selectedCountry !== 'TN') && photo.size === '8x10') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
-        }
-        else if ((selectedCountry !== 'TUN' && selectedCountry !== 'TN') && photo.size === '4x4') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
-        }
+    const subtotalsBySize = {
+      '4x6': 0,
+      '5x7': 0,
+      '10x15': 0,
+      '15x22': 0,
+      '8x10': 0,
+      '4x4': 0,
+      '3.5x4.5': 0,
+      '3d_frame': 0,
+      'keychain': 0,
+      'keyring_magnet': 0
+    };
+  
+    // FIRST: Count all quantities by size/product type
+    selectedPhotos.forEach(photo => {
+      if (photo.productType === 'photo_print') {
+        quantities[photo.size] += photo.quantity || 1;
+      } else if (photo.productType === '3d_frame') {
+        quantities['3d_frame'] += photo.quantity || 1;
+      } else if (photo.productType === 'keychain') {
+        quantities['keychain'] += photo.quantity || 1;
+      } else if (photo.productType === 'keyring_magnet') {
+        quantities['keyring_magnet'] += photo.quantity || 1;
       }
-    } else if (photo.productType === '3d_frame') {
-      quantities['3d_frame'] += photo.quantity || 1;
-      subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
-    } else if (photo.productType === 'keychain') {
-      quantities['keychain'] += photo.quantity || 1;
-      subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
-    } else if (photo.productType === 'keyring_magnet') {
-      quantities['keyring_magnet'] += photo.quantity || 1;
-      subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
-    }
-  });
-
-  const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
-  
-  // Calculate shipping fee based on country and delivery method
-  let shippingFee = 0;
-  const isTunisiaFreeShipping = subtotal >= 25;  // Tunisia: Free shipping at 25
-  const isOtherCountriesFreeShipping = subtotal >= 50;  // Other countries: Free shipping at 999
-  
-  // Only apply shipping fee if delivery method is 'shipping'
-  if (deliveryMethod === 'shipping') {
+    });
     
-    // ========== TUNISIA SPECIAL LOGIC ==========
-    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-      if (isTunisiaFreeShipping) {
-        shippingFee = 0;  // Free shipping for Tunisia if ≥25
-      } else {
-        shippingFee = 8;  // 8 TND shipping fee for Tunisia if <25
-      }
-    }
-    
-    // ========== OTHER COUNTRIES LOGIC ==========
-    else {
-      if (isOtherCountriesFreeShipping) {
-        shippingFee = 0;  // Free shipping for all other countries if ≥999
-      } else {
-        // Apply shipping fees based on country if <999
-        if (selectedCountry === 'USA' || selectedCountry === 'US') {
-          shippingFee = 15;
-        } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-          shippingFee = 15;
-        } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
-          shippingFee = 20;
-        } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
-          shippingFee = 20;
-        } else if (['AUS', 'AU'].includes(selectedCountry)) {
-          shippingFee = 25;  // Australia
-        } else if (['JPN', 'JP'].includes(selectedCountry)) {
-          shippingFee = 2500;  // Japan (in JPY)
-        } else if (['SGP', 'SG'].includes(selectedCountry)) {
-          shippingFee = 20;  // Singapore
-        } else if (['AE', 'ARE'].includes(selectedCountry)) {
-          shippingFee = 25;  // UAE
-        } else if (['SA', 'SAU'].includes(selectedCountry)) {
-          shippingFee = 30;  // Saudi Arabia
-        } else if (['BR', 'BRA'].includes(selectedCountry)) {
-          shippingFee = 35;  // Brazil
-        } else if (['MX', 'MEX'].includes(selectedCountry)) {
-          shippingFee = 200;  // Mexico (in MXN)
-        } else if (['RU', 'RUS'].includes(selectedCountry)) {
-          shippingFee = 800;  // Russia (in RUB)
-        } else if (['CN', 'CHN'].includes(selectedCountry)) {
-          shippingFee = 60;  // China (in CNY)
+    // SECOND: Calculate subtotals using total quantities for pricing tiers
+    selectedPhotos.forEach(photo => {
+      if (photo.productType === 'photo_print') {
+        if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+          // For Tunisia: use total quantity for this size to determine price tier
+          const totalQuantityForSize = quantities[photo.size];
+          const pricePerUnit = getTunisiaPricing(photo.size, totalQuantityForSize);
+          subtotalsBySize[photo.size] += (photo.quantity || 1) * pricePerUnit;
         } else {
-          // Default shipping fee for unlisted countries
-          shippingFee = 25;
+          // For other countries: use fixed pricing
+          if (photo.size === '4x6') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
+          } else if (photo.size === '5x7') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size5x7;
+          } else if (photo.size === '8x10') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size8x10;
+          } else if (photo.size === '4x4') {
+            subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x4;
+          }
         }
+      } else if (photo.productType === '3d_frame') {
+        subtotalsBySize['3d_frame'] += (photo.quantity || 1) * country.crystal3d;
+      } else if (photo.productType === 'keychain') {
+        subtotalsBySize['keychain'] += (photo.quantity || 1) * country.keychain;
+      } else if (photo.productType === 'keyring_magnet') {
+        subtotalsBySize['keyring_magnet'] += (photo.quantity || 1) * country.keyring_magnet;
       }
-    }
-  }
-
-  // Combine subtotal and shipping before calculating discount
-  const preDiscountTotal = subtotal + shippingFee;
+    });
   
-  // Calculate discount if applicable (now applies to subtotal + shipping)
-let discount = 0;
-if (discountCode && availableDiscounts.length > 0) {
-  // Find the matching discount rule
-  const discountRule = availableDiscounts.find(
-    rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
-  );
-  
-  // Only proceed if we found a matching rule
-  if (discountRule) {
-    console.log('Applying discount rule:', discountRule);
+    const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
     
-    // Handle both naming conventions
-    const valueType = discountRule.valueType || discountRule.value_type;
-    const value = discountRule.value;
+    // Calculate shipping fee based on country and delivery method
+    let shippingFee = 0;
+    const isTunisiaFreeShipping = subtotal >= 25;
+    const isOtherCountriesFreeShipping = subtotal >= 50;
     
-    if (valueType === 'percentage') {
-      // Convert percentage to decimal (e.g., -30.0 becomes 0.3)
-      const percentageValue = Math.abs(parseFloat(value)) / 100;
-      discount = preDiscountTotal * percentageValue;
-      console.log('Applied percentage discount:', { 
-        percentageValue, 
-        preDiscountTotal, 
-        discount 
-      });
-    } else if (valueType === 'fixed_amount') {
-      // Use the fixed amount directly
-      discount = Math.abs(parseFloat(value));
-      console.log('Applied fixed discount:', { discount });
-    }
-  }
-}
-  // Calculate taxable amount AFTER discount is applied
-  const taxableAmount = preDiscountTotal - discount;
-  
-  // Calculate tax
-  let taxAmount = 0;
-  let appliedProvince = null;
-  let appliedTaxRates = null;
-
-  // Apply tax calculation for Tunisia
-  if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-    taxAmount = 0; // 19% TVA for Tunisia
-  } 
-  // Enhanced tax calculation for Canada - both for pickup and shipping
-  else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
-    // Get province based on delivery method
-    let province;
-    
-    if (deliveryMethod === 'pickup') {
-      // For pickup, detect province from studio information
-      province = detectCanadianProvince(selectedStudio);
-      
-      // Log detected province for debugging
-      console.log('Detected province from studio:', {
-        studio: selectedStudio?.name,
-        address: selectedStudio?.address,
-        detectedProvince: province
-      });
-    } else {
-      // If shipping, get province from shipping address
-      province = formData.shippingAddress.province;
-    }
-    
-    // Apply taxes if we have a valid province
-    if (province && TAX_RATES['CA'][province]) {
-      appliedProvince = province;
-      appliedTaxRates = TAX_RATES['CA'][province];
-      
-      if (appliedTaxRates.HST) {
-        // Apply Harmonized Sales Tax (HST)
-        taxAmount = taxableAmount * (appliedTaxRates.HST / 100);
+    if (deliveryMethod === 'shipping') {
+      if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+        if (isTunisiaFreeShipping) {
+          shippingFee = 0;
+        } else {
+          shippingFee = 8;
+        }
       } else {
-        // Apply GST and PST/QST separately
-        if (appliedTaxRates.GST) {
-          taxAmount += taxableAmount * (appliedTaxRates.GST / 100);
-        }
-        
-        if (appliedTaxRates.PST) {
-          taxAmount += taxableAmount * (appliedTaxRates.PST / 100);
-        }
-        
-        if (appliedTaxRates.QST) {
-          taxAmount += taxableAmount * (appliedTaxRates.QST / 100);
+        if (isOtherCountriesFreeShipping) {
+          shippingFee = 0;
+        } else {
+          // Apply shipping fees based on country
+          if (selectedCountry === 'USA' || selectedCountry === 'US') {
+            shippingFee = 15;
+          } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+            shippingFee = 15;
+          } else if (selectedCountry === 'GBR' || selectedCountry === 'GB') {
+            shippingFee = 20;
+          } else if (['DEU', 'FRA', 'ITA', 'ESP', 'DE', 'FR', 'IT', 'ES'].includes(selectedCountry)) {
+            shippingFee = 20;
+          } else if (['AUS', 'AU'].includes(selectedCountry)) {
+            shippingFee = 25;
+          } else if (['JPN', 'JP'].includes(selectedCountry)) {
+            shippingFee = 2500;
+          } else if (['SGP', 'SG'].includes(selectedCountry)) {
+            shippingFee = 20;
+          } else if (['AE', 'ARE'].includes(selectedCountry)) {
+            shippingFee = 25;
+          } else if (['SA', 'SAU'].includes(selectedCountry)) {
+            shippingFee = 30;
+          } else if (['BR', 'BRA'].includes(selectedCountry)) {
+            shippingFee = 35;
+          } else if (['MX', 'MEX'].includes(selectedCountry)) {
+            shippingFee = 200;
+          } else if (['RU', 'RUS'].includes(selectedCountry)) {
+            shippingFee = 800;
+          } else if (['CN', 'CHN'].includes(selectedCountry)) {
+            shippingFee = 60;
+          } else {
+            shippingFee = 25;
+          }
         }
       }
-    } else {
-      // Default to GST only if province is unknown
-      taxAmount = taxableAmount * 0.05; // 5% GST
     }
-  }
-  // Apply taxes for other countries with tax rates
-  else if (TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default) {
-    taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
-  }
-
-  // Calculate total with the correct order: subtotal + shipping - discount + tax
-  const total = taxableAmount + taxAmount;
-
-  return {
-    subtotalsBySize,
-    subtotal,
-    taxAmount,
-    shippingFee,
-    total,
-    quantities,
-    discount,
-    preDiscountTotal,
-    appliedProvince,
-    appliedTaxRates,
-    discountDetails: discountCode ? availableDiscounts.find(
-      rule => rule.title.toUpperCase() === discountCode.toUpperCase()
-    ) : null
+  
+    const preDiscountTotal = subtotal + shippingFee;
+    
+    // Calculate discount
+    let discount = 0;
+    if (discountCode && availableDiscounts.length > 0) {
+      const discountRule = availableDiscounts.find(
+        rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
+      );
+      
+      if (discountRule) {
+        const valueType = discountRule.valueType || discountRule.value_type;
+        const value = discountRule.value;
+        
+        if (valueType === 'percentage') {
+          const percentageValue = Math.abs(parseFloat(value)) / 100;
+          discount = preDiscountTotal * percentageValue;
+        } else if (valueType === 'fixed_amount') {
+          discount = Math.abs(parseFloat(value));
+        }
+      }
+    }
+  
+    const taxableAmount = preDiscountTotal - discount;
+    
+    // Calculate tax
+    let taxAmount = 0;
+    let appliedProvince = null;
+    let appliedTaxRates = null;
+  
+    if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+      taxAmount = 0; // No tax for Tunisia
+    } else if (selectedCountry === 'CAN' || selectedCountry === 'CA') {
+      let province;
+      
+      if (deliveryMethod === 'pickup') {
+        province = detectCanadianProvince(selectedStudio);
+      } else {
+        province = formData.shippingAddress.province;
+      }
+      
+      if (province && TAX_RATES['CA'][province]) {
+        appliedProvince = province;
+        appliedTaxRates = TAX_RATES['CA'][province];
+        
+        if (appliedTaxRates.HST) {
+          taxAmount = taxableAmount * (appliedTaxRates.HST / 100);
+        } else {
+          if (appliedTaxRates.GST) {
+            taxAmount += taxableAmount * (appliedTaxRates.GST / 100);
+          }
+          if (appliedTaxRates.PST) {
+            taxAmount += taxableAmount * (appliedTaxRates.PST / 100);
+          }
+          if (appliedTaxRates.QST) {
+            taxAmount += taxableAmount * (appliedTaxRates.QST / 100);
+          }
+        }
+      } else {
+        taxAmount = taxableAmount * 0.05; // 5% GST default
+      }
+    } else if (TAX_RATES[selectedCountry] && TAX_RATES[selectedCountry].default) {
+      taxAmount = taxableAmount * (TAX_RATES[selectedCountry].default / 100);
+    }
+  
+    const total = taxableAmount + taxAmount;
+  
+    return {
+      subtotalsBySize,
+      subtotal,
+      taxAmount,
+      shippingFee,
+      total,
+      quantities,
+      discount,
+      preDiscountTotal,
+      appliedProvince,
+      appliedTaxRates,
+      discountDetails: discountCode ? availableDiscounts.find(
+        rule => rule.title.toUpperCase() === discountCode.toUpperCase()
+      ) : null
+    };
   };
-};
 
 const calculateTotalsWithGiftCard = () => {
   const country = initialCountries.find(c => c.value === selectedCountry);
@@ -6869,10 +6833,11 @@ const renderInvoice = () => {
     appliedProvince, 
     appliedTaxRates,
     discountDetails,
-    giftCardAmount = 0, // Provide a default value
+    giftCardAmount = 0,
     originalTotal
   } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
+  
   const getPricingTierLabel = (quantity) => {
     if (quantity <= 4) return 'Qty 1-4';
     if (quantity <= 24) return 'Qty 5-24';
@@ -6880,24 +6845,24 @@ const renderInvoice = () => {
     if (quantity <= 74) return 'Qty 50-74';
     return 'Qty 75+';
   }; 
+  
   return (
     <div className="space-y-6">
-     {/* Discount Code Section + gift cards */}
-     <div className="border rounded-lg p-4">
-      
-      {/* Tabs for Discount and Gift Card */}
-      <div className="flex border-b mb-4">
-        <button 
-          className={`px-4 py-2 ${activePaymentTab === 'discount' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
-          onClick={() => setActivePaymentTab('discount')}
-        >
-          {t('order.discount_code')}
-        </button>
-       
-      </div>
-      
-     {/* Discount Code Form */}
-     {activePaymentTab === 'discount' && (
+      {/* Discount Code Section + gift cards */}
+      <div className="border rounded-lg p-4">
+        
+        {/* Tabs for Discount and Gift Card */}
+        <div className="flex border-b mb-4">
+          <button 
+            className={`px-4 py-2 ${activePaymentTab === 'discount' ? 'border-b-2 border-yellow-400 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActivePaymentTab('discount')}
+          >
+            {t('order.discount_code')}
+          </button>
+        </div>
+        
+        {/* Discount Code Form */}
+        {activePaymentTab === 'discount' && (
           <div className="space-y-4">
             {/* Discount Code Input */}
             <div className="space-y-2">
@@ -6925,7 +6890,7 @@ const renderInvoice = () => {
               )}
             </div>
 
-            {/* NEW: Add Discount Link Generator when discount is successfully applied */}
+            {/* Discount Link Generator when discount is successfully applied */}
             {discountCode && !discountError && discount > 0 && (
               <DiscountLinkGenerator
                 discountCode={discountCode}
@@ -6938,20 +6903,20 @@ const renderInvoice = () => {
             )}
           </div>
         )}
-      
-      {/* Gift Card Form */}
-      {activePaymentTab === 'giftcard' && (
-        <GiftCardInput
-        onGiftCardApplied={handleGiftCardApplied}
-        onGiftCardRemoved={handleGiftCardRemoved}
-        isLoading={false}
-        error={giftCardError}
-        setError={setGiftCardError}
-        appliedGiftCard={appliedGiftCard}
-      />
-      )}
-    </div>
-      
+        
+        {/* Gift Card Form */}
+        {activePaymentTab === 'giftcard' && (
+          <GiftCardInput
+            onGiftCardApplied={handleGiftCardApplied}
+            onGiftCardRemoved={handleGiftCardRemoved}
+            isLoading={false}
+            error={giftCardError}
+            setError={setGiftCardError}
+            appliedGiftCard={appliedGiftCard}
+          />
+        )}
+      </div>
+        
       {/* Order Summary */}
       <div className="border rounded-lg p-4">
         <h3 className="font-medium mb-3">{t('order.summary')}</h3>
@@ -6959,32 +6924,62 @@ const renderInvoice = () => {
         {/* Photo Prints */}
         {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
           <>
-          {quantities['10x15'] > 0 && (
-              <div className="space-y-1">
-                <div className="flex justify-between py-2">
+            {quantities['10x15'] > 0 && (
+              <div className="space-y-1 border-b pb-3 mb-3">
+                <div className="flex justify-between">
                   <div className="flex flex-col">
-                    <span>10x15 cm Photos (x ({quantities['10x15']}) )</span>
-                   
+                    <span className="font-medium">10×15 cm Photos</span>
+                    <span className="text-sm text-gray-600">
+                      {quantities['10x15']} units • {getPricingTierLabel(quantities['10x15'])}
+                    </span>
+                    <span className="text-sm text-blue-600">
+                      {getTunisiaPricing('10x15', quantities['10x15']).toFixed(2)} TND per photo
+                    </span>
                   </div>
-                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+                  <div className="text-right">
+                    <div className="font-medium">{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</div>
+                    <div className="text-sm text-gray-500">
+                      {quantities['10x15']} × {getTunisiaPricing('10x15', quantities['10x15']).toFixed(2)}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
+            
             {quantities['15x22'] > 0 && (
-              <div className="space-y-1">
-                <div className="flex justify-between py-2">
+              <div className="space-y-1 border-b pb-3 mb-3">
+                <div className="flex justify-between">
                   <div className="flex flex-col">
-                    <span>15x23 cm Photos (x ({quantities['15x22']}) )</span>
-                   
+                    <span className="font-medium">15×23 cm Photos</span>
+                    <span className="text-sm text-gray-600">
+                      {quantities['15x22']} units • {getPricingTierLabel(quantities['15x22'])}
+                    </span>
+                    <span className="text-sm text-blue-600">
+                      {getTunisiaPricing('15x22', quantities['15x22']).toFixed(2)} TND per photo
+                    </span>
                   </div>
-                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+                  <div className="text-right">
+                    <div className="font-medium">{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</div>
+                    <div className="text-sm text-gray-500">
+                      {quantities['15x22']} × {getTunisiaPricing('15x22', quantities['15x22']).toFixed(2)}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
+            
             {quantities['3.5x4.5'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>3.5x4.5 cm Photos ({quantities['3.5x4.5']} × {country?.size35x45.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</span>
+              <div className="flex justify-between py-2 border-b">
+                <div className="flex flex-col">
+                  <span className="font-medium">3.5×4.5 cm Photos</span>
+                  <span className="text-sm text-gray-600">{quantities['3.5x4.5']} units</span>
+                </div>
+                <div className="text-right">
+                  <div className="font-medium">{subtotalsBySize['3.5x4.5'].toFixed(2)} {country?.currency}</div>
+                  <div className="text-sm text-gray-500">
+                    {quantities['3.5x4.5']} × {country?.size35x45?.toFixed(2) || '1.25'}
+                  </div>
+                </div>
               </div>
             )}
           </>
@@ -6992,25 +6987,25 @@ const renderInvoice = () => {
           <>
             {quantities['4x6'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>4x6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
+                <span>4×6" Photos ({quantities['4x6']} × {country?.size4x6.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['4x6'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
             {quantities['5x7'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>5x7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
+                <span>5×7" Photos ({quantities['5x7']} × {country?.size5x7.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['5x7'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
-            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
+            {(selectedCountry !== 'TN' && selectedCountry !== 'TUN') && quantities['8x10'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>8x10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
+                <span>8×10" Photos ({quantities['8x10']} × {country?.size8x10.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['8x10'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
-            {(selectedCountry !== 'TN' || selectedCountry !== 'TUN')  && quantities['4x4'] > 0 && (
+            {(selectedCountry !== 'TN' && selectedCountry !== 'TUN') && quantities['4x4'] > 0 && (
               <div className="flex justify-between py-2">
-                <span>4x4" Photos ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
+                <span>4×4" Photos ({quantities['4x4']} × {country?.size4x4.toFixed(2)} {country?.currency})</span>
                 <span>{subtotalsBySize['4x4'].toFixed(2)} {country?.currency}</span>
               </div>
             )}
@@ -7021,7 +7016,7 @@ const renderInvoice = () => {
         {quantities['3d_frame'] > 0 && (
           <div className="flex justify-between py-2">
             <span>3D Crystal Frame ({quantities['3d_frame']} × {country?.crystal3d.toFixed(2)} {country?.currency})</span>
-            <span>{(quantities['3d_frame'] * country?.crystal3d).toFixed(2)} {country?.currency}</span>
+            <span>{subtotalsBySize['3d_frame'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
 
@@ -7029,7 +7024,7 @@ const renderInvoice = () => {
         {quantities['keychain'] > 0 && (
           <div className="flex justify-between py-2">
             <span>Keychains ({quantities['keychain']} × {country?.keychain.toFixed(2)} {country?.currency})</span>
-            <span>{(quantities['keychain'] * country?.keychain).toFixed(2)} {country?.currency}</span>
+            <span>{subtotalsBySize['keychain'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
 
@@ -7037,12 +7032,12 @@ const renderInvoice = () => {
         {quantities['keyring_magnet'] > 0 && (
           <div className="flex justify-between py-2">
             <span>Keyring/Magnets ({quantities['keyring_magnet']} × {country?.keyring_magnet.toFixed(2)} {country?.currency})</span>
-            <span>{(quantities['keyring_magnet'] * country?.keyring_magnet).toFixed(2)} {country?.currency}</span>
+            <span>{subtotalsBySize['keyring_magnet'].toFixed(2)} {country?.currency}</span>
           </div>
         )}
 
         {/* Subtotal */}
-        <div className="flex justify-between py-2 border-t">
+        <div className="flex justify-between py-2 border-t mt-3">
           <span>{t('produits.subtotal')}</span>
           <span>{subtotal.toFixed(2)} {country?.currency}</span>
         </div>
@@ -7055,30 +7050,20 @@ const renderInvoice = () => {
         
         {/* Discount - Now positioned AFTER subtotal and shipping */}
         {discount > 0 && discountDetails && (
-    <div className="flex justify-between py-2 text-green-600">
-   <span>
-    {t('order.discount')} (
-    {discountDetails.valueType === 'percentage'  // Changed from value_type to valueType to match API
-      ? `${Math.abs(parseFloat(discountDetails.value))}%` 
-      : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
-    })
-    {discountDetails.title && ` - ${discountDetails.title}`}
-  </span>
-  <span>
-    -{Math.abs(discount).toFixed(2)} {country?.currency}
-  </span>
-    </div>
-  )}
-
-
-        {/* Tax for applicable regions - Now calculated based on (subtotal + shipping - discount) */}
-        {/* Tunisia tax 
-        {(selectedCountry === 'TUN' || selectedCountry === 'TN') && (
-          <div className="flex justify-between py-2">
-            <span>TVA (19%)</span>
-            <span>{taxAmount.toFixed(2)} {country?.currency}</span>
+          <div className="flex justify-between py-2 text-green-600">
+            <span>
+              {t('order.discount')} (
+              {discountDetails.valueType === 'percentage' || discountDetails.value_type === 'percentage'
+                ? `${Math.abs(parseFloat(discountDetails.value))}%` 
+                : `${Math.abs(parseFloat(discountDetails.value))} ${country?.currency}`
+              })
+              {discountDetails.title && ` - ${discountDetails.title}`}
+            </span>
+            <span>
+              -{Math.abs(discount).toFixed(2)} {country?.currency}
+            </span>
           </div>
-        )}*/}
+        )}
 
         {/* Enhanced Canada tax - using our improved detection */}
         {(selectedCountry === 'CAN' || selectedCountry === 'CA') && (
@@ -7097,10 +7082,8 @@ const renderInvoice = () => {
                       appliedTaxRates.QST && `QST (${appliedTaxRates.QST}%)`
                     ].filter(Boolean).join(' + ');
                   } else if (deliveryMethod === 'pickup') {
-                    // For pickup without detected province
                     return 'GST (5%)';
                   } else {
-                    // For shipping without selected province
                     const province = formData.shippingAddress.province;
                     
                     if (province && TAX_RATES['CA'][province]) {
@@ -7134,8 +7117,8 @@ const renderInvoice = () => {
           </div>
         )}
 
- {/* Gift Card Section - New */}
- {appliedGiftCard && giftCardAmount > 0 && (
+        {/* Gift Card Section */}
+        {appliedGiftCard && giftCardAmount > 0 && (
           <div className="flex justify-between py-2 text-emerald-600">
             <span>
               {t('order.gift_card')} ({appliedGiftCard.code})
@@ -7147,16 +7130,16 @@ const renderInvoice = () => {
         )}
 
         {/* Final Total */}
-        <div className="flex justify-between py-2 border-t font-bold">
-        <span>
-  {t('produits.total')}
-  {(selectedCountry === 'TUN' || selectedCountry === 'TN') && ' TTC'}
-</span>
+        <div className="flex justify-between py-2 border-t font-bold text-lg">
+          <span>
+            {t('produits.total')}
+            {(selectedCountry === 'TUN' || selectedCountry === 'TN') && ' TTC'}
+          </span>
           <span>{total.toFixed(2)} {country?.currency}</span>
         </div>
 
-          {/* Payment Method Indicator - New */}
-          {total === 0 && appliedGiftCard && (
+        {/* Payment Method Indicator */}
+        {total === 0 && appliedGiftCard && (
           <div className="mt-2 p-2 bg-emerald-50 text-emerald-700 rounded text-sm">
             {t('order.fully_paid_gift_card')}
           </div>
