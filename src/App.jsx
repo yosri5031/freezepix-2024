@@ -748,6 +748,42 @@ const BookingPopup = ({ onClose }) => {
     window.history.pushState({ studioId: studio._id }, '', newUrl);
   };
 
+// Add these helper functions before the FreezePIX component
+const getTunisiaPricing = (size, quantity) => {
+  const pricingTable = {
+    '10x15': {
+      '1-4': 3.00,
+      '5-24': 2.40,
+      '25-49': 2.00,
+      '50-74': 1.50,
+      '75+': 1.25
+    },
+    '15x22': { // Note: using 15x22 to match existing code, but display as 15x23
+      '1-4': 5.00,
+      '5-24': 4.00,
+      '25-49': 3.50,
+      '50-74': 2.50,
+      '75+': 2.00
+    }
+  };
+
+  const pricing = pricingTable[size];
+  if (!pricing) return 0;
+
+  if (quantity <= 4) return pricing['1-4'];
+  if (quantity <= 24) return pricing['5-24'];
+  if (quantity <= 49) return pricing['25-49'];
+  if (quantity <= 74) return pricing['50-74'];
+  return pricing['75+'];
+};
+
+const getTunisiaPricingTier = (quantity) => {
+  if (quantity <= 4) return '1-4';
+  if (quantity <= 24) return '5-24';
+  if (quantity <= 49) return '25-49';
+  if (quantity <= 74) return '50-74';
+  return '75+';
+};
 
   // FreezePIX Printing APP - Order Photo Prints Online from anywhere in Canada And United States
 const FreezePIX = () => {
@@ -2284,17 +2320,15 @@ const closeProductDetails = () => {
           category: 'Photo Prints',
           product: 'Format 10x15 cm',
           country: countryInfo.name,
-          price: countryInfo.currency === 'TND' 
-            ? `${countryInfo.size10x15} TND`
-            : `${countryInfo.currency} ${countryInfo.size4x6}`
+          pricing: '3.00 TND (1-4) • 2.40 TND (5-24) • 2.00 TND (25-49) • 1.50 TND (50-74) • 1.25 TND (75+)'
+
         },
         {
           category: 'Photo Prints',
           product: 'Format 15x23 cm',
           country: countryInfo.name,
-          price: countryInfo.currency === 'TND'
-            ? `${countryInfo.size15x22} TND`
-            : `${countryInfo.currency} ${countryInfo.size5x7}`
+          pricing: '5.00 TND (1-4) • 4.00 TND (5-24) • 3.50 TND (25-49) • 2.50 TND (50-74) • 2.00 TND (75+)'
+
         },
         /*{
           category: 'Photo Prints',
@@ -2400,6 +2434,14 @@ const closeProductDetails = () => {
                 {translateProduct(product.product)}
               </div>
             </div>
+            <div>
+                  <div className="text-xs font-medium text-gray-500 uppercase">
+                    {t('productDetails.pricing')}
+                  </div>
+                  <div className="text-xs text-gray-600 leading-relaxed">
+                    {product.pricing || product.price}
+                  </div>
+                </div>
             
             <div>
               
@@ -3199,19 +3241,30 @@ const submitTunisiaOrderWithImprovedChunking = async (orderData) => {
         return `FPX-${timestamp.slice(-6)}${random}`;
       };
 
-      const calculateItemPrice = (photo, country) => {
+      const calculateItemPrice = (photo, country, allPhotos) => {
         if (!photo || !country) return 0;
-        
+      
         if (photo.productType === 'photo_print') {
-          switch (photo.size) {
-            case '4x6': return country.size4x6 || 0;
-            case '5x7': return country.size5x7 || 0;
-            case '8x10': return country.size8x10 || 0;
-            case '4x4': return country.size4x4 || 0;
-            case '10x15': return country.size10x15 || country.size4x6 || 0;
-            case '15x22': return country.size15x22 || country.size5x7 || 0;
-            case '3.5x4.5': return country.size35x45 || 0;
-            default: return 0;
+          // Calculate total quantity for the specific size
+          const totalQuantityForSize = allPhotos
+            .filter(p => p.size === photo.size && p.productType === 'photo_print')
+            .reduce((sum, p) => sum + (p.quantity || 1), 0);
+      
+          // Use the pricing function for Tunisia
+          if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+            return getTunisiaPricing(photo.size, totalQuantityForSize);
+          } else {
+            // Existing logic for other countries
+            switch (photo.size) {
+              case '4x6': return country.size4x6 || 0;
+              case '5x7': return country.size5x7 || 0;
+              case '8x10': return country.size8x10 || 0;
+              case '4x4': return country.size4x4 || 0;
+              case '10x15': return country.size10x15 || country.size4x6 || 0;
+              case '15x22': return country.size15x22 || country.size5x7 || 0;
+              case '3.5x4.5': return country.size35x45 || 0;
+              default: return 0;
+            }
           }
         } else if (photo.productType === '3d_frame') {
           return country.crystal3d || 0;
@@ -3222,6 +3275,7 @@ const submitTunisiaOrderWithImprovedChunking = async (orderData) => {
         }
         return 0;
       };
+      
 const convertFileToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -6148,18 +6202,20 @@ const calculateTotals = () => {
     'keyring_magnet': 0
   };
 
+  selectedPhotos.forEach(photo => {
+    if (photo.productType === 'photo_print') {
+      quantities[photo.size] += photo.quantity || 1;
+    }
+  });
+  
   // Count quantities and calculate subtotals for each size/product
   selectedPhotos.forEach(photo => {
     if (photo.productType === 'photo_print') {
       quantities[photo.size] += photo.quantity || 1;
       if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
-        if (photo.size === '10x15') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size10x15;
-        } else if (photo.size === '15x22') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size15x22;
-        } else if (photo.size === '3.5x4.5') {
-          subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size35x45;
-        }
+        const totalQuantityForSize = quantities[photo.size];
+        const pricePerUnit = getTunisiaPricing(photo.size, totalQuantityForSize);
+        subtotalsBySize[photo.size] += (photo.quantity || 1) * pricePerUnit;
       } else {
         if (photo.size === '4x6') {
           subtotalsBySize[photo.size] += (photo.quantity || 1) * country.size4x6;
@@ -6817,7 +6873,13 @@ const renderInvoice = () => {
     originalTotal
   } = appliedGiftCard ? calculateTotalsWithGiftCard() : calculateTotals();
   const country = initialCountries.find(c => c.value === selectedCountry);
-  
+  const getPricingTierLabel = (quantity) => {
+    if (quantity <= 4) return 'Qty 1-4';
+    if (quantity <= 24) return 'Qty 5-24';
+    if (quantity <= 49) return 'Qty 25-49';
+    if (quantity <= 74) return 'Qty 50-74';
+    return 'Qty 75+';
+  }; 
   return (
     <div className="space-y-6">
      {/* Discount Code Section + gift cards */}
@@ -6897,16 +6959,26 @@ const renderInvoice = () => {
         {/* Photo Prints */}
         {selectedCountry === 'TUN' || selectedCountry === 'TN' ? (
           <>
-            {quantities['10x15'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>10x15 cm Photos ({quantities['10x15']} × {country?.size10x15.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+          {quantities['10x15'] > 0 && (
+              <div className="space-y-1">
+                <div className="flex justify-between py-2">
+                  <div className="flex flex-col">
+                    <span>10x15 cm Photos (x ({quantities['10x15']}) )</span>
+                   
+                  </div>
+                  <span>{subtotalsBySize['10x15'].toFixed(2)} {country?.currency}</span>
+                </div>
               </div>
             )}
             {quantities['15x22'] > 0 && (
-              <div className="flex justify-between py-2">
-                <span>15x23 cm Photos ({quantities['15x22']} × {country?.size15x22.toFixed(2)} {country?.currency})</span>
-                <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+              <div className="space-y-1">
+                <div className="flex justify-between py-2">
+                  <div className="flex flex-col">
+                    <span>15x23 cm Photos (x ({quantities['15x22']}) )</span>
+                   
+                  </div>
+                  <span>{subtotalsBySize['15x22'].toFixed(2)} {country?.currency}</span>
+                </div>
               </div>
             )}
             {quantities['3.5x4.5'] > 0 && (
