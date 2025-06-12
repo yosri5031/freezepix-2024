@@ -2890,11 +2890,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.65, // Balanced size for speed
+                maxSizeMB: 0.75, // Balanced size for speed
                 maxWidthOrHeight: 1000, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.65, // Good quality but fast
+                initialQuality: 0.70, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
