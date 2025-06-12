@@ -216,6 +216,7 @@
       },
 
       "productDetails": {
+        "pricing": "Tarification",
     "title": "Détails des produits",
     "category": "Catégorie",
     "product": "Produit",

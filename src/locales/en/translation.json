@@ -236,7 +236,8 @@
       "qty_50_74": "50-74 units",
       "qty_75_plus": "75+ units",
       "per_photo": "per photo",
-      "bulk_discount_note": "The more you order, the less you pay per photo!"
+      "bulk_discount_note": "The more you order, the less you pay per photo!",
+      "pricing": "Pricing"
   },
 
     "categories": {
