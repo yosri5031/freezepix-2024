@@ -3347,6 +3347,44 @@ const sendOrderConfirmationEmail = async (orderData) => {
       }
     };
 
+    // Helper function to normalize country codes for Tunisia
+    const normalizeTunisiaCountryCode = (country) => {
+      if (!country) return null;
+      const normalizedCountry = country.toLowerCase().trim();
+      const tunisiaVariants = ['tn', 'tun', 'tunisia', 'tunisie'];
+      return tunisiaVariants.includes(normalizedCountry) ? 'TN' : country.toUpperCase();
+    };
+
+    // Helper function to get Tunisia studios that accept shipping
+    const getTunisiaShippingStudios = async () => {
+      try {
+        // Use your existing Studio model endpoint - adjust URL as needed
+        const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          signal: AbortSignal.timeout(30000)
+        });
+
+        if (response.ok) {
+          const studios = await response.json();
+          return studios.filter(studio => 
+            studio.country === 'TN' && 
+            studio.acceptsShipping === true && 
+            studio.isActive === true &&
+            studio.owner?.email
+          );
+        }
+        
+        return [];
+      } catch (error) {
+        console.error('Error fetching Tunisia shipping studios:', error);
+        return [];
+      }
+    };
+
     // Create order summary with detailed product information
     const emailOrderData = {
       orderNumber: orderData.orderNumber || 'N/A',
@@ -3396,8 +3434,9 @@ const sendOrderConfirmationEmail = async (orderData) => {
       discount: orderData.discount || 0
     };
 
-    console.log('Sending order summary email:', JSON.stringify(emailOrderData, null, 2));
+    console.log('Sending order confirmation email for customer and admin...');
 
+    // Send main email (customer + admin) - this uses existing backend logic
     const response = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/send-order-confirmation', {
       method: 'POST',
       headers: {
@@ -3405,14 +3444,12 @@ const sendOrderConfirmationEmail = async (orderData) => {
         'Accept': 'application/json'
       },
       body: JSON.stringify(emailOrderData),
-      // Add timeout to prevent hanging
-      signal: AbortSignal.timeout(90000) // 30 second timeout
+      signal: AbortSignal.timeout(90000)
     });
 
     const responseData = await response.json().catch(e => null);
     
     if (!response.ok) {
-      // Enhanced error classification
       const errorType = response.status === 500 ? 'SERVER_ERROR' : 
                        response.status === 403 ? 'AUTH_ERROR' : 
                        response.status === 429 ? 'RATE_LIMIT' : 'UNKNOWN';
@@ -3422,12 +3459,114 @@ const sendOrderConfirmationEmail = async (orderData) => {
         status: response.status,
         type: errorType,
         response: responseData,
-        isEmailError: true // Flag to identify email-specific errors
+        isEmailError: true
       };
     }
 
-    console.log('Email sent successfully:', responseData);
-    return responseData;
+    console.log('Main emails sent successfully (customer + admin)');
+
+    // NEW LOGIC: Handle Tunisia shipping studio owner notifications
+    let tunisiaShippingNotifications = {
+      attempted: false,
+      success: false,
+      studiosNotified: 0,
+      errors: []
+    };
+
+    // Check if this is a shipping order to Tunisia
+    if (orderData.deliveryMethod === 'shipping' && orderData.shippingAddress?.country) {
+      const normalizedShippingCountry = normalizeTunisiaCountryCode(orderData.shippingAddress.country);
+      
+      if (normalizedShippingCountry === 'TN') {
+        console.log('Processing Tunisia shipping order - notifying studio owners...');
+        tunisiaShippingNotifications.attempted = true;
+        
+        try {
+          // Get Tunisia studios that accept shipping
+          const tunisiaStudios = await getTunisiaShippingStudios();
+          
+          if (tunisiaStudios.length > 0) {
+            console.log(`Found ${tunisiaStudios.length} Tunisia studios that accept shipping`);
+            
+            // Send individual emails to each studio owner
+            const studioNotificationPromises = tunisiaStudios.map(async (studio) => {
+              try {
+                const studioEmailData = {
+                  ...emailOrderData,
+                  // Override pickup studio with this shipping studio for email template
+                  pickupStudio: {
+                    name: studio.name,
+                    address: studio.address || 'Not Specified',
+                    city: studio.city || 'Not Specified', 
+                    country: studio.country || 'TN'
+                  },
+                  // Override email to studio owner
+                  email: studio.owner.email,
+                  // Add flag to indicate this is a studio notification
+                  isStudioNotification: true,
+                  originalCustomerEmail: orderData.email
+                };
+
+                const studioResponse = await fetch('https://freezepix-database-server-c95d4dd2046d.herokuapp.com/send-order-confirmation', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                  },
+                  body: JSON.stringify(studioEmailData),
+                  signal: AbortSignal.timeout(60000)
+                });
+
+                if (studioResponse.ok) {
+                  console.log(`Studio notification sent to: ${studio.owner.email} (${studio.name})`);
+                  return { success: true, studio: studio.name, email: studio.owner.email };
+                } else {
+                  const error = `Failed to notify ${studio.name}: ${studioResponse.statusText}`;
+                  console.error(error);
+                  return { success: false, studio: studio.name, error };
+                }
+              } catch (error) {
+                const errorMsg = `Error notifying ${studio.name}: ${error.message}`;
+                console.error(errorMsg);
+                return { success: false, studio: studio.name, error: errorMsg };
+              }
+            });
+
+            // Wait for all studio notifications to complete
+            const studioResults = await Promise.allSettled(studioNotificationPromises);
+            
+            // Process results
+            studioResults.forEach((result, index) => {
+              if (result.status === 'fulfilled' && result.value.success) {
+                tunisiaShippingNotifications.studiosNotified++;
+              } else {
+                const errorMsg = result.status === 'rejected' 
+                  ? result.reason 
+                  : result.value.error;
+                tunisiaShippingNotifications.errors.push(errorMsg);
+              }
+            });
+
+            tunisiaShippingNotifications.success = tunisiaShippingNotifications.studiosNotified > 0;
+            console.log(`Tunisia shipping notifications completed: ${tunisiaShippingNotifications.studiosNotified}/${tunisiaStudios.length} successful`);
+            
+          } else {
+            console.warn('No Tunisia studios found that accept shipping');
+            tunisiaShippingNotifications.errors.push('No Tunisia studios found that accept shipping');
+          }
+          
+        } catch (error) {
+          console.error('Error processing Tunisia shipping notifications:', error);
+          tunisiaShippingNotifications.errors.push(error.message);
+        }
+      }
+    }
+
+    // Return comprehensive response
+    return {
+      ...responseData,
+      tunisiaShippingNotifications
+    };
 
   } catch (error) {
     // Enhanced error logging with classification
