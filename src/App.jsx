@@ -2269,29 +2269,26 @@ const closeProductDetails = () => {
         };
       
         const translateCategory = (category) => {
-          // Use the categories mapping from translation.json
           return t(`categories.${category}`, { defaultValue: category });
         };
         
         const translateProduct = (product) => {
-          // Use the products mapping from translation.json
           return t(`products.${product}`, { defaultValue: product });
         };
       
-        // Define product data with price formatting based on country
         const getProductData = (country) => {
           const countryInfo = initialCountries.find(c => c.value === country);
           if (!countryInfo) return [];
           
-          let products = []; // Define products array outside if statements
-        
+          let products = [];
+      
           if (country !== 'TUN' && country !== 'TN') {
             products = [
               {
-              category: 'Photo Prints',
-              product: '4x4 Size',
-              country: countryInfo.name,
-              price: `${countryInfo.currency} ${countryInfo.size4x4}`
+                category: 'Photo Prints',
+                product: '4x4 Size',
+                country: countryInfo.name,
+                price: `${countryInfo.currency} ${countryInfo.size4x4}`
               },
               {
                 category: 'Photo Prints',
@@ -2317,7 +2314,7 @@ const closeProductDetails = () => {
               }
             ];
           } 
-        
+      
           if (country === 'TN' || country === 'TUN') {
             products = [
               {
@@ -2348,7 +2345,7 @@ const closeProductDetails = () => {
               }
             ];
           } 
-        
+      
           return products;
         };
       
@@ -2369,13 +2366,14 @@ const closeProductDetails = () => {
             'Rectangle': Rectangle,
             'Heart': Heart
           };
-        
+      
           return imageMap[product] || '';
         };
       
         if (!isOpen) return null;
       
         const productData = getProductData(selectedCountry);
+        const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
       
         return (
           <>
@@ -2419,11 +2417,22 @@ const closeProductDetails = () => {
                 </div>
                 
                 <div className="p-4">
+                  {/* Size comparison image for Tunisia at the top */}
+                  {isTunisia && (
+                    <div className="mb-6">
+                      <img 
+                        src={phototunisia} 
+                        alt="Available Photo Sizes"
+                        className="w-full h-auto rounded-lg shadow-sm" 
+                      />
+                    </div>
+                  )}
+      
                   <div className="grid grid-cols-1 gap-4">
                     {productData.map((product, index) => (
                       <div key={index} className="bg-white rounded-lg shadow hover:shadow-md transition-shadow">
                         <div className="p-4">
-                          {/* Product Header with Image */}
+                          {/* Product Header */}
                           <div className="grid grid-cols-2 items-center mb-4">
                             <div className="space-y-3">
                               <div>
@@ -2445,16 +2454,19 @@ const closeProductDetails = () => {
                               </div>
                             </div>
                             
-                            <div className="justify-self-center">
-                              {getImageSrc(product.product) && (
-                                <img
-                                  src={getImageSrc(product.product)}
-                                  alt={translateProduct(product.product)}
-                                  className="h-32 w-32 object-cover cursor-pointer rounded-lg"
-                                  onClick={() => handleImageClick(getImageSrc(product.product))}
-                                />
-                              )}
-                            </div>
+                            {/* Only show individual product images for non-Tunisia countries */}
+                            {!isTunisia && (
+                              <div className="justify-self-center">
+                                {getImageSrc(product.product) && (
+                                  <img
+                                    src={getImageSrc(product.product)}
+                                    alt={translateProduct(product.product)}
+                                    className="h-32 w-32 object-cover cursor-pointer rounded-lg"
+                                    onClick={() => handleImageClick(getImageSrc(product.product))}
+                                  />
+                                )}
+                              </div>
+                            )}
                           </div>
       
                           {/* Pricing Section */}
@@ -2463,11 +2475,6 @@ const closeProductDetails = () => {
                               {t('productDetails.pricing')}
                             </div>
                             
-                                   {/* Full-width image for Tunisian users */}
-                    {selectedCountry === 'TN' && (
-                        <img src={phototunisia} alt="Product Banner" className="w-full h-auto" />
-                    )}
-
                             {product.hasPricingTable ? (
                               <div className="bg-gray-50 rounded-lg p-3">
                                 <div className="space-y-2">
