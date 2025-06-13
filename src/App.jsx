@@ -7163,10 +7163,8 @@ const renderInvoice = () => {
   const country = initialCountries.find(c => c.value === selectedCountry);
   
   const getPricingTierLabel = (quantity) => {
-    if (quantity <= 4) return t('order.qty_1_4');
-    if (quantity <= 24) return t('order.qty_5_24');
-    if (quantity <= 49) return t('order.qty_25_49');
-    if (quantity <= 74) return t('order.qty_50_74');
+    if (quantity <= 24) return t('order.qty_1_24');
+    if (quantity <= 74) return t('order.qty_25_74');
     return t('order.qty_75_plus');
   }; 
   
