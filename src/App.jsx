@@ -7671,50 +7671,62 @@ return (
           Photo Print Pricing (Tunisia)
         </h3>
         
-        {/* Mobile-first responsive layout */}
+        {/* Mobile Table - Optimized but still a table */}
         <div className="block sm:hidden">
-          {/* Mobile Card Layout */}
-          <div className="space-y-3">
-            {/* Standard Size Card */}
-            <div className="bg-white rounded-lg border shadow-sm p-3">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-gray-800">Standard Photo</h4>
-                <span className="text-xs text-gray-500">10.0×15.0 cm</span>
-              </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">1-24</div>
-                  <div className="font-bold text-blue-600">2.500</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">25-74</div>
-                  <div className="font-bold text-green-600">2.000</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">75+</div>
-                  <div className="font-bold text-purple-600">1.500</div>
-                </div>
+          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+            {/* Mobile Table Header */}
+            <div className="bg-yellow-100 px-2 py-2 border-b">
+              <div className="grid grid-cols-5 gap-1 text-xs font-semibold text-gray-700">
+                <div className="col-span-2 text-left">Product & Size</div>
+                <div className="text-center">1-24 qty</div>
+                <div className="text-center">25-74 qty</div>
+                <div className="text-center">75+ qty</div>
               </div>
             </div>
             
-            {/* Large Size Card */}
-            <div className="bg-white rounded-lg border shadow-sm p-3">
-              <div className="flex justify-between items-center mb-2">
-                <h4 className="font-semibold text-gray-800">Large Photo</h4>
-                <span className="text-xs text-gray-500">15.0×23.0 cm</span>
+            {/* Mobile Table Rows */}
+            <div className="divide-y">
+              {/* Standard Row */}
+              <div className="px-2 py-3 hover:bg-gray-50">
+                <div className="grid grid-cols-5 gap-1 text-xs items-center">
+                  <div className="col-span-2">
+                    <div className="font-semibold text-gray-800">Standard</div>
+                    <div className="text-gray-500 text-xs">10.0×15.0 cm</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-blue-600">2.500</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-green-600">2.000</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-purple-600">1.500</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
+                </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 text-xs">
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">1-24</div>
-                  <div className="font-bold text-blue-600">3.500</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">25-74</div>
-                  <div className="font-bold text-green-600">3.000</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-gray-500 mb-1">75+</div>
-                  <div className="font-bold text-purple-600">2.500</div>
+              
+              {/* Large Row */}
+              <div className="px-2 py-3 hover:bg-gray-50">
+                <div className="grid grid-cols-5 gap-1 text-xs items-center">
+                  <div className="col-span-2">
+                    <div className="font-semibold text-gray-800">Large</div>
+                    <div className="text-gray-500 text-xs">15.0×23.0 cm</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-blue-600">3.500</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-green-600">3.000</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="font-bold text-purple-600">2.500</div>
+                    <div className="text-gray-400 text-xs">TND</div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -7794,7 +7806,7 @@ return (
           </table>
         </div>
         
-     
+      
       </div>
     </div>
   </div>
