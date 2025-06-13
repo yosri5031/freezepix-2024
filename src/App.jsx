@@ -7662,7 +7662,7 @@ return (
 {/* Product Pricing Table - Sticky only on step 0 (upload images) */}
 {selectedPhotos.length > 0 && selectedCountry === 'TN' && (
   <div className={`
-    ${activeStep === 0 ? 'sticky top-0 z-40 bg-white shadow-sm border-b' : ''}
+    ${activeStep === 0 ? ' top-0 z-40 bg-white shadow-sm border-b' : ''}
     mb-6 py-3 transition-all duration-200
   `}>
     <div className="max-w-4xl mx-auto px-4">
