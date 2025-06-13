@@ -753,37 +753,29 @@ const BookingPopup = ({ onClose }) => {
 const getTunisiaPricing = (size, quantity) => {
   const pricingTable = {
     '10x15': {
-      '1-4': 3.00,
-      '5-24': 2.40,
-      '25-49': 2.00,
-      '50-74': 1.50,
-      '75+': 1.25
+      '1-24': 2.50,
+      '25-74': 2.00,
+      '75+': 1.50
     },
     '15x22': { // 15x23 cm in display
-      '1-4': 5.00,
-      '5-24': 4.00,
-      '25-49': 3.50,
-      '50-74': 2.50,
-      '75+': 2.00
+      '1-24': 3.50,
+      '25-74': 3.00,
+      '75+': 2.50
     }
   };
 
   const pricing = pricingTable[size];
   if (!pricing) return 0;
 
-  if (quantity <= 4) return pricing['1-4'];
-  if (quantity <= 24) return pricing['5-24'];
-  if (quantity <= 49) return pricing['25-49'];
-  if (quantity <= 74) return pricing['50-74'];
+  if (quantity <= 24) return pricing['1-24'];
+  if (quantity <= 74) return pricing['25-74'];
   return pricing['75+'];
 };
 
 // Helper function to get pricing tier name for display
 const getTunisiaPricingTier = (quantity) => {
-  if (quantity <= 4) return '1-4';
-  if (quantity <= 24) return '5-24';
-  if (quantity <= 49) return '25-49';
-  if (quantity <= 74) return '50-74';
+  if (quantity <= 24) return '1-24';
+  if (quantity <= 74) return '25-74';
   return '75+';
 };
 
@@ -2323,10 +2315,8 @@ const closeProductDetails = () => {
                 country: countryInfo.name,
                 hasPricingTable: true,
                 pricingTiers: [
-                  { range: '1-4', price: '3.00', label: t('productDetails.qty_1_4') },
-                  { range: '5-24', price: '2.40', label: t('productDetails.qty_5_24') },
-                  { range: '25-49', price: '2.00', label: t('productDetails.qty_25_49') },
-                  { range: '50-74', price: '1.50', label: t('productDetails.qty_50_74') },
+                  { range: '1-24', price: '3.00', label: t('productDetails.qty_1_24') },
+                  { range: '25-74', price: '1.50', label: t('productDetails.qty_25_74') },
                   { range: '75+', price: '1.25', label: t('productDetails.qty_75_plus') }
                 ]
               },
@@ -2336,11 +2326,9 @@ const closeProductDetails = () => {
                 country: countryInfo.name,
                 hasPricingTable: true,
                 pricingTiers: [
-                  { range: '1-4', price: '5.00', label: t('productDetails.qty_1_4') },
-                  { range: '5-24', price: '4.00', label: t('productDetails.qty_5_24') },
-                  { range: '25-49', price: '3.50', label: t('productDetails.qty_25_49') },
-                  { range: '50-74', price: '2.50', label: t('productDetails.qty_50_74') },
-                  { range: '75+', price: '2.00', label: t('productDetails.qty_75_plus') }
+                  { range: '1-24', price: '3.00', label: t('productDetails.qty_1_24') },
+                  { range: '25-74', price: '1.50', label: t('productDetails.qty_25_74') },
+                  { range: '75+', price: '1.25', label: t('productDetails.qty_75_plus') }
                 ]
               }
             ];
