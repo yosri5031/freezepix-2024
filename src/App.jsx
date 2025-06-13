@@ -7656,7 +7656,7 @@ return (
     <div className="max-w-4xl mx-auto px-4">
       <div className="bg-gray-50 rounded-lg p-4">
         <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 text-center">
-          Photo Print Pricing (Tunisia)
+          {t('pricing.title')}
         </h3>
         
         {/* Mobile Table - Optimized but still a table */}
@@ -7665,10 +7665,10 @@ return (
             {/* Mobile Table Header */}
             <div className="bg-yellow-100 px-2 py-2 border-b">
               <div className="grid grid-cols-5 gap-1 text-xs font-semibold text-gray-700">
-                <div className="col-span-2 text-left">Product & Size</div>
-                <div className="text-center">1-24 qty</div>
-                <div className="text-center">25-74 qty</div>
-                <div className="text-center">75+ qty</div>
+                <div className="col-span-2 text-left">{t('pricing.product_size')}</div>
+                <div className="text-center">{t('pricing.qty_1_24')}</div>
+                <div className="text-center">{t('pricing.qty_25_74')}</div>
+                <div className="text-center">{t('pricing.qty_75_plus')}</div>
               </div>
             </div>
             
@@ -7678,20 +7678,20 @@ return (
               <div className="px-2 py-3 hover:bg-gray-50">
                 <div className="grid grid-cols-5 gap-1 text-xs items-center">
                   <div className="col-span-2">
-                    <div className="font-semibold text-gray-800">Standard</div>
-                    <div className="text-gray-500 text-xs">10.0×15.0 cm</div>
+                    <div className="font-semibold text-gray-800">{t('pricing.standard')}</div>
+                    <div className="text-gray-500 text-xs">{t('pricing.standard_size')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-blue-600">2.500</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-green-600">2.000</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-purple-600">1.500</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                 </div>
               </div>
@@ -7700,20 +7700,20 @@ return (
               <div className="px-2 py-3 hover:bg-gray-50">
                 <div className="grid grid-cols-5 gap-1 text-xs items-center">
                   <div className="col-span-2">
-                    <div className="font-semibold text-gray-800">Large</div>
-                    <div className="text-gray-500 text-xs">15.0×23.0 cm</div>
+                    <div className="font-semibold text-gray-800">{t('pricing.large')}</div>
+                    <div className="text-gray-500 text-xs">{t('pricing.large_size')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-blue-600">3.500</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-green-600">3.000</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-bold text-purple-600">2.500</div>
-                    <div className="text-gray-400 text-xs">TND</div>
+                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
                   </div>
                 </div>
               </div>
@@ -7727,40 +7727,40 @@ return (
             <thead>
               <tr className="bg-yellow-100 border-b">
                 <th className="px-4 py-2 text-left font-semibold text-gray-700 border-r">
-                  Product
+                  {t('pricing.product')}
                 </th>
                 <th className="px-3 py-2 text-center font-semibold text-gray-700 border-r" colSpan="2">
-                  Dimensions (cm)
+                  {t('pricing.dimensions')}
                 </th>
                 <th className="px-3 py-2 text-center font-semibold text-gray-700" colSpan="3">
-                  Pricing (TND)
+                  {t('pricing.pricing_tnd')}
                 </th>
               </tr>
               <tr className="bg-yellow-50 border-b text-sm">
                 <th className="px-4 py-2 text-left font-medium text-gray-600 border-r">
-                  Photo Print
+                  {t('pricing.photo_print')}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
-                  W
+                  {t('pricing.width')}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
-                  L
+                  {t('pricing.length')}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
-                  1-24
+                  {t('pricing.qty_1_24')}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
-                  25-74
+                  {t('pricing.qty_25_74')}
                 </th>
                 <th className="px-2 py-2 text-center font-medium text-gray-600">
-                  75+
+                  {t('pricing.qty_75_plus')}
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b hover:bg-gray-50">
                 <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
-                  Standard
+                  {t('pricing.standard')}
                 </td>
                 <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">10.0</td>
                 <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
@@ -7776,7 +7776,7 @@ return (
               </tr>
               <tr className="hover:bg-gray-50">
                 <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
-                  Large
+                  {t('pricing.large')}
                 </td>
                 <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
                 <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">23.0</td>

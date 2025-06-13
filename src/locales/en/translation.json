@@ -221,6 +221,24 @@
         "details": "Product Details"
 
       },
+      "pricing": {
+        "title": "Photo Print Pricing (Tunisia)",
+        "product_size": "Product & Size",
+        "qty_1_24": "1-24 qty",
+        "qty_25_74": "25-74 qty",
+        "qty_75_plus": "75+ qty",
+        "standard": "Standard",
+        "standard_size": "10.0×15.0 cm",
+        "large": "Large",
+        "large_size": "15.0×23.0 cm",
+        "currency": "TND",
+        "product": "Product",
+        "dimensions": "Dimensions (cm)",
+        "pricing_tnd": "Pricing (TND)",
+        "photo_print": "Photo Print",
+        "width": "W",
+        "length": "L"
+      },
       "productDetails": {
     "title": "Products Details",
     "category": "Category",

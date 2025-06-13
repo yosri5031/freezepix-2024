@@ -198,6 +198,24 @@
   "discountmessage": "أدخل رمز الخصم",
   "details": "تفاصيل المنتج"
   },
+  "pricing": {
+    "title": "أسعار طباعة الصور (تونس)",
+    "product_size": "المنتج والحجم",
+    "qty_1_24": "1-24 كمية",
+    "qty_25_74": "25-74 كمية",
+    "qty_75_plus": "75+ كمية",
+    "standard": "عادي",
+    "standard_size": "10.0×15.0 سم",
+    "large": "كبير",
+    "large_size": "15.0×23.0 سم",
+    "currency": "دينار تونسي",
+    "product": "المنتج",
+    "dimensions": "الأبعاد (سم)",
+    "pricing_tnd": "التسعير (دينار تونسي)",
+    "photo_print": "طباعة الصور",
+    "width": "العرض",
+    "length": "الطول"
+  },
   "productDetails": {
     "pricing": "التسعير",
   "title": "تفاصيل المنتج ",
