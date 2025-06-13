@@ -6836,10 +6836,10 @@ const renderStepContent = () => {
                     </select>
                   </div>
 
-                  {/* Single Details button at the end */}
+                  {/* Details button under image (product details) 
                   <button onClick={openProductDetails} className="text-sm text-blue-500 underline">
                     {t('produits.details')}
-                  </button>
+                  </button>*/}
                 </div>
               </div>
             ))}
