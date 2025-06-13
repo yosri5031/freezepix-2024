@@ -6574,10 +6574,12 @@ const handleFileChange = async (event) => {
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
     
     // Calculate shipping fee based on country and delivery method
-    let shippingFee = 8;
+    let shippingFee = 0;
     const isTunisiaFreeShipping = subtotal >= 25;
     const isOtherCountriesFreeShipping = subtotal >= 50;
-    
+    if (deliveryMethod === 'pickup') {
+       shippingFee = 0;
+    }
     if (deliveryMethod === 'shipping') {
       if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         if (isTunisiaFreeShipping) {
