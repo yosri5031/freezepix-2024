@@ -6586,14 +6586,14 @@ const handleFileChange = async (event) => {
     const subtotal = Object.values(subtotalsBySize).reduce((acc, curr) => acc + curr, 0);
     
     // Calculate shipping fee based on country and delivery method
-    let shippingFee = 0;
+    let shippingFee = 8;
     const isTunisiaFreeShipping = subtotal >= 25;
     const isOtherCountriesFreeShipping = subtotal >= 50;
     
     if (deliveryMethod === 'shipping') {
       if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
         if (isTunisiaFreeShipping) {
-          shippingFee = 0;
+          shippingFee = 8;
         } else {
           shippingFee = 8;
         }
@@ -7659,69 +7659,92 @@ return (
       </div>
       
      {/* Shipping Progress Bar */}
-     {/* Shipping Progress Bar - Sticky only on step 0 (upload images) */}
-{selectedPhotos.length > 0 && selectedCountry && (
+{/* Product Pricing Table - Sticky only on step 0 (upload images) */}
+{selectedPhotos.length > 0 && selectedCountry === 'TN' && (
   <div className={`
-    ${activeStep === 0 ? 'sticky top-0 z-40 bg-white shadow-sm border-b' : ''} 
+    ${activeStep === 0 ? 'sticky top-0 z-40 bg-white shadow-sm border-b' : ''}
     mb-6 py-3 transition-all duration-200
   `}>
-    <div className="max-w-md mx-auto px-4">
-      {(() => {
-        const { subtotal } = calculateTotals();
-        const country = initialCountries.find(c => c.value === selectedCountry);
-        const freeShippingThreshold = country?.freeShippingThreshold || 200;
-        const currency = country?.currency || 'USD';
-        const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
-        const progressPercentage = Math.min(100, (subtotal / freeShippingThreshold) * 100);
-        const hasEarnedFreeShipping = subtotal >= freeShippingThreshold;
+    <div className="max-w-4xl mx-auto px-4">
+      <div className="bg-gray-50 rounded-lg p-4">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+          Photo Print Pricing (Tunisia)
+        </h3>
         
-        // Calculate totals for pictures and prints
-        const totalPictures = selectedPhotos.length;
-        const totalPrints = selectedPhotos.reduce((sum, photo) => sum + (photo.quantity || 1), 0);
-
-        return (
-          <div className="bg-gray-50 rounded-lg p-3 sm:p-4">
-            {/* Single row with all information inline */}
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 mb-3">
-              {/* Left side: Money, Pictures, and Prints all in one line */}
-              <div className="flex items-center gap-3 sm:gap-4 text-sm order-1">
-                <span className="font-medium text-gray-700">
-                  💰 <span className="font-bold">{subtotal.toFixed(2)} {currency}</span>
-                </span>
-                <Camera size={16} className="text-blue-500" />
-                <span className="font-medium">{totalPictures}</span>
-                <Printer size={16} className="text-purple-500" />
-                <span className="font-medium">{totalPrints}</span>
-              </div>
-              
-              {/* Right side: Free shipping status */}
-              {hasEarnedFreeShipping && (
-                <span className="text-sm font-medium text-green-600 flex items-center order-2">
-                  <Truck size={16} className="mr-1" />
-                  {t('order.free_shipping_earned', 'Free Shipping!')}
-                </span>
-              )}
-            </div>
-            
-            {/* Progress bar */}
-            <div className="w-full bg-gray-200 rounded-full h-3 sm:h-2 mb-3 sm:mb-2">
-              <div 
-                className={`h-3 sm:h-2 rounded-full transition-all duration-300 ${
-                  hasEarnedFreeShipping ? 'bg-green-500' : 'bg-yellow-400'
-                }`}
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-            
-            {/* Bottom text */}
-            <div className="text-sm sm:text-xs text-gray-500 text-center font-medium">
-              {!hasEarnedFreeShipping &&  (
-                `${remainingForFreeShipping.toFixed(2)} ${currency} ${t('order.until_free_shipping', 'until free shipping')}`
-              )}
-            </div>
-          </div>
-        );
-      })()}
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+            <thead>
+              <tr className="bg-yellow-100 border-b">
+                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-r">
+                  Product
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-700 border-r" colSpan="2">
+                  Dimensions (cm)
+                </th>
+                <th className="px-4 py-3 text-center font-semibold text-gray-700" colSpan="3">
+                  Pricing
+                </th>
+              </tr>
+              <tr className="bg-yellow-50 border-b">
+                <th className="px-4 py-2 text-left font-medium text-gray-600 border-r">
+                  Photo Print
+                </th>
+                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
+                  Width
+                </th>
+                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
+                  Length
+                </th>
+                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
+                  1 - 24
+                </th>
+                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
+                  25 - 74
+                </th>
+                <th className="px-4 py-2 text-center font-medium text-gray-600">
+                  75+
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-700 border-r bg-yellow-50">
+                  Standard
+                </td>
+                <td className="px-4 py-3 text-center text-gray-600 border-r">10.0</td>
+                <td className="px-4 py-3 text-center text-gray-600 border-r">15.0</td>
+                <td className="px-4 py-3 text-center font-semibold text-blue-600 border-r">
+                  2.500 TND
+                </td>
+                <td className="px-4 py-3 text-center font-semibold text-green-600 border-r">
+                  2.000 TND
+                </td>
+                <td className="px-4 py-3 text-center font-semibold text-purple-600">
+                  1.500 TND
+                </td>
+              </tr>
+              <tr className="hover:bg-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-700 border-r bg-yellow-50">
+                  Large
+                </td>
+                <td className="px-4 py-3 text-center text-gray-600 border-r">15.0</td>
+                <td className="px-4 py-3 text-center text-gray-600 border-r">23.0</td>
+                <td className="px-4 py-3 text-center font-semibold text-blue-600 border-r">
+                  3.500 TND
+                </td>
+                <td className="px-4 py-3 text-center font-semibold text-green-600 border-r">
+                  3.000 TND
+                </td>
+                <td className="px-4 py-3 text-center font-semibold text-purple-600">
+                  2.500 TND
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+       
+      </div>
     </div>
   </div>
 )}
