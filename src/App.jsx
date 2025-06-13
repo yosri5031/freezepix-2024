@@ -7667,83 +7667,134 @@ return (
   `}>
     <div className="max-w-4xl mx-auto px-4">
       <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4 text-center">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 text-center">
           Photo Print Pricing (Tunisia)
         </h3>
         
-        <div className="overflow-x-auto">
+        {/* Mobile-first responsive layout */}
+        <div className="block sm:hidden">
+          {/* Mobile Card Layout */}
+          <div className="space-y-3">
+            {/* Standard Size Card */}
+            <div className="bg-white rounded-lg border shadow-sm p-3">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-semibold text-gray-800">Standard Photo</h4>
+                <span className="text-xs text-gray-500">10.0×15.0 cm</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">1-24</div>
+                  <div className="font-bold text-blue-600">2.500</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">25-74</div>
+                  <div className="font-bold text-green-600">2.000</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">75+</div>
+                  <div className="font-bold text-purple-600">1.500</div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Large Size Card */}
+            <div className="bg-white rounded-lg border shadow-sm p-3">
+              <div className="flex justify-between items-center mb-2">
+                <h4 className="font-semibold text-gray-800">Large Photo</h4>
+                <span className="text-xs text-gray-500">15.0×23.0 cm</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">1-24</div>
+                  <div className="font-bold text-blue-600">3.500</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">25-74</div>
+                  <div className="font-bold text-green-600">3.000</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-gray-500 mb-1">75+</div>
+                  <div className="font-bold text-purple-600">2.500</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Desktop Table Layout */}
+        <div className="hidden sm:block">
           <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
             <thead>
               <tr className="bg-yellow-100 border-b">
-                <th className="px-4 py-3 text-left font-semibold text-gray-700 border-r">
+                <th className="px-4 py-2 text-left font-semibold text-gray-700 border-r">
                   Product
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-700 border-r" colSpan="2">
+                <th className="px-3 py-2 text-center font-semibold text-gray-700 border-r" colSpan="2">
                   Dimensions (cm)
                 </th>
-                <th className="px-4 py-3 text-center font-semibold text-gray-700" colSpan="3">
-                  Pricing
+                <th className="px-3 py-2 text-center font-semibold text-gray-700" colSpan="3">
+                  Pricing (TND)
                 </th>
               </tr>
-              <tr className="bg-yellow-50 border-b">
+              <tr className="bg-yellow-50 border-b text-sm">
                 <th className="px-4 py-2 text-left font-medium text-gray-600 border-r">
                   Photo Print
                 </th>
-                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
-                  Width
+                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                  W
                 </th>
-                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
-                  Length
+                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                  L
                 </th>
-                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
-                  1 - 24
+                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                  1-24
                 </th>
-                <th className="px-4 py-2 text-center font-medium text-gray-600 border-r">
-                  25 - 74
+                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                  25-74
                 </th>
-                <th className="px-4 py-2 text-center font-medium text-gray-600">
+                <th className="px-2 py-2 text-center font-medium text-gray-600">
                   75+
                 </th>
               </tr>
             </thead>
             <tbody>
               <tr className="border-b hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-700 border-r bg-yellow-50">
+                <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
                   Standard
                 </td>
-                <td className="px-4 py-3 text-center text-gray-600 border-r">10.0</td>
-                <td className="px-4 py-3 text-center text-gray-600 border-r">15.0</td>
-                <td className="px-4 py-3 text-center font-semibold text-blue-600 border-r">
-                  2.500 TND
+                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">10.0</td>
+                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
+                <td className="px-2 py-2 text-center font-semibold text-blue-600 border-r text-sm">
+                  2.500
                 </td>
-                <td className="px-4 py-3 text-center font-semibold text-green-600 border-r">
-                  2.000 TND
+                <td className="px-2 py-2 text-center font-semibold text-green-600 border-r text-sm">
+                  2.000
                 </td>
-                <td className="px-4 py-3 text-center font-semibold text-purple-600">
-                  1.500 TND
+                <td className="px-2 py-2 text-center font-semibold text-purple-600 text-sm">
+                  1.500
                 </td>
               </tr>
               <tr className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-700 border-r bg-yellow-50">
+                <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
                   Large
                 </td>
-                <td className="px-4 py-3 text-center text-gray-600 border-r">15.0</td>
-                <td className="px-4 py-3 text-center text-gray-600 border-r">23.0</td>
-                <td className="px-4 py-3 text-center font-semibold text-blue-600 border-r">
-                  3.500 TND
+                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
+                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">23.0</td>
+                <td className="px-2 py-2 text-center font-semibold text-blue-600 border-r text-sm">
+                  3.500
                 </td>
-                <td className="px-4 py-3 text-center font-semibold text-green-600 border-r">
-                  3.000 TND
+                <td className="px-2 py-2 text-center font-semibold text-green-600 border-r text-sm">
+                  3.000
                 </td>
-                <td className="px-4 py-3 text-center font-semibold text-purple-600">
-                  2.500 TND
+                <td className="px-2 py-2 text-center font-semibold text-purple-600 text-sm">
+                  2.500
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
         
-       
+     
       </div>
     </div>
   </div>
