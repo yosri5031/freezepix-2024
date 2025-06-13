@@ -807,7 +807,7 @@ const FreezePIX = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
-    const [deliveryMethod, setDeliveryMethod] = useState('pickup'); // 'pickup' or 'shipping'
+    const [deliveryMethod, setDeliveryMethod] = useState('shipping'); // 'pickup' or 'shipping'
     const [activePaymentTab, setActivePaymentTab] = useState('discount');
 
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
@@ -6892,6 +6892,21 @@ const renderStepContent = () => {
             <div className="border rounded-lg p-4">
   <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
   <div className="space-y-3">
+  <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+        <input
+          type="radio"
+          name="deliveryMethod"
+          value="shipping"
+          checked={deliveryMethod === 'shipping'}
+          onChange={() => setDeliveryMethod('shipping')}
+          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+        />
+        <div>
+        <p className="font-medium">{t('order.shipping_to_address')}</p>
+        <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
+        </div>
+      </label>
+   
     <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
       <input
         type="radio"
@@ -6908,20 +6923,7 @@ const renderStepContent = () => {
     </label>
     
     
-      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-        <input
-          type="radio"
-          name="deliveryMethod"
-          value="shipping"
-          checked={deliveryMethod === 'shipping'}
-          onChange={() => setDeliveryMethod('shipping')}
-          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-        />
-        <div>
-        <p className="font-medium">{t('order.shipping_to_address')}</p>
-        <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
-        </div>
-      </label>
+   
 
   </div>
 </div>
