@@ -1293,8 +1293,6 @@ useEffect(() => {
 
 // REPLACEMENT 3: Load cached photos (only once)
 useEffect(() => {
-  if (showIntro) return; // Don't load cached data on intro
-
   const loadAndFixCachedPhotos = async () => {
     if (hasLoadedCache || !selectedCountry) return;
     
@@ -1369,12 +1367,10 @@ useEffect(() => {
   };
 
   loadAndFixCachedPhotos();
-}, [selectedCountry, hasLoadedCache, showIntro]);
+}, [selectedCountry, hasLoadedCache]);
 
 // REPLACEMENT 4: Initial country detection (only once)
 useEffect(() => {
-  if (showIntro) return; // Don't auto-detect country on intro page
-
   const setInitialCountryAndLanguage = async () => {
     if (initialLoadComplete || selectedCountry || isLoading) return;
     
@@ -1404,7 +1400,8 @@ useEffect(() => {
   };
 
   setInitialCountryAndLanguage();
-}, [showIntro, initialLoadComplete, selectedCountry, isLoading]);
+}, [initialLoadComplete, selectedCountry, isLoading]);
+
 // REPLACEMENT 5: Debounced save state (prevents excessive saves)
 useEffect(() => {
   if (saveStateTimeoutRef.current) {
@@ -1445,8 +1442,6 @@ useEffect(() => {
 }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
 
       useEffect(() => {
-        if (showIntro) return; // Skip all auto-loading when intro is shown
-
         const handleStudioPreselection = async () => {
           const studioSlug = parseStudioSlugFromUrl();
           
@@ -1527,7 +1522,8 @@ useEffect(() => {
         };
         
         handleStudioPreselection();
-      }, [showIntro]);
+      }, []);  // Run once on component mount
+
       // Add this useEffect in your FreezePIX component
       const [hasAutoSetLanguage, setHasAutoSetLanguage] = useState(false);
 
