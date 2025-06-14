@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck, Printer   } from 'lucide-react';
+import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck, Users, Printer   } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -330,6 +330,258 @@ const CANADIAN_PROVINCES = [
   'Northwest Territories', 'Nova Scotia', 'Nunavut', 'Ontario', 'Prince Edward Island',
   'Quebec', 'Saskatchewan', 'Yukon'
 ];
+
+const IntroPage = ({ onStartPrinting, selectedCountry, setSelectedCountry }) => {
+  const { t } = useTranslation();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // Sample images for carousel (you can replace these with actual product images)
+  const carouselImages = [
+    {
+      src: photoprint4x6,
+      alt: "Professional photo prints with vibrant colors and sharp details",
+      title: t('intro.carousel.prints_title', 'Premium Photo Prints'),
+      description: t('intro.carousel.prints_desc', 'High-quality prints on professional paper')
+    },
+    {
+      src: threeDFrame,
+      alt: "Elegant 3D crystal frames showcasing precious memories",
+      title: t('intro.carousel.crystal_title', '3D Crystal Frames'),
+      description: t('intro.carousel.crystal_desc', 'Stunning crystal displays for your memories')
+    },
+    {
+      src: keychain,
+      alt: "Custom photo keychains and magnets for everyday memories",
+      title: t('intro.carousel.accessories_title', 'Photo Accessories'),
+      description: t('intro.carousel.accessories_desc', 'Keychains, magnets and more')
+    }
+  ];
+
+  // Auto-advance carousel
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [carouselImages.length]);
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % carouselImages.length);
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + carouselImages.length) % carouselImages.length);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-yellow-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        
+        {/* Logo Section */}
+        <div className="text-center mb-12">
+          <div className="text-5xl md:text-7xl font-black mb-4">
+            <span className="text-gray-800">freeze</span>
+            <span className="text-yellow-400">PIX</span>
+          </div>
+          <p className="text-xl md:text-2xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+            {t('intro.tagline', 'Professional Photo Printing & Custom Products Delivered Worldwide')}
+          </p>
+        </div>
+
+        {/* Features Icons Section */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+          <div className="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-20 h-20 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Star className="w-10 h-10 text-yellow-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">
+              {t('intro.features.quality_title', 'Premium Quality')}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('intro.features.quality_desc', 'Professional-grade printing with vibrant colors and crisp details')}
+            </p>
+          </div>
+
+          <div className="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Globe className="w-10 h-10 text-blue-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">
+              {t('intro.features.global_title', 'Worldwide Delivery')}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('intro.features.global_desc', 'Fast and secure shipping to over 20 countries worldwide')}
+            </p>
+          </div>
+
+          <div className="text-center p-8 bg-white rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Users className="w-10 h-10 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-3">
+              {t('intro.features.trusted_title', 'Trusted by Thousands')}
+            </h3>
+            <p className="text-gray-600 leading-relaxed">
+              {t('intro.features.trusted_desc', 'Join our community of satisfied customers worldwide')}
+            </p>
+          </div>
+        </div>
+
+        {/* Image Carousel Section */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+            {t('intro.products_title', 'Our Products')}
+          </h2>
+          
+          <div className="relative max-w-4xl mx-auto">
+            <div className="relative h-80 md:h-96 rounded-2xl overflow-hidden shadow-lg">
+              {carouselImages.map((image, index) => (
+                <div
+                  key={index}
+                  className={`absolute inset-0 transition-opacity duration-500 ${
+                    index === currentSlide ? 'opacity-100' : 'opacity-0'
+                  }`}
+                >
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-40 flex items-end">
+                    <div className="text-white p-8 w-full">
+                      <h3 className="text-2xl font-bold mb-2">{image.title}</h3>
+                      <p className="text-lg opacity-90">{image.description}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Carousel Navigation */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full flex items-center justify-center shadow-lg transition-all"
+              aria-label="Previous image"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700" />
+            </button>
+            
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white bg-opacity-90 hover:bg-opacity-100 rounded-full flex items-center justify-center shadow-lg transition-all"
+              aria-label="Next image"
+            >
+              <ChevronLeft className="w-6 h-6 text-gray-700 transform rotate-180" />
+            </button>
+
+            {/* Carousel Indicators */}
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+              {carouselImages.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentSlide(index)}
+                  className={`w-3 h-3 rounded-full transition-all ${
+                    index === currentSlide ? 'bg-white' : 'bg-white bg-opacity-50'
+                  }`}
+                  aria-label={`Go to slide ${index + 1}`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Selectors Section */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
+            {t('intro.get_started', 'Get Started')}
+          </h2>
+          
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Country Selector */}
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+              <label className="block text-lg font-semibold text-gray-800 mb-3">
+                {t('intro.select_country', 'Select Your Country')}
+              </label>
+              <select 
+                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent text-lg"
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+              >
+                <option value="">{t('intro.choose_country', 'Choose your country...')}</option>
+                {initialCountries.map(country => (
+                  <option key={country.value} value={country.value} className="text-lg">
+                    {country.name} ({country.currency})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Language Selector */}
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+              <label className="block text-lg font-semibold text-gray-800 mb-3">
+                {t('intro.select_language', 'Select Your Language')}
+              </label>
+              <div className="flex justify-center">
+                <LanguageSelector 
+                  className="text-lg px-4 py-3 border-2 border-gray-200 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent" 
+                  iconClassName="w-6 h-6" 
+                />
+              </div>
+            </div>
+
+            {/* Delivery Method Preview */}
+            <div className="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition-shadow">
+              <label className="block text-lg font-semibold text-gray-800 mb-3">
+                {t('intro.delivery_options', 'Delivery Options')}
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <Truck className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-800">{t('intro.shipping', 'Home Delivery')}</p>
+                    <p className="text-sm text-gray-600">{t('intro.shipping_desc', 'Direct to your door')}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 p-3 border border-gray-200 rounded-lg">
+                  <Store className="w-6 h-6 text-green-600 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium text-gray-800">{t('intro.pickup', 'Store Pickup')}</p>
+                    <p className="text-sm text-gray-600">{t('intro.pickup_desc', 'Collect from studio')}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Call to Action Button */}
+        <div className="text-center">
+          <button
+            onClick={onStartPrinting}
+            disabled={!selectedCountry}
+            className={`
+              inline-flex items-center gap-3 px-8 py-4 text-xl font-bold rounded-2xl 
+              transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl
+              ${selectedCountry
+                ? 'bg-yellow-400 hover:bg-yellow-500 text-black' 
+                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }
+            `}
+          >
+            <Camera className="w-8 h-8" />
+            <span>{t('intro.start_printing', 'Start Printing Your Photos')}</span>
+          </button>
+          
+          {!selectedCountry && (
+            <p className="text-gray-500 mt-4">
+              {t('intro.select_country_first', 'Please select your country to continue')}
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const BookingPopup = ({ onClose }) => {
   return (
@@ -7584,6 +7836,16 @@ const handleStepClick = (stepIndex) => {
   // Allow navigation to this step
   setActiveStep(stepIndex);
 };
+
+ if (showIntro) {
+        return (
+          <IntroPage 
+            onStartPrinting={handleStartPrinting}
+            selectedCountry={selectedCountry}
+            setSelectedCountry={setSelectedCountry}
+          />
+        );
+      }
 
 return (
   <div className="min-h-screen bg-gray-50 pb-24">
