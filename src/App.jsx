@@ -964,16 +964,22 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
+// Replace the existing useEffect with this one
 useEffect(() => {
-  // Check if this is the first visit
-  const hasVisitedBefore = localStorage.getItem('showIntro') === 'false';
+  // Always show intro when component mounts
+  setShowIntro(true);
   
-  if (isFirstLoad) {
-    // For first time visitors, show intro
-    setShowIntro(true);
-    setIsFirstLoad(true);
+  // Optional: Check for any pending state or data
+  const savedState = localStorage.getItem('freezepixState');
+  if (savedState) {
+    try {
+      const parsedState = JSON.parse(savedState);
+      setSelectedCountry(parsedState.selectedCountry || '');
+    } catch (error) {
+      console.warn('Error loading saved state:', error);
+    }
   }
-}, [isFirstLoad]);
+}, []); // Empty dependency array means this runs once when component mounts
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
