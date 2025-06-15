@@ -814,7 +814,7 @@ const FreezePIX = () => {
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
 const [giftCardError, setGiftCardError] = useState('');
 const [isGiftCardLoading, setIsGiftCardLoading] = useState(false);
-
+const [isFirstLoad, setIsFirstLoad] = useState(true);
 const [interacReference, setInteracReference] = useState('');
 const [formData, setFormData] = useState({
   email: '',
@@ -965,11 +965,15 @@ useEffect(() => {
 }, []);
 
 useEffect(() => {
+  // Check if this is the first visit
   const hasVisitedBefore = localStorage.getItem('showIntro') === 'false';
-  if (hasVisitedBefore) {
-    setShowIntro(false);
+  
+  if (isFirstLoad) {
+    // For first time visitors, show intro
+    setShowIntro(!hasVisitedBefore);
+    setIsFirstLoad(false);
   }
-}, []);
+}, [isFirstLoad]);
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
@@ -1127,37 +1131,30 @@ useEffect(() => {
 
 // REPLACEMENT 4: Initial country detection (only once)
 useEffect(() => {
-  const setInitialCountryAndLanguage = async () => {
-    if (initialLoadComplete || selectedCountry || isLoading) return;
-    
-    try {
+  const detectInitialLocation = async () => {
+    if (isFirstLoad && !selectedCountry) {
       setIsLoading(true);
-      setInitialLoadComplete(true);
-      
-      const locationData = await detectUserLocation();
-      
-      if (locationData?.country) {
-        const mappedCountry = mapCountryCode(locationData.country);
-        
-        if (initialCountries.some(c => c.value === mappedCountry)) {
-          setSelectedCountry(mappedCountry);
-        } else {
-          setSelectedCountry('US');
+      try {
+        const locationData = await detectUserLocation();
+        if (locationData?.country) {
+          const mappedCountry = mapCountryCode(locationData.country);
+          if (initialCountries.some(c => c.value === mappedCountry)) {
+            setSelectedCountry(mappedCountry);
+          } else {
+            setSelectedCountry('US'); // Default fallback
+          }
         }
-      } else {
-        setSelectedCountry('US');
+      } catch (error) {
+        console.error('Location detection error:', error);
+        setSelectedCountry('US'); // Default fallback
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Error in country/language setup:', error);
-      setSelectedCountry('US');
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  setInitialCountryAndLanguage();
-}, [initialLoadComplete, selectedCountry, isLoading]);
-
+  detectInitialLocation();
+}, [isFirstLoad, selectedCountry]);
 // REPLACEMENT 5: Debounced save state (prevents excessive saves)
 useEffect(() => {
   if (saveStateTimeoutRef.current) {
