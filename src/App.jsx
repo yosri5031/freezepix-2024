@@ -5096,40 +5096,7 @@ while (retryCount < maxRetries) {
     await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retryCount)));
   }
 }
-if (discountCode) {
-  // Find the discount rule that was used
-  const discountRule = availableDiscounts.find(
-    rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
-  );
 
-  // Check if this was a one-use-per-customer discount
-  if (discountRule?.once_per_customer) {
-    try {
-      // Get existing used codes
-      const usedCodes = JSON.parse(localStorage.getItem('usedDiscountCodes') || '[]');
-      
-      // Add this code if not already tracked
-      if (!usedCodes.includes(discountCode)) {
-        usedCodes.push(discountCode);
-        localStorage.setItem('usedDiscountCodes', JSON.stringify(usedCodes));
-      }
-
-      // Also store with email for better tracking
-      const emailUsedCodes = JSON.parse(localStorage.getItem('emailUsedCodes') || '{}');
-      if (!emailUsedCodes[formData.email]) {
-        emailUsedCodes[formData.email] = [];
-      }
-      if (!emailUsedCodes[formData.email].includes(discountCode)) {
-        emailUsedCodes[formData.email].push(discountCode);
-        localStorage.setItem('emailUsedCodes', JSON.stringify(emailUsedCodes));
-      }
-
-      console.log(`One-use discount code ${discountCode} marked as used`);
-    } catch (storageError) {
-      console.warn('Failed to save used discount code:', storageError);
-    }
-  }
-}
 // Send confirmation email with retry
 let emailSent = false;
 retryCount = 0;
@@ -6069,10 +6036,11 @@ const initializeDiscounts = async () => {
 };
     
 // Updated handleDiscountCode function that fixes the "discountRule is not defined" error
-const handleDiscountCode = async (value) => {
+const handleDiscountCode = (value) => {
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
   
+  // Clear discount error if empty code
   if (!upperValue) {
     setDiscountError('');
     return;
@@ -6080,67 +6048,60 @@ const handleDiscountCode = async (value) => {
   
   setIsLoading(true);
   
-  try {
-    // Fetch price rules and validate
-    const priceRules = await fetchShopifyPriceRules();
-    
-    // Find matching rule
-    const matchingRule = priceRules.find(
-      rule => rule.title && rule.title.toUpperCase() === upperValue
-    );
-    
-    if (!matchingRule) {
-      setDiscountError('Invalid discount code');
-      setIsLoading(false);
-      return;
-    }
-
-    // Check if this is a one-use-per-customer code
-    if (matchingRule.once_per_customer) {
-      // Check localStorage for previous usage
-      const usedCodes = JSON.parse(localStorage.getItem('usedDiscountCodes') || '[]');
+  // Fetch price rules and validate
+  fetchShopifyPriceRules()
+    .then(priceRules => {
+      console.log('Fetched price rules:', priceRules);
       
-      if (usedCodes.includes(upperValue)) {
-        setDiscountError('This discount code can only be used once');
+      // Update available discounts
+      setAvailableDiscounts(priceRules);
+      
+      // Find matching rule
+      const matchingRule = priceRules.find(
+        rule => rule.title && rule.title.toUpperCase() === upperValue
+      );
+      
+      // If no matching rule found
+      if (!matchingRule) {
+        console.log('No matching discount found for:', upperValue);
+        setDiscountError('Invalid discount code');
         setIsLoading(false);
         return;
       }
-    }
-    
-    // Validate dates
-    const now = new Date();
-    const startDate = safelyParseDate(matchingRule.startsAt);
-    const endDate = safelyParseDate(matchingRule.endsAt);
-    
-    if (startDate && now < startDate) {
-      setDiscountError('This discount code is not active yet');
+      
+      console.log('Found discount rule:', matchingRule);
+      
+      // Now validate the dates on the matching rule
+      const now = new Date();
+      const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
+      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
+      
+      // Check if the discount is active based on dates
+      if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
+        setDiscountError('This discount code is not active yet');
+        setIsLoading(false);
+        return;
+      }
+      
+      // Check end date validation
+      if (endDate) {
+        if (!isNaN(endDate.getTime()) && now > endDate) {
+          setDiscountError('This discount code has expired');
+          setIsLoading(false);
+          return;
+        }
+      }
+      
+      // If we made it here, the discount is valid
+      console.log('Discount code is valid:', upperValue);
+      setDiscountError('');
       setIsLoading(false);
-      return;
-    }
-    
-    if (endDate && now > endDate) {
-      setDiscountError('This discount code has expired');
+    })
+    .catch(error => {
+      console.error('Error validating discount code:', error);
+      setDiscountError('Unable to validate discount code');
       setIsLoading(false);
-      return;
-    }
-
-    // If code is valid and one-use, store it in localStorage
-    if (matchingRule.once_per_customer) {
-      const usedCodes = JSON.parse(localStorage.getItem('usedDiscountCodes') || '[]');
-      usedCodes.push(upperValue);
-      localStorage.setItem('usedDiscountCodes', JSON.stringify(usedCodes));
-    }
-    
-    // Update available discounts
-    setAvailableDiscounts(priceRules);
-    setDiscountError('');
-    
-  } catch (error) {
-    console.error('Error validating discount code:', error);
-    setDiscountError('Unable to validate discount code');
-  } finally {
-    setIsLoading(false);
-  }
+    });
 };
 
 
@@ -7262,18 +7223,11 @@ const renderInvoice = () => {
               {discountError && (
                 <p className="text-red-500 text-sm">{discountError}</p>
               )}
-               {discountCode && !discountError && (
-        <p className="text-green-500 text-sm">
-          {t('order.discount_applied')}: {getDiscountDisplay()}
-          {availableDiscounts.find(
-            rule => rule.title.toUpperCase() === discountCode.toUpperCase()
-          )?.once_per_customer && (
-            <span className="text-xs text-red-500 ml-2">
-              (One-time use only)
-            </span>
-          )}
-        </p>
-      )}
+              {discountCode && !discountError && discount > 0 && (
+                <p className="text-green-500 text-sm">
+                  {t('order.discount_applied')}: {getDiscountDisplay()}
+                </p>
+              )}
             </div>
 
             {/* Discount Link Generator when discount is successfully applied */}
