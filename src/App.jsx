@@ -1200,88 +1200,91 @@ useEffect(() => {
   };
 }, [showIntro, selectedCountry, selectedPhotos, activeStep, formData]);
 
-      useEffect(() => {
-        const handleStudioPreselection = async () => {
-          const studioSlug = parseStudioSlugFromUrl();
-          
-          if (!studioSlug) return;
-          
-          setIsLoading(true);
-          setError(null);
-          
-          try {
-            // First try exact match on slug field
-            const response = await axios.get(
-              `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/by-slug/${studioSlug}`
-            );
-            
-            if (response.data && response.data._id) {
-              console.log('Studio preselected from URL:', response.data.name);
-              
-              // Set the selected studio
-              setSelectedStudio(response.data);
-              
-              // If country is specified in studio data, set it
-              if (response.data.country) {
-                const countryCode = mapCountryCode(response.data.country);
-                if (initialCountries.some(c => c.value === countryCode)) {
-                  setSelectedCountry(countryCode);
-                }
-              }
-              
-              // Skip intro and go directly to upload photos step
-              setShowIntro(false);
-              setActiveStep(0); // Set to upload photos step
-              
-              // Mark this studio as preselected
-              localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
-              localStorage.setItem('isPreselectedFromUrl', 'true');
-            }
-          } catch (error) {
-            console.error('Failed to find studio by slug, trying fuzzy match:', error);
-            
-            try {
-              // Fall back to search by name if slug doesn't match exactly
-              const searchResponse = await axios.get(
-                `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/search`,
-                { params: { query: studioSlug.replace(/-/g, ' ') } }
-              );
-              
-              if (searchResponse.data && searchResponse.data.length > 0) {
-                console.log('Studio found by fuzzy search:', searchResponse.data[0].name);
-                
-                // Set the selected studio
-                setSelectedStudio(searchResponse.data[0]);
-                
-                // Set country if available
-                if (searchResponse.data[0].country) {
-                  const countryCode = mapCountryCode(searchResponse.data[0].country);
-                  if (initialCountries.some(c => c.value === countryCode)) {
-                    setSelectedCountry(countryCode);
-                  }
-                }
-                
-                // Skip intro and go directly to upload photos step
-                setShowIntro(false);
-                setActiveStep(0); // Ensure we land on the upload photos step
-                
-                // Mark this studio as preselected
-                localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
-                localStorage.setItem('isPreselectedFromUrl', 'true');
-              } else {
-                setError('Studio not found');
-              }
-            } catch (searchError) {
-              console.error('Failed to find studio by search:', searchError);
-              setError('Studio not found');
-            }
-          } finally {
-            setIsLoading(false);
-          }
-        };
+useEffect(() => {
+  const handleStudioPreselection = async () => {
+    // CHANGE: Always show intro first, regardless of URL
+    setShowIntro(true);
+
+    const studioSlug = parseStudioSlugFromUrl();
+    
+    if (!studioSlug) return;
+    
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // First try exact match on slug field
+      const response = await axios.get(
+        `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/by-slug/${studioSlug}`
+      );
+      
+      if (response.data && response.data._id) {
+        console.log('Studio preselected from URL:', response.data.name);
         
-        handleStudioPreselection();
-      }, []);  // Run once on component mount
+        // Set the selected studio
+        setSelectedStudio(response.data);
+        
+        // If country is specified in studio data, set it
+        if (response.data.country) {
+          const countryCode = mapCountryCode(response.data.country);
+          if (initialCountries.some(c => c.value === countryCode)) {
+            setSelectedCountry(countryCode);
+          }
+        }
+        
+        // REMOVE: No longer skip intro
+        // setShowIntro(false); - REMOVED
+        // setActiveStep(0); - REMOVED
+        
+        // Mark this studio as preselected
+        localStorage.setItem('preselectedStudio', JSON.stringify(response.data));
+        localStorage.setItem('isPreselectedFromUrl', 'true');
+      }
+    } catch (error) {
+      console.error('Failed to find studio by slug, trying fuzzy match:', error);
+      
+      try {
+        // Fall back to search by name if slug doesn't match exactly
+        const searchResponse = await axios.get(
+          `https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/studios/search`,
+          { params: { query: studioSlug.replace(/-/g, ' ') } }
+        );
+        
+        if (searchResponse.data && searchResponse.data.length > 0) {
+          console.log('Studio found by fuzzy search:', searchResponse.data[0].name);
+          
+          // Set the selected studio
+          setSelectedStudio(searchResponse.data[0]);
+          
+          // Set country if available
+          if (searchResponse.data[0].country) {
+            const countryCode = mapCountryCode(searchResponse.data[0].country);
+            if (initialCountries.some(c => c.value === countryCode)) {
+              setSelectedCountry(countryCode);
+            }
+          }
+          
+          // REMOVE: No longer skip intro
+          // setShowIntro(false); - REMOVED
+          // setActiveStep(0); - REMOVED
+          
+          // Mark this studio as preselected
+          localStorage.setItem('preselectedStudio', JSON.stringify(searchResponse.data[0]));
+          localStorage.setItem('isPreselectedFromUrl', 'true');
+        } else {
+          setError('Studio not found');
+        }
+      } catch (searchError) {
+        console.error('Failed to find studio by search:', searchError);
+        setError('Studio not found');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  handleStudioPreselection();
+}, []); // Run once on component mount
 
       // Add this useEffect in your FreezePIX component
       const [hasAutoSetLanguage, setHasAutoSetLanguage] = useState(false);
