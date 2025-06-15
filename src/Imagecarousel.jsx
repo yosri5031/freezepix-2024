@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import print1 from '../assets/wedding.jpg';
-import print2 from '../assets/baby.jpg';
-import print3 from '../assets/omra.jpg';
+import print1 from './assets/wedding.jpg';
+import print2 from './assets/baby.jpg';
+import print3 from './assets/omra.jpg';
 
 const ImageCarousel = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
