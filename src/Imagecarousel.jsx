@@ -13,19 +13,16 @@ const ImageCarousel = () => {
       id: 1,
       src: print1,
       alt: 'Professional Photo Printing',
-      title: 'Professional Photo Prints'
     },
     {
       id: 2,
       src: print2,
       alt: 'Photo Studio',
-      title: 'Local Studio Pickup'
     },
     {
       id: 3,
       src: print3,
       alt: 'Delivered Prints',
-      title: 'Fast Worldwide Delivery'
     }
   ];
 
