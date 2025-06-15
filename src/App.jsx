@@ -964,7 +964,16 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
-
+useEffect(() => {
+  // Check if this is the first visit
+  const hasVisitedBefore = localStorage.getItem('showIntro') === 'false';
+  
+  if (isFirstLoad) {
+    // For first time visitors, show intro
+    setShowIntro(true);
+    setIsFirstLoad(true);
+  }
+}, [isFirstLoad]);
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
