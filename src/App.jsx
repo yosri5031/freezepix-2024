@@ -964,16 +964,7 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
-useEffect(() => {
-  // Check if this is the first visit
-  const hasVisitedBefore = localStorage.getItem('showIntro') === 'false';
-  
-  if (isFirstLoad) {
-    // For first time visitors, show intro
-    setShowIntro(!hasVisitedBefore);
-    setIsFirstLoad(false);
-  }
-}, [isFirstLoad]);
+
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
@@ -7536,8 +7527,7 @@ const renderInvoice = () => {
     setShowIntro(false);
     setActiveStep(0);
     
-    // Save state to localStorage
-    localStorage.setItem('showIntro', 'false');
+    
   };
 const validatePaymentForm = () => {
   // Always validate basic contact information
@@ -7635,27 +7625,32 @@ return (
 
             {/* Selectors */}
             <div className="space-y-4 max-w-sm mx-auto">
-              <select 
-                className="w-full p-2 border rounded-lg"
-                value={selectedCountry}
-                onChange={(e) => setSelectedCountry(e.target.value)}
-              >
-                <option value="">{t('intro.select_country')}</option>
-                {initialCountries.map(country => (
-                  <option key={country.value} value={country.value}>
-                    {country.name} ({country.currency})
-                  </option>
-                ))}
-              </select>
+            <select 
+        className="w-full h-11 px-3 py-2 border rounded-lg shadow-sm text-gray-700 bg-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+        value={selectedCountry}
+        onChange={(e) => setSelectedCountry(e.target.value)}
+      >
+        <option value="">{t('intro.select_country')}</option>
+        {initialCountries.map(country => (
+          <option key={country.value} value={country.value}>
+            {country.name} ({country.currency})
+          </option>
+        ))}
+      </select>
 
-              <LanguageSelector className="w-full" />
+      {/* Language Selector */}
+      <LanguageSelector 
+        className="w-full h-11" 
+      />
 
-              <StudioLocationHeader 
-                selectedStudio={selectedStudio}
-                onStudioSelect={handleStudioSelect}
-                selectedCountry={selectedCountry}
-                simplified={true}
-              />
+      {/* Studio Location */}
+      <StudioLocationHeader 
+        selectedStudio={selectedStudio}
+        onStudioSelect={handleStudioSelect}
+        selectedCountry={selectedCountry}
+        simplified={true}
+        className="w-full h-11"
+      />
             </div>
 
             {/* Start Button */}
@@ -7935,6 +7930,7 @@ return (
     </div>
 
     {/* Fixed Bottom Bar */}
+    {!showIntro && (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
       <div className="max-w-4xl mx-auto px-4 py-2">
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
@@ -7960,6 +7956,7 @@ return (
         </div>
       </div>
     </div>
+)}
   </div>
 );
 };
