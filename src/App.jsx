@@ -7650,6 +7650,7 @@ return (
       {/* Language Selector */}
       <LanguageSelector 
         className="w-full h-11" 
+        isIntro={true}
       />
 
       {/* Studio Location */}

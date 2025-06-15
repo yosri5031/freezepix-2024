@@ -57,8 +57,8 @@ const metaTranslations = {
   }
 };
 
-const LanguageSelector = () => {
-  const { changeLanguage, language } = useLanguage();
+const LanguageSelector = ({ isIntro = false}) => { 
+    const { changeLanguage, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const dropdownRef = useRef(null);
@@ -149,42 +149,58 @@ const LanguageSelector = () => {
   };
 
   return (
-    <div className="relative inline-block text-left z-50" ref={dropdownRef}>
+    <div className={`relative ${isIntro ? 'w-full' : 'inline-block'} text-left z-50`} ref={dropdownRef}>
       <button
         onClick={toggleDropdown}
-        className="flex items-center gap-2 px-2 py-1 text-sm bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-yellow-400"
+        className={`
+          flex items-center gap-2 bg-white border rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-1 focus:ring-yellow-400
+          ${isIntro 
+            ? 'w-full h-11 px-3 py-2 justify-between' 
+            : 'px-2 py-1 text-sm'
+          }
+        `}
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
-        <Globe className="w-4 h-4 text-gray-500" />
-        <span className="text-sm font-medium">
-          {languages.find(l => l.code === language)?.label || 'Select Language'}
-        </span>
-        <ChevronDown className="w-4 h-4 text-gray-500" />
+        <div className="flex items-center gap-2">
+          <Globe className={`text-gray-500 ${isIntro ? 'w-5 h-5' : 'w-4 h-4'}`} />
+          <span className="text-sm font-medium">
+            {languages.find(l => l.code === language)?.label || 'Select Language'}
+          </span>
+        </div>
+        <ChevronDown className={`text-gray-500 ${isIntro ? 'w-5 h-5' : 'w-4 h-4'}`} />
       </button>
   
       {isOpen && (
         <div 
-          className="origin-bottom-right absolute bottom-full right-0 mb-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 max-h-80 overflow-y-auto"
+          className={`
+            absolute rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-100 focus:outline-none z-50 max-h-80 overflow-y-auto
+            ${isIntro 
+              ? 'top-full left-0 right-0 mt-1 w-full' 
+              : 'bottom-full right-0 mb-2 w-56 origin-bottom-right'
+            }
+          `}
           style={{ 
             pointerEvents: 'auto',
             visibility: 'visible',
-            opacity: 1
+            opacity: 1,
+            direction: 'ltr'
           }}
         >
           <div className="py-1">
             {languages.map((lang) => (
               <button
                 key={lang.code}
-                className={`${
-                  language === lang.code ? 'bg-gray-100 text-gray-900' : 'text-gray-700'
-                } group flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900`}
+                className={`
+                  group flex items-center justify-between w-full px-4 py-2 text-sm hover:bg-gray-100 hover:text-gray-900
+                  ${language === lang.code ? 'bg-gray-100 text-gray-900' : 'text-gray-700'}
+                `}
                 role="menuitem"
                 onClick={() => handleLanguageChange(lang.code, lang.path)}
               >
                 <span>{lang.label}</span>
                 {language === lang.code && (
-                  <Check className="w-4 h-4 text-blue-500" />
+                  <Check className={`${isIntro ? 'text-yellow-400' : 'text-blue-500'} w-4 h-4`} />
                 )}
               </button>
             ))}
