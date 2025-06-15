@@ -1,6 +1,6 @@
 import React from 'react';
 import { memo, useState, useRef, useCallback, useEffect } from 'react';
-import { Upload, ShoppingCart, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck, Printer   } from 'lucide-react';
+import { Upload, ShoppingCart, Globe, Languages, Package, Camera, X , Loader, MapPin, Clock, Phone, Mail,aperture,AlertCircle, Navigation, Check, ChevronDown, ChevronUp,Calendar ,ChevronLeft , Store, Truck, Printer   } from 'lucide-react';
 import './index.css'; 
 import { loadStripe } from "@stripe/stripe-js";
 import { v4 as uuidv4 } from 'uuid';
@@ -24,6 +24,7 @@ import {clearStateStorage} from './stateManagementUtils';
 import {ShareUrl} from './StudioUrlShare';
 import StudioLocationHeader from './components/studiolocationheader';
 import GiftCardInput from './components/giftcard';
+import ImageCarousel from './Imagecarousel';
 import Stripe from 'stripe';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { 
@@ -961,6 +962,13 @@ useEffect(() => {
   };
   window.addEventListener('scroll', handleScroll);
   return () => window.removeEventListener('scroll', handleScroll);
+}, []);
+
+useEffect(() => {
+  const hasVisitedBefore = localStorage.getItem('showIntro') === 'false';
+  if (hasVisitedBefore) {
+    setShowIntro(false);
+  }
 }, []);
 
     // REPLACEMENT 1: Photo price updates (only when needed)
@@ -7527,10 +7535,13 @@ const renderInvoice = () => {
     setSelectedCountry(country);
 };
   // Add a separate handler for the Start Printing button
-const handleStartPrinting = () => {
-  setShowIntro(false);
-  setActiveStep(0);
-};
+  const handleStartPrinting = () => {
+    setShowIntro(false);
+    setActiveStep(0);
+    
+    // Save state to localStorage
+    localStorage.setItem('showIntro', 'false');
+  };
 const validatePaymentForm = () => {
   // Always validate basic contact information
   if (!formData.email || !formData.phone || !formData.name) {
@@ -7589,67 +7600,130 @@ return (
   <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
-                {/* New Header Organization */}
-        <div className="mb-6">
-          {/* First Row: Studio Location Header at top left */}
-  <div className="mb-4 flex">
-    <div className="w-auto">
-      <StudioLocationHeader 
-        selectedStudio={selectedStudio}
-        onStudioSelect={handleStudioSelect}
-        selectedCountry={selectedCountry}
-      />
-    </div>
-  </div>
-  
-  {/* Second Row: Logo */}
-  <div className="flex justify-center mb-4">
-    <div className="text-2xl font-bold">
-      <span className="text-black">freeze</span>
-      <span className="text-yellow-400">PIX</span>
-    </div>
-  </div>
-</div>
+        {showIntro ? (
+          // Intro Page Content
+          <div className="space-y-8">
+            {/* Logo */}
+            <div className="flex justify-center">
+              <div className="text-3xl font-bold">
+                <span className="text-black">freeze</span>
+                <span className="text-yellow-400">PIX</span>
+              </div>
+            </div>
 
-        {/* Stepper - Only 2 steps now */}
-        <div className="flex items-center justify-center mb-8">
-        <div className="flex items-center">
-          <div 
-            className={`
-              w-8 h-8 rounded-full flex items-center justify-center 
-              cursor-pointer hover:bg-yellow-500 transition-colors
-              ${activeStep >= 0 ? 'bg-yellow-400' : 'bg-gray-200'}
-            `}
-            onClick={() => handleStepClick(0)}
-          >
-            <Camera 
-              className={`
-                ${activeStep >= 0 ? 'text-black' : 'text-gray-500'}
-              `} 
-              size={24} 
-            />
+            {/* Icons Feature Grid */}
+            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Camera className="w-6 h-6 text-yellow-600" />
+                </div>
+                <span className="text-sm font-medium text-center">{t('intro.quality_prints')}</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Store className="w-6 h-6 text-yellow-600" />
+                </div>
+                <span className="text-sm font-medium text-center">{t('intro.local_pickup')}</span>
+              </div>
+              <div className="flex flex-col items-center space-y-2">
+                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
+                  <Truck className="w-6 h-6 text-yellow-600" />
+                </div>
+                <span className="text-sm font-medium text-center">{t('intro.worldwide')}</span>
+              </div>
+            </div>
+
+            {/* Image Carousel */}
+            <ImageCarousel />
+
+            {/* Selectors */}
+            <div className="space-y-4 max-w-sm mx-auto">
+              <select 
+                className="w-full p-2 border rounded-lg"
+                value={selectedCountry}
+                onChange={(e) => setSelectedCountry(e.target.value)}
+              >
+                <option value="">{t('intro.select_country')}</option>
+                {initialCountries.map(country => (
+                  <option key={country.value} value={country.value}>
+                    {country.name} ({country.currency})
+                  </option>
+                ))}
+              </select>
+
+              <LanguageSelector className="w-full" />
+
+              <StudioLocationHeader 
+                selectedStudio={selectedStudio}
+                onStudioSelect={handleStudioSelect}
+                selectedCountry={selectedCountry}
+                simplified={true}
+              />
+            </div>
+
+            {/* Start Button */}
+            <div className="flex justify-center">
+              <button
+                onClick={() => setShowIntro(false)}
+                className="px-8 py-3 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 font-medium text-lg"
+              >
+                {t('intro.start_printing')}
+              </button>
+            </div>
           </div>
-          <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
-          <div 
-            className={`
-              w-8 h-8 rounded-full flex items-center justify-center 
-              cursor-pointer hover:bg-yellow-500 transition-colors
-              ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}
-            `}
-            onClick={() => handleStepClick(1)}
-          >
-            <ShoppingCart 
-              className={`
-                ${activeStep >= 1 ? 'text-black' : 'text-gray-500'}
-              `} 
-              size={24} 
-            />
-          </div>
-        </div>
-      </div>
-      
-     {/* Shipping Progress Bar */}
-{/* Product Pricing Table - Sticky only on step 0 (upload images) */}
+        ) : (
+          // Main App Content
+          <>
+            {/* Header */}
+            <div className="mb-6">
+              <div className="mb-4 flex">
+                <div className="w-auto">
+                  <StudioLocationHeader 
+                    selectedStudio={selectedStudio}
+                    onStudioSelect={handleStudioSelect}
+                    selectedCountry={selectedCountry}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-center mb-4">
+                <div className="text-2xl font-bold">
+                  <span className="text-black">freeze</span>
+                  <span className="text-yellow-400">PIX</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stepper */}
+            <div className="flex items-center justify-center mb-8">
+              <div className="flex items-center">
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center 
+                    cursor-pointer hover:bg-yellow-500 transition-colors
+                    ${activeStep >= 0 ? 'bg-yellow-400' : 'bg-gray-200'}`}
+                  onClick={() => handleStepClick(0)}
+                >
+                  <Camera 
+                    className={activeStep >= 0 ? 'text-black' : 'text-gray-500'} 
+                    size={24} 
+                  />
+                </div>
+                <div className={`h-1 w-24 ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`} />
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center 
+                    cursor-pointer hover:bg-yellow-500 transition-colors
+                    ${activeStep >= 1 ? 'bg-yellow-400' : 'bg-gray-200'}`}
+                  onClick={() => handleStepClick(1)}
+                >
+                  <ShoppingCart 
+                    className={activeStep >= 1 ? 'text-black' : 'text-gray-500'} 
+                    size={24} 
+                  />
+                </div>
+              </div>
+            </div>
+
+           {/* Tunisia Pricing Table */}
 {selectedPhotos.length > 0 && selectedCountry === 'TN' && (
   <div className={`
     ${activeStep === 0 ? ' top-0 z-40 bg-white shadow-sm border-b' : ''}
@@ -7795,105 +7869,100 @@ return (
             </tbody>
           </table>
         </div>
-        
-      
       </div>
     </div>
   </div>
 )}
 
-
-      {/* Render the current step's content */}
-
-
-        {/* Error message if any */}
-        {error && (
-          <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
-            {error}
-          </div>
-        )}
-
-        {/* Step Content */}
-        {orderSuccess ? (
-          // Order Success UI
-          <div className="text-center space-y-6">
-            <div className="text-green-500 text-5xl">✓</div>
-            <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
-            <p className="text-gray-600">
-              {t('order.success_details')} {formData.email}
-            </p>
-            <div className="mt-4">
-              <p className="font-medium">{t('order.details')}:</p>
-              <p>{t('order.order_number')}: {currentOrderNumber}</p>
-              
-              {deliveryMethod === 'pickup' && selectedStudio && (
-  <div className="mt-4 p-4 bg-gray-50 rounded-lg">
-    <p className="font-medium">{t('pickup.location')}:</p>
-    <p>{selectedStudio.name}</p>
-    <p>{selectedStudio.address}</p>
-    <p>{selectedStudio.city}, {selectedStudio.country}</p>
-  </div>
-)}
-            </div>
-            
-            <button
-              onClick={() => {
-                setOrderSuccess(false);
-                setError(null);
-                setCurrentOrderNumber(null);
-                setOrderNote('');
-                setSelectedPhotos([]);
-                setActiveStep(0);
-                setFormData({
-                  email: '',
-                  phone: '',
-                  name: '',
-                  shippingAddress: { country: selectedCountry },
-                  billingAddress: { country: selectedCountry }
-                });
-              }}
-              className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
-            >
-              {t('buttons.place_new')}
-            </button>
-          </div>
-        ) : (
-          // Render current step
-          renderStepContent()
-        )}
-
-        {/* Navigation Buttons */}
-        {!orderSuccess && renderNavigationButtons()}
+            {/* Error Message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                {error}
               </div>
-    </div>
-    
-  {/* Fixed bottom bar for country and language selection */}
-<div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
-  <div className="max-w-4xl mx-auto px-4 py-2">
-    <div className="grid grid-cols-2 gap-2 sm:gap-4">
-      <div className="w-full">
-        <select 
-          className="w-full px-2 py-1 text-sm border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
-          value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
-        >
-          <option value="">{t('navigation.select')}</option>
-          {initialCountries.map(country => (
-            <option key={country.value} value={country.value} className="text-sm">
-              {country.name} ({country.currency})
-            </option>
-          ))}
-        </select>
+            )}
+
+            {/* Main Content Area */}
+            {orderSuccess ? (
+              // Success UI
+              <div className="text-center space-y-6">
+                <div className="text-green-500 text-5xl">✓</div>
+                <h2 className="text-2xl font-bold">{t('order.success_message')}</h2>
+                <p className="text-gray-600">
+                  {t('order.success_details')} {formData.email}
+                </p>
+                <div className="mt-4">
+                  <p className="font-medium">{t('order.details')}:</p>
+                  <p>{t('order.order_number')}: {currentOrderNumber}</p>
+                  
+                  {deliveryMethod === 'pickup' && selectedStudio && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <p className="font-medium">{t('pickup.location')}:</p>
+                      <p>{selectedStudio.name}</p>
+                      <p>{selectedStudio.address}</p>
+                      <p>{selectedStudio.city}, {selectedStudio.country}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <button
+                  onClick={() => {
+                    setOrderSuccess(false);
+                    setError(null);
+                    setCurrentOrderNumber(null);
+                    setOrderNote('');
+                    setSelectedPhotos([]);
+                    setActiveStep(0);
+                    setFormData({
+                      email: '',
+                      phone: '',
+                      name: '',
+                      shippingAddress: { country: selectedCountry },
+                      billingAddress: { country: selectedCountry }
+                    });
+                  }}
+                  className="px-6 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500"
+                >
+                  {t('buttons.place_new')}
+                </button>
+              </div>
+            ) : (
+              // Current Step Content
+              renderStepContent()
+            )}
+
+            {/* Navigation Buttons */}
+            {!orderSuccess && renderNavigationButtons()}
+          </>
+        )}
       </div>
-      
-      {/* Modify LanguageSelector to match */}
-      <LanguageSelector 
-        className="text-sm" 
-        iconClassName="w-4 h-4" 
-      />
     </div>
-  </div>
-</div>
+
+    {/* Fixed Bottom Bar */}
+    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
+      <div className="max-w-4xl mx-auto px-4 py-2">
+        <div className="grid grid-cols-2 gap-2 sm:gap-4">
+          <div className="w-full">
+            <select 
+              className="w-full px-2 py-1 text-sm border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
+              value={selectedCountry}
+              onChange={(e) => setSelectedCountry(e.target.value)}
+            >
+              <option value="">{t('navigation.select')}</option>
+              {initialCountries.map(country => (
+                <option key={country.value} value={country.value} className="text-sm">
+                  {country.name} ({country.currency})
+                </option>
+              ))}
+            </select>
+          </div>
+          
+          <LanguageSelector 
+            className="text-sm" 
+            iconClassName="w-4 h-4" 
+          />
+        </div>
+      </div>
+    </div>
   </div>
 );
 };

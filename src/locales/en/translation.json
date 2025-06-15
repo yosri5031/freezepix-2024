@@ -4,7 +4,14 @@
       "title": "Transform Your Digital Memories Into Beautiful Prints",
       "subtitle": "Get high-quality prints delivered straight to your door. Easy ordering, fast delivery, and stunning results.",
       "choose_location": "Choose your location to start printing your memories",
-      "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped."
+      "archive_policy": "Archive policy: All pictures will be achieved in our database 60 days after the order is shipped.",
+      "quality_prints": "Quality Prints",
+    "local_pickup": "Local Pickup",
+    "worldwide": "Worldwide Shipping",
+    "start_printing": "Print Your Photos",
+    "select_country": "Select Your Country",
+    "select_language": "Select Language",
+    "select_studio": "Select Nearest Studio"
     },
     "errors": {
   "gift_card_insufficient": "Gift card balance is insufficient to cover the order",

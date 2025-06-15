@@ -1,10 +1,17 @@
 {
     "intro": {
-      "welcome" : "la société de photographie",
-      "title": "Transformez vos souvenirs numériques en magnifiques impressions",
-      "subtitle": "Obtenez des impressions de haute qualité livrées directement à votre porte. Commande facile, livraison rapide et résultats époustouflants.",
-      "choose_location": "Choisissez votre pays pour commencer à imprimer vos souvenirs",
-      "archive_policy": "Politique d'archivage : Toutes les photos seront archivées dans notre base de données 60 jours après l'expédition de la commande."
+      "welcome": "l'entreprise de photographie",
+    "title": "Transformez Vos Souvenirs Numériques en Magnifiques Tirages",
+    "subtitle": "Obtenez des tirages de haute qualité livrés directement chez vous. Commande facile, livraison rapide et résultats exceptionnels.",
+    "choose_location": "Choisissez votre emplacement pour commencer à imprimer vos souvenirs",
+    "archive_policy": "Politique d'archivage : Toutes les photos seront archivées dans notre base de données 60 jours après l'expédition de la commande.",
+    "quality_prints": "Tirages de Qualité",
+    "local_pickup": "Retrait en Studio",
+    "worldwide": "Livraison Mondiale",
+    "start_printing": "Imprimer vos Photos",
+    "select_country": "Sélectionnez votre Pays",
+    "select_language": "Sélectionnez la Langue",
+    "select_studio": "Choisir le Studio le Plus Proche"
     },
     "services": {
       "studio": "Studio Photo",
