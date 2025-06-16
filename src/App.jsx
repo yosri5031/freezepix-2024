@@ -2892,11 +2892,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.75, // Balanced size for speed
-                maxWidthOrHeight: 1000, // Slightly smaller for speed
+                maxSizeMB: 0.85, // Balanced size for speed
+                maxWidthOrHeight: 1200, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.70, // Good quality but fast
+                initialQuality: 0.85, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
@@ -4095,11 +4095,11 @@ const handleCheckout = async (paymentMethod) => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.5, // Balanced size for speed
-                maxWidthOrHeight: 1000, // Slightly smaller for speed
+                maxSizeMB: 0.85, // Balanced size for speed
+                maxWidthOrHeight: 1200, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.75, // Good quality but fast
+                initialQuality: 0.85, // Good quality but fast
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
@@ -5521,14 +5521,14 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
                 maxWidthOrHeight: 1200, // Higher resolution for Canada
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.75,   // Higher quality for Canada
+                initialQuality: 0.85,   // Higher quality for Canada
                 alwaysKeepResolution: false
               } : {
                 maxSizeMB: 1.0,
                 maxWidthOrHeight: 1200,
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.75,
+                initialQuality: 0.85,
                 alwaysKeepResolution: false
               };
               
