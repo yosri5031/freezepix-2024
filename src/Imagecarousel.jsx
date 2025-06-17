@@ -11,30 +11,49 @@ import print11 from './assets/print11.jpg';
 import print12 from './assets/print12.jpg';
 import print13 from './assets/print13.jpg';
 
-
-
+import usprint1 from './assets/usprint1.jpg';
+import usprint2 from './assets/usprint2.jpg';
+import usprint3 from './assets/usprint3.jpg';
 
 const ImageCarousel = ({ selectedCountry }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Define different sets of images based on country
   const getImagesForCountry = () => {
-    if (selectedCountry === 'US' || selectedCountry === 'CA') {
+    if (selectedCountry === 'US') {
+      return [
+        {
+          id: 1,
+          src: usprint1,
+          alt: 'Professional Photo Printing US',
+        },
+        {
+          id: 2,
+          src: usprint2,
+          alt: 'Photo Studio US',
+        },
+        {
+          id: 3,
+          src: usprint3,
+          alt: 'Delivered Prints US',
+        }
+      ];
+    } else if (selectedCountry === 'CA') {
       return [
         {
           id: 1,
           src: print11,
-          alt: 'Professional Photo Printing US/CA',
+          alt: 'Professional Photo Printing CA',
         },
         {
           id: 2,
           src: print12,
-          alt: 'Photo Studio US/CA',
+          alt: 'Photo Studio CA',
         },
         {
           id: 3,
           src: print13,
-          alt: 'Delivered Prints US/CA',
+          alt: 'Delivered Prints CA',
         }
       ];
     } else {
