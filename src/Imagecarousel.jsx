@@ -18,7 +18,6 @@ import usprint3 from './assets/usprint3.jpg';
 const ImageCarousel = ({ selectedCountry }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Define different sets of images based on country
   const getImagesForCountry = () => {
     if (selectedCountry === 'US') {
       return [
@@ -57,7 +56,6 @@ const ImageCarousel = ({ selectedCountry }) => {
         }
       ];
     } else {
-      // Tunisia and other countries
       return [
         {
           id: 1,
@@ -92,7 +90,6 @@ const ImageCarousel = ({ selectedCountry }) => {
 
   const images = getImagesForCountry();
 
-
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentIndex((prevIndex) => 
@@ -122,8 +119,7 @@ const ImageCarousel = ({ selectedCountry }) => {
   };
 
   return (
-    <div className="relative w-full h-64 md:h-80 overflow-hidden rounded-lg">
-      {/* Images container */}
+    <div className="relative w-full h-64 md:h-96 lg:h-[32rem] overflow-hidden rounded-lg">
       <div 
         className="absolute top-0 left-0 w-full h-full flex transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
@@ -138,9 +134,7 @@ const ImageCarousel = ({ selectedCountry }) => {
               alt={image.alt}
               className="w-full h-full object-cover"
             />
-            {/* Gradient overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            {/* Title */}
             <h3 className="absolute bottom-8 left-1/2 -translate-x-1/2 text-2xl font-bold text-white text-center w-full px-4">
               {image.title}
             </h3>
@@ -148,7 +142,6 @@ const ImageCarousel = ({ selectedCountry }) => {
         ))}
       </div>
 
-      {/* Navigation Buttons */}
       <button
         onClick={goToPrevious}
         className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/30 hover:bg-black/50 text-white p-2 rounded-full transition-colors"
@@ -162,7 +155,6 @@ const ImageCarousel = ({ selectedCountry }) => {
         <ChevronRight size={20} />
       </button>
 
-      {/* Dots */}
       <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
         {images.map((_, index) => (
           <button
