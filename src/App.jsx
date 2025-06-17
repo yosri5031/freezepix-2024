@@ -82,7 +82,7 @@ const initialCountries = [
     keyring_magnet: 15.00,
     freeShippingThreshold: 25,
     shippingFee: 8 },
-  // Added European countries
+  /* Added European countries
   { name: 'United Kingdom', 
     value: 'GB', 
     currency: 'GBP', 
@@ -242,7 +242,7 @@ const initialCountries = [
     size4x4: 72.99,
     crystal3d: 2550, 
     keychain: 549.99, 
-    keyring_magnet: 549.99 },
+    keyring_magnet: 549.99 },*/
 ];
 
 const TAX_RATES = {
