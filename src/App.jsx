@@ -522,25 +522,14 @@ const BookingPopup = ({ onClose }) => {
       setSelectedStudio(null);
     };
   
-    const handleBack = (e) => {
-      e.preventDefault();
-      
-      const isPreselected = localStorage.getItem('isPreselectedFromUrl') === 'true';
-      
-      // Special handling if we're at step 2 with a preselected studio
-      if (activeStep === 2 && isPreselected) {
-        setActiveStep(0); // Go back to upload photos
-        return;
-      }
-      
-      // Normal back button behavior
+    const handleBack = () => {
       if (activeStep === 0) {
         setShowIntro(true);
+        setForceShowIntro(true);
       } else {
         setActiveStep(prev => prev - 1);
       }
     };
-  
     // Common header with back button
     const Header = () => (
       <div className="sticky top-0 z-50 bg-white rounded-xl shadow-sm mb-4">
@@ -810,6 +799,7 @@ const FreezePIX = () => {
     const [uploadProgress, setUploadProgress] = useState(0);
     const [deliveryMethod, setDeliveryMethod] = useState('shipping'); // 'pickup' or 'shipping'
     const [activePaymentTab, setActivePaymentTab] = useState('discount');
+    const [forceShowIntro, setForceShowIntro] = useState(false);
 
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
 const [giftCardError, setGiftCardError] = useState('');
@@ -919,7 +909,14 @@ const [formData, setFormData] = useState({
           };
         }
       };
-      
+
+      const handleHomeClick = () => {
+        setShowIntro(true);
+        setForceShowIntro(true);
+        // Optionally reset some state
+        setActiveStep(0);
+      };
+
       // shipping coutries for freezepix printing app
       const mapCountryCode = (code) => {
         const countryMap = {
@@ -964,22 +961,14 @@ useEffect(() => {
   return () => window.removeEventListener('scroll', handleScroll);
 }, []);
 
-// Replace the existing useEffect with this one
+// Modify the useEffect for intro handling
 useEffect(() => {
-  // Always show intro when component mounts
-  setShowIntro(true);
-  
-  // Optional: Check for any pending state or data
-  const savedState = localStorage.getItem('freezepixState');
-  if (savedState) {
-    try {
-      const parsedState = JSON.parse(savedState);
-      setSelectedCountry(parsedState.selectedCountry || '');
-    } catch (error) {
-      console.warn('Error loading saved state:', error);
-    }
+  const shouldShowIntro = localStorage.getItem('shouldShowIntro');
+  if (shouldShowIntro !== 'false') {
+    setShowIntro(true);
   }
-}, []); // Empty dependency array means this runs once when component mounts
+}, []);
+
 
     // REPLACEMENT 1: Photo price updates (only when needed)
 useEffect(() => {
@@ -2575,36 +2564,26 @@ const closeProductDetails = () => {
    
      // Modify the load state useEffect to handle image reconstruction
      useEffect(() => {
-         const loadState = async () => {
-             const savedState = localStorage.getItem('freezepixState');
-             if (savedState) {
-                 try {
-                     const parsedState = JSON.parse(savedState);
-                     
-                     // Reconstruct files from base64
-                     const photosWithFiles = parsedState.selectedPhotos.map(photo => {
-                         if (photo.base64) {
-                             const file = base64ToFile(photo.base64, photo.fileName);
-                             return {
-                                 ...photo,
-                                 file,
-                                 preview: photo.base64, // Use base64 as preview URL
-                             };
-                         }
-                         return photo;
-                     });
-     
-                     setShowIntro(parsedState.showIntro);
-                     setSelectedCountry(parsedState.selectedCountry);
-                     setSelectedPhotos(photosWithFiles);
-                     setActiveStep(parsedState.activeStep);
-                     setFormData(parsedState.formData);
-                 } catch (error) {
-                     console.error('Error loading saved state:', error);
-                     localStorage.removeItem('freezepixState');
-                 }
-             }
-         };
+      const loadState = async () => {
+        const savedState = localStorage.getItem('freezepixState');
+        if (savedState && !forceShowIntro) {
+          try {
+            const parsedState = JSON.parse(savedState);
+            
+            // Don't restore showIntro state if we're forcing it
+            const { showIntro: _, ...restState } = parsedState;
+            
+            // Restore other state
+            setSelectedCountry(restState.selectedCountry);
+            setSelectedPhotos(restState.selectedPhotos);
+            setActiveStep(restState.activeStep);
+            setFormData(restState.formData);
+          } catch (error) {
+            console.error('Error loading saved state:', error);
+            localStorage.removeItem('freezepixState');
+          }
+        }
+      };
      
          loadState();
      }, []);
@@ -2693,20 +2672,18 @@ const renderNavigationButtons = () => {
   const isGiftCardFullyCovering = appliedGiftCard && calculatedTotal <= 0;
   
   return (
-    <div className="flex justify-between mt-8">
-      {activeStep > 0 ? (
-        <button
-          onClick={handleBack}
-          className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200"
-          type="button"
-        >
-          {t('buttons.back')}
-        </button>
-      ) : (
-        <div></div> // Empty div for layout consistency
-      )}
+    <div className="flex justify-between items-center mt-8">
+      {/* Back Button - Always visible */}
+      <button
+        onClick={handleBack}
+        className="px-6 py-2 rounded bg-gray-100 hover:bg-gray-200 flex items-center gap-2"
+        type="button"
+      >
+        <ChevronLeft size={20} />
+        {t('buttons.back')}
+      </button>
       
-      {/* Conditional rendering for payment button */}
+      {/* Right-side button (Print/Place Order/etc.) */}
       {activeStep === 1 ? (
         isGiftCardFullyCovering ? (
           // Gift card fully covers order - show direct "Place Order" button
@@ -2735,7 +2712,7 @@ const renderNavigationButtons = () => {
             </div>
           </button>
         ) : isTunisia ? (
-          // Tunisia COD - Direct order placement without Helcim - ADDED FALLBACK TEXT
+          // Tunisia COD - Direct order placement
           <button
             onClick={handleTunisiaCODOrder}
             disabled={isProcessingOrder || !validatePaymentForm()}
@@ -2753,7 +2730,6 @@ const renderNavigationButtons = () => {
                 <Package size={18} />
               )}
               <span className="text-black font-bold tracking-wide">
-                {/* FIXED: Added fallback text for missing translation */}
                 {isProcessingOrder 
                   ? (t('order.processing') || 'Processing...') 
                   : (t('order.place_cod_order') || 'Place Order (COD)')
@@ -2762,7 +2738,7 @@ const renderNavigationButtons = () => {
             </div>
           </button>
         ) : paymentMethod === 'helcim' ? (
-          // Regular Helcim payment flow for other countries
+          // Regular Helcim payment flow
           <div className="helcim-payment-wrapper">
             <HelcimPayButton 
               onPaymentSuccess={handleHelcimPaymentSuccess}
@@ -2777,7 +2753,7 @@ const renderNavigationButtons = () => {
             />
           </div>
         ) : (
-          // Regular "Next/Print" button for other cases
+          // Regular Next/Print button
           <button
             onClick={handleNext}
             disabled={!isStepValid}
@@ -2791,7 +2767,6 @@ const renderNavigationButtons = () => {
             <div className="flex items-center justify-center gap-2 relative z-10">
               <span className="text-black font-bold tracking-wide">{t('order.print_button')}</span>
               <div className="relative">
-                {/* FreezeFIX custom printer icon */}
                 <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
                   <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
@@ -2825,9 +2800,8 @@ const renderNavigationButtons = () => {
           type="button"
         >
           <div className="flex items-center justify-center gap-2 relative z-10">
-          <span className="text-black font-bold tracking-wide">{t('order.print_button')}</span>
-          <div className="relative">
-              {/* FreezeFIX custom printer icon (same as above) */}
+            <span className="text-black font-bold tracking-wide">{t('order.print_button')}</span>
+            <div className="relative">
               <svg width="28" height="26" viewBox="0 0 28 26" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="4" y="6" width="20" height="10" rx="2" fill="black" />
                 <path d="M7 6V2H21V6" fill="none" stroke="black" strokeWidth="2" />
@@ -7543,9 +7517,9 @@ const renderInvoice = () => {
   // Add a separate handler for the Start Printing button
   const handleStartPrinting = () => {
     setShowIntro(false);
+    setForceShowIntro(false);
     setActiveStep(0);
-    
-    
+    localStorage.setItem('shouldShowIntro', 'false');
   };
 const validatePaymentForm = () => {
   // Always validate basic contact information
@@ -7639,7 +7613,8 @@ return (
             </div>
 
             {/* Image Carousel */}
-            <ImageCarousel />
+            <ImageCarousel selectedCountry={selectedCountry} />
+
 
             {/* Selectors */}
             <div className="space-y-4 max-w-sm mx-auto">
@@ -7662,14 +7637,7 @@ return (
         isIntro={true}
       />
 
-      {/* Studio Location */}
-      <StudioLocationHeader 
-        selectedStudio={selectedStudio}
-        onStudioSelect={handleStudioSelect}
-        selectedCountry={selectedCountry}
-        simplified={true}
-        className="w-full h-11"
-      />
+    
             </div>
 
             {/* Start Button */}

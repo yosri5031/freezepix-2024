@@ -3,28 +3,76 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import print1 from './assets/wedding.jpg';
 import print2 from './assets/baby.jpg';
 import print3 from './assets/omra.jpg';
+import print4 from './assets/print4.jpg';
+import print5 from './assets/print5.jpg';
+import print6 from './assets/print6.jpg';
 
-const ImageCarousel = () => {
+import print11 from './assets/print11.jpg';
+import print12 from './assets/print12.jpg';
+import print13 from './assets/print13.jpg';
+
+
+
+
+const ImageCarousel = ({ selectedCountry }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Real images with imported sources
-  const images = [
-    {
-      id: 1,
-      src: print1,
-      alt: 'Professional Photo Printing',
-    },
-    {
-      id: 2,
-      src: print2,
-      alt: 'Photo Studio',
-    },
-    {
-      id: 3,
-      src: print3,
-      alt: 'Delivered Prints',
+  // Define different sets of images based on country
+  const getImagesForCountry = () => {
+    if (selectedCountry === 'US' || selectedCountry === 'CA') {
+      return [
+        {
+          id: 1,
+          src: print11,
+          alt: 'Professional Photo Printing US/CA',
+        },
+        {
+          id: 2,
+          src: print12,
+          alt: 'Photo Studio US/CA',
+        },
+        {
+          id: 3,
+          src: print13,
+          alt: 'Delivered Prints US/CA',
+        }
+      ];
+    } else {
+      // Tunisia and other countries
+      return [
+        {
+          id: 1,
+          src: print1,
+          alt: 'Professional Photo Printing',
+        },
+        {
+          id: 2,
+          src: print2,
+          alt: 'Photo Studio',
+        },
+        {
+          id: 3,
+          src: print3,
+          alt: 'Delivered Prints',
+        },
+        {
+          id: 4,
+          src: print4,
+        },
+        {
+          id: 5,
+          src: print5,
+        },
+        {
+          id: 6,
+          src: print6,
+        }
+      ];
     }
-  ];
+  };
+
+  const images = getImagesForCountry();
+
 
   useEffect(() => {
     const timer = setInterval(() => {
