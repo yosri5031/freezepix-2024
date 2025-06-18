@@ -7702,73 +7702,73 @@ return (
               </div>
             </div>
 
-           {/* Tunisia Pricing Table */}
-           {(selectedCountry === 'TN' || selectedCountry === 'TUN') && (
-              <div className={`
-    ${activeStep === 0 ? ' top-0 z-40 bg-white shadow-sm border-b' : ''}
-    mb-6 py-3 transition-all duration-200
+      {/* Tunisia Pricing Table */}
+{(selectedCountry === 'TN' || selectedCountry === 'TUN') && (
+  <div className={`
+    ${activeStep === 0 ? 'top-0 z-40 bg-white shadow-md border-b' : ''}
+    mb-6 py-4 transition-all duration-200
   `}>
     <div className="max-w-4xl mx-auto px-4">
-      <div className="bg-gray-50 rounded-lg p-4">
-        <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-3 text-center">
+      <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl p-5 shadow-sm">
+        <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-4 text-center tracking-tight">
           {t('pricing.title')}
         </h3>
         
-        {/* Mobile Table - Optimized but still a table */}
+        {/* Mobile Table */}
         <div className="block sm:hidden">
-          <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-            {/* Mobile Table Header */}
-            <div className="bg-yellow-100 px-2 py-2 border-b">
-              <div className="grid grid-cols-5 gap-1 text-xs font-semibold text-gray-700">
-                <div className="col-span-2 text-left">{t('pricing.product_size')}</div>
-                <div className="text-center">{t('pricing.qty_1_24')}</div>
-                <div className="text-center">{t('pricing.qty_25_74')}</div>
-                <div className="text-center">{t('pricing.qty_75_plus')}</div>
+          <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
+            {/* Mobile Header */}
+            <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 px-3 py-3">
+              <div className="grid grid-cols-5 gap-2 text-xs font-bold">
+                <div className="col-span-2 text-left text-white">{t('pricing.product_size')}</div>
+                <div className="text-center text-white/90">{t('pricing.qty_1_24')}</div>
+                <div className="text-center text-white/90">{t('pricing.qty_25_74')}</div>
+                <div className="text-center text-white/90">{t('pricing.qty_75_plus')}</div>
               </div>
             </div>
             
-            {/* Mobile Table Rows */}
-            <div className="divide-y">
-              {/* Standard Row */}
-              <div className="px-2 py-3 hover:bg-gray-50">
-                <div className="grid grid-cols-5 gap-1 text-xs items-center">
+            {/* Mobile Rows */}
+            <div className="divide-y divide-gray-100">
+              {/* Standard Size Row */}
+              <div className="px-3 py-4 hover:bg-gray-50 transition-colors">
+                <div className="grid grid-cols-5 gap-2 text-xs items-center">
                   <div className="col-span-2">
-                    <div className="font-semibold text-gray-800">{t('pricing.standard')}</div>
-                    <div className="text-gray-500 text-xs">{t('pricing.standard_size')}</div>
+                    <div className="font-bold text-gray-900 text-sm mb-1">{t('pricing.standard')}</div>
+                    <div className="text-yellow-600 text-xs font-medium">{t('pricing.standard_size')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-blue-600">2.500</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">2.500</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-green-600">2.000</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">2.000</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-purple-600">1.500</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">1.500</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
               </div>
               
-              {/* Large Row */}
-              <div className="px-2 py-3 hover:bg-gray-50">
-                <div className="grid grid-cols-5 gap-1 text-xs items-center">
+              {/* Large Size Row */}
+              <div className="px-3 py-4 hover:bg-gray-50 transition-colors">
+                <div className="grid grid-cols-5 gap-2 text-xs items-center">
                   <div className="col-span-2">
-                    <div className="font-semibold text-gray-800">{t('pricing.large')}</div>
-                    <div className="text-gray-500 text-xs">{t('pricing.large_size')}</div>
+                    <div className="font-bold text-gray-900 text-sm mb-1">{t('pricing.large')}</div>
+                    <div className="text-yellow-600 text-xs font-medium">{t('pricing.large_size')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-blue-600">3.500</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">3.500</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-green-600">3.000</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">3.000</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-bold text-purple-600">2.500</div>
-                    <div className="text-gray-400 text-xs">{t('pricing.currency')}</div>
+                  <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
+                    <div className="font-bold text-amber-700 text-sm">2.500</div>
+                    <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
               </div>
@@ -7776,72 +7776,72 @@ return (
           </div>
         </div>
 
-        {/* Desktop Table Layout */}
+        {/* Desktop Table */}
         <div className="hidden sm:block">
-          <table className="w-full border-collapse bg-white rounded-lg shadow-sm">
+          <table className="w-full border-collapse bg-white rounded-xl shadow-md overflow-hidden">
             <thead>
-              <tr className="bg-yellow-100 border-b">
-                <th className="px-4 py-2 text-left font-semibold text-gray-700 border-r">
+              <tr className="bg-gradient-to-r from-yellow-500 to-yellow-400">
+                <th className="px-6 py-3 text-left font-bold text-white border-r border-yellow-400">
                   {t('pricing.product')}
                 </th>
-                <th className="px-3 py-2 text-center font-semibold text-gray-700 border-r" colSpan="2">
+                <th className="px-4 py-3 text-center font-bold text-white border-r border-yellow-400" colSpan="2">
                   {t('pricing.dimensions')}
                 </th>
-                <th className="px-3 py-2 text-center font-semibold text-gray-700" colSpan="3">
+                <th className="px-4 py-3 text-center font-bold text-white" colSpan="3">
                   {t('pricing.pricing_tnd')}
                 </th>
               </tr>
-              <tr className="bg-yellow-50 border-b text-sm">
-                <th className="px-4 py-2 text-left font-medium text-gray-600 border-r">
+              <tr className="bg-yellow-50 border-b border-yellow-100">
+                <th className="px-6 py-3 text-left font-semibold text-gray-700 border-r border-yellow-100">
                   {t('pricing.photo_print')}
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                <th className="px-3 py-3 text-center font-semibold text-gray-700 border-r border-yellow-100">
                   {t('pricing.width')}
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                <th className="px-3 py-3 text-center font-semibold text-gray-700 border-r border-yellow-100">
                   {t('pricing.length')}
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                <th className="px-3 py-3 text-center font-semibold text-gray-700 border-r border-yellow-100">
                   {t('pricing.qty_1_24')}
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-600 border-r">
+                <th className="px-3 py-3 text-center font-semibold text-gray-700 border-r border-yellow-100">
                   {t('pricing.qty_25_74')}
                 </th>
-                <th className="px-2 py-2 text-center font-medium text-gray-600">
+                <th className="px-3 py-3 text-center font-semibold text-gray-700">
                   {t('pricing.qty_75_plus')}
                 </th>
               </tr>
             </thead>
             <tbody>
-              <tr className="border-b hover:bg-gray-50">
-                <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
+              <tr className="border-b border-yellow-100 hover:bg-yellow-50/50 transition-colors">
+                <td className="px-6 py-4 font-bold text-gray-900 border-r border-yellow-100 bg-yellow-50/50">
                   {t('pricing.standard')}
                 </td>
-                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">10.0</td>
-                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
-                <td className="px-2 py-2 text-center font-semibold text-blue-600 border-r text-sm">
+                <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">10.0</td>
+                <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">15.0</td>
+                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
                   2.500
                 </td>
-                <td className="px-2 py-2 text-center font-semibold text-green-600 border-r text-sm">
+                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
                   2.000
                 </td>
-                <td className="px-2 py-2 text-center font-semibold text-purple-600 text-sm">
+                <td className="px-3 py-4 text-center font-bold text-amber-700">
                   1.500
                 </td>
               </tr>
-              <tr className="hover:bg-gray-50">
-                <td className="px-4 py-2 font-medium text-gray-700 border-r bg-yellow-50">
+              <tr className="hover:bg-yellow-50/50 transition-colors">
+                <td className="px-6 py-4 font-bold text-gray-900 border-r border-yellow-100 bg-yellow-50/50">
                   {t('pricing.large')}
                 </td>
-                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">15.0</td>
-                <td className="px-2 py-2 text-center text-gray-600 border-r text-sm">23.0</td>
-                <td className="px-2 py-2 text-center font-semibold text-blue-600 border-r text-sm">
+                <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">15.0</td>
+                <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">23.0</td>
+                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
                   3.500
                 </td>
-                <td className="px-2 py-2 text-center font-semibold text-green-600 border-r text-sm">
+                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
                   3.000
                 </td>
-                <td className="px-2 py-2 text-center font-semibold text-purple-600 text-sm">
+                <td className="px-3 py-4 text-center font-bold text-amber-700">
                   2.500
                 </td>
               </tr>
