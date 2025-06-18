@@ -2096,7 +2096,7 @@ const StudioSelector = ({ onStudioSelect, selectedStudio, selectedCountry }) => 
       
 
 const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
-  const [showSizePreview, setShowSizePreview] = useState(null);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   const sizeOptions = (selectedCountry === 'TUN' || selectedCountry === 'TN') ? [
     { value: '10x15', label: '10x15 cm', width: 35, height: 53 },
@@ -2108,99 +2108,93 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
     { value: '8x10', label: '8x10"', width: 46, height: 58 }
   ];
 
-  const handleSizeClick = (sizeOption) => {
+  const shouldUseDropdown = sizeOptions.length > 3;
+
+  const handleSizeSelect = (sizeOption) => {
     onSizeChange(photo.id, sizeOption.value);
-    setShowSizePreview(sizeOption);
-    
-    setTimeout(() => {
-      setShowSizePreview(null);
-    }, 2000);
+    setIsDropdownOpen(false);
   };
+
+  if (shouldUseDropdown) {
+    return (
+      <div className="relative">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Size
+        </label>
+        
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="w-full px-3 py-2 border rounded-lg flex items-center justify-between bg-white"
+        >
+          <span className="text-sm">
+            {sizeOptions.find(option => option.value === photo.size)?.label || 'Select size'}
+          </span>
+          <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {isDropdownOpen && (
+          <div className="absolute z-10 w-full mt-1 bg-white border rounded-lg shadow-lg">
+            {sizeOptions.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => handleSizeSelect(option)}
+                className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 flex items-center justify-between
+                  ${photo.size === option.value ? 'bg-yellow-50' : ''}`}
+              >
+                <span>{option.label}</span>
+                {photo.size === option.value && (
+                  <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
+                    <Check size={8} className="text-black" />
+                  </div>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-      {t('produits.size')}
+        Size
       </label>
       
-      {showSizePreview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-sm w-full text-center">
-            <h3 className="text-lg font-medium mb-4">
-              {showSizePreview.label} Preview
-            </h3>
-            <div className="flex justify-center mb-4">
-              <div 
-                className="border-2 border-gray-300 bg-gray-100 flex items-center justify-center"
-                style={{ 
-                  width: `${showSizePreview.width * 3}px`, 
-                  height: `${showSizePreview.height * 3}px`,
-                  maxWidth: '200px',
-                  maxHeight: '200px'
-                }}
-              >
-                <img 
-                  src={photo.preview} 
-                  alt="Size preview"
-                  className="w-full h-full object-cover rounded"
-                />
-              </div>
-            </div>
-            <p className="text-sm text-gray-600 mb-4">
-              Actual size: {showSizePreview.label}
-            </p>
-            <button 
-              onClick={() => setShowSizePreview(null)}
-              className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      
       <div className="space-y-2">
-        {sizeOptions.map((sizeOption) => (
+        {sizeOptions.map((option) => (
           <button
-            key={sizeOption.value}
-            onClick={() => handleSizeClick(sizeOption)}
-            className={`w-full relative flex items-center justify-between p-2.5 border-2 rounded-lg transition-all hover:shadow-md ${
-              photo.size === sizeOption.value
-                ? 'border-yellow-400 bg-yellow-50'
-                : 'border-gray-200 hover:border-gray-300'
-            }`}
+            key={option.value}
+            onClick={() => handleSizeSelect(option)}
+            className={`w-full relative px-3 py-2 border-2 rounded-lg text-left
+              ${photo.size === option.value ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}
           >
-            {/* Left side content with fixed width */}
-            <div className="flex items-center gap-2.5 flex-1 min-w-0">
-              <div 
-                className={`border-2 flex-shrink-0 flex items-center justify-center text-xs font-bold rounded ${
-                  photo.size === sizeOption.value
-                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
-                    : 'border-gray-300 bg-gray-50 text-gray-600'
-                }`}
-                style={{ 
-                  width: `${sizeOption.width}px`, 
-                  height: `${sizeOption.height}px`,
-                  minWidth: `${sizeOption.width}px`
-                }}
-              >
-                📷
-              </div>
-              
-              <span className="text-sm font-medium truncate">
-                {sizeOption.label}
-              </span>
-            </div>
-
-            {/* Right side selection circle with fixed position */}
-            <div className="flex-shrink-0 ml-4">
-              {photo.size === sizeOption.value ? (
-                <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Check size={12} className="text-black font-bold" />
+            {/* Selection circle - smaller and top-right positioned */}
+            <div className="absolute top-2 right-2">
+              {photo.size === option.value ? (
+                <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Check size={8} className="text-black" />
                 </div>
               ) : (
-                <div className="w-5 h-5 border-2 border-gray-300 rounded-full bg-white" />
+                <div className="w-3 h-3 border border-gray-300 rounded-full bg-white" />
               )}
+            </div>
+            
+            {/* Content with enough right padding to not overlap with circle */}
+            <div className="pr-8">
+              <div className="flex items-center gap-2">
+                <div 
+                  className={`border flex-shrink-0 flex items-center justify-center text-xs rounded
+                    ${photo.size === option.value ? 'border-yellow-400 bg-yellow-100' : 'border-gray-200 bg-gray-50'}`}
+                  style={{ 
+                    width: `${option.width}px`, 
+                    height: `${option.height}px` 
+                  }}
+                >
+                  📷
+                </div>
+                <span className="text-sm">{option.label}</span>
+              </div>
             </div>
           </button>
         ))}
