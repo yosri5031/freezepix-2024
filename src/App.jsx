@@ -2127,7 +2127,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
           className="w-full px-3 py-2 border rounded-lg flex items-center justify-between bg-white"
         >
           <span className="text-sm">
-            {sizeOptions.find(option => option.value === photo.size)?.label || 'Select size'}
+            {sizeOptions.find(option => option.value === photo.size)?.label || sizeOptions[0].label}
           </span>
           <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -2158,7 +2158,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-        Size
+      {t('produits.size')}
       </label>
       
       <div className="space-y-2">
