@@ -7719,7 +7719,7 @@ return (
           <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
             {/* Mobile Header */}
             <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 px-3 py-3">
-              <div className="grid grid-cols-4 gap-2 text-xs font-bold">
+              <div className="grid grid-cols-5 gap-2 text-xs font-bold">
                 <div className="col-span-2 text-left text-white">{t('pricing.product_size')}</div>
                 <div className="text-center text-white/90">{t('pricing.qty_1_24')}</div>
                 <div className="text-center text-white/90">{t('pricing.qty_25_74')}</div>
