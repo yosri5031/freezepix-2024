@@ -2108,7 +2108,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
     { value: '8x10', label: '8x10"', width: 46, height: 58 }
   ];
 
-  // Initialize with first option if no size selected...
+  // Initialize with first option if no size selected
   if (!photo.size) {
     onSizeChange(photo.id, sizeOptions[0].value);
   }
