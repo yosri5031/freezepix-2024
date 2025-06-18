@@ -2164,42 +2164,43 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
           <button
             key={sizeOption.value}
             onClick={() => handleSizeClick(sizeOption)}
-            className={`w-full p-2.5 border-2 rounded-lg transition-all hover:shadow-md ${
+            className={`w-full relative flex items-center justify-between p-2.5 border-2 rounded-lg transition-all hover:shadow-md ${
               photo.size === sizeOption.value
                 ? 'border-yellow-400 bg-yellow-50'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div 
-                  className={`border-2 flex items-center justify-center text-xs font-bold flex-shrink-0 rounded ${
-                    photo.size === sizeOption.value
-                      ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
-                      : 'border-gray-300 bg-gray-50 text-gray-600'
-                  }`}
-                  style={{ 
-                    width: `${sizeOption.width}px`, 
-                    height: `${sizeOption.height}px` 
-                  }}
-                >
-                  📷
-                </div>
-                
-                <span className="text-sm font-medium">
-                  {sizeOption.label}
-                </span>
+            {/* Left side content with fixed width */}
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div 
+                className={`border-2 flex-shrink-0 flex items-center justify-center text-xs font-bold rounded ${
+                  photo.size === sizeOption.value
+                    ? 'border-yellow-400 bg-yellow-100 text-yellow-800'
+                    : 'border-gray-300 bg-gray-50 text-gray-600'
+                }`}
+                style={{ 
+                  width: `${sizeOption.width}px`, 
+                  height: `${sizeOption.height}px`,
+                  minWidth: `${sizeOption.width}px`
+                }}
+              >
+                📷
               </div>
               
-              <div className="flex-shrink-0">
-                {photo.size === sizeOption.value ? (
-                  <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
-                    <Check size={12} className="text-black font-bold" />
-                  </div>
-                ) : (
-                  <div className="w-5 h-5 border-2 border-gray-300 rounded-full bg-white" />
-                )}
-              </div>
+              <span className="text-sm font-medium truncate">
+                {sizeOption.label}
+              </span>
+            </div>
+
+            {/* Right side selection circle with fixed position */}
+            <div className="flex-shrink-0 ml-4">
+              {photo.size === sizeOption.value ? (
+                <div className="w-5 h-5 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Check size={12} className="text-black font-bold" />
+                </div>
+              ) : (
+                <div className="w-5 h-5 border-2 border-gray-300 rounded-full bg-white" />
+              )}
             </div>
           </button>
         ))}
