@@ -253,9 +253,9 @@
     "price": "Price",
     "image": "Image",
     "imagePreview": "Image Preview",
-      "qty_1_24": "1-24 units",
-      "qty_25_74": "25-74 units",
-      "qty_75_plus": "75+ units",
+      "qty_1_24": "1-24 ",
+      "qty_25_74": "25-74 ",
+      "qty_75_plus": "75+ ",
       "per_photo": "per photo",
       "bulk_discount_note": "The more you order, the less you pay per photo!",
       "pricing": "Pricing"

@@ -222,9 +222,9 @@
       "pricing": {
         "title": "Tarification d'Impression Photo (Tunisie)",
         "product_size": "Produit et Taille",
-        "qty_1_24": "1-24 qté",
-        "qty_25_74": "25-74 qté",
-        "qty_75_plus": "75+ qté",
+        "qty_1_24": "1-24 ",
+        "qty_25_74": "25-74 ",
+        "qty_75_plus": "75+ ",
         "standard": "Standard",
         "standard_size": "10,0×15,0 cm",
         "large": "Grand",

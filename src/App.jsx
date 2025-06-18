@@ -7708,7 +7708,7 @@ return (
     ${activeStep === 0 ? 'top-0 z-40 bg-white shadow-md border-b' : ''}
     mb-6 py-4 transition-all duration-200
   `}>
-    <div className="max-w-4xl mx-auto px-4">
+    <div className="max-w-4xl mx-auto px-2">
       <div className="bg-gradient-to-b from-gray-50 to-white rounded-xl p-5 shadow-sm">
         <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-4 text-center tracking-tight">
           {t('pricing.title')}
@@ -7737,15 +7737,15 @@ return (
                     <div className="text-yellow-600 text-xs font-medium">{t('pricing.standard_size')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.500</div>
+                    <div className="font-bold text-amber-700 text-sm">2.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.000</div>
+                    <div className="font-bold text-amber-700 text-sm">2.0</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">1.500</div>
+                    <div className="font-bold text-amber-700 text-sm">1.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
