@@ -7719,7 +7719,7 @@ return (
           <div className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-100">
             {/* Mobile Header */}
             <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 px-3 py-3">
-              <div className="grid grid-cols-5 gap-2 text-xs font-bold">
+              <div className="grid grid-cols-6 gap-2 text-xs font-bold">
                 <div className="col-span-2 text-left text-white">{t('pricing.product_size')}</div>
                 <div className="text-center text-white/90">{t('pricing.qty_1_24')}</div>
                 <div className="text-center text-white/90">{t('pricing.qty_25_74')}</div>
@@ -7759,15 +7759,15 @@ return (
                     <div className="text-yellow-600 text-xs font-medium">{t('pricing.large_size')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">3.500</div>
+                    <div className="font-bold text-amber-700 text-sm">3.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">3.000</div>
+                    <div className="font-bold text-amber-700 text-sm">3.0</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.500</div>
+                    <div className="font-bold text-amber-700 text-sm">2.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
