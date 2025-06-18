@@ -2108,11 +2108,6 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
     { value: '8x10', label: '8x10"', width: 46, height: 58 }
   ];
 
-  // Initialize with first option if no size selected
-  if (!photo.size) {
-    onSizeChange(photo.id, sizeOptions[0].value);
-  }
-
   const shouldUseDropdown = sizeOptions.length > 3;
 
   const handleSizeSelect = (sizeOption) => {
@@ -2124,7 +2119,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
     return (
       <div className="relative">
         <label className="block text-sm font-medium text-gray-700 mb-2">
-          Size
+        {t('produits.size')}
         </label>
         
         <button
@@ -2132,7 +2127,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
           className="w-full px-3 py-2 border rounded-lg flex items-center justify-between bg-white"
         >
           <span className="text-sm">
-            {sizeOptions.find(option => option.value === photo.size)?.label || sizeOptions[0].label}
+            {sizeOptions.find(option => option.value === photo.size)?.label || 'Select size'}
           </span>
           <ChevronDown size={16} className={`transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
         </button>
@@ -2163,8 +2158,7 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
   return (
     <div className="relative">
       <label className="block text-sm font-medium text-gray-700 mb-2">
-      {t('produits.size')}
-
+        Size
       </label>
       
       <div className="space-y-2">
@@ -2172,27 +2166,34 @@ const SizeSelector = ({ photo, onSizeChange, selectedCountry }) => {
           <button
             key={option.value}
             onClick={() => handleSizeSelect(option)}
-            className="w-full relative bg-white border rounded-lg p-3 flex items-center"
+            className={`w-full relative px-3 py-2 border-2 rounded-lg text-left
+              ${photo.size === option.value ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}
           >
-            <div className="flex items-center flex-1">
-              <div className="w-12 h-12 relative flex-shrink-0">
-                <div className="w-full h-full flex items-center justify-center">
-                  <img src="/camera-icon.svg" alt="" className="w-6 h-6" />
+            {/* Selection circle - smaller and top-right positioned */}
+            <div className="absolute top-2 right-2">
+              {photo.size === option.value ? (
+                <div className="w-3 h-3 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Check size={8} className="text-black" />
                 </div>
-              </div>
-              <span className="ml-3 text-sm">{option.label}</span>
+              ) : (
+                <div className="w-3 h-3 border border-gray-300 rounded-full bg-white" />
+              )}
             </div>
             
-            {/* Consistent circle styling for all options */}
-            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-              <div className={`w-4 h-4 rounded-full border ${
-                photo.size === option.value 
-                  ? 'border-yellow-400 bg-yellow-400' 
-                  : 'border-gray-300 bg-white'
-              }`}>
-                {photo.size === option.value && (
-                  <Check size={10} className="text-white" />
-                )}
+            {/* Content with enough right padding to not overlap with circle */}
+            <div className="pr-8">
+              <div className="flex items-center gap-2">
+                <div 
+                  className={`border flex-shrink-0 flex items-center justify-center text-xs rounded
+                    ${photo.size === option.value ? 'border-yellow-400 bg-yellow-100' : 'border-gray-200 bg-gray-50'}`}
+                  style={{ 
+                    width: `${option.width}px`, 
+                    height: `${option.height}px` 
+                  }}
+                >
+                  📷
+                </div>
+                <span className="text-sm">{option.label}</span>
               </div>
             </div>
           </button>
