@@ -6745,7 +6745,7 @@ const calculateTotalsWithGiftCard = () => {
 
 //..
 const renderStepContent = () => {
-  const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback
+  const currency_curr = selectedCountry ? selectedCountry.currency : 'USD'; // USD as fallback -- <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
   const { total } = calculateTotals();
   
   switch (activeStep) {
@@ -6753,7 +6753,7 @@ const renderStepContent = () => {
       return (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-medium">{t('form.select_photo')}</h2>
+         
             <button
               onClick={() => fileInputRef.current?.click()}
               className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500"
@@ -7703,8 +7703,8 @@ return (
             </div>
 
            {/* Tunisia Pricing Table */}
-{selectedPhotos.length > 0 && selectedCountry === 'TN' && (
-  <div className={`
+           {(selectedCountry === 'TN' || selectedCountry === 'TUN') && (
+              <div className={`
     ${activeStep === 0 ? ' top-0 z-40 bg-white shadow-sm border-b' : ''}
     mb-6 py-3 transition-all duration-200
   `}>
