@@ -7613,18 +7613,21 @@ return (
 
             {/* Selectors */}
             <div className="space-y-4 max-w-sm mx-auto">
-            <select 
-        className="w-full h-11 px-3 py-2 border rounded-lg shadow-sm text-gray-700 bg-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
-        value={selectedCountry}
-        onChange={(e) => setSelectedCountry(e.target.value)}
-      >
-        <option value="">{t('intro.select_country')}</option>
-        {initialCountries.map(country => (
-          <option key={country.value} value={country.value}>
-            {country.name} ({country.currency})
-          </option>
-        ))}
-      </select>
+            <div className="relative w-full">
+  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-500 pointer-events-none z-10" />
+  <select 
+    className="w-full h-11 pl-10 pr-3 py-2 border rounded-lg shadow-sm text-gray-700 bg-white focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400"
+    value={selectedCountry}
+    onChange={(e) => setSelectedCountry(e.target.value)}
+  >
+    <option value="">{t('intro.select_country')}</option>
+    {initialCountries.map(country => (
+      <option key={country.value} value={country.value}>
+        {country.name} ({country.currency})
+      </option>
+    ))}
+  </select>
+</div>
 
       {/* Language Selector */}
       <LanguageSelector 
