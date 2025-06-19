@@ -6114,13 +6114,40 @@ const isDiscountApplicable = (code) => {
          (!endDate || now <= endDate);
 };
     
-      const handleBack = () => {
-        if (activeStep === 0) {
-          setShowIntro(true);
-        } else {
-          setActiveStep(prev => prev - 1);
-        }
-      };
+const handleBack = () => {
+  if (activeStep === 0) {
+    setShowIntro(true);
+  } else {
+    // Refresh previews when going back to photo selection step
+    if (activeStep === 1) {
+      setSelectedPhotos(prevPhotos => prevPhotos.map(photo => ({
+        ...photo,
+        preview: photo.base64 || (photo.file instanceof Blob ? URL.createObjectURL(photo.file) : photo.preview)
+      })));
+    }
+    setActiveStep(prev => prev - 1);
+  }
+};
+
+// 2. Essential useEffect for preview management
+useEffect(() => {
+  // Create preview URLs when needed
+  if (activeStep === 0) {
+    setSelectedPhotos(prevPhotos => prevPhotos.map(photo => ({
+      ...photo,
+      preview: photo.base64 || (photo.file instanceof Blob ? URL.createObjectURL(photo.file) : photo.preview)
+    })));
+  }
+
+  // Cleanup function
+  return () => {
+    selectedPhotos.forEach(photo => {
+      if (photo.preview && photo.preview.startsWith('blob:')) {
+        URL.revokeObjectURL(photo.preview);
+      }
+    });
+  };
+}, [activeStep]);
 
       const useBackButton = ({ activeStep, setActiveStep, setShowIntro }) => {
         useEffect(() => {
