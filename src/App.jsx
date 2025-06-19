@@ -7578,11 +7578,10 @@ const validatePaymentForm = () => {
 const validateStep = () => {
   switch (activeStep) {
     case 0: // Photo Upload step
-      return selectedPhotos.length > 0;
+      // Check if there are photos AND each photo has a size selected
+      return selectedPhotos.length > 0 && selectedPhotos.every(photo => photo.size);
       
     case 1: // Delivery & Review step
-      // For step navigation, we should use the same validation as the payment button
-      // This ensures consistency between the "Next" button and the Helcim payment button
       return validatePaymentForm();
 
     default:
