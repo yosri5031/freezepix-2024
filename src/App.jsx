@@ -7730,7 +7730,8 @@ return (
             </div>
 
       {/* Tunisia Pricing Table */}
-{(selectedCountry === 'TN' || selectedCountry === 'TUN') && (
+{(selectedCountry === 'TN' || selectedCountry === 'TUN') && 
+ !orderSuccess &&(
   <div className={`
     ${activeStep === 0 ? 'top-0 z-40 bg-white shadow-md border-b' : ''}
     mb-6 py-4 transition-all duration-200
