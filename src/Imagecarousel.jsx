@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import print0 from './assets/wedding0.jpg';
 import print1 from './assets/wedding.jpg';
 import print2 from './assets/baby.jpg';
 import print3 from './assets/omra.jpg';
@@ -59,29 +60,34 @@ const ImageCarousel = ({ selectedCountry }) => {
       return [
         {
           id: 1,
+          src: print0,
+          alt: 'Wedding Photo Printing',
+        },
+        {
+          id: 2,
           src: print1,
           alt: 'Professional Photo Printing',
         },
         {
-          id: 2,
+          id: 3,
           src: print2,
           alt: 'Photo Studio',
         },
         {
-          id: 3,
+          id: 4,
           src: print3,
           alt: 'Delivered Prints',
         },
         {
-          id: 4,
+          id: 5,
           src: print4,
         },
         {
-          id: 5,
+          id: 6,
           src: print5,
         },
         {
-          id: 6,
+          id: 7,
           src: print6,
         }
       ];
