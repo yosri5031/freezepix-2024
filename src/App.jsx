@@ -6898,11 +6898,12 @@ const renderStepContent = () => {
               </div>
             </div>
       
-            {/* Delivery Method Selection */}
-            <div className="border rounded-lg p-4">
-  <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
-  <div className="space-y-3">
-  <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+         {/* Delivery Method Selection - Only show for non-Tunisia countries */}
+{(selectedCountry !== 'TN' && selectedCountry !== 'TUN') && (
+  <div className="border rounded-lg p-4">
+    <h3 className="font-medium mb-3">{t('order.delivery_method')}</h3>
+    <div className="space-y-3">
+      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
         <input
           type="radio"
           name="deliveryMethod"
@@ -6912,31 +6913,28 @@ const renderStepContent = () => {
           className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
         />
         <div>
-        <p className="font-medium">{t('order.shipping_to_address')}</p>
-        <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
+          <p className="font-medium">{t('order.shipping_to_address')}</p>
+          <p className="text-sm text-gray-600">{t('order.shipping_description')}</p>
         </div>
       </label>
-   
-    <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
-      <input
-        type="radio"
-        name="deliveryMethod"
-        value="pickup"
-        checked={deliveryMethod === 'pickup'}
-        onChange={() => setDeliveryMethod('pickup')}
-        className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
-      />
-      <div>
-        <p className="font-medium">{t('order.studio_pickup')}</p>
-        <p className="text-sm text-gray-600">{t('order.pickup_description')}</p>
-      </div>
-    </label>
-    
-    
-   
-
+      
+      <label className="flex items-center space-x-3 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+        <input
+          type="radio"
+          name="deliveryMethod"
+          value="pickup"
+          checked={deliveryMethod === 'pickup'}
+          onChange={() => setDeliveryMethod('pickup')}
+          className="h-4 w-4 text-yellow-400 focus:ring-yellow-500"
+        />
+        <div>
+          <p className="font-medium">{t('order.studio_pickup')}</p>
+          <p className="text-sm text-gray-600">{t('order.pickup_description')}</p>
+        </div>
+      </label>
+    </div>
   </div>
-</div>
+)}
       
             {/* Conditional rendering based on delivery method */}
             {deliveryMethod === 'pickup' ? (
@@ -7682,11 +7680,15 @@ return (
             <div className="mb-6">
               <div className="mb-4 flex">
                 <div className="w-auto">
-                  <StudioLocationHeader 
-                    selectedStudio={selectedStudio}
-                    onStudioSelect={handleStudioSelect}
-                    selectedCountry={selectedCountry}
-                  />
+                {selectedCountry !== 'TN' && selectedCountry !== 'TUN' && (
+      <div className="w-auto">
+        <StudioLocationHeader 
+          selectedStudio={selectedStudio}
+          onStudioSelect={handleStudioSelect}
+          selectedCountry={selectedCountry}
+        />
+      </div>
+    )}
                 </div>
               </div>
               
