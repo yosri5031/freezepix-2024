@@ -7762,15 +7762,15 @@ return (
                     <div className="text-yellow-600 text-xs font-medium">{t('pricing.standard_size')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.5</div>
+                    <div className="font-bold text-green-900 text-sm">2.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.0</div>
+                    <div className="font-bold text-green-900 text-sm">2.0</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">1.5</div>
+                    <div className="font-bold text-green-900 text-sm">1.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
@@ -7784,15 +7784,15 @@ return (
                     <div className="text-yellow-600 text-xs font-medium">{t('pricing.large_size')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">3.5</div>
+                    <div className="font-bold text-green-900 text-sm">3.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">3.0</div>
+                    <div className="font-bold text-green-900 text-sm">3.0</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                   <div className="text-center bg-amber-50 rounded-lg py-2 px-1">
-                    <div className="font-bold text-amber-700 text-sm">2.5</div>
+                    <div className="font-bold text-green-900 text-sm">2.5</div>
                     <div className="text-amber-600 text-xs font-medium">{t('pricing.currency')}</div>
                   </div>
                 </div>
@@ -7844,13 +7844,13 @@ return (
                 </td>
                 <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">10.0</td>
                 <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">15.0</td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
+                <td className="px-3 py-4 text-center font-bold text-green-900 border-r border-yellow-100">
                   2.500
                 </td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
+                <td className="px-3 py-4 text-center font-bold text-green-900 border-r border-yellow-100">
                   2.000
                 </td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700">
+                <td className="px-3 py-4 text-center font-bold text-green-900">
                   1.500
                 </td>
               </tr>
@@ -7860,13 +7860,13 @@ return (
                 </td>
                 <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">15.0</td>
                 <td className="px-3 py-4 text-center text-gray-700 border-r border-yellow-100">23.0</td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
+                <td className="px-3 py-4 text-center font-bold text-green-900 border-r border-yellow-100">
                   3.500
                 </td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700 border-r border-yellow-100">
+                <td className="px-3 py-4 text-center font-bold text-green-900 border-r border-yellow-100">
                   3.000
                 </td>
-                <td className="px-3 py-4 text-center font-bold text-amber-700">
+                <td className="px-3 py-4 text-center font-bold text-green-900">
                   2.500
                 </td>
               </tr>
