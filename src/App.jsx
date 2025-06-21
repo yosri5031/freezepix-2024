@@ -7617,12 +7617,7 @@ return (
                 </div>
                 <span className="text-sm font-medium text-center">{t('intro.quality_prints')}</span>
               </div>
-              <div className="flex flex-col items-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Store className="w-6 h-6 text-yellow-600" />
-                </div>
-                <span className="text-sm font-medium text-center">{t('intro.local_pickup')}</span>
-              </div>
+           
               <div className="flex flex-col items-center space-y-2">
                 <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
                   <Truck className="w-6 h-6 text-yellow-600" />
