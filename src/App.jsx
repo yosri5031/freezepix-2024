@@ -7595,7 +7595,7 @@ const handleStepClick = (stepIndex) => {
 };
 
 return (
-  <div className="min-h-screen bg-gray-50 pb-40">
+  <div className="min-h-screen bg-gray-50 pb-24">
     <div className="max-w-4xl mx-auto p-4">
       <div className="bg-white rounded-lg shadow-lg p-6">
         {showIntro ? (
@@ -7943,37 +7943,10 @@ return (
         )}
       </div>
     </div>
-{/* Support Footer */}
-<div className="fixed bottom-16 left-0 right-0 bg-gray-50 border-t z-40">
-  <div className="max-w-4xl mx-auto px-4 py-3">
-    <div className="text-center text-sm text-gray-600">
-      <p className="font-medium mb-2">{t('support.contact_title', 'For help, please contact our support team:')}</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
-        <div className="flex items-center justify-center sm:justify-end gap-2">
-          <Phone size={16} />
-          <a href="tel:+15146613005" className="hover:text-yellow-600">
-            +1 514-661-3005 {t('support.north_america', '(North America)')}
-          </a>
-        </div>
-        <div className="flex items-center justify-center sm:justify-start gap-2">
-          <Phone size={16} />
-          <a href="tel:+21695612003" className="hover:text-yellow-600">
-            +216 95-612-003 {t('support.north_africa', '(North Africa)')}
-          </a>
-        </div>
-      </div>
-      <div className="flex items-center justify-center gap-2">
-        <Mail size={16} />
-        <a href="mailto:Support@freezepix.com" className="hover:text-yellow-600">
-          Support@freezepix.com
-        </a>
-      </div>
-    </div>
-  </div>
-</div>
+
     {/* Fixed Bottom Bar */}
     {!showIntro && (
-    <div className="fixed bottom-0 pb-16 left-0 right-0 bg-white shadow-lg z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
       <div className="max-w-4xl mx-auto px-4 py-2">
         <div className="grid grid-cols-2 gap-2 sm:gap-4">
           <div className="w-full">
@@ -7999,7 +7972,6 @@ return (
       </div>
     </div>
 )}
-
   </div>
 );
 };
