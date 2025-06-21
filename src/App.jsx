@@ -7609,22 +7609,28 @@ return (
               </div>
             </div>
 
-            {/* Icons Feature Grid */}
-            <div className="grid grid-cols-3 gap-4 max-w-lg mx-auto">
-              <div className="flex flex-col items-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Camera className="w-6 h-6 text-yellow-600" />
-                </div>
-                <span className="text-sm font-medium text-center">{t('intro.quality_prints')}</span>
-              </div>
-           
-              <div className="flex flex-col items-center space-y-2">
-                <div className="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center">
-                  <Truck className="w-6 h-6 text-yellow-600" />
-                </div>
-                <span className="text-sm font-medium text-center">{t('intro.worldwide')}</span>
-              </div>
-            </div>
+          {/* Icons Feature Grid */}
+<div className="flex justify-center my-8">
+  <div className="grid grid-cols-2 gap-8 sm:gap-12">
+    <div className="flex flex-col items-center space-y-3">
+      <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center shadow-sm">
+        <Camera className="w-7 h-7 text-yellow-600" />
+      </div>
+      <span className="text-sm font-medium text-center text-gray-800">
+        {t('intro.quality_prints')}
+      </span>
+    </div>
+
+    <div className="flex flex-col items-center space-y-3">
+      <div className="w-14 h-14 rounded-full bg-yellow-100 flex items-center justify-center shadow-sm">
+        <Truck className="w-7 h-7 text-yellow-600" />
+      </div>
+      <span className="text-sm font-medium text-center text-gray-800">
+        {t('intro.worldwide')}
+      </span>
+    </div>
+  </div>
+</div>
 
             {/* Image Carousel */}
             <ImageCarousel selectedCountry={selectedCountry} />
