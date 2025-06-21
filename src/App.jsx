@@ -7944,6 +7944,65 @@ return (
       </div>
     </div>
 
+{/* Support Section - Added as normal content */}
+<div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+      <div className="text-center">
+        <h4 className="text-lg font-semibold text-gray-900 mb-4">
+          {t('support.contact_title', 'For help, please contact our support team')}
+        </h4>
+        
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* North America Contact */}
+            <div className="flex flex-col items-center sm:items-end space-y-1">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Phone size={16} className="text-yellow-500" />
+                <a 
+                  href="tel:+15146613005" 
+                  className="hover:text-yellow-600 transition-colors"
+                >
+                  +1 514-661-3005
+                </a>
+              </div>
+              <span className="text-sm text-gray-500">
+                {t('support.north_america', '(North America)')}
+              </span>
+            </div>
+
+            {/* North Africa Contact */}
+            <div className="flex flex-col items-center sm:items-start space-y-1">
+              <div className="flex items-center gap-2 text-gray-700">
+                <Phone size={16} className="text-yellow-500" />
+                <a 
+                  href="tel:+21695612003" 
+                  className="hover:text-yellow-600 transition-colors"
+                >
+                  +216 95-612-003
+                </a>
+              </div>
+              <span className="text-sm text-gray-500">
+                {t('support.north_africa', '(North Africa)')}
+              </span>
+            </div>
+          </div>
+
+          {/* Email Contact */}
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <Mail size={16} className="text-yellow-500" />
+            <a 
+              href="mailto:Support@freezepix.com" 
+              className="text-gray-700 hover:text-yellow-600 transition-colors"
+            >
+              Support@freezepix.com
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Add some bottom spacing */}
+    <div className="h-8"></div>
+
     {/* Fixed Bottom Bar */}
     {!showIntro && (
     <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
