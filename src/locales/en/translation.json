@@ -17,7 +17,12 @@
   "gift_card_insufficient": "Gift card balance is insufficient to cover the order",
   "gift_card_update_failed": "Failed to update gift card balance",
   "gift_card_order_failed": "Failed to process gift card order",
-  "photoProcessingFailed": "Failed to process photos"
+  "photoProcessingFailed": "Failed to process photos",
+  "discount_expired": "This discount code has expired",
+  "discount_not_started": "This discount code is not active yet",
+  "invalid_discount": "Invalid discount code",
+  "discount_inactive": "This discount code is no longer active",
+  "validation_failed": "Unable to validate discount code"
 },
     "services": {
       "studio": "Photography Studio",

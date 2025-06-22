@@ -5925,19 +5925,28 @@ const validateDiscountCode = (code) => {
 
   const upperCode = code.toUpperCase();
   const validDiscount = availableDiscounts.find(discount => {
-    const isMatchingCode = discount.code.toUpperCase() === upperCode;
+    const isMatchingCode = discount.title.toUpperCase() === upperCode;
     const now = new Date();
-    const startDate = new Date(discount.startDate);
-    const endDate = discount.endDate ? new Date(discount.endDate) : null;
+    const startDate = new Date(discount.startsAt || discount.starts_at);
+    const endDate = discount.endsAt || discount.ends_at ? new Date(discount.endsAt || discount.ends_at) : null;
     
-    return isMatchingCode && 
-           discount.isActive && 
-           (!endDate || endDate > now) && 
-           startDate <= now;
+    // Check if discount is expired
+    if (endDate && now > endDate) {
+      setDiscountError(t('errors.discount_expired'));
+      return false;
+    }
+
+    // Check if discount hasn't started yet
+    if (startDate && now < startDate) {
+      setDiscountError(t('errors.discount_not_started'));
+      return false;
+    }
+
+    return isMatchingCode && discount.status === 'active';
   });
 
   if (!validDiscount) {
-    setDiscountError('Invalid discount code');
+    setDiscountError(t('errors.invalid_discount'));
     return false;
   }
 
@@ -6005,11 +6014,10 @@ const initializeDiscounts = async () => {
 };
     
 // Updated handleDiscountCode function that fixes the "discountRule is not defined" error
-const handleDiscountCode = (value) => {
+const handleDiscountCode = async (value) => {
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
   
-  // Clear discount error if empty code
   if (!upperValue) {
     setDiscountError('');
     return;
@@ -6017,62 +6025,57 @@ const handleDiscountCode = (value) => {
   
   setIsLoading(true);
   
-  // Fetch price rules and validate
-  fetchShopifyPriceRules()
-    .then(priceRules => {
-      console.log('Fetched price rules:', priceRules);
-      
-      // Update available discounts
-      setAvailableDiscounts(priceRules);
-      
-      // Find matching rule
-      const matchingRule = priceRules.find(
-        rule => rule.title && rule.title.toUpperCase() === upperValue
-      );
-      
-      // If no matching rule found
-      if (!matchingRule) {
-        console.log('No matching discount found for:', upperValue);
-        setDiscountError('Invalid discount code');
-        setIsLoading(false);
-        return;
-      }
-      
-      console.log('Found discount rule:', matchingRule);
-      
-      // Now validate the dates on the matching rule
-      const now = new Date();
-      const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
-      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
-      
-      // Check if the discount is active based on dates
-      if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
-        setDiscountError('This discount code is not active yet');
-        setIsLoading(false);
-        return;
-      }
-      
-      // Check end date validation
-      if (endDate) {
-        if (!isNaN(endDate.getTime()) && now > endDate) {
-          setDiscountError('This discount code has expired');
-          setIsLoading(false);
-          return;
-        }
-      }
-      
-      // If we made it here, the discount is valid
-      console.log('Discount code is valid:', upperValue);
-      setDiscountError('');
+  try {
+    const priceRules = await fetchShopifyPriceRules();
+    
+    // Update available discounts
+    setAvailableDiscounts(priceRules);
+    
+    // Find matching rule
+    const matchingRule = priceRules.find(
+      rule => rule.title && rule.title.toUpperCase() === upperValue
+    );
+    
+    if (!matchingRule) {
+      setDiscountError(t('errors.invalid_discount'));
       setIsLoading(false);
-    })
-    .catch(error => {
-      console.error('Error validating discount code:', error);
-      setDiscountError('Unable to validate discount code');
-      setIsLoading(false);
-    });
-};
+      return;
+    }
 
+    const now = new Date();
+    const startDate = new Date(matchingRule.startsAt || matchingRule.starts_at);
+    const endDate = matchingRule.endsAt || matchingRule.ends_at ? 
+      new Date(matchingRule.endsAt || matchingRule.ends_at) : null;
+
+    // Validate dates
+    if (endDate && now > endDate) {
+      setDiscountError(t('errors.discount_expired'));
+      setIsLoading(false);
+      return;
+    }
+
+    if (startDate && now < startDate) {
+      setDiscountError(t('errors.discount_not_started'));
+      setIsLoading(false);
+      return;
+    }
+
+    // Validate status
+    if (matchingRule.status !== 'active') {
+      setDiscountError(t('errors.discount_inactive'));
+      setIsLoading(false);
+      return;
+    }
+
+    setDiscountError('');
+    setIsLoading(false);
+
+  } catch (error) {
+    console.error('Error validating discount code:', error);
+    setDiscountError(t('errors.validation_failed'));
+    setIsLoading(false);
+  }
+};
 
 
 
