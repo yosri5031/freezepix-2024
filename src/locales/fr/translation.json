@@ -324,13 +324,6 @@
      "gift_card": "Carte Cadeau",
   "gift_card_description": "Payez avec une carte cadeau Shopify"
 
-  },
-  "errors": {
-    "discount_expired": "Ce code de réduction a expiré",
-    "discount_not_started": "Ce code de réduction n'est pas encore actif",
-    "invalid_discount": "Code de réduction invalide",
-    "discount_inactive": "Ce code de réduction n'est plus actif",
-    "validation_failed": "Impossible de valider le code de réduction"
   }
       
   }

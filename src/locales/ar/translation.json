@@ -324,12 +324,5 @@
     "credit_pickup_description": "ادفع بأمان باستخدام بطاقة الائتمان أو الخصم الخاصة بك لطلبات الاستلام",
       "gift_card": "بطاقة هدية",
   "gift_card_description": "الدفع ببطاقة هدية من Shopify"
-  },
-  "errors": {
-    "discount_expired": "انتهت صلاحية رمز الخصم",
-    "discount_not_started": "رمز الخصم غير نشط بعد",
-    "invalid_discount": "رمز الخصم غير صالح",
-    "discount_inactive": "رمز الخصم لم يعد نشطًا",
-    "validation_failed": "تعذر التحقق من صحة رمز الخصم"
   }
   }
