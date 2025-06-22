@@ -1358,12 +1358,12 @@ const fetchShopifyPriceRules = async () => {
       return [];
     }
   } catch (error) {
-    console.error('Error fetching price rules:', error);
-    if (error.response) {
-      console.error('Response status:', error.response.status);
-      console.error('Response data:', error.response.data);
+    if (error.response?.status === 429) {
+      // Retry after delay on rate limit
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      return fetchShopifyPriceRules();
     }
-    return [];
+    throw error;
   }
 };
 
@@ -6014,6 +6014,18 @@ const initializeDiscounts = async () => {
 };
     
 // Updated handleDiscountCode function that fixes the "discountRule is not defined" error
+// Utility function to standardize date fields
+const getStartDate = (discount) => {
+  const date = discount?.startsAt || discount?.starts_at || discount?.startDate;
+  return date ? new Date(date) : null;
+};
+
+const getEndDate = (discount) => {
+  const date = discount?.endsAt || discount?.ends_at || discount?.endDate;
+  return date ? new Date(date) : null;
+};
+
+// Updated handleDiscountCode function with standardized date handling
 const handleDiscountCode = async (value) => {
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
@@ -6028,9 +6040,9 @@ const handleDiscountCode = async (value) => {
   
   try {
     const priceRules = await fetchShopifyPriceRules();
+    setAvailableDiscounts(priceRules);
     console.log('Fetched price rules:', priceRules);
     
-    // Find matching rule
     const matchingRule = priceRules.find(
       rule => rule.title && rule.title.toUpperCase() === upperValue
     );
@@ -6044,19 +6056,16 @@ const handleDiscountCode = async (value) => {
       return;
     }
 
-    // Convert dates to UTC for consistent comparison
     const now = new Date();
-    const startDate = new Date(matchingRule.startsAt || matchingRule.starts_at);
-    const endDate = matchingRule.endsAt || matchingRule.ends_at ? 
-      new Date(matchingRule.endsAt || matchingRule.ends_at) : null;
+    const startDate = getStartDate(matchingRule);
+    const endDate = getEndDate(matchingRule);
 
     console.log('Date validation:', {
       now: now.toISOString(),
-      startDate: startDate.toISOString(),
+      startDate: startDate?.toISOString(),
       endDate: endDate?.toISOString(),
     });
 
-    // Check if discount has expired
     if (endDate && now >= endDate) {
       console.log('Discount expired');
       setDiscountError(t('errors.discount_expired'));
@@ -6065,8 +6074,7 @@ const handleDiscountCode = async (value) => {
       return;
     }
 
-    // Check if discount hasn't started yet
-    if (now < startDate) {
+    if (startDate && now < startDate) {
       console.log('Discount not started yet');
       setDiscountError(t('errors.discount_not_started'));
       setDiscountCode('');
@@ -6074,7 +6082,6 @@ const handleDiscountCode = async (value) => {
       return;
     }
 
-    // Validate status
     if (matchingRule.status !== 'active') {
       console.log('Discount inactive');
       setDiscountError(t('errors.discount_inactive'));
@@ -6083,7 +6090,6 @@ const handleDiscountCode = async (value) => {
       return;
     }
 
-    // If we get here, the discount is valid
     console.log('Discount valid, updating available discounts');
     setAvailableDiscounts([matchingRule]);
     setDiscountError('');
@@ -6661,35 +6667,31 @@ const handleFileChange = async (event) => {
     const preDiscountTotal = subtotal + shippingFee;
     
       // Calculate discount
-  let discount = 0;
-  if (discountCode && availableDiscounts.length > 0) {
-    const discountRule = availableDiscounts.find(
-      rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
-    );
-    
-    if (discountRule) {
-      // Check if discount is still valid
-      const now = new Date();
-      const endDate = discountRule.endsAt || discountRule.ends_at ? 
-        new Date(discountRule.endsAt || discountRule.ends_at) : null;
-
-      if (!endDate || now < endDate) {
-        const valueType = discountRule.valueType || discountRule.value_type;
-        const value = discountRule.value;
+      let discount = 0;
+      if (discountCode && availableDiscounts.length > 0) {
+        const discountRule = availableDiscounts.find(
+          rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
+        );
         
-        if (valueType === 'percentage') {
-          const percentageValue = Math.abs(parseFloat(value)) / 100;
-          discount = preDiscountTotal * percentageValue;
-        } else if (valueType === 'fixed_amount') {
-          discount = Math.abs(parseFloat(value));
+        if (discountRule) {
+          const now = new Date();
+          const endDate = getEndDate(discountRule);
+    
+          if (!endDate || now < endDate) {
+            const valueType = discountRule.valueType || discountRule.value_type;
+            const value = discountRule.value;
+            
+            if (valueType === 'percentage') {
+              discount = (preDiscountTotal * Math.abs(parseFloat(value))) / 100;
+            } else if (valueType === 'fixed_amount') {
+              discount = Math.abs(parseFloat(value));
+            }
+          } else {
+            setDiscountCode('');
+            setDiscountError(t('errors.discount_expired'));
+          }
         }
-      } else {
-        // Discount has expired, clear it
-        setDiscountCode('');
-        setDiscountError(t('errors.discount_expired'));
       }
-    }
-  }
   
     const taxableAmount = preDiscountTotal - discount;
     
