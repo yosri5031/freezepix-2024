@@ -6020,6 +6020,7 @@ const handleDiscountCode = async (value) => {
   
   if (!upperValue) {
     setDiscountError('');
+    setDiscountCode('');
     return;
   }
   
@@ -6027,52 +6028,71 @@ const handleDiscountCode = async (value) => {
   
   try {
     const priceRules = await fetchShopifyPriceRules();
-    
-    // Update available discounts
-    setAvailableDiscounts(priceRules);
+    console.log('Fetched price rules:', priceRules);
     
     // Find matching rule
     const matchingRule = priceRules.find(
       rule => rule.title && rule.title.toUpperCase() === upperValue
     );
     
+    console.log('Matching rule found:', matchingRule);
+
     if (!matchingRule) {
       setDiscountError(t('errors.invalid_discount'));
+      setDiscountCode('');
       setIsLoading(false);
       return;
     }
 
+    // Convert dates to UTC for consistent comparison
     const now = new Date();
     const startDate = new Date(matchingRule.startsAt || matchingRule.starts_at);
     const endDate = matchingRule.endsAt || matchingRule.ends_at ? 
       new Date(matchingRule.endsAt || matchingRule.ends_at) : null;
 
-    // Validate dates
-    if (endDate && now > endDate) {
+    console.log('Date validation:', {
+      now: now.toISOString(),
+      startDate: startDate.toISOString(),
+      endDate: endDate?.toISOString(),
+    });
+
+    // Check if discount has expired
+    if (endDate && now >= endDate) {
+      console.log('Discount expired');
       setDiscountError(t('errors.discount_expired'));
+      setDiscountCode('');
       setIsLoading(false);
       return;
     }
 
-    if (startDate && now < startDate) {
+    // Check if discount hasn't started yet
+    if (now < startDate) {
+      console.log('Discount not started yet');
       setDiscountError(t('errors.discount_not_started'));
+      setDiscountCode('');
       setIsLoading(false);
       return;
     }
 
     // Validate status
     if (matchingRule.status !== 'active') {
+      console.log('Discount inactive');
       setDiscountError(t('errors.discount_inactive'));
+      setDiscountCode('');
       setIsLoading(false);
       return;
     }
 
+    // If we get here, the discount is valid
+    console.log('Discount valid, updating available discounts');
+    setAvailableDiscounts([matchingRule]);
     setDiscountError('');
     setIsLoading(false);
 
   } catch (error) {
     console.error('Error validating discount code:', error);
     setDiscountError(t('errors.validation_failed'));
+    setDiscountCode('');
     setIsLoading(false);
   }
 };
@@ -6640,14 +6660,20 @@ const handleFileChange = async (event) => {
   
     const preDiscountTotal = subtotal + shippingFee;
     
-    // Calculate discount
-    let discount = 0;
-    if (discountCode && availableDiscounts.length > 0) {
-      const discountRule = availableDiscounts.find(
-        rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
-      );
-      
-      if (discountRule) {
+      // Calculate discount
+  let discount = 0;
+  if (discountCode && availableDiscounts.length > 0) {
+    const discountRule = availableDiscounts.find(
+      rule => rule.title && rule.title.toUpperCase() === discountCode.toUpperCase()
+    );
+    
+    if (discountRule) {
+      // Check if discount is still valid
+      const now = new Date();
+      const endDate = discountRule.endsAt || discountRule.ends_at ? 
+        new Date(discountRule.endsAt || discountRule.ends_at) : null;
+
+      if (!endDate || now < endDate) {
         const valueType = discountRule.valueType || discountRule.value_type;
         const value = discountRule.value;
         
@@ -6657,8 +6683,13 @@ const handleFileChange = async (event) => {
         } else if (valueType === 'fixed_amount') {
           discount = Math.abs(parseFloat(value));
         }
+      } else {
+        // Discount has expired, clear it
+        setDiscountCode('');
+        setDiscountError(t('errors.discount_expired'));
       }
     }
+  }
   
     const taxableAmount = preDiscountTotal - discount;
     
