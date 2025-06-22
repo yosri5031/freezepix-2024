@@ -6043,8 +6043,9 @@ const handleDiscountCode = (value) => {
       // Now validate the dates on the matching rule
       const now = new Date();
       const startDate = safelyParseDate(matchingRule.startsAt || matchingRule.starts_at);
-      const endDate = safelyParseDate(matchingRule.endsAt || matchingRule.ends_at);
-      
+      const endDate = matchingRule.endsAt || matchingRule.ends_at ? 
+      new Date(matchingRule.endsAt || matchingRule.ends_at) : null;
+            
       // Check if the discount is active based on dates
       if (startDate && !isNaN(startDate.getTime()) && now < startDate) {
         setDiscountError('This discount code is not active yet');
@@ -6052,13 +6053,13 @@ const handleDiscountCode = (value) => {
         return;
       }
       
-      // Check end date validation
-      if (endDate) {
-        if (!isNaN(endDate.getTime()) && now > endDate) {
-          setDiscountError('This discount code has expired');
-          setIsLoading(false);
-          return;
-        }
+     
+  
+      if (endDate && now > endDate) {
+        setDiscountError(t('errors.discount_expired'));
+        setDiscountCode(''); // Clear the expired code
+        setIsLoading(false);
+        return;
       }
       
       // If we made it here, the discount is valid
