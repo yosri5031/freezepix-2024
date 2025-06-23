@@ -2992,10 +2992,10 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  // Smaller chunks for Tunisia
-  const TUNISIA_CHUNK_SIZE = 24; 
-  const TUNISIA_TIMEOUT = 180000; // Increased timeout to 3 minutes
-  const CHUNK_DELAY = 1000; // Increased delay between chunks
+  // MASSIVE CHUNKS for 24 images
+  const TUNISIA_CHUNK_SIZE = 24; // ALL 24 images in 1 chunk!
+  const TUNISIA_TIMEOUT = 180000; // 3 minutes timeout for big chunk
+  const CHUNK_DELAY = 1000; // 1 second delay
   
   const baseOrderData = {
     ...orderData,
@@ -3006,92 +3006,83 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     paymentMethod: 'cod',
     paymentStatus: 'pending',
     tunisiaSpeedMode: true,
+    massiveChunk: true, // Flag for server to handle big chunks
     ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
       ? { pickupStudio: orderData.pickupStudio } 
       : { pickupStudio: null })
   };
 
-  // Split into smaller chunks
+  // Split into MASSIVE chunks (probably just 1 chunk for 24 images)
   const chunks = [];
   for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
     chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
   }
 
-  console.log(`Tunisia: Processing ${chunks.length} chunks of ${TUNISIA_CHUNK_SIZE} items`);
+  console.log(`Tunisia MASSIVE: ${chunks.length} chunks of up to ${TUNISIA_CHUNK_SIZE} items`);
 
   const results = [];
-  const errors = [];
-  let failedChunks = 0;
+  const startTime = Date.now();
 
   for (let i = 0; i < chunks.length; i++) {
+    const chunkStartTime = Date.now();
     const chunk = chunks[i];
     const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
 
     let retryCount = 0;
-    const maxRetries = 3;
-    let chunkSuccess = false;
+    const maxRetries = 2; // More retries for massive chunks
 
-    while (retryCount <= maxRetries && !chunkSuccess) {
+    while (retryCount <= maxRetries) {
       try {
-        console.log(`Tunisia: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        console.log(`Tunisia MASSIVE: Uploading chunk ${i + 1}/${chunks.length} with ${chunk.length} items, attempt ${retryCount + 1}`);
         
-        // Compress chunk data before sending
-        const compressedChunk = await Promise.all(chunk.map(async (item) => ({
-          ...item,
-          file: await optimizeImageHighQuality(item.file)
-        })));
-
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
           {
             ...baseOrderData,
-            orderItems: compressedChunk
+            orderItems: chunk
           },
           {
             withCredentials: true,
             timeout: TUNISIA_TIMEOUT,
             headers: {
-              'Content-Type': 'application/json',
-              'X-Chunk-Index': i,
-              'X-Total-Chunks': chunks.length
-            },
-            onUploadProgress: (progressEvent) => {
-              const chunkSpecificProgress = (progressEvent.loaded / progressEvent.total) * 100;
-              setUploadProgress(Math.round(20 + (i / chunks.length * 70) + (chunkSpecificProgress / chunks.length)));
+              'Content-Type': 'application/json'
             }
           }
         );
 
+        const chunkTime = Date.now() - chunkStartTime;
         results.push(response.data);
-        chunkSuccess = true;
+        console.log(`Tunisia MASSIVE: Chunk ${i + 1} with ${chunk.length} items completed in ${chunkTime}ms`);
         
-        // Success - wait before next chunk
-        await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+        // Small delay between massive chunks
+        if (i < chunks.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+        }
+        
+        break;
         
       } catch (error) {
         retryCount++;
-        console.error(`Tunisia: Chunk ${i + 1} failed:`, error);
+        const chunkTime = Date.now() - chunkStartTime;
+        console.error(`Tunisia MASSIVE: Chunk ${i + 1} failed after ${chunkTime}ms:`, error.message);
         
         if (retryCount <= maxRetries) {
-          // Exponential backoff
-          const backoffDelay = CHUNK_DELAY * Math.pow(2, retryCount - 1);
-          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          // Shorter wait for retry
+          console.log(`Tunisia MASSIVE: Retrying chunk ${i + 1} after 2 seconds...`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
         } else {
-          failedChunks++;
-          errors.push(`Chunk ${i + 1} failed after ${maxRetries + 1} attempts`);
-          
-          // If too many chunks failed, abort
-          if (failedChunks > chunks.length * 0.2) { // More than 20% failed
-            throw new Error('Too many upload failures - please try again');
-          }
+          throw new Error(`Tunisia MASSIVE: Chunk ${i + 1} failed after ${maxRetries + 1} attempts: ${error.message}`);
         }
       }
     }
   }
 
-  if (errors.length > 0) {
-    console.warn('Tunisia: Upload completed with errors:', errors);
+  const totalTime = Date.now() - startTime;
+  console.log(`Tunisia MASSIVE: All ${orderItems.length} items completed in ${totalTime}ms (${(totalTime/1000).toFixed(1)}s)`);
+
+  if (results.length !== chunks.length) {
+    throw new Error(`Tunisia: Upload incomplete: ${results.length}/${chunks.length} chunks`);
   }
 
   return results;
@@ -6331,133 +6322,50 @@ const convertToBase64 = async (file) => {
 const handleFileChange = async (event) => {
   try {
     const files = Array.from(event.target.files);
-    const MAX_FILES = 350; // Set reasonable limit
-    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB max per file
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
-
-    // Check total files
-    if (files.length + selectedPhotos.length > MAX_FILES) {
-      throw new Error(t('errors.too_many_files', { max: MAX_FILES }));
-    }
-
-    // Validate files first
-    const validationPromises = files.map(async (file) => {
-      // Check file type
-      if (!ALLOWED_TYPES.includes(file.type)) {
-        throw new Error(`${file.name}: ${t('errors.invalid_file_type')}`);
-      }
-
-      // Check file size
-      if (file.size > MAX_FILE_SIZE) {
-        throw new Error(`${file.name}: ${t('errors.file_too_large')}`);
-      }
-
-      // Validate image dimensions
-      return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-          if (img.width < 100 || img.height < 100) {
-            reject(new Error(`${file.name}: ${t('errors.image_too_small')}`));
-          }
-          resolve(file);
-        };
-        img.onerror = () => reject(new Error(`${file.name}: ${t('errors.invalid_image')}`));
-        img.src = URL.createObjectURL(file);
-      });
-    });
-
-    // Wait for all validations
-    await Promise.all(validationPromises);
-
-    // Process valid files
+    
     const newPhotos = await Promise.all(files.map(async (file) => {
-      // Pre-compress image before processing
-      const compressedFile = await imageCompression(file, {
-        maxSizeMB: 1,
-        maxWidthOrHeight: 2000,
-        useWebWorker: true,
-        initialQuality: 0.8
-      });
+      if (!file.type.startsWith('image/')) {
+        throw new Error(`Invalid file type: ${file.type}`);
+      }
 
+      // Generate unique ID
       const photoId = uuidv4();
       
-      // Generate preview and base64 in parallel
+      // Create both preview URL and base64 in parallel
       const [preview, base64] = await Promise.all([
-        Promise.resolve(URL.createObjectURL(compressedFile)),
-        convertImageToBase64(compressedFile)
+        // Create object URL for immediate display
+        Promise.resolve(URL.createObjectURL(file)),
+        // Generate base64 for storage
+        convertImageToBase64(file)
       ]);
-
+      
       return {
         id: photoId,
-        file: compressedFile,
-        base64,
+        file: file,
+        base64: base64, // Store base64 for persistence
         fileName: file.name,
         fileType: file.type,
-        preview,
+        preview: preview, // Use object URL for display
         productType: 'photo_print',
         size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-        quantity: 1,
-        status: 'ready' // Add status tracking
+        quantity: 1
       };
     }));
 
-    // Add new photos in batches
-    const BATCH_SIZE = 40;
-    for (let i = 0; i < newPhotos.length; i += BATCH_SIZE) {
-      const batch = newPhotos.slice(i, i + BATCH_SIZE);
-      setSelectedPhotos(prev => [...prev, ...batch]);
-      // Small delay between batches
-      await new Promise(resolve => setTimeout(resolve, 100));
-    }
-
-    // Reset input
+    // Add new photos to existing ones
+    setSelectedPhotos(prev => [...prev, ...newPhotos]);
+    
+    // Reset the file input to allow selecting the same files again
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
-
   } catch (error) {
     console.error('File upload error:', error);
     setError(error.message);
   }
 };
 
-const handleUploadFailure = async (error, orderData) => {
-  console.error('Upload failure:', error);
-  
-  // Save failed order data for recovery
-  try {
-    localStorage.setItem('failedOrderData', JSON.stringify({
-      orderData,
-      timestamp: new Date().toISOString(),
-      error: error.message
-    }));
-    
-    // Clear selected photos but keep their metadata
-    const photoMetadata = selectedPhotos.map(photo => ({
-      id: photo.id,
-      fileName: photo.fileName,
-      size: photo.size,
-      quantity: photo.quantity
-    }));
-    localStorage.setItem('failedPhotosMetadata', JSON.stringify(photoMetadata));
-    
-  } catch (storageError) {
-    console.error('Failed to save recovery data:', storageError);
-  }
 
-  // Show user-friendly error
-  setError(t('errors.upload_failed_try_again'));
-  
-  // Reset states
-  setIsProcessingOrder(false);
-  setUploadProgress(0);
-  
-  // Offer retry option
-  if (confirm(t('errors.retry_upload'))) {
-    // Implement retry logic
-    retryFailedUpload();
-  }
-};
 
 
 
