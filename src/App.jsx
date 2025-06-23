@@ -2832,7 +2832,7 @@ const handleTunisiaCODOrder = async () => {
 
     console.log('Tunisia SPEED: Starting lightning fast processing...');
 
-    // Validate form data first
+    // ULTRA-FAST validation
     if (!formData?.email || !formData?.phone || !formData?.name) {
       throw new Error('Please fill in all required contact information');
     }
@@ -2841,86 +2841,56 @@ const handleTunisiaCODOrder = async () => {
       throw new Error('Please select a pickup location');
     }
 
-    // Generate order number
     const orderNumber = generateOrderNumber();
     setCurrentOrderNumber(orderNumber);
     
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // IMPROVED PHOTO PROCESSING
+    // LIGHTNING FAST photo processing - DEFINED HERE
     const processPhotosWithProgress = async () => {
       try {
-        // Ensure we have photos to process
-        if (!selectedPhotos || selectedPhotos.length === 0) {
-          throw new Error('No photos selected');
-        }
-
         const compressedPhotos = await Promise.all(
           selectedPhotos.map(async (photo, index) => {
-            try {
-              const progress = ((index + 1) / selectedPhotos.length) * 15;
-              setUploadProgress(Math.round(progress));
+            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
+            setUploadProgress(Math.round(progress));
 
-              let imageData;
-              if (photo.base64) {
-                imageData = photo.base64;
-              } else if (photo.file) {
-                // Ensure file exists
-                if (!(photo.file instanceof Blob || photo.file instanceof File)) {
-                  throw new Error(`Invalid file data for photo ${photo.fileName || 'unknown'}`);
-                }
-
-                const compressedFile = await imageCompression(photo.file, {
-                  maxSizeMB: 0.85,
-                  maxWidthOrHeight: 1200,
-                  useWebWorker: true,
-                  fileType: 'image/jpeg',
-                  initialQuality: 0.85,
-                  alwaysKeepResolution: false
-                });
-                imageData = await convertImageToBase64(compressedFile);
-              } else {
-                throw new Error(`No valid image data found for photo ${photo.fileName || 'unknown'}`);
-              }
-
-              return {
-                ...photo,
-                file: imageData,
-                price: photo.price || calculateItemPrice(photo, country),
-                productType: photo.productType || 'photo_print',
-                size: photo.size || '10x15',
-                quantity: photo.quantity || 1
-              };
-            } catch (photoError) {
-              console.error(`Error processing photo ${index}:`, photoError);
-              // Return null for failed photos
-              return null;
+            let imageData;
+            if (photo.base64) {
+              imageData = photo.base64;
+            } else if (photo.file) {
+              // LIGHTNING FAST compression
+              const compressedFile = await imageCompression(photo.file, {
+                maxSizeMB: 0.85, // Balanced size for speed
+                maxWidthOrHeight: 1200, // Slightly smaller for speed
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.85, // Good quality but fast
+                alwaysKeepResolution: false
+              });
+              imageData = await convertImageToBase64(compressedFile);
             }
+
+            return {
+              ...photo,
+              file: imageData,
+              price: photo.price || calculateItemPrice(photo, country),
+              productType: photo.productType || 'photo_print',
+              size: photo.size || '10x15',
+              quantity: photo.quantity || 1
+            };
           })
         );
-
-        // Filter out failed photos
-        const validPhotos = compressedPhotos.filter(photo => photo !== null);
-
-        if (validPhotos.length === 0) {
-          throw new Error('No photos could be processed successfully');
-        }
-
-        if (validPhotos.length < selectedPhotos.length) {
-          console.warn(`Warning: Only ${validPhotos.length} out of ${selectedPhotos.length} photos processed successfully`);
-        }
-
-        return validPhotos;
+        return compressedPhotos;
       } catch (processError) {
         console.error('Tunisia SPEED: Photo processing error:', processError);
         throw new Error('Failed to process photos');
       }
     };
 
+    // CALL the photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
-    // Construct order data
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -2971,11 +2941,11 @@ const handleTunisiaCODOrder = async () => {
       createdAt: new Date().toISOString()
     };
 
-    // Submit order
+    // LIGHTNING FAST order submission
     console.log('Tunisia SPEED: Submitting order...');
     const responses = await submitTunisiaBiggerChunks(orderData);
 
-    // Send confirmation email (fire and forget)
+    // FIRE-AND-FORGET email (don't wait for it)
     sendOrderConfirmationEmail({
       ...orderData,
       orderItems: orderData.orderItems.map(item => ({
@@ -3004,7 +2974,14 @@ const handleTunisiaCODOrder = async () => {
     const totalTime = Date.now() - startTime;
     console.error(`Tunisia SPEED: Order failed after ${totalTime}ms:`, error);
     
-    setError(error.message);
+    let errorMessage = 'Failed to place order';
+    if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+    
+    setError(errorMessage);
     setOrderSuccess(false);
   } finally {
     setIsProcessingOrder(false);
