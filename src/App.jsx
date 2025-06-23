@@ -6322,40 +6322,78 @@ const convertToBase64 = async (file) => {
 const handleFileChange = async (event) => {
   try {
     const files = Array.from(event.target.files);
-    
-    const newPhotos = await Promise.all(files.map(async (file) => {
-      if (!file.type.startsWith('image/')) {
-        throw new Error(`Invalid file type: ${file.type}`);
+    const MAX_FILES = 350;
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+    const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
+
+    // Check total files limit
+    if (files.length + selectedPhotos.length > MAX_FILES) {
+      throw new Error(`Maximum ${MAX_FILES} photos allowed`);
+    }
+
+    // Filter valid files
+    const validFiles = files.filter(file => {
+      const isValidType = ALLOWED_TYPES.includes(file.type);
+      const isValidSize = file.size <= MAX_FILE_SIZE;
+      return isValidType && isValidSize;
+    });
+
+    // Process valid files in batches of 50
+    const processFilesInBatches = async (files) => {
+      const results = [];
+      const BATCH_SIZE = 50;
+
+      for (let i = 0; i < files.length; i += BATCH_SIZE) {
+        const batch = files.slice(i, i + BATCH_SIZE);
+        
+        const batchResults = await Promise.all(
+          batch.map(async (file) => {
+            const photoId = uuidv4();
+            
+            // Create both preview URL and base64 in parallel
+            const [preview, base64] = await Promise.all([
+              Promise.resolve(URL.createObjectURL(file)),
+              convertImageToBase64(file)
+            ]);
+            
+            return {
+              id: photoId,
+              file: file,
+              base64: base64,
+              fileName: file.name,
+              fileType: file.type,
+              preview: preview,
+              productType: 'photo_print',
+              size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+              quantity: 1
+            };
+          })
+        );
+
+        results.push(...batchResults);
+        
+        // Update state after each batch
+        setSelectedPhotos(prev => [...prev, ...batchResults]);
+        
+        // Small delay between batches
+        if (i + BATCH_SIZE < files.length) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
       }
 
-      // Generate unique ID
-      const photoId = uuidv4();
-      
-      // Create both preview URL and base64 in parallel
-      const [preview, base64] = await Promise.all([
-        // Create object URL for immediate display
-        Promise.resolve(URL.createObjectURL(file)),
-        // Generate base64 for storage
-        convertImageToBase64(file)
-      ]);
-      
-      return {
-        id: photoId,
-        file: file,
-        base64: base64, // Store base64 for persistence
-        fileName: file.name,
-        fileType: file.type,
-        preview: preview, // Use object URL for display
-        productType: 'photo_print',
-        size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-        quantity: 1
-      };
-    }));
+      return results;
+    };
 
-    // Add new photos to existing ones
-    setSelectedPhotos(prev => [...prev, ...newPhotos]);
+    // Process valid files
+    await processFilesInBatches(validFiles);
+
+    // Show message if some files were ignored
+    if (validFiles.length < files.length) {
+      const ignoredCount = files.length - validFiles.length;
+      setError(`${ignoredCount} invalid file(s) were ignored. Only JPG, JPEG, and PNG files under 25MB are accepted.`);
+    }
     
-    // Reset the file input to allow selecting the same files again
+    // Reset the file input
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
