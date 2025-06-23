@@ -6331,158 +6331,83 @@ const convertToBase64 = async (file) => {
 const handleFileChange = async (event) => {
   try {
     const files = Array.from(event.target.files);
-    const MAX_FILES = 350;
-    const MAX_FILE_SIZE = 25 * 1024 * 1024;
+    const MAX_FILES = 350; // Set reasonable limit
+    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB max per file
     const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/jpg'];
-    
+
     // Check total files
     if (files.length + selectedPhotos.length > MAX_FILES) {
       throw new Error(t('errors.too_many_files', { max: MAX_FILES }));
     }
 
-    // Track validation results
-    const validationResults = await Promise.allSettled(files.map(async (file) => {
-      try {
-        // Check file type
-        if (!ALLOWED_TYPES.includes(file.type)) {
-          return { status: 'rejected', file, reason: `${file.name}: ${t('errors.invalid_file_type')}` };
-        }
-
-        // Check file size
-        if (file.size > MAX_FILE_SIZE) {
-          return { status: 'rejected', file, reason: `${file.name}: ${t('errors.file_too_large')}` };
-        }
-
-        // Validate image dimensions
-        const dimensionsValid = await new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => {
-            resolve(img.width >= 100 && img.height >= 100);
-            URL.revokeObjectURL(img.src);
-          };
-          img.onerror = () => resolve(false);
-          img.src = URL.createObjectURL(file);
-        });
-
-        if (!dimensionsValid) {
-          return { status: 'rejected', file, reason: `${file.name}: ${t('errors.image_too_small')}` };
-        }
-
-        return { status: 'fulfilled', file };
-      } catch (error) {
-        return { status: 'rejected', file, reason: `${file.name}: ${error.message}` };
+    // Validate files first
+    const validationPromises = files.map(async (file) => {
+      // Check file type
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        throw new Error(`${file.name}: ${t('errors.invalid_file_type')}`);
       }
-    }));
 
-    // Separate valid and invalid files
-    const validFiles = [];
-    const invalidFiles = [];
-    validationResults.forEach((result, index) => {
-      if (result.status === 'fulfilled' && result.value.status === 'fulfilled') {
-        validFiles.push(result.value.file);
-      } else {
-        invalidFiles.push({
-          fileName: files[index].name,
-          reason: result.status === 'rejected' ? result.reason : result.value.reason
-        });
+      // Check file size
+      if (file.size > MAX_FILE_SIZE) {
+        throw new Error(`${file.name}: ${t('errors.file_too_large')}`);
       }
+
+      // Validate image dimensions
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          if (img.width < 100 || img.height < 100) {
+            reject(new Error(`${file.name}: ${t('errors.image_too_small')}`));
+          }
+          resolve(file);
+        };
+        img.onerror = () => reject(new Error(`${file.name}: ${t('errors.invalid_image')}`));
+        img.src = URL.createObjectURL(file);
+      });
     });
 
-    // Show warning for invalid files if any
-    if (invalidFiles.length > 0) {
-      console.warn('Skipped invalid files:', invalidFiles);
-      setError(t('warnings.some_files_skipped', {
-        count: invalidFiles.length,
-        total: files.length
-      }));
-    }
+    // Wait for all validations
+    await Promise.all(validationPromises);
 
     // Process valid files
-    if (validFiles.length > 0) {
-      // Show processing message
-      setError(t('info.processing_files', {
-        count: validFiles.length,
-        total: files.length
-      }));
+    const newPhotos = await Promise.all(files.map(async (file) => {
+      // Pre-compress image before processing
+      const compressedFile = await imageCompression(file, {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 2000,
+        useWebWorker: true,
+        initialQuality: 0.8
+      });
 
-      const processedPhotos = await Promise.all(validFiles.map(async (file) => {
-        try {
-          // Pre-compress image
-          const compressedFile = await imageCompression(file, {
-            maxSizeMB: 1,
-            maxWidthOrHeight: 2000,
-            useWebWorker: true,
-            initialQuality: 0.8,
-            onProgress: (progress) => {
-              // Optional: Update progress for individual file
-              console.log(`Compressing ${file.name}: ${progress}%`);
-            }
-          }).catch(err => {
-            console.warn(`Compression failed for ${file.name}, using original:`, err);
-            return file;
-          });
+      const photoId = uuidv4();
+      
+      // Generate preview and base64 in parallel
+      const [preview, base64] = await Promise.all([
+        Promise.resolve(URL.createObjectURL(compressedFile)),
+        convertImageToBase64(compressedFile)
+      ]);
 
-          const photoId = uuidv4();
-          
-          // Generate preview and base64 in parallel
-          const [preview, base64] = await Promise.all([
-            Promise.resolve(URL.createObjectURL(compressedFile)),
-            convertImageToBase64(compressedFile).catch(err => {
-              console.warn(`Base64 conversion failed for ${file.name}:`, err);
-              return null;
-            })
-          ]);
+      return {
+        id: photoId,
+        file: compressedFile,
+        base64,
+        fileName: file.name,
+        fileType: file.type,
+        preview,
+        productType: 'photo_print',
+        size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
+        quantity: 1,
+        status: 'ready' // Add status tracking
+      };
+    }));
 
-          if (!base64) {
-            throw new Error('Failed to generate base64');
-          }
-
-          return {
-            id: photoId,
-            file: compressedFile,
-            base64,
-            fileName: file.name,
-            fileType: file.type,
-            preview,
-            productType: 'photo_print',
-            size: (selectedCountry === 'TUN' || selectedCountry === 'TN') ? '10x15' : '4x6',
-            quantity: 1,
-            status: 'ready'
-          };
-        } catch (error) {
-          console.warn(`Failed to process ${file.name}:`, error);
-          return null;
-        }
-      }));
-
-      // Filter out failed processing attempts
-      const successfulPhotos = processedPhotos.filter(photo => photo !== null);
-
-      // Add successful photos in batches
-      const BATCH_SIZE = 40;
-      for (let i = 0; i < successfulPhotos.length; i += BATCH_SIZE) {
-        const batch = successfulPhotos.slice(i, i + BATCH_SIZE);
-        setSelectedPhotos(prev => [...prev, ...batch]);
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      // Update final status
-      if (successfulPhotos.length < validFiles.length) {
-        setError(t('warnings.some_files_failed', {
-          succeeded: successfulPhotos.length,
-          total: validFiles.length
-        }));
-      } else if (invalidFiles.length > 0) {
-        setError(t('warnings.upload_partial_success', {
-          succeeded: successfulPhotos.length,
-          failed: invalidFiles.length,
-          total: files.length
-        }));
-      } else {
-        setError(null);
-      }
-    } else {
-      setError(t('errors.no_valid_files'));
+    // Add new photos in batches
+    const BATCH_SIZE = 40;
+    for (let i = 0; i < newPhotos.length; i += BATCH_SIZE) {
+      const batch = newPhotos.slice(i, i + BATCH_SIZE);
+      setSelectedPhotos(prev => [...prev, ...batch]);
+      // Small delay between batches
+      await new Promise(resolve => setTimeout(resolve, 100));
     }
 
     // Reset input
