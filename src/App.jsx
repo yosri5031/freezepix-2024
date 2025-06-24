@@ -3222,9 +3222,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
             timeout: TUNISIA_TIMEOUT,
             headers: {
               'Content-Type': 'application/json',
-              'X-Upload-Attempt': retryCount + 1,
-              'X-Chunk-Index': i,
-              'X-Total-Chunks': chunks.length
+             
             },
             retry: 3,
             retryDelay: (retryCount) => Math.min(BASE_BACKOFF_DELAY * Math.pow(2, retryCount), MAX_BACKOFF_DELAY)
