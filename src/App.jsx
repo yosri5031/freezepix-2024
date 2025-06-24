@@ -6075,7 +6075,17 @@ const handleDiscountCode = async (value) => {
   const upperValue = value.toUpperCase();
   setDiscountCode(upperValue);
   
+  // Clear if empty
   if (!upperValue) {
+    setDiscountError('');
+    return;
+  }
+
+  // Check if code was already validated successfully
+  const existingValidation = localStorage.getItem(`validDiscount_${upperValue}`);
+  if (existingValidation) {
+    const validatedDiscount = JSON.parse(existingValidation);
+    setAvailableDiscounts([validatedDiscount]);
     setDiscountError('');
     return;
   }
@@ -6088,18 +6098,25 @@ const handleDiscountCode = async (value) => {
   setIsLoading(true);
   
   try {
-    // Add small delay to avoid multiple rapid requests
     await new Promise(resolve => setTimeout(resolve, 500));
     
     const priceRules = await fetchShopifyPriceRules();
-    setAvailableDiscounts(priceRules);
     
     const matchingRule = priceRules.find(
       rule => rule.title && rule.title.toUpperCase() === upperValue
     );
     
-    // Only show error and validate if we have a full match
     if (matchingRule) {
+      const discountValue = Math.abs(parseFloat(matchingRule.value));
+      
+      // Ignore discounts greater than 15%
+      if (matchingRule.valueType === 'percentage' && discountValue > 15) {
+        setDiscountError(t('errors.invalid_discount'));
+        setDiscountCode('');
+        setIsLoading(false);
+        return;
+      }
+
       const now = new Date();
       const endDate = matchingRule.endsAt || matchingRule.ends_at ? 
         new Date(matchingRule.endsAt || matchingRule.ends_at) : null;
@@ -6108,10 +6125,12 @@ const handleDiscountCode = async (value) => {
         setDiscountError(t('errors.discount_expired'));
         setDiscountCode('');
       } else {
+        // Store valid discount in localStorage to persist validation
+        localStorage.setItem(`validDiscount_${upperValue}`, JSON.stringify(matchingRule));
+        setAvailableDiscounts([matchingRule]);
         setDiscountError('');
       }
     } else {
-      // Don't show error while typing unless code is complete match length
       const closestMatch = priceRules.find(
         rule => rule.title && rule.title.toUpperCase().startsWith(upperValue)
       );
@@ -6128,6 +6147,24 @@ const handleDiscountCode = async (value) => {
     setIsLoading(false);
   }
 };
+
+// Clean up expired validations periodically
+const cleanupValidations = () => {
+  Object.keys(localStorage).forEach(key => {
+    if (key.startsWith('validDiscount_')) {
+      const validation = JSON.parse(localStorage.getItem(key));
+      const endDate = validation.endsAt || validation.ends_at;
+      if (endDate && new Date() > new Date(endDate)) {
+        localStorage.removeItem(key);
+      }
+    }
+  });
+};
+
+// Call cleanup on mount
+useEffect(() => {
+  cleanupValidations();
+}, []);
 
 
 
