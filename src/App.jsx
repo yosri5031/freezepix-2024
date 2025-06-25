@@ -3056,31 +3056,12 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  // Core configuration constants
-  const TUNISIA_CHUNK_SIZE = 3;                    // Number of images per chunk
-  const TUNISIA_TIMEOUT = 120000;                  // 2 minutes timeout (in milliseconds)
-  const INITIAL_CHUNK_DELAY = 1000;                // 1 second base delay between chunks
-  const EXTENDED_CHUNK_DELAY = 2000;               // 2 seconds delay after failures
-  const MAX_RETRIES = 6;                          // Maximum retry attempts per chunk
-  const MAX_CONSECUTIVE_FAILURES = 3;              // Trigger extended delay after this many failures
-  const FAILURE_THRESHOLD = 0.2;                   // 20% maximum acceptable failure rate
-  const EXTENDED_BREAK_DURATION = 15000;           // 15 seconds break after consecutive failures
-  const BASE_BACKOFF_DELAY = 3000;                 // Base delay for exponential backoff
-  const MAX_BACKOFF_DELAY = 30000;                 // Maximum backoff delay
-  const PROGRESS_START_PERCENTAGE = 20;            // Starting progress percentage
-  const PROGRESS_END_PERCENTAGE = 90;              // Ending progress percentage
+  // Much smaller chunks for Tunisia to handle poor network conditions
+  const TUNISIA_CHUNK_SIZE = 5; // Reduced to just 3 images per chunk
+  const TUNISIA_TIMEOUT = 90000; // 1 minute timeout per chunk
+  const CHUNK_DELAY = 750; // 1 seconds delay between chunks
+  const MAX_RETRIES = 5; // More retries
   
-  // Image quality constants
-  const INITIAL_QUALITY = 0.85;                    // Starting image quality (85%)
-  const MINIMUM_QUALITY = 0.70;                    // Minimum acceptable quality (70%)
-  const QUALITY_REDUCTION_STEP = 0.05;             // Quality reduction per retry (5%)
-  const INITIAL_MAX_SIZE = 0.85;                   // Starting max file size in MB
-  const MINIMUM_MAX_SIZE = 0.65;                   // Minimum acceptable file size in MB
-  const INITIAL_MAX_WIDTH = 1200;                  // Starting image width in pixels
-  const MINIMUM_MAX_WIDTH = 800;                   // Minimum acceptable width in pixels
-  const WIDTH_REDUCTION_STEP = 100;                // Width reduction per retry in pixels
-
-  // Enhanced base order data
   const baseOrderData = {
     ...orderData,
     shippingFee: orderData.shippingFee || 0,
@@ -3090,41 +3071,15 @@ const submitTunisiaBiggerChunks = async (orderData) => {
     paymentMethod: 'cod',
     paymentStatus: 'pending',
     tunisiaSpeedMode: true,
-    orderSource: 'tunisia_optimized',
-    timestamp: new Date().toISOString(),
     ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
       ? { pickupStudio: orderData.pickupStudio } 
       : { pickupStudio: null })
   };
 
-  // Progressive compression settings with print-quality focus
-  const getCompressionSettings = (retryCount) => {
-    const baseSettings = {
-      quality: INITIAL_QUALITY,
-      maxSize: INITIAL_MAX_SIZE,
-      maxWidth: INITIAL_MAX_WIDTH,
-      mozjpeg: true
-    };
-
-    if (retryCount > 0) {
-      return {
-        quality: Math.max(MINIMUM_QUALITY, INITIAL_QUALITY - (retryCount * QUALITY_REDUCTION_STEP)),
-        maxSize: Math.max(MINIMUM_MAX_SIZE, INITIAL_MAX_SIZE - (retryCount * QUALITY_REDUCTION_STEP)),
-        maxWidth: Math.max(MINIMUM_MAX_WIDTH, INITIAL_MAX_WIDTH - (retryCount * WIDTH_REDUCTION_STEP)),
-        mozjpeg: true
-      };
-    }
-
-    return baseSettings;
-  };
-
-  // Chunk preparation with validation
+  // Split into very small chunks
   const chunks = [];
   for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
-    const chunk = orderItems.slice(i, i + TUNISIA_CHUNK_SIZE);
-    if (chunk.length > 0) {
-      chunks.push(chunk);
-    }
+    chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
   }
 
   console.log(`Tunisia: Processing ${chunks.length} chunks of ${TUNISIA_CHUNK_SIZE} items`);
@@ -3132,12 +3087,10 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   const results = [];
   const failedChunks = [];
   let consecutiveFailures = 0;
-  let totalAttempts = 0;
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
-    const chunkProgress = PROGRESS_START_PERCENTAGE + 
-      ((i + 1) / chunks.length) * (PROGRESS_END_PERCENTAGE - PROGRESS_START_PERCENTAGE);
+    const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
 
     let retryCount = 0;
@@ -3145,65 +3098,17 @@ const submitTunisiaBiggerChunks = async (orderData) => {
 
     while (retryCount < MAX_RETRIES && !chunkSucceeded) {
       try {
-        totalAttempts++;
         console.log(`Tunisia: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
         
-        const compressionSettings = getCompressionSettings(retryCount);
+        // Reduce image quality if we've had failures
         const compressedChunk = await Promise.all(chunk.map(async (item) => {
-          try {
-            const optimizedFile = await optimizeImageForTunisia(
-              item.file,
-              compressionSettings.quality,
-              compressionSettings.maxSize,
-              compressionSettings.maxWidth
-            );
-
-            const originalSize = item.file.size;
-            const compressedSize = optimizedFile.length;
-            const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(2);
-
-            return {
-              ...item,
-              file: optimizedFile,
-              compressionLevel: retryCount + 1,
-              originalSize,
-              compressedSize,
-              compressionRatio,
-              quality: compressionSettings.quality,
-              width: compressionSettings.maxWidth
-            };
-          } catch (compressionError) {
-            console.warn(`Compression failed for item in chunk ${i + 1}:`, compressionError);
-            
-            const fallbackSettings = {
-              quality: MINIMUM_QUALITY,
-              maxSize: MINIMUM_MAX_SIZE,
-              maxWidth: MINIMUM_MAX_WIDTH,
-              mozjpeg: true
-            };
-            
-            try {
-              const fallbackOptimized = await optimizeImageForTunisia(
-                item.file,
-                fallbackSettings.quality,
-                fallbackSettings.maxSize,
-                fallbackSettings.maxWidth
-              );
-              
-              return {
-                ...item,
-                file: fallbackOptimized,
-                compressionLevel: 'fallback',
-                originalSize: item.file.size,
-                compressedSize: fallbackOptimized.length,
-                quality: fallbackSettings.quality,
-                width: fallbackSettings.maxWidth
-              };
-            } catch (fallbackError) {
-              console.error('Fallback compression failed:', fallbackError);
-              return item;
-            }
-          }
+          const quality = retryCount > 0 ? 0.7 : 0.8; // Reduce quality on retries
+          const maxSize = retryCount > 0 ? 0.69 : 0.8; // Reduce size on retries
+          
+          return {
+            ...item,
+            file: await optimizeImageForTunisia(item.file, quality, maxSize)
+          };
         }));
 
         const response = await axios.post(
@@ -3212,31 +3117,26 @@ const submitTunisiaBiggerChunks = async (orderData) => {
             ...baseOrderData,
             orderItems: compressedChunk,
             chunkIndex: i,
-            totalChunks: chunks.length,
-            attemptNumber: retryCount + 1,
-            compressionLevel: retryCount + 1,
-            timestamp: new Date().toISOString()
+            totalChunks: chunks.length
           },
           {
             withCredentials: true,
             timeout: TUNISIA_TIMEOUT,
             headers: {
-              'Content-Type': 'application/json',
-              'X-Upload-Attempt': retryCount + 1,
-              'X-Chunk-Index': i,
-              'X-Total-Chunks': chunks.length
+              'Content-Type': 'application/json'
             },
+            // Add retry and timeout configuration
             retry: 3,
-            retryDelay: (retryCount) => Math.min(BASE_BACKOFF_DELAY * Math.pow(2, retryCount), MAX_BACKOFF_DELAY)
+            retryDelay: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000)
           }
         );
 
         results.push(response.data);
         chunkSucceeded = true;
-        consecutiveFailures = 0;
+        consecutiveFailures = 0; // Reset consecutive failures counter
 
-        const delayTime = consecutiveFailures > 0 ? EXTENDED_CHUNK_DELAY : INITIAL_CHUNK_DELAY;
-        await new Promise(resolve => setTimeout(resolve, delayTime));
+        // Longer delay after success to prevent overloading
+        await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
         
       } catch (error) {
         retryCount++;
@@ -3244,53 +3144,44 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         
         console.error(`Tunisia: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
         
-        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-          console.log('Taking extended break due to consecutive failures...');
-          await new Promise(resolve => setTimeout(resolve, EXTENDED_BREAK_DURATION));
-          consecutiveFailures = Math.max(0, consecutiveFailures - 2);
+        // If we have too many consecutive failures, take a longer break
+        if (consecutiveFailures >= 3) {
+          console.log('Too many consecutive failures, taking a longer break...');
+          await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second break
+          consecutiveFailures = 0; // Reset after break
         }
 
         if (retryCount < MAX_RETRIES) {
-          const baseDelay = BASE_BACKOFF_DELAY * Math.pow(2, retryCount);
-          const jitter = Math.random() * 1000;
-          const backoffDelay = Math.min(baseDelay + jitter, MAX_BACKOFF_DELAY);
-          
+          const backoffDelay = Math.min(3000 * Math.pow(2, retryCount), 20000);
           console.log(`Tunisia: Retrying chunk ${i + 1} after ${backoffDelay}ms delay...`);
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
         } else {
           failedChunks.push({
             chunkIndex: i,
             items: chunk,
-            error: error.message,
-            attempts: retryCount,
-            lastAttemptTime: new Date().toISOString()
+            error: error.message
           });
         }
       }
     }
 
+    // If this chunk completely failed after all retries
     if (!chunkSucceeded) {
       console.error(`Tunisia: Chunk ${i + 1} failed completely after ${MAX_RETRIES} attempts`);
       
-      if (failedChunks.length > chunks.length * FAILURE_THRESHOLD) {
-        throw new Error(`Upload failed: ${failedChunks.length} chunks failed out of ${chunks.length}`);
+      // If we have too many failed chunks, throw error
+      if (failedChunks.length > chunks.length * 0.2) { // More than 20% failed
+        throw new Error('Too many upload failures - please try again');
       }
     }
   }
 
-  const uploadStats = {
-    totalChunks: chunks.length,
-    successfulChunks: results.length,
-    failedChunks: failedChunks.length,
-    totalAttempts,
-    averageAttemptsPerChunk: totalAttempts / chunks.length,
-    completionRate: (results.length / chunks.length) * 100
-  };
+  // Log final results
+  console.log(`Tunisia: Upload completed. Success: ${results.length}, Failed: ${failedChunks.length}`);
 
-  console.log('Tunisia Upload Statistics:', uploadStats);
-
+  // If we have any failed chunks but not too many, we can still consider it a partial success
   if (failedChunks.length > 0) {
-    console.warn('Failed chunks details:', failedChunks);
+    console.warn('Some chunks failed to upload:', failedChunks);
   }
 
   return results;
