@@ -3039,7 +3039,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         // Reduce image quality if we've had failures
         const compressedChunk = await Promise.all(chunk.map(async (item) => {
           const quality = retryCount > 0 ? 0.7 : 0.8; // Reduce quality on retries
-          const maxSize = retryCount > 0 ? 0.69 : 0.8; // Reduce size on retries
+          const maxSize = retryCount > 0 ? 0.3 : 0.4; // Reduce size on retries
           
           return {
             ...item,
@@ -3124,7 +3124,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
 };
 
 // Helper function to optimize images for Tunisia's network conditions
-const optimizeImageForTunisia = async (imageData, quality = 0.8, maxSizeMB = 0.8) => {
+const optimizeImageForTunisia = async (imageData, quality = 0.8, maxSizeMB = 0.4) => {
   try {
     if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
       // Already a base64 string, convert to blob for compression
@@ -4130,7 +4130,7 @@ const handleCheckout = async (paymentMethod) => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.85, // Balanced size for speed
+                maxSizeMB: 0.40, // Balanced size for speed
                 maxWidthOrHeight: 1200, // Slightly smaller for speed
                 useWebWorker: true,
                 fileType: 'image/jpeg',
@@ -5559,7 +5559,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
                 initialQuality: 0.85,   // Higher quality for Canada
                 alwaysKeepResolution: false
               } : {
-                maxSizeMB: 1.0,
+                maxSizeMB: 0.4,
                 maxWidthOrHeight: 1200,
                 useWebWorker: true,
                 fileType: 'image/jpeg',
