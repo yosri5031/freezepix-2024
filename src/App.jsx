@@ -2847,93 +2847,30 @@ const handleTunisiaCODOrder = async () => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    const optimizeImageForTunisia = async (imageData, quality = 0.75) => {
-      try {
-        // First try aggressive compression
-        const options = {
-          maxSizeMB: 0.1, // Target 100KB
-          maxWidthOrHeight: 800, // Reduced resolution but still good for prints
-          useWebWorker: true,
-          fileType: 'image/jpeg',
-          initialQuality: quality, // Start with decent quality
-          alwaysKeepResolution: false,
-          // Add advanced compression options
-          mozjpeg: true, // Use mozjpeg compression
-          strict: false // Allow flexibility in size/quality trade-off
-        };
-    
-        let compressedImage;
-        
-        if (typeof imageData === 'string' && imageData.startsWith('data:image/')) {
-          // Convert base64 to blob first
-          const response = await fetch(imageData);
-          imageData = await response.blob();
-        }
-    
-        // Try progressive compression if needed
-        let currentQuality = quality;
-        let currentSize = imageData.size / (1024 * 1024); // Convert to MB
-        
-        while (currentSize > 0.1 && currentQuality > 0.3) {
-          options.initialQuality = currentQuality;
-          
-          compressedImage = await imageCompression(imageData, options);
-          currentSize = compressedImage.size / (1024 * 1024);
-          
-          if (currentSize <= 0.1) break;
-          
-          currentQuality -= 0.1;
-        }
-    
-        // If still too large, try more aggressive resolution reduction
-        if (currentSize > 0.1) {
-          options.maxWidthOrHeight = 600;
-          options.initialQuality = 0.6;
-          compressedImage = await imageCompression(imageData, options);
-        }
-    
-        // Convert to base64 for transmission
-        return await convertImageToBase64(compressedImage);
-    
-      } catch (error) {
-        console.error('Tunisia image optimization error:', error);
-        // Fallback to original compression if optimization fails
-        return await convertImageToBase64(imageData);
-      }
-    };
     // LIGHTNING FAST photo processing - DEFINED HERE
     const processPhotosWithProgress = async () => {
       try {
-        const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
-        
-        const processedPhotos = await Promise.all(
+        const compressedPhotos = await Promise.all(
           selectedPhotos.map(async (photo, index) => {
-            const progress = ((index + 1) / selectedPhotos.length) * 15;
+            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
             setUploadProgress(Math.round(progress));
-    
+
             let imageData;
-            
             if (photo.base64) {
-              if (isTunisia) {
-                // Re-compress existing base64 for Tunisia
-                imageData = await optimizeImageForTunisia(photo.base64);
-              } else {
-                imageData = photo.base64;
-              }
+              imageData = photo.base64;
             } else if (photo.file) {
-              if (isTunisia) {
-                imageData = await optimizeImageForTunisia(photo.file);
-              } else {
-                // Regular compression for other countries
-                const compressedFile = await imageCompression(photo.file, {
-                  maxSizeMB: 1,
-                  maxWidthOrHeight: 1200,
-                  useWebWorker: true
-                });
-                imageData = await convertImageToBase64(compressedFile);
-              }
+              // LIGHTNING FAST compression
+              const compressedFile = await imageCompression(photo.file, {
+                maxSizeMB: 0.85, // Balanced size for speed
+                maxWidthOrHeight: 1200, // Slightly smaller for speed
+                useWebWorker: true,
+                fileType: 'image/jpeg',
+                initialQuality: 0.85, // Good quality but fast
+                alwaysKeepResolution: false
+              });
+              imageData = await convertImageToBase64(compressedFile);
             }
-    
+
             return {
               ...photo,
               file: imageData,
@@ -2944,11 +2881,10 @@ const handleTunisiaCODOrder = async () => {
             };
           })
         );
-    
-        return processedPhotos;
-      } catch (error) {
-        console.error('Photo processing error:', error);
-        throw error;
+        return compressedPhotos;
+      } catch (processError) {
+        console.error('Tunisia SPEED: Photo processing error:', processError);
+        throw new Error('Failed to process photos');
       }
     };
 
@@ -3967,14 +3903,9 @@ const processImageForUpload = async (photo) => {
 // Optimized order submission with better chunking and progress tracking
 
 const submitOrderWithOptimizedChunking = async (orderData) => {
-  const isTunisia = selectedCountry === 'TN' || selectedCountry === 'TUN';
-  const CHUNK_SIZE = isTunisia ? 2 : 6; // Smaller chunks for Tunisia
-  const TIMEOUT = isTunisia ? 90000 : 45000; // Longer timeout for Tunisia
-
   try {
     const { orderItems } = orderData;
-
-    // Integrate the base order data with safety checks
+    
     const baseOrderData = {
       ...orderData,
       shippingFee: orderData.shippingFee || 0,
@@ -3988,97 +3919,64 @@ const submitOrderWithOptimizedChunking = async (orderData) => {
         ? { pickupStudio: orderData.pickupStudio } 
         : { pickupStudio: null })
     };
-    
-    // Split into smaller chunks for Tunisia
+    // Process items
+    const processedItems = await Promise.all(orderItems.map(async (item) => {
+      let imageData;
+      try {
+        if (item.base64) {
+          imageData = item.base64;
+        } else if (item.file) {
+          imageData = await convertImageToBase64(item.file);
+        } else {
+          throw new Error('No valid image data found');
+        }
+
+        return {
+          ...item,
+          file: imageData,
+          productType: item.productType || 'photo_print',
+          size: item.size || 'default',
+          quantity: item.quantity || 1,
+          price: item.price || 0
+        };
+      } catch (error) {
+        console.error(`Error processing item ${item.id}:`, error);
+        throw error;
+      }
+    }));
+
+    // Split into chunks
+    const CHUNK_SIZE = 6;
     const chunks = [];
-    for (let i = 0; i < orderItems.length; i += CHUNK_SIZE) {
-      chunks.push(orderItems.slice(i, i + CHUNK_SIZE));
+    for (let i = 0; i < processedItems.length; i += CHUNK_SIZE) {
+      chunks.push(processedItems.slice(i, i + CHUNK_SIZE));
     }
 
-    console.log(`Submitting order in ${chunks.length} chunks of ${CHUNK_SIZE} items each`);
-
-    // Submit chunks with delays between them for Tunisia
-    const results = [];
-    for (let i = 0; i < chunks.length; i++) {
+    // HERE WE MUST ntegrate order notif to studio owner...
+    const results = await Promise.all(chunks.map(async (chunk) => {
       try {
-        const chunkProgress = 40 + ((i + 1) / chunks.length) * 50;
-        setUploadProgress(Math.round(chunkProgress));
-
         const response = await axios.post(
           'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
           {
-            ...baseOrderData, // Use the baseOrderData instead of orderData directly
-            orderItems: chunks[i],
-            chunkIndex: i,
-            totalChunks: chunks.length
+            ...baseOrderData,
+            orderItems: chunk
           },
           {
             withCredentials: true,
-            timeout: TIMEOUT,
-            headers: { 'Content-Type': 'application/json' }
+            timeout: 45000,
+            headers: {
+              'Content-Type': 'application/json'
+            }
           }
         );
-        
-        results.push(response.data);
-        console.log(`Chunk ${i + 1} uploaded successfully`);
-        
-        // Add delay between chunks for Tunisia
-        if (isTunisia && i < chunks.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 2000));
-        }
-        
+        return response.data;
       } catch (error) {
-        console.error(`Chunk ${i + 1} upload failed:`, error);
-        
-        // Add retry logic for failed chunks
-        let retryCount = 0;
-        const maxRetries = 3;
-        
-        while (retryCount < maxRetries) {
-          try {
-            console.log(`Retrying chunk ${i + 1}, attempt ${retryCount + 1}`);
-            
-            const retryResponse = await axios.post(
-              'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-              {
-                ...baseOrderData,
-                orderItems: chunks[i],
-                chunkIndex: i,
-                totalChunks: chunks.length,
-                isRetry: true,
-                retryCount: retryCount + 1
-              },
-              {
-                withCredentials: true,
-                timeout: TIMEOUT,
-                headers: { 'Content-Type': 'application/json' }
-              }
-            );
-            
-            results.push(retryResponse.data);
-            console.log(`Chunk ${i + 1} retry successful`);
-            break;
-          } catch (retryError) {
-            retryCount++;
-            if (retryCount === maxRetries) {
-              throw new Error(`Failed to upload chunk ${i + 1} after ${maxRetries} retries`);
-            }
-            // Exponential backoff
-            await new Promise(resolve => 
-              setTimeout(resolve, 1000 * Math.pow(2, retryCount))
-            );
-          }
-        }
+        console.error('Chunk upload error:', error.response?.data || error);
+        throw error;
       }
-    }
+    }));
 
-    if (results.length !== chunks.length) {
-      throw new Error(`Upload incomplete: ${results.length}/${chunks.length} chunks uploaded`);
-    }
-
-    console.log(`Order upload completed successfully: ${results.length} chunks uploaded`);
     return results;
-
   } catch (error) {
     console.error('Order submission error:', error);
     throw error;
