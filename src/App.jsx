@@ -2995,7 +2995,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   // Much smaller chunks for Tunisia to handle poor network conditions
   const TUNISIA_CHUNK_SIZE = 5; // Reduced to just 3 images per chunk
   const TUNISIA_TIMEOUT = 90000; // 1 minute timeout per chunk
-  const CHUNK_DELAY = 350; // 1 seconds delay between chunks
+  const CHUNK_DELAY = 750; // 1 seconds delay between chunks
   const MAX_RETRIES = 5; // More retries
   
   const baseOrderData = {
