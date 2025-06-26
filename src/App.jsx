@@ -8179,15 +8179,7 @@ return (
         </div>
       </div>
       
-      {/* Cancel Button (Optional) */}
-      <div className="text-center mt-3">
-        <button 
-          onClick={cancelUpload}
-          className="px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-        >
-          Cancel Upload
-        </button>
-      </div>
+   
     </div>
   </div>
 )}
