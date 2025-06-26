@@ -796,17 +796,11 @@ const FreezePIX = () => {
     const [currentOrderNumber, setCurrentOrderNumber] = useState(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isInteracProcessing, setIsInteracProcessing] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
     const [deliveryMethod, setDeliveryMethod] = useState('shipping'); // 'pickup' or 'shipping'
     const [activePaymentTab, setActivePaymentTab] = useState('discount');
     const [forceShowIntro, setForceShowIntro] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState({
-      show: false,
-      currentFile: 0,
-      totalFiles: 0,
-      progress: 0,
-      uploadSpeed: 0,
-      timeLeft: 0
-    });
+
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
 const [giftCardError, setGiftCardError] = useState('');
 const [isGiftCardLoading, setIsGiftCardLoading] = useState(false);
@@ -2995,305 +2989,139 @@ const handleTunisiaCODOrder = async () => {
   }
 };
 
-const TunisiaUploadProgress = ({ 
-  currentChunk,
-  totalChunks,
-  currentFile,
-  totalFiles,
-  progress,
-  uploadSpeed,
-  timeLeft,
-  status,
-  retryCount = 0
-}) => {
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl">
-        <div className="space-y-6">
-          {/* Chunk Progress */}
-          <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-800">
-              Processing Chunk {currentChunk} of {totalChunks}
-            </h3>
-            <p className="text-sm text-gray-600">
-              File {currentFile} of {totalFiles}
-            </p>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="relative pt-8">
-            <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-yellow-400 transition-all duration-300 ease-out"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-            
-            {/* Progress Percentage */}
-            <div className="absolute top-0 left-0 right-0 text-center">
-              <span className="text-3xl font-bold text-gray-800">
-                {progress}%
-              </span>
-              <p className="text-gray-600 text-sm mt-1">
-                UPLOADED
-              </p>
-            </div>
-          </div>
-
-          {/* Status Message */}
-          <div className="text-center">
-            <p className="text-sm font-medium" style={{ color: status.color }}>
-              {status.message}
-            </p>
-            {retryCount > 0 && (
-              <p className="text-xs text-amber-600 mt-1">
-                Retry attempt: {retryCount}/{5}
-              </p>
-            )}
-          </div>
-
-          {/* Upload Stats */}
-          <div className="flex justify-between text-sm text-gray-600 border-t pt-4">
-            <div>
-              <span>Time left: </span>
-              <span className="font-medium">{timeLeft} SECONDS</span>
-            </div>
-            <div>
-              <span>Speed: </span>
-              <span className="font-medium">{uploadSpeed} KB/S</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// Updated submitTunisiaBiggerChunks function
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
-  const TUNISIA_CHUNK_SIZE = 5;
-  const TUNISIA_TIMEOUT = 90000;
-  const CHUNK_DELAY = 350;
-  const MAX_RETRIES = 5;
+  // Much smaller chunks for Tunisia to handle poor network conditions
+  const TUNISIA_CHUNK_SIZE = 5; // Reduced to just 3 images per chunk
+  const TUNISIA_TIMEOUT = 90000; // 1 minute timeout per chunk
+  const CHUNK_DELAY = 350; // 1 seconds delay between chunks
+  const MAX_RETRIES = 5; // More retries
   
-  // Progress state
-  const [uploadState, setUploadState] = useState({
-    show: false,
-    currentChunk: 0,
-    totalChunks: 0,
-    currentFile: 0,
-    totalFiles: 0,
-    progress: 0,
-    uploadSpeed: 0,
-    timeLeft: 0,
-    status: {
-      message: '',
-      color: 'text-gray-600'
-    },
-    retryCount: 0
-  });
+  const baseOrderData = {
+    ...orderData,
+    shippingFee: orderData.shippingFee || 0,
+    shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
+    deliveryMethod: orderData.deliveryMethod || 'pickup',
+    status: 'Waiting for CSR approval',
+    paymentMethod: 'cod',
+    paymentStatus: 'pending',
+    tunisiaSpeedMode: true,
+    ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
+      ? { pickupStudio: orderData.pickupStudio } 
+      : { pickupStudio: null })
+  };
 
-  try {
-    const baseOrderData = {
-      ...orderData,
-      shippingFee: orderData.shippingFee || 0,
-      shippingMethod: orderData.deliveryMethod === 'shipping' ? 'shipping' : 'local_pickup',
-      deliveryMethod: orderData.deliveryMethod || 'pickup',
-      status: 'Waiting for CSR approval',
-      paymentMethod: 'cod',
-      paymentStatus: 'pending',
-      tunisiaSpeedMode: true,
-      ...(orderData.deliveryMethod !== 'shipping' && orderData.pickupStudio 
-        ? { pickupStudio: orderData.pickupStudio } 
-        : { pickupStudio: null })
-    };
+  // Split into very small chunks
+  const chunks = [];
+  for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
+    chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
+  }
 
-    // Split into chunks
-    const chunks = [];
-    for (let i = 0; i < orderItems.length; i += TUNISIA_CHUNK_SIZE) {
-      chunks.push(orderItems.slice(i, i + TUNISIA_CHUNK_SIZE));
-    }
+  console.log(`Tunisia: Processing ${chunks.length} chunks of ${TUNISIA_CHUNK_SIZE} items`);
 
-    // Initialize upload progress
-    setUploadState({
-      show: true,
-      currentChunk: 0,
-      totalChunks: chunks.length,
-      currentFile: 0,
-      totalFiles: orderItems.length,
-      progress: 0,
-      uploadSpeed: 0,
-      timeLeft: 0,
-      status: {
-        message: 'Preparing upload...',
-        color: 'text-blue-600'
-      }
-    });
+  const results = [];
+  const failedChunks = [];
+  let consecutiveFailures = 0;
 
-    const results = [];
-    const failedChunks = [];
-    let consecutiveFailures = 0;
-    const startTime = Date.now();
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
+    setUploadProgress(Math.round(chunkProgress));
 
-    for (let i = 0; i < chunks.length; i++) {
-      const chunk = chunks[i];
-      let retryCount = 0;
-      let chunkSucceeded = false;
+    let retryCount = 0;
+    let chunkSucceeded = false;
 
-      while (retryCount < MAX_RETRIES && !chunkSucceeded) {
-        try {
-          // Update progress state
-          setUploadState(prev => ({
-            ...prev,
-            currentChunk: i + 1,
-            currentFile: i * TUNISIA_CHUNK_SIZE + 1,
-            retryCount,
-            status: {
-              message: `Processing chunk ${i + 1}/${chunks.length}...`,
-              color: 'text-blue-600'
-            }
-          }));
+    while (retryCount < MAX_RETRIES && !chunkSucceeded) {
+      try {
+        console.log(`Tunisia: Uploading chunk ${i + 1}/${chunks.length}, attempt ${retryCount + 1}`);
+        
+        // Reduce image quality if we've had failures
+        const compressedChunk = await Promise.all(chunk.map(async (item) => {
+          const quality = retryCount > 0 ? 0.7 : 0.8; // Reduce quality on retries
+          const maxSize = retryCount > 0 ? 0.3 : 0.4; // Reduce size on retries
+          
+          return {
+            ...item,
+            file: await optimizeImageForTunisia(item.file, quality, maxSize)
+          };
+        }));
 
-          // Compress chunk with quality reduction on retries
-          const compressedChunk = await Promise.all(chunk.map(async (item, index) => {
-            const quality = retryCount > 0 ? 0.7 : 0.8;
-            const maxSize = retryCount > 0 ? 0.3 : 0.4;
-            
-            // Update progress for each file
-            setUploadState(prev => ({
-              ...prev,
-              currentFile: i * TUNISIA_CHUNK_SIZE + index + 1,
-              status: {
-                message: `Compressing image ${i * TUNISIA_CHUNK_SIZE + index + 1}/${orderItems.length}`,
-                color: 'text-yellow-600'
-              }
-            }));
-
-            return {
-              ...item,
-              file: await optimizeImageForTunisia(item.file, quality, maxSize)
-            };
-          }));
-
-          // Upload chunk
-          setUploadState(prev => ({
-            ...prev,
-            status: {
-              message: `Uploading chunk ${i + 1}/${chunks.length}...`,
-              color: 'text-green-600'
-            }
-          }));
-
-          const response = await axios.post(
-            'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
-            {
-              ...baseOrderData,
-              orderItems: compressedChunk,
-              chunkIndex: i,
-              totalChunks: chunks.length
+        const response = await axios.post(
+          'https://freezepix-database-server-c95d4dd2046d.herokuapp.com/api/orders/chunk',
+          {
+            ...baseOrderData,
+            orderItems: compressedChunk,
+            chunkIndex: i,
+            totalChunks: chunks.length
+          },
+          {
+            withCredentials: true,
+            timeout: TUNISIA_TIMEOUT,
+            headers: {
+              'Content-Type': 'application/json'
             },
-            {
-              withCredentials: true,
-              timeout: TUNISIA_TIMEOUT,
-              headers: { 'Content-Type': 'application/json' },
-              onUploadProgress: (progressEvent) => {
-                const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                const elapsedTime = (Date.now() - startTime) / 1000;
-                const uploadSpeed = Math.round((progressEvent.loaded / 1024) / elapsedTime);
-                const remainingBytes = progressEvent.total - progressEvent.loaded;
-                const timeLeft = Math.round((remainingBytes / 1024) / uploadSpeed);
-
-                setUploadState(prev => ({
-                  ...prev,
-                  progress: percentCompleted,
-                  uploadSpeed,
-                  timeLeft
-                }));
-              }
-            }
-          );
-
-          results.push(response.data);
-          chunkSucceeded = true;
-          consecutiveFailures = 0;
-
-          setUploadState(prev => ({
-            ...prev,
-            progress: Math.round(((i + 1) / chunks.length) * 100),
-            status: {
-              message: `Chunk ${i + 1}/${chunks.length} uploaded successfully`,
-              color: 'text-green-600'
-            }
-          }));
-
-          await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
-
-        } catch (error) {
-          retryCount++;
-          consecutiveFailures++;
-
-          setUploadState(prev => ({
-            ...prev,
-            retryCount,
-            status: {
-              message: `Upload failed. Retrying... (${retryCount}/${MAX_RETRIES})`,
-              color: 'text-red-600'
-            }
-          }));
-
-          if (consecutiveFailures >= 3) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            consecutiveFailures = 0;
+            // Add retry and timeout configuration
+            retry: 3,
+            retryDelay: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000)
           }
+        );
 
-          if (retryCount < MAX_RETRIES) {
-            const backoffDelay = Math.min(3000 * Math.pow(2, retryCount), 20000);
-            await new Promise(resolve => setTimeout(resolve, backoffDelay));
-          } else {
-            failedChunks.push({
-              chunkIndex: i,
-              items: chunk,
-              error: error.message
-            });
-          }
+        results.push(response.data);
+        chunkSucceeded = true;
+        consecutiveFailures = 0; // Reset consecutive failures counter
+
+        // Longer delay after success to prevent overloading
+        await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
+        
+      } catch (error) {
+        retryCount++;
+        consecutiveFailures++;
+        
+        console.error(`Tunisia: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
+        
+        // If we have too many consecutive failures, take a longer break
+        if (consecutiveFailures >= 3) {
+          console.log('Too many consecutive failures, taking a longer break...');
+          await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second break
+          consecutiveFailures = 0; // Reset after break
+        }
+
+        if (retryCount < MAX_RETRIES) {
+          const backoffDelay = Math.min(3000 * Math.pow(2, retryCount), 20000);
+          console.log(`Tunisia: Retrying chunk ${i + 1} after ${backoffDelay}ms delay...`);
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+        } else {
+          failedChunks.push({
+            chunkIndex: i,
+            items: chunk,
+            error: error.message
+          });
         }
       }
+    }
 
-      if (!chunkSucceeded && failedChunks.length > chunks.length * 0.2) {
+    // If this chunk completely failed after all retries
+    if (!chunkSucceeded) {
+      console.error(`Tunisia: Chunk ${i + 1} failed completely after ${MAX_RETRIES} attempts`);
+      
+      // If we have too many failed chunks, throw error
+      if (failedChunks.length > chunks.length * 0.2) { // More than 20% failed
         throw new Error('Too many upload failures - please try again');
       }
     }
-
-    setUploadState(prev => ({
-      ...prev,
-      progress: 100,
-      status: {
-        message: 'Upload completed successfully!',
-        color: 'text-green-600'
-      }
-    }));
-
-    return results;
-
-  } catch (error) {
-    setUploadState(prev => ({
-      ...prev,
-      status: {
-        message: `Upload failed: ${error.message}`,
-        color: 'text-red-600'
-      }
-    }));
-    throw error;
-  } finally {
-    // Hide progress after a short delay
-    setTimeout(() => {
-      setUploadState(prev => ({ ...prev, show: false }));
-    }, 2000);
   }
-};
 
+  // Log final results
+  console.log(`Tunisia: Upload completed. Success: ${results.length}, Failed: ${failedChunks.length}`);
+
+  // If we have any failed chunks but not too many, we can still consider it a partial success
+  if (failedChunks.length > 0) {
+    console.warn('Some chunks failed to upload:', failedChunks);
+  }
+
+  return results;
+};
 
 // Helper function to optimize images for Tunisia's network conditions
 const optimizeImageForTunisia = async (imageData, quality = 0.8, maxSizeMB = 0.4) => {
@@ -8319,16 +8147,6 @@ return (
       </div>
     </div>
 )}
-{/* Upload Progress Overlay */}
-{uploadProgress.show && (
-      <UploadProgressOverlay
-        currentFile={uploadProgress.currentFile}
-        totalFiles={uploadProgress.totalFiles}
-        progress={uploadProgress.progress}
-        uploadSpeed={uploadProgress.uploadSpeed}
-        timeLeft={uploadProgress.timeLeft}
-      />
-    )}
   </div>
 );
 };
