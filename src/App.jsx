@@ -838,21 +838,7 @@ const [formData, setFormData] = useState({
   },
   paymentMethod: 'helcim'
 });
-const [uploadState, setUploadState] = useState({
-  show: false,
-  currentChunk: 0,
-  totalChunks: 0,
-  currentFile: 0,
-  totalFiles: 0,
-  progress: 0,
-  uploadSpeed: 0,
-  timeLeft: 0,
-  status: {
-    message: '',
-    color: 'text-gray-600'
-  },
-  retryCount: 0
-});
+
       const [isProductDetailsOpen, setIsProductDetailsOpen] = useState(false);
       const [hasLoadedCache, setHasLoadedCache] = useState(false);
       const [initialLoadComplete, setInitialLoadComplete] = useState(false);
@@ -3093,7 +3079,21 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   const MAX_RETRIES = 5;
   
   // Progress state
-
+  const [uploadState, setUploadState] = useState({
+    show: false,
+    currentChunk: 0,
+    totalChunks: 0,
+    currentFile: 0,
+    totalFiles: 0,
+    progress: 0,
+    uploadSpeed: 0,
+    timeLeft: 0,
+    status: {
+      message: '',
+      color: 'text-gray-600'
+    },
+    retryCount: 0
+  });
 
   try {
     const baseOrderData = {
