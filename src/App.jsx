@@ -800,7 +800,12 @@ const FreezePIX = () => {
     const [deliveryMethod, setDeliveryMethod] = useState('shipping'); // 'pickup' or 'shipping'
     const [activePaymentTab, setActivePaymentTab] = useState('discount');
     const [forceShowIntro, setForceShowIntro] = useState(false);
-
+    const [currentFileIndex, setCurrentFileIndex] = useState(0);
+    const [totalFiles, setTotalFiles] = useState(0);
+    const [currentFileName, setCurrentFileName] = useState('');
+    const [currentFileSize, setCurrentFileSize] = useState('');
+    const [timeLeft, setTimeLeft] = useState('');
+    const [uploadSpeed, setUploadSpeed] = useState('');
 const [appliedGiftCard, setAppliedGiftCard] = useState(null);
 const [giftCardError, setGiftCardError] = useState('');
 const [isGiftCardLoading, setIsGiftCardLoading] = useState(false);
@@ -2992,11 +2997,15 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   
+  // Set initial values
+  setTotalFiles(orderItems.length);
+  setCurrentFileIndex(0);
+  
   // Much smaller chunks for Tunisia to handle poor network conditions
-  const TUNISIA_CHUNK_SIZE = 5; // Reduced to just 3 images per chunk
-  const TUNISIA_TIMEOUT = 90000; // 1 minute timeout per chunk
-  const CHUNK_DELAY = 750; // 1 seconds delay between chunks
-  const MAX_RETRIES = 5; // More retries
+  const TUNISIA_CHUNK_SIZE = 5;
+  const TUNISIA_TIMEOUT = 90000;
+  const CHUNK_DELAY = 750;
+  const MAX_RETRIES = 5;
   
   const baseOrderData = {
     ...orderData,
@@ -3023,11 +3032,32 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   const results = [];
   const failedChunks = [];
   let consecutiveFailures = 0;
+  const startTime = Date.now();
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
     const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
+    
+    // Update current file info (assuming first item in chunk)
+    if (chunk.length > 0) {
+      setCurrentFileIndex(i * TUNISIA_CHUNK_SIZE + 1);
+      setCurrentFileName(chunk[0].file?.name || `Chunk ${i + 1}`);
+      setCurrentFileSize(chunk[0].file?.size ? `${(chunk[0].file.size / (1024 * 1024)).toFixed(2)} MB` : '');
+      
+      // Calculate time left and speed
+      const elapsed = Date.now() - startTime;
+      const progress = chunkProgress / 100;
+      const estimatedTotal = elapsed / progress;
+      const timeLeftMs = estimatedTotal - elapsed;
+      const timeLeftMin = Math.ceil(timeLeftMs / 60000);
+      setTimeLeft(`${timeLeftMin} MINUTES`);
+      
+      // Calculate upload speed (rough estimate)
+      const processedItems = i * TUNISIA_CHUNK_SIZE;
+      const speed = processedItems > 0 ? Math.round((processedItems * 100) / (elapsed / 1000)) : 0;
+      setUploadSpeed(`${speed} KB/S`);
+    }
 
     let retryCount = 0;
     let chunkSucceeded = false;
@@ -3038,8 +3068,8 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         
         // Reduce image quality if we've had failures
         const compressedChunk = await Promise.all(chunk.map(async (item) => {
-          const quality = retryCount > 0 ? 0.7 : 0.8; // Reduce quality on retries
-          const maxSize = retryCount > 0 ? 0.3 : 0.4; // Reduce size on retries
+          const quality = retryCount > 0 ? 0.7 : 0.8;
+          const maxSize = retryCount > 0 ? 0.3 : 0.4;
           
           return {
             ...item,
@@ -3061,7 +3091,6 @@ const submitTunisiaBiggerChunks = async (orderData) => {
             headers: {
               'Content-Type': 'application/json'
             },
-            // Add retry and timeout configuration
             retry: 3,
             retryDelay: (retryCount) => Math.min(1000 * Math.pow(2, retryCount), 10000)
           }
@@ -3069,9 +3098,8 @@ const submitTunisiaBiggerChunks = async (orderData) => {
 
         results.push(response.data);
         chunkSucceeded = true;
-        consecutiveFailures = 0; // Reset consecutive failures counter
+        consecutiveFailures = 0;
 
-        // Longer delay after success to prevent overloading
         await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
         
       } catch (error) {
@@ -3080,11 +3108,10 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         
         console.error(`Tunisia: Chunk ${i + 1} attempt ${retryCount} failed:`, error.message);
         
-        // If we have too many consecutive failures, take a longer break
         if (consecutiveFailures >= 3) {
           console.log('Too many consecutive failures, taking a longer break...');
-          await new Promise(resolve => setTimeout(resolve, 10000)); // 10 second break
-          consecutiveFailures = 0; // Reset after break
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          consecutiveFailures = 0;
         }
 
         if (retryCount < MAX_RETRIES) {
@@ -3101,28 +3128,29 @@ const submitTunisiaBiggerChunks = async (orderData) => {
       }
     }
 
-    // If this chunk completely failed after all retries
     if (!chunkSucceeded) {
       console.error(`Tunisia: Chunk ${i + 1} failed completely after ${MAX_RETRIES} attempts`);
       
-      // If we have too many failed chunks, throw error
-      if (failedChunks.length > chunks.length * 0.2) { // More than 20% failed
+      if (failedChunks.length > chunks.length * 0.2) {
         throw new Error('Too many upload failures - please try again');
       }
     }
   }
 
-  // Log final results
+  // Reset upload progress when complete
+  setUploadProgress(100);
+  setTimeout(() => {
+    setUploadProgress(0);
+  }, 2000);
+
   console.log(`Tunisia: Upload completed. Success: ${results.length}, Failed: ${failedChunks.length}`);
 
-  // If we have any failed chunks but not too many, we can still consider it a partial success
   if (failedChunks.length > 0) {
     console.warn('Some chunks failed to upload:', failedChunks);
   }
 
   return results;
 };
-
 // Helper function to optimize images for Tunisia's network conditions
 const optimizeImageForTunisia = async (imageData, quality = 0.8, maxSizeMB = 0.4) => {
   try {
@@ -8119,33 +8147,78 @@ return (
     {/* Add some bottom spacing */}
     <div className="h-8"></div>
 
-    {/* Fixed Bottom Bar */}
-    {!showIntro && (
-    <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
-      <div className="max-w-4xl mx-auto px-4 py-2">
-        <div className="grid grid-cols-2 gap-2 sm:gap-4">
-          <div className="w-full">
-            <select 
-              className="w-full px-2 py-1 text-sm border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
-              value={selectedCountry}
-              onChange={(e) => setSelectedCountry(e.target.value)}
-            >
-              <option value="">{t('navigation.select')}</option>
-              {initialCountries.map(country => (
-                <option key={country.value} value={country.value} className="text-sm">
-                  {country.name} ({country.currency})
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <LanguageSelector 
-            className="text-sm" 
-            iconClassName="w-4 h-4" 
-          />
+   {/* Progress Bar - Above Fixed Bottom Bar */}
+{!showIntro && uploadProgress > 0 && uploadProgress < 100 && (
+  <div className="fixed bottom-16 left-0 right-0 bg-white shadow-lg z-50 border-t">
+    <div className="max-w-4xl mx-auto px-4 py-3">
+      {/* Upload Info */}
+      <div className="text-center mb-2">
+        <h3 className="text-lg font-semibold text-gray-800">Uploading file {currentFileIndex} of {totalFiles}</h3>
+        <p className="text-sm text-gray-600">{currentFileName} ({currentFileSize})</p>
+      </div>
+      
+      {/* Time and Speed Info */}
+      <div className="flex justify-between items-center text-sm text-gray-600 mb-3">
+        <span>Time left {timeLeft}</span>
+        <span>Upload speed {uploadSpeed}</span>
+      </div>
+      
+      {/* Progress Bar */}
+      <div className="relative">
+        <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
+          <div 
+            className="bg-red-500 h-3 rounded-full transition-all duration-300 ease-out"
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+        </div>
+        
+        {/* Progress Percentage */}
+        <div className="text-center">
+          <span className="text-2xl font-bold text-gray-800">{uploadProgress}%</span>
+          <span className="text-sm text-gray-600 ml-1">UPLOADED</span>
         </div>
       </div>
+      
+      {/* Cancel Button (Optional) */}
+      <div className="text-center mt-3">
+        <button 
+          onClick={cancelUpload}
+          className="px-4 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+        >
+          Cancel Upload
+        </button>
+      </div>
     </div>
+  </div>
+)}
+
+{/* Fixed Bottom Bar */}
+{!showIntro && (
+  <div className="fixed bottom-0 left-0 right-0 bg-white shadow-lg z-50">
+    <div className="max-w-4xl mx-auto px-4 py-2">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4">
+        <div className="w-full">
+          <select
+            className="w-full px-2 py-1 text-sm border rounded-lg shadow-sm focus:outline-none focus:ring-1 focus:ring-yellow-400"
+            value={selectedCountry}
+            onChange={(e) => setSelectedCountry(e.target.value)}
+          >
+            <option value="">{t('navigation.select')}</option>
+            {initialCountries.map(country => (
+              <option key={country.value} value={country.value} className="text-sm">
+                {country.name} ({country.currency})
+              </option>
+            ))}
+          </select>
+        </div>
+       
+        <LanguageSelector
+          className="text-sm"
+          iconClassName="w-4 h-4"
+        />
+      </div>
+    </div>
+  </div>
 )}
   </div>
 );
