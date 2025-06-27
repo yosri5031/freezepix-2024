@@ -2830,7 +2830,8 @@ const renderNavigationButtons = () => {
 
 const handleTunisiaCODOrder = async () => {
   const startTime = Date.now();
-  let totalBytesProcessed = 0; // Ajouter pour tracker les bytes
+  let totalBytesProcessed = 0;
+  let lastSpeedUpdate = Date.now(); // Ajouter pour contrôler les mises à jour
   
   try {
     setIsProcessingOrder(true);
@@ -2841,6 +2842,7 @@ const handleTunisiaCODOrder = async () => {
     // Initialiser les variables de progression
     setTotalFiles(selectedPhotos.length);
     setCurrentFileIndex(0);
+    setUploadSpeed('0.0 KB/s'); // Initialiser à 0
 
     console.log('Tunisia SPEED: Starting lightning fast processing...');
 
@@ -2878,27 +2880,38 @@ const handleTunisiaCODOrder = async () => {
             
             // Calculer le temps écoulé et estimer le temps restant
             const elapsed = Date.now() - startTime;
-            const averageTimePerPhoto = elapsed / (index + 1);
-            const remainingPhotos = selectedPhotos.length - (index + 1);
-            const estimatedTimeLeft = (averageTimePerPhoto * remainingPhotos) / 1000; // en secondes
             
-            // Mettre à jour le temps restant
-            if (estimatedTimeLeft > 60) {
-              setTimeLeft(`${Math.ceil(estimatedTimeLeft / 60)} min`);
+            // Ne calculer le temps restant qu'après 2 secondes pour éviter les estimations folles
+            if (elapsed > 2000) {
+              const averageTimePerPhoto = elapsed / (index + 1);
+              const remainingPhotos = selectedPhotos.length - (index + 1);
+              const estimatedTimeLeft = (averageTimePerPhoto * remainingPhotos) / 1000;
+              
+              if (estimatedTimeLeft > 60) {
+                setTimeLeft(`${Math.ceil(estimatedTimeLeft / 60)} min`);
+              } else {
+                setTimeLeft(`${Math.ceil(estimatedTimeLeft)} sec`);
+              }
             } else {
-              setTimeLeft(`${Math.ceil(estimatedTimeLeft)} sec`);
+              setTimeLeft('Calculating...');
             }
             
-            // Calculer la vitesse en KB/s basée sur la taille des fichiers traités
-            totalBytesProcessed += fileSize;
-            const kbProcessed = totalBytesProcessed / 1024;
+            // Calculer la vitesse seulement si au moins 1 seconde s'est écoulée
             const secondsElapsed = elapsed / 1000;
-            const kbPerSecond = secondsElapsed > 0 ? (kbProcessed / secondsElapsed) : 0;
-            
-            if (kbPerSecond > 1024) {
-              setUploadSpeed(`${(kbPerSecond / 1024).toFixed(1)} MB/s`);
-            } else {
-              setUploadSpeed(`${kbPerSecond.toFixed(1)} KB/s`);
+            if (secondsElapsed >= 1) {
+              totalBytesProcessed += fileSize;
+              const kbProcessed = totalBytesProcessed / 1024;
+              const kbPerSecond = kbProcessed / secondsElapsed;
+              
+              // Limiter la vitesse maximale affichée pour éviter les valeurs irréalistes
+              const maxReasonableSpeed = 50 * 1024; // 50 MB/s max
+              const actualSpeed = Math.min(kbPerSecond, maxReasonableSpeed);
+              
+              if (actualSpeed > 1024) {
+                setUploadSpeed(`${(actualSpeed / 1024).toFixed(1)} MB/s`);
+              } else if (actualSpeed > 0) {
+                setUploadSpeed(`${actualSpeed.toFixed(1)} KB/s`);
+              }
             }
 
             let imageData;
@@ -2916,9 +2929,9 @@ const handleTunisiaCODOrder = async () => {
               });
               imageData = await convertImageToBase64(compressedFile);
               
-              // Ajouter la taille du fichier compressé aux bytes traités
-              const compressedSize = compressedFile.size || 0;
-              totalBytesProcessed += compressedSize;
+              // Ajouter la taille du fichier compressé (estimation)
+              const base64Size = imageData.length * 0.75; // Base64 overhead
+              totalBytesProcessed += base64Size;
             }
 
             return {
@@ -2940,7 +2953,6 @@ const handleTunisiaCODOrder = async () => {
 
     // CALL the photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
-
     // Continuer avec le reste de la logique...
     const orderData = {
       orderNumber,
@@ -3051,11 +3063,13 @@ const handleTunisiaCODOrder = async () => {
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   const startUploadTime = Date.now();
-  let totalUploadBytes = 0; // Tracker pour les bytes uploadés
+  let totalUploadBytes = 0;
+  let uploadStarted = false; // Flag pour savoir si l'upload a vraiment commencé
   
   // Set initial values
   setTotalFiles(orderItems.length);
   setCurrentFileIndex(0);
+  setUploadSpeed('0.0 KB/s'); // Initialiser à 0....
   
   // Much smaller chunks for Tunisia to handle poor network conditions
   const TUNISIA_CHUNK_SIZE = 5;
@@ -3112,30 +3126,42 @@ const submitTunisiaBiggerChunks = async (orderData) => {
       
       setCurrentFileSize(chunkSize > 0 ? `${(chunkSize / (1024 * 1024)).toFixed(1)} MB` : '');
       
-      // Calculate time left pour l'upload
+      // Calculate time left pour l'upload - mais seulement après le premier chunk
       const uploadElapsed = Date.now() - startUploadTime;
-      const progress = (i + 1) / chunks.length;
-      const estimatedTotalTime = uploadElapsed / progress;
-      const timeLeftMs = estimatedTotalTime - uploadElapsed;
-      
-      if (timeLeftMs > 60000) {
-        setTimeLeft(`${Math.ceil(timeLeftMs / 60000)} min`);
+      if (i > 0 && uploadElapsed > 1000) { // Attendre au moins 1 seconde et 1 chunk
+        const progress = (i + 1) / chunks.length;
+        const estimatedTotalTime = uploadElapsed / progress;
+        const timeLeftMs = estimatedTotalTime - uploadElapsed;
+        
+        if (timeLeftMs > 60000) {
+          setTimeLeft(`${Math.ceil(timeLeftMs / 60000)} min`);
+        } else {
+          setTimeLeft(`${Math.ceil(timeLeftMs / 1000)} sec`);
+        }
       } else {
-        setTimeLeft(`${Math.ceil(timeLeftMs / 1000)} sec`);
+        setTimeLeft('Starting...');
       }
       
-      // Calculer la vitesse réelle d'upload en KB/s
-      totalUploadBytes += chunkSize;
-      const kbUploaded = totalUploadBytes / 1024;
-      const secondsElapsed = uploadElapsed / 1000;
-      const kbPerSecond = secondsElapsed > 0 ? (kbUploaded / secondsElapsed) : 0;
-      
-      if (kbPerSecond > 1024) {
-        setUploadSpeed(`${(kbPerSecond / 1024).toFixed(1)} MB/s`);
-      } else if (kbPerSecond > 0) {
-        setUploadSpeed(`${kbPerSecond.toFixed(1)} KB/s`);
+      // Calculer la vitesse réelle d'upload en KB/s - seulement après 2 secondes
+      if (uploadElapsed > 2000 && i > 0) {
+        totalUploadBytes += chunkSize;
+        const kbUploaded = totalUploadBytes / 1024;
+        const secondsElapsed = uploadElapsed / 1000;
+        const kbPerSecond = kbUploaded / secondsElapsed;
+        
+        // Limiter à une vitesse maximale raisonnable
+        const maxReasonableSpeed = 10 * 1024; // 10 MB/s max pour upload
+        const actualSpeed = Math.min(kbPerSecond, maxReasonableSpeed);
+        
+        if (actualSpeed > 1024) {
+          setUploadSpeed(`${(actualSpeed / 1024).toFixed(1)} MB/s`);
+        } else if (actualSpeed > 0) {
+          setUploadSpeed(`${actualSpeed.toFixed(1)} KB/s`);
+        } else {
+          setUploadSpeed('0.0 KB/s');
+        }
       } else {
-        setUploadSpeed(`0.0 KB/s`);
+        setUploadSpeed('Starting...');
       }
     }
 
@@ -3179,6 +3205,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         results.push(response.data);
         chunkSucceeded = true;
         consecutiveFailures = 0;
+        uploadStarted = true; // Marquer que l'upload a commencé
 
         await new Promise(resolve => setTimeout(resolve, CHUNK_DELAY));
         
