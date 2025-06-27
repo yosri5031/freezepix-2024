@@ -324,6 +324,17 @@
      "gift_card": "Carte Cadeau",
   "gift_card_description": "Payez avec une carte cadeau Shopify"
 
-  }
+  },
+  "support": {
+      "contact_title": "Pour obtenir de l'aide, veuillez contacter notre équipe de support",
+      "region_north_america": "Amérique du Nord",
+      "region_north_africa": "Afrique du Nord"
+    },
+    "upload": {
+      "uploading_file": "Téléchargement du fichier {{current}} sur {{total}}",
+      "time_left": "Temps restant",
+      "upload_speed": "Vitesse de téléchargement",
+      "uploaded": "TÉLÉCHARGÉ"
+    }
       
   }

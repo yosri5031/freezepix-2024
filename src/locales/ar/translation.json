@@ -324,5 +324,16 @@
     "credit_pickup_description": "ادفع بأمان باستخدام بطاقة الائتمان أو الخصم الخاصة بك لطلبات الاستلام",
       "gift_card": "بطاقة هدية",
   "gift_card_description": "الدفع ببطاقة هدية من Shopify"
-  }
+  },
+  "support": {
+      "contact_title": "للحصول على المساعدة، يرجى الاتصال بفريق الدعم الخاص بنا",
+      "region_north_america": "أمريكا الشمالية",
+      "region_north_africa": "شمال أفريقيا"
+    },
+    "upload": {
+      "uploading_file": "رفع الملف {{current}} من {{total}}",
+      "time_left": "الوقت المتبقي",
+      "upload_speed": "سرعة الرفع",
+      "uploaded": "تم الرفع"
+    }
   }

@@ -8108,9 +8108,9 @@ return (
 <div className="mt-6 px-4 py-3 text-center text-sm">
   <div className="space-y-3">
     <p className="font-medium text-gray-800">
-      {t('support.contact_title', 'For help, please contact our support team')}
+      {t('support.contact_title')}
     </p>
-    
+         
     <div className="space-y-2">
       {/* North America Phone */}
       <div className="flex items-center justify-center">
@@ -8119,10 +8119,10 @@ return (
           +1 514-661-3005
         </a>
         <span className="text-gray-500 text-xs ml-2">
-          (North America)
+          ({t('support.region_north_america')})
         </span>
       </div>
-
+       
       {/* North Africa Phone */}
       <div className="flex items-center justify-center">
         <Phone size={14} className="text-yellow-400 mr-2" />
@@ -8130,10 +8130,10 @@ return (
           +216 95-612-003
         </a>
         <span className="text-gray-500 text-xs ml-2">
-          (North Africa)
+          ({t('support.region_north_africa')})
         </span>
       </div>
-
+       
       {/* Email */}
       <div className="flex items-center justify-center">
         <Mail size={14} className="text-yellow-400 mr-2" />
@@ -8144,25 +8144,30 @@ return (
     </div>
   </div>
 </div>
-    {/* Add some bottom spacing */}
-    <div className="h-8"></div>
+    
+{/* Add some bottom spacing */}
+<div className="h-8"></div>
 
-   {/* Progress Bar - Above Fixed Bottom Bar */}
+{/* Progress Bar - Above Fixed Bottom Bar */}
 {!showIntro && uploadProgress > 0 && uploadProgress < 100 && (
   <div className="fixed bottom-16 left-0 right-0 bg-white shadow-lg z-50 border-t">
     <div className="max-w-4xl mx-auto px-4 py-3">
       {/* Upload Info */}
       <div className="text-center mb-2">
-        <h3 className="text-lg font-semibold text-gray-800">Uploading file {currentFileIndex} of {totalFiles}</h3>
-        <p className="text-sm text-gray-600">{currentFileName} ({currentFileSize})</p>
+        <h3 className="text-lg font-semibold text-gray-800">
+          {t('upload.uploading_file', { current: currentFileIndex, total: totalFiles })}
+        </h3>
+        <p className="text-sm text-gray-600">
+          {currentFileName} ({currentFileSize})
+        </p>
       </div>
-      
+             
       {/* Time and Speed Info */}
       <div className="flex justify-between items-center text-sm text-gray-600 mb-3">
-        <span>Time left {timeLeft}</span>
-        <span>Upload speed {uploadSpeed}</span>
+        <span>{t('upload.time_left')} {timeLeft}</span>
+        <span>{t('upload.upload_speed')} {uploadSpeed}</span>
       </div>
-      
+             
       {/* Progress Bar */}
       <div className="relative">
         <div className="w-full bg-gray-200 rounded-full h-3 mb-2">
@@ -8171,15 +8176,14 @@ return (
             style={{ width: `${uploadProgress}%` }}
           ></div>
         </div>
-        
+                 
         {/* Progress Percentage */}
         <div className="text-center">
           <span className="text-2xl font-bold text-gray-800">{uploadProgress}%</span>
-          <span className="text-sm text-gray-600 ml-1">UPLOADED</span>
+          <span className="text-sm text-gray-600 ml-1">{t('upload.uploaded')}</span>
         </div>
       </div>
-      
-   
+               
     </div>
   </div>
 )}

@@ -13,6 +13,17 @@
     "select_language": "Select Language",
     "select_studio": "Select Nearest Studio"
     },
+    "support": {
+      "contact_title": "For help, please contact our support team",
+      "region_north_america": "North America",
+      "region_north_africa": "North Africa"
+    },
+    "upload": {
+      "uploading_file": "Uploading file {{current}} of {{total}}",
+      "time_left": "Time left",
+      "upload_speed": "Upload speed",
+      "uploaded": "UPLOADED"
+    },
     "errors": {
   "gift_card_insufficient": "Gift card balance is insufficient to cover the order",
   "gift_card_update_failed": "Failed to update gift card balance",
