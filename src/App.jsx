@@ -2830,6 +2830,7 @@ const renderNavigationButtons = () => {
 
 const handleTunisiaCODOrder = async () => {
   const startTime = Date.now();
+  let totalBytesProcessed = 0; // Ajouter pour tracker les bytes
   
   try {
     setIsProcessingOrder(true);
@@ -2866,7 +2867,10 @@ const handleTunisiaCODOrder = async () => {
             // Mettre à jour les informations du fichier actuel
             setCurrentFileIndex(index + 1);
             setCurrentFileName(photo.file?.name || `Photo ${index + 1}`);
-            setCurrentFileSize(photo.file?.size ? `${(photo.file.size / (1024 * 1024)).toFixed(1)} MB` : '');
+            
+            // Calculer la taille du fichier en cours
+            const fileSize = photo.file?.size || 0;
+            setCurrentFileSize(fileSize > 0 ? `${(fileSize / (1024 * 1024)).toFixed(1)} MB` : '');
             
             // Calculer la progression (15% pour le traitement des photos)
             const progress = ((index + 1) / selectedPhotos.length) * 15;
@@ -2885,9 +2889,17 @@ const handleTunisiaCODOrder = async () => {
               setTimeLeft(`${Math.ceil(estimatedTimeLeft)} sec`);
             }
             
-            // Calculer la vitesse (photos par seconde)
-            const photosPerSecond = (index + 1) / (elapsed / 1000);
-            setUploadSpeed(`${photosPerSecond.toFixed(1)} photos/sec`);
+            // Calculer la vitesse en KB/s basée sur la taille des fichiers traités
+            totalBytesProcessed += fileSize;
+            const kbProcessed = totalBytesProcessed / 1024;
+            const secondsElapsed = elapsed / 1000;
+            const kbPerSecond = secondsElapsed > 0 ? (kbProcessed / secondsElapsed) : 0;
+            
+            if (kbPerSecond > 1024) {
+              setUploadSpeed(`${(kbPerSecond / 1024).toFixed(1)} MB/s`);
+            } else {
+              setUploadSpeed(`${kbPerSecond.toFixed(1)} KB/s`);
+            }
 
             let imageData;
             if (photo.base64) {
@@ -2903,6 +2915,10 @@ const handleTunisiaCODOrder = async () => {
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
+              
+              // Ajouter la taille du fichier compressé aux bytes traités
+              const compressedSize = compressedFile.size || 0;
+              totalBytesProcessed += compressedSize;
             }
 
             return {
@@ -3028,12 +3044,14 @@ const handleTunisiaCODOrder = async () => {
     setCurrentFileSize('');
     setTimeLeft('');
     setUploadSpeed('');
+    totalBytesProcessed = 0; // Reset bytes counter
   }
 };
 
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
   const startUploadTime = Date.now();
+  let totalUploadBytes = 0; // Tracker pour les bytes uploadés
   
   // Set initial values
   setTotalFiles(orderItems.length);
@@ -3082,9 +3100,19 @@ const submitTunisiaBiggerChunks = async (orderData) => {
       const currentItemIndex = (i * TUNISIA_CHUNK_SIZE) + 1;
       setCurrentFileIndex(currentItemIndex);
       setCurrentFileName(chunk[0].fileName || `Chunk ${i + 1}`);
-      setCurrentFileSize(''); // Clear file size for chunks
       
-      // Calculate time left and speed pour l'upload
+      // Calculer la taille du chunk actuel
+      let chunkSize = 0;
+      chunk.forEach(item => {
+        if (item.file && typeof item.file === 'string') {
+          // Estimer la taille d'une string base64 (approximativement 75% de la longueur)
+          chunkSize += (item.file.length * 0.75);
+        }
+      });
+      
+      setCurrentFileSize(chunkSize > 0 ? `${(chunkSize / (1024 * 1024)).toFixed(1)} MB` : '');
+      
+      // Calculate time left pour l'upload
       const uploadElapsed = Date.now() - startUploadTime;
       const progress = (i + 1) / chunks.length;
       const estimatedTotalTime = uploadElapsed / progress;
@@ -3096,9 +3124,19 @@ const submitTunisiaBiggerChunks = async (orderData) => {
         setTimeLeft(`${Math.ceil(timeLeftMs / 1000)} sec`);
       }
       
-      // Calculate upload speed (chunks per second)
-      const chunksPerSecond = (i + 1) / (uploadElapsed / 1000);
-      setUploadSpeed(`${chunksPerSecond.toFixed(1)} chunks/sec`);
+      // Calculer la vitesse réelle d'upload en KB/s
+      totalUploadBytes += chunkSize;
+      const kbUploaded = totalUploadBytes / 1024;
+      const secondsElapsed = uploadElapsed / 1000;
+      const kbPerSecond = secondsElapsed > 0 ? (kbUploaded / secondsElapsed) : 0;
+      
+      if (kbPerSecond > 1024) {
+        setUploadSpeed(`${(kbPerSecond / 1024).toFixed(1)} MB/s`);
+      } else if (kbPerSecond > 0) {
+        setUploadSpeed(`${kbPerSecond.toFixed(1)} KB/s`);
+      } else {
+        setUploadSpeed(`0.0 KB/s`);
+      }
     }
 
     let retryCount = 0;
