@@ -2826,6 +2826,8 @@ const renderNavigationButtons = () => {
   );
 };
 // Add this new function to handle Tunisia COD orders
+// Remplacez la fonction handleTunisiaCODOrder avec ces corrections :
+
 const handleTunisiaCODOrder = async () => {
   const startTime = Date.now();
   
@@ -2834,6 +2836,10 @@ const handleTunisiaCODOrder = async () => {
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
+    
+    // Initialiser les variables de progression
+    setTotalFiles(selectedPhotos.length);
+    setCurrentFileIndex(0);
 
     console.log('Tunisia SPEED: Starting lightning fast processing...');
 
@@ -2852,13 +2858,36 @@ const handleTunisiaCODOrder = async () => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // LIGHTNING FAST photo processing - DEFINED HERE
+    // LIGHTNING FAST photo processing - AVEC PROGRESSION CORRIGÉE
     const processPhotosWithProgress = async () => {
       try {
         const compressedPhotos = await Promise.all(
           selectedPhotos.map(async (photo, index) => {
-            const progress = ((index + 1) / selectedPhotos.length) * 15; // Only 15% for processing
+            // Mettre à jour les informations du fichier actuel
+            setCurrentFileIndex(index + 1);
+            setCurrentFileName(photo.file?.name || `Photo ${index + 1}`);
+            setCurrentFileSize(photo.file?.size ? `${(photo.file.size / (1024 * 1024)).toFixed(1)} MB` : '');
+            
+            // Calculer la progression (15% pour le traitement des photos)
+            const progress = ((index + 1) / selectedPhotos.length) * 15;
             setUploadProgress(Math.round(progress));
+            
+            // Calculer le temps écoulé et estimer le temps restant
+            const elapsed = Date.now() - startTime;
+            const averageTimePerPhoto = elapsed / (index + 1);
+            const remainingPhotos = selectedPhotos.length - (index + 1);
+            const estimatedTimeLeft = (averageTimePerPhoto * remainingPhotos) / 1000; // en secondes
+            
+            // Mettre à jour le temps restant
+            if (estimatedTimeLeft > 60) {
+              setTimeLeft(`${Math.ceil(estimatedTimeLeft / 60)} min`);
+            } else {
+              setTimeLeft(`${Math.ceil(estimatedTimeLeft)} sec`);
+            }
+            
+            // Calculer la vitesse (photos par seconde)
+            const photosPerSecond = (index + 1) / (elapsed / 1000);
+            setUploadSpeed(`${photosPerSecond.toFixed(1)} photos/sec`);
 
             let imageData;
             if (photo.base64) {
@@ -2866,11 +2895,11 @@ const handleTunisiaCODOrder = async () => {
             } else if (photo.file) {
               // LIGHTNING FAST compression
               const compressedFile = await imageCompression(photo.file, {
-                maxSizeMB: 0.85, // Balanced size for speed
-                maxWidthOrHeight: 1200, // Slightly smaller for speed
+                maxSizeMB: 0.85,
+                maxWidthOrHeight: 1200,
                 useWebWorker: true,
                 fileType: 'image/jpeg',
-                initialQuality: 0.85, // Good quality but fast
+                initialQuality: 0.85,
                 alwaysKeepResolution: false
               });
               imageData = await convertImageToBase64(compressedFile);
@@ -2896,6 +2925,7 @@ const handleTunisiaCODOrder = async () => {
     // CALL the photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
 
+    // Continuer avec le reste de la logique...
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -2991,11 +3021,19 @@ const handleTunisiaCODOrder = async () => {
   } finally {
     setIsProcessingOrder(false);
     setUploadProgress(0);
+    // Réinitialiser les variables de progression
+    setCurrentFileIndex(0);
+    setTotalFiles(0);
+    setCurrentFileName('');
+    setCurrentFileSize('');
+    setTimeLeft('');
+    setUploadSpeed('');
   }
 };
 
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
+  const startUploadTime = Date.now();
   
   // Set initial values
   setTotalFiles(orderItems.length);
@@ -3032,31 +3070,35 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   const results = [];
   const failedChunks = [];
   let consecutiveFailures = 0;
-  const startTime = Date.now();
 
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
+    // Progression de 20% à 90% pour l'upload
     const chunkProgress = 20 + ((i + 1) / chunks.length) * 70;
     setUploadProgress(Math.round(chunkProgress));
     
-    // Update current file info (assuming first item in chunk)
+    // Update current file info
     if (chunk.length > 0) {
-      setCurrentFileIndex(i * TUNISIA_CHUNK_SIZE + 1);
-      setCurrentFileName(chunk[0].file?.name || `Chunk ${i + 1}`);
-      setCurrentFileSize(chunk[0].file?.size ? `${(chunk[0].file.size / (1024 * 1024)).toFixed(2)} MB` : '');
+      const currentItemIndex = (i * TUNISIA_CHUNK_SIZE) + 1;
+      setCurrentFileIndex(currentItemIndex);
+      setCurrentFileName(chunk[0].fileName || `Chunk ${i + 1}`);
+      setCurrentFileSize(''); // Clear file size for chunks
       
-      // Calculate time left and speed
-      const elapsed = Date.now() - startTime;
-      const progress = chunkProgress / 100;
-      const estimatedTotal = elapsed / progress;
-      const timeLeftMs = estimatedTotal - elapsed;
-      const timeLeftMin = Math.ceil(timeLeftMs / 60000);
-      setTimeLeft(`${timeLeftMin} MINUTES`);
+      // Calculate time left and speed pour l'upload
+      const uploadElapsed = Date.now() - startUploadTime;
+      const progress = (i + 1) / chunks.length;
+      const estimatedTotalTime = uploadElapsed / progress;
+      const timeLeftMs = estimatedTotalTime - uploadElapsed;
       
-      // Calculate upload speed (rough estimate)
-      const processedItems = i * TUNISIA_CHUNK_SIZE;
-      const speed = processedItems > 0 ? Math.round((processedItems * 100) / (elapsed / 1000)) : 0;
-      setUploadSpeed(`${speed} KB/S`);
+      if (timeLeftMs > 60000) {
+        setTimeLeft(`${Math.ceil(timeLeftMs / 60000)} min`);
+      } else {
+        setTimeLeft(`${Math.ceil(timeLeftMs / 1000)} sec`);
+      }
+      
+      // Calculate upload speed (chunks per second)
+      const chunksPerSecond = (i + 1) / (uploadElapsed / 1000);
+      setUploadSpeed(`${chunksPerSecond.toFixed(1)} chunks/sec`);
     }
 
     let retryCount = 0;
@@ -3141,6 +3183,12 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   setUploadProgress(100);
   setTimeout(() => {
     setUploadProgress(0);
+    setCurrentFileIndex(0);
+    setTotalFiles(0);
+    setCurrentFileName('');
+    setCurrentFileSize('');
+    setTimeLeft('');
+    setUploadSpeed('');
   }, 2000);
 
   console.log(`Tunisia: Upload completed. Success: ${results.length}, Failed: ${failedChunks.length}`);
@@ -3151,6 +3199,7 @@ const submitTunisiaBiggerChunks = async (orderData) => {
 
   return results;
 };
+
 // Helper function to optimize images for Tunisia's network conditions
 const optimizeImageForTunisia = async (imageData, quality = 0.8, maxSizeMB = 0.4) => {
   try {
