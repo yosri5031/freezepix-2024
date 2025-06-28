@@ -3510,6 +3510,10 @@ const convertFileToBase64 = (file) => {
 //email send 
 const sendOrderConfirmationEmail = async (orderData) => {
   try {
+    const formatCurrency = (amount, currencyCode) => {
+      const formattedAmount = (amount || 0).toFixed(2);
+      return `${formattedAmount} ${currencyCode}`;
+    };
     // Helper function to get product description
     const getProductDescription = (photo) => {
       switch (photo.productType) {
@@ -3595,8 +3599,8 @@ const sendOrderConfirmationEmail = async (orderData) => {
         disclaimer: 'This is an automated notification from FreezePIX system.'
       };
       
-      const formattedAmount = orderData.totalAmount?.toFixed(2) || '0.00';
-      const currency = orderData.currency || 'USD';
+      const formattedTotal = formatCurrency(orderData.totalAmount, orderData.currency || 'USD');
+
       const shippingAddress = orderData.shippingAddress || {};
       
       return `
@@ -3632,7 +3636,7 @@ const sendOrderConfirmationEmail = async (orderData) => {
               </tr>
               <tr>
                 <td style="padding: 10px; font-weight: bold; border: 1px solid #ddd; background-color: #f8f9fa;">${texts.totalAmount}</td>
-                <td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #28a745; font-size: 18px;">${formattedAmount} ${currency}</td>
+<td style="padding: 10px; border: 1px solid #ddd; font-weight: bold; color: #28a745; font-size: 18px;">${formattedTotal}</td>
               </tr>
             </table>
             
@@ -3687,8 +3691,8 @@ const sendOrderConfirmationEmail = async (orderData) => {
         customerNote: 'Customer Note'
       };
       
-      const formattedAmount = orderData.totalAmount?.toFixed(2) || '0.00';
-      const currency = orderData.currency || 'USD';
+      const formattedTotal = formatCurrency(orderData.totalAmount, orderData.currency || 'USD');
+
       const shippingAddress = orderData.shippingAddress || {};
       
       return `
@@ -3702,7 +3706,7 @@ ${texts.orderDetails}
 ${texts.orderNumber}: ${orderData.orderNumber}
 ${texts.customerEmail}: ${orderData.email}
 ${texts.customerPhone}: ${orderData.phone}
-${texts.totalAmount}: ${formattedAmount} ${currency}
+${texts.totalAmount}: ${formattedTotal}
 
 ${texts.shippingAddress}:
 ${shippingAddress.firstName || ''} ${shippingAddress.lastName || ''}
@@ -3798,7 +3802,7 @@ This is an automated notification from FreezePIX system.
       orderNote: orderData.orderNote || '',
       paymentMethod: orderData.paymentMethod || 'helcim',
       orderItems: orderData.orderItems || [],
-      totalAmount: orderData.totalAmount || 0,
+      totalAmount: Number(orderData.totalAmount) || 0,
       currency: orderData.currency || 'USD',
       deliveryMethod: orderData.deliveryMethod || 'pickup',
       subtotal: orderData.subtotal || 0,
@@ -5881,7 +5885,7 @@ const handleHelcimPaymentSuccess = async (paymentData) => {
       discountDetails: discountCode ? availableDiscounts.find(
         rule => rule.title.toUpperCase() === discountCode.toUpperCase()
       ) : null,
-      currency: paymentData.currency,
+      currency: country?.currency || paymentData.currency,
       orderNote: "",
       paymentMethod: "helcim",
       deliveryMethod: deliveryMethod || 'pickup',
@@ -6975,6 +6979,7 @@ const handleFileChange = async (event) => {
     const total = taxableAmount + taxAmount;
   
     return {
+      currency: country.currency, // Make sure this is always included
       subtotalsBySize,
       subtotal,
       taxAmount,
