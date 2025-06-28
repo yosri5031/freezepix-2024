@@ -8267,7 +8267,7 @@ return (
 <div className="h-8"></div>
 
 {/* Progress Bar - Above Fixed Bottom Bar */}
-{!showIntro && uploadProgress > 0 && uploadProgress < 100 && (
+{!showIntro && uploadProgress > 0 && uploadProgress < 100 && (selectedCountry === 'TN' || selectedCountry === 'TUN') &&  (
   <div className="fixed bottom-16 left-0 right-0 bg-white shadow-lg z-50 border-t">
     <div className="max-w-4xl mx-auto px-4 py-3">
       {/* Upload Info */}
