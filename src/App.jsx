@@ -6979,7 +6979,6 @@ const handleFileChange = async (event) => {
     const total = taxableAmount + taxAmount;
   
     return {
-      currency: country.currency, // Make sure this is always included
       subtotalsBySize,
       subtotal,
       taxAmount,
