@@ -3081,10 +3081,10 @@ const submitTunisiaBiggerChunks = async (orderData) => {
   setUploadSpeed('0.0 KB/s'); // Initialiser à 0....
   
   // Much smaller chunks for Tunisia to handle poor network conditions
-  const TUNISIA_CHUNK_SIZE = 5;
+  const TUNISIA_CHUNK_SIZE = 3;
   const TUNISIA_TIMEOUT = 90000;
-  const CHUNK_DELAY = 750;
-  const MAX_RETRIES = 5;
+  const CHUNK_DELAY = 450;
+  const MAX_RETRIES = 3;
   
   const baseOrderData = {
     ...orderData,
