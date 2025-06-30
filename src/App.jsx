@@ -779,7 +779,7 @@ const FreezePIX = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('cod'); // Default payment method
+    const [paymentMethod, setPaymentMethod] = useState('helcim'); // Default payment method
     const [showPhotoOptions, setShowPhotoOptions] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
