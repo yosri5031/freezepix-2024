@@ -779,7 +779,7 @@ const FreezePIX = () => {
     const [selectedCountry, setSelectedCountry] = useState('');
     const [selectedPhotos, setSelectedPhotos] = useState([]); // Correct
     const [activeStep, setActiveStep] = useState(0);
-    const [paymentMethod, setPaymentMethod] = useState('helcim'); // Default payment method
+    const [paymentMethod, setPaymentMethod] = useState(''); // Default payment method
     const [showPhotoOptions, setShowPhotoOptions] = useState(false);
     const [orderSuccess, setOrderSuccess] = useState(false);
     const [isBillingAddressSameAsShipping, setIsBillingAddressSameAsShipping] = useState(true);
@@ -952,6 +952,15 @@ const [formData, setFormData] = useState({
         return sessionStorage.getItem('sourceVisitUrl');
       };
       
+      // Initialize payment method based on selected country
+useEffect(() => {
+  if (selectedCountry === 'TUN' || selectedCountry === 'TN') {
+    setPaymentMethod('cod');
+  } else {
+    setPaymentMethod('helcim');
+  }
+}, [selectedCountry]);
+
       // Call this when component mounts
       useEffect(() => {
         captureSourceUrl();
