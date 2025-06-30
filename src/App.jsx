@@ -6035,7 +6035,7 @@ const submitCanadaOrderOptimized = async (orderData) => {
           
           // Delay between chunks for Canada
           if (i < chunks.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            await new Promise(resolve => setTimeout(resolve, 300));
           }
           
           break; // Success, exit retry loop
