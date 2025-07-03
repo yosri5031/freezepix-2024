@@ -328,7 +328,9 @@
   "support": {
       "contact_title": "Pour obtenir de l'aide, veuillez contacter notre équipe de support",
       "region_north_america": "Amérique du Nord",
-      "region_north_africa": "Afrique du Nord"
+      "region_north_africa": "Afrique du Nord",
+      "powered_by": "Propulsé par"
+
     },
     "upload": {
       "uploading_file": "Téléchargement du fichier {{current}} sur {{total}}",

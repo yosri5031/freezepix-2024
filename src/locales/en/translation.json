@@ -16,7 +16,9 @@
     "support": {
       "contact_title": "For help, please contact our support team",
       "region_north_america": "North America",
-      "region_north_africa": "North Africa"
+      "region_north_africa": "North Africa",
+      "powered_by": "Powered By"
+
     },
     "upload": {
       "uploading_file": "Uploading file {{current}} of {{total}}",

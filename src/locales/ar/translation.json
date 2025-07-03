@@ -328,7 +328,9 @@
   "support": {
       "contact_title": "للحصول على المساعدة، يرجى الاتصال بفريق الدعم الخاص بنا",
       "region_north_america": "أمريكا الشمالية",
-      "region_north_africa": "شمال أفريقيا"
+      "region_north_africa": "شمال أفريقيا",
+      "powered_by": "مدعوم من"
+
     },
     "upload": {
       "uploading_file": "رفع الملف {{current}} من {{total}}",

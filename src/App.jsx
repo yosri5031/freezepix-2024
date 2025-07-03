@@ -7887,13 +7887,13 @@ return (
         {showIntro ? (
           // Intro Page Content
           <div className="space-y-8">
-            {/* Logo */}
+            {/* Logo 
             <div className="flex justify-center">
               <div className="text-3xl font-bold">
                 <span className="text-black">freeze</span>
                 <span className="text-yellow-400">PIX</span>
               </div>
-            </div>
+            </div>*/}
 
           {/* Icons Feature Grid */}
 <div className="flex justify-center my-8">
@@ -8230,6 +8230,17 @@ return (
         )}
       </div>
     </div>
+
+{/* Powered By FreezePIX Branding */}
+<div className="mt-4 px-4 py-2 text-center">
+  <div className="inline-flex items-center space-x-1">
+  <span className="text-xs text-gray-500 font-light">{t('support.powered_by') || 'Powered By'}</span>
+  <span className="text-sm font-bold">
+      <span className="text-black">freeze</span>
+      <span className="text-yellow-400">PIX</span>
+    </span>
+  </div>
+</div>
 
 {/* Support Section - Compact Version */}
 <div className="mt-6 px-4 py-3 text-center text-sm">
