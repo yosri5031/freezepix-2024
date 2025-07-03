@@ -7980,10 +7980,10 @@ return (
               </div>
               
               <div className="flex justify-center mb-4">
-                <div className="text-2xl font-bold">
+                {/*<div className="text-2xl font-bold">
                   <span className="text-black">freeze</span>
                   <span className="text-yellow-400">PIX</span>
-                </div>
+                </div>*/}
               </div>
             </div>
 
