@@ -2840,18 +2840,21 @@ const renderNavigationButtons = () => {
 const handleTunisiaCODOrder = async () => {
   const startTime = Date.now();
   let totalBytesProcessed = 0;
-  let lastSpeedUpdate = Date.now(); // Ajouter pour contrôler les mises à jour
+  let lastSpeedUpdate = Date.now(); // For controlling updates
   
   try {
+    // Capture the source URL before processing the order
+    captureSourceUrl();
+
     setIsProcessingOrder(true);
     setOrderSuccess(false);
     setError(null);
     setUploadProgress(0);
     
-    // Initialiser les variables de progression
+    // Initialize progress variables
     setTotalFiles(selectedPhotos.length);
     setCurrentFileIndex(0);
-    setUploadSpeed('0.0 KB/s'); // Initialiser à 0
+    setUploadSpeed('0.0 KB/s'); // Initialize to 0
 
     console.log('Tunisia SPEED: Starting lightning fast processing...');
 
@@ -2870,27 +2873,27 @@ const handleTunisiaCODOrder = async () => {
     const { total, currency, subtotal, shippingFee, taxAmount, discount } = calculateTotals();
     const country = initialCountries.find(c => c.value === selectedCountry);
 
-    // LIGHTNING FAST photo processing - AVEC PROGRESSION CORRIGÉE
+    // LIGHTNING FAST photo processing - WITH CORRECTED PROGRESS
     const processPhotosWithProgress = async () => {
       try {
         const compressedPhotos = await Promise.all(
           selectedPhotos.map(async (photo, index) => {
-            // Mettre à jour les informations du fichier actuel
+            // Update current file information
             setCurrentFileIndex(index + 1);
             setCurrentFileName(photo.file?.name || `Photo ${index + 1}`);
             
-            // Calculer la taille du fichier en cours
+            // Calculate the size of the current file
             const fileSize = photo.file?.size || 0;
             setCurrentFileSize(fileSize > 0 ? `${(fileSize / (1024 * 1024)).toFixed(1)} MB` : '');
             
-            // Calculer la progression (15% pour le traitement des photos)
+            // Calculate progress (15% for photo processing)
             const progress = ((index + 1) / selectedPhotos.length) * 15;
             setUploadProgress(Math.round(progress));
             
-            // Calculer le temps écoulé et estimer le temps restant
+            // Calculate elapsed time and estimate remaining time
             const elapsed = Date.now() - startTime;
             
-            // Ne calculer le temps restant qu'après 2 secondes pour éviter les estimations folles
+            // Only calculate remaining time after 2 seconds to avoid wild estimates
             if (elapsed > 2000) {
               const averageTimePerPhoto = elapsed / (index + 1);
               const remainingPhotos = selectedPhotos.length - (index + 1);
@@ -2905,14 +2908,14 @@ const handleTunisiaCODOrder = async () => {
               setTimeLeft('Calculating...');
             }
             
-            // Calculer la vitesse seulement si au moins 1 seconde s'est écoulée
+            // Calculate speed only if at least 1 second has passed
             const secondsElapsed = elapsed / 1000;
             if (secondsElapsed >= 1) {
               totalBytesProcessed += fileSize;
               const kbProcessed = totalBytesProcessed / 1024;
               const kbPerSecond = kbProcessed / secondsElapsed;
               
-              // Limiter la vitesse maximale affichée pour éviter les valeurs irréalistes
+              // Limit the displayed max speed to avoid unrealistic values
               const maxReasonableSpeed = 50 * 1024; // 50 MB/s max
               const actualSpeed = Math.min(kbPerSecond, maxReasonableSpeed);
               
@@ -2938,7 +2941,7 @@ const handleTunisiaCODOrder = async () => {
               });
               imageData = await convertImageToBase64(compressedFile);
               
-              // Ajouter la taille du fichier compressé (estimation)
+              // Add the size of the compressed file (estimation)
               const base64Size = imageData.length * 0.75; // Base64 overhead
               totalBytesProcessed += base64Size;
             }
@@ -2962,7 +2965,7 @@ const handleTunisiaCODOrder = async () => {
 
     // CALL the photo processing
     const optimizedPhotosWithPrices = await processPhotosWithProgress();
-    // Continuer avec le reste de la logique...
+    // Continue with the rest of the logic...
     const orderData = {
       orderNumber,
       email: formData.email,
@@ -3058,7 +3061,7 @@ const handleTunisiaCODOrder = async () => {
   } finally {
     setIsProcessingOrder(false);
     setUploadProgress(0);
-    // Réinitialiser les variables de progression
+    // Reset progress variables
     setCurrentFileIndex(0);
     setTotalFiles(0);
     setCurrentFileName('');
@@ -3068,6 +3071,7 @@ const handleTunisiaCODOrder = async () => {
     totalBytesProcessed = 0; // Reset bytes counter
   }
 };
+
 
 const submitTunisiaBiggerChunks = async (orderData) => {
   const { orderItems } = orderData;
