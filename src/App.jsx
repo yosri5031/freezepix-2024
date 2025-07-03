@@ -2843,8 +2843,10 @@ const handleTunisiaCODOrder = async () => {
   let lastSpeedUpdate = Date.now(); // For controlling updates
   
   try {
-    // Capture the source URL before processing the order
-    captureSourceUrl();
+       // Retrieve the source visit URL from sessionStorage
+       const sourceVisitUrl = sessionStorage.getItem('sourceVisitUrl');
+       console.log('Retrieved Source Visit URL:', sourceVisitUrl);
+   
 
     setIsProcessingOrder(true);
     setOrderSuccess(false);
@@ -2971,6 +2973,7 @@ const handleTunisiaCODOrder = async () => {
       email: formData.email,
       phone: formData.phone,
       name: formData.name || '',
+      sourceVisitUrl,
       
       ...(deliveryMethod === 'pickup' ? {
         pickupStudio: selectedStudio ? {
